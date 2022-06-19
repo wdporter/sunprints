@@ -294,7 +294,8 @@ input:invalid {
 			$(this).addClass('selected');
 			var data = datatable.row(this).data();
 			console.log(data)
-			app.setGarment(data)
+			const clone = JSON.parse(JSON.stringify(data))
+			app.setGarment(clone)
 			app.setLegend(`${data.Code}; ${data.Type}; ${data.Label}; ${data.Colour}`)
 		}
 	});
@@ -347,9 +348,8 @@ input:invalid {
 					vue.garment.LastModifiedBy = json.LastModifiedBy
 					vue.garment.LastModifiedDateTime = json.LastModifiedDateTime
 					document.getElementById("success").showModal()
+					// reload table, find the current one and select it
 					window.datatable.ajax.reload(() => document.querySelector(`tr#row-${vue.garment.GarmentId}`).classList.add("selected"), false)
-					// find the current one and select it
-					
 				})
 				.catch(err => window.alert(`We encountered an error: ${err}`))
 
