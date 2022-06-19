@@ -7,12 +7,55 @@
 	width: unset;
 }
 
+section { 
+  grid-template-columns: auto auto;
+}
+
+.breakall {
+	word-break: break-all;
+}
+
+input:invalid {
+  border: 2px dashed red;
+}
+
+.wide-column {
+  width: 250px
+}
+
+.dataTables_wrapper .dataTables_filter {
+  text-align: revert;
+}
+
+#garmentTable_filter {
+  display: none
+
+}
+
+.selected-garment button {
+	margin-bottom: 0;
+}
+
+section.price-section {
+  margin-bottom: 2em;
+}
+
+ 
+
+button+button, button+input[type=reset], input[type=submit]+button {
+	margin-left: 2em;
+}
+
+table#stockWarningTable {
+	min-width: unset;
+	width: unset;
+}
+
 </style>
 
-<ul><li>TODO add ship, print job sheet, print design buttons to the order edit page</li></ul>
 
-
-	<fieldset><legend>1. Order details</legend>
+<fieldset>
+	<legend>1. Order details</legend>
 	<input type=hidden id=orderId value=<%=mode=="edit" ? orderid : "0" %> />
 	<details id=chooseCustomerDetails style="margin-top:2em" <% if (mode=="new") { %>open<% } %> >
 		<input type=hidden id=selectedCustomerId value="<%= customer ? customer.CustomerId : '' %>" />
@@ -67,7 +110,7 @@
 				<select id="salesRep">
 					<option value=0>&mdash;choose&mdash;</option>
 					<% salesReps.forEach(rep => { %>
-					 <option <% if (order && order.SalesRep && order.SalesRep == rep.Name) { %>selected<% } %>><%= rep.Name %> 
+						<option <% if (order && order.SalesRep && order.SalesRep == rep.Name) { %>selected<% } %>><%= rep.Name %> 
 					<% }) %>
 				</select>
 				
@@ -293,6 +336,7 @@
 	</dialog>
 
 	<input type=button id=printJobButton style="display:none" onclick="printJobSheet()" value="Print Job Sheet" />
+	<input type=submit id=shipOrderButton style="display:none" onclick="alert(this)" value="Ship Order" />
 
 	<script>
 
@@ -303,6 +347,7 @@
 		document.getElementById("garmentSection").style.display = window.sunprints.mode == "edit" ? "block" : "none"
 		document.getElementById("invoiceDatePara").style.display = window.sunprints.mode == "edit" ? "block" : "none"
 		document.getElementById("printJobButton").style.display = window.sunprints.mode == "edit" ? "inline" : "none"
+		document.getElementById("shipOrderButton").style.display = window.sunprints.mode == "edit" ? "inline" : "none"
 
 		// 1. Choose Customer
 
