@@ -1,0 +1,19 @@
+.nameDiv {
+	border: black solid 1px;
+	padding: .5em;
+	margin-right: .5em;
+}
+
+
+#nameListTable {
+	background-color: lightgoldenrodyellow;
+}
+
+button+button {
+	margin-left: 2em;
+}
+
+#addNameDialog {
+	width: 500px
+}
+

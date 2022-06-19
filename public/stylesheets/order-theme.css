@@ -1,0 +1,28 @@
+.dataTables_wrapper {
+	margin-left: 3em
+}
+
+
+table#orderTable {
+	font-size: .75rem;
+}
+
+
+td.alignCentre {
+	text-align: center;
+}
+
+.garmentDiv + .garmentDiv {
+	margin-left: 2px
+}
+.garmentDiv {
+	border: black solid 1px;
+	padding: 2px
+}
+
+.buttondiv {
+	clear:both;
+}
+
+
+

@@ -1,0 +1,115 @@
+<%- include("../partials/head.ejs") %>
+
+<p>
+	<a href="/supplier">Go to suppliers list</a>
+</p>
+
+
+<table class="hover">
+	<thead>
+		<tr>
+		<% if (deleted.length > 0) { 
+			for (var item in deleted[0]) { %> <th><%= item %> 
+		<% } 
+		} %>
+	<tbody>
+		<% for (var item of deleted) { %><tr data-id="<%=item.PrintDesignId%>" >
+			<% for (var key in item) { %><td><%= item[key] %>
+			<% }  } %> 
+	</tbody>
+</table>
+
+
+
+<script>
+	window.datatable = new DataTable("table", {
+		columnDefs: [
+			{
+				visible: false,
+				targets: [3, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 20]
+			},
+			{
+				orderable: false,
+				render: function (data, type, row) {
+					return `<button onclick="restore(${data})">Restore</button>`
+				},
+				title: "",
+				targets: 0,
+			},
+			{
+				render: function (data, type, row) {
+					return `${data} ${row[3]}`.trim()
+				},
+				targets: 4,
+				title: "Name"
+			},
+			{
+				orderable: false,
+				render: function (data, type, row) {
+					const items = []
+					if (data)
+						items.push(`O: ${data}`)
+					if (row[6])
+						items.push(`H: ${row[6]}`)
+					if (row[7])
+						items.push(`M: ${row[7]}`)
+					if (row[8])
+						items.push(`F: ${row[8]}`)
+					if (row[9])
+						items.push(`E: ${row[9]}`)
+
+					return items.join("<br>")
+				},
+				targets: 5,
+				title: "Contact"
+			},
+			{
+				orderable: false,
+				render: function (data, type, row) {
+					const items = []
+					if (data)
+						items.push(data)
+					if (row[11])
+						items.push(row[11])
+					const loc = []
+					if (row[12])
+						loc.push(row[12])
+					if (row[14])
+						loc.push(row[14])
+					if (row[13])
+						loc.push(row[13])
+					items.push(loc.join(" "))
+					return items.join("<br>")
+				},
+				targets: 10,
+				title: "Address"
+			},
+			{
+				orderable: false,
+				render: function (data, type, row) {
+					return `${data}<br>${row[20]}`
+				},
+				targets: 19,
+				title: "Deleted by"
+			}
+		]
+	})
+	
+
+	function restore( id) {
+		const tr = document.querySelector(`tr[data-id="${id}"]`)
+
+		fetch(`/supplier/restore/${id}`, { method: "PUT" })
+		.then(response => {
+			if (response.ok) {
+				window.datatable.row(tr).remove().draw("page")
+			}
+			else {
+				window.alert(`We encountered an error: ${response.statusText}`)
+			}
+		})
+	}
+</script>
+
+
+<%- include('../partials/foot.ejs'); %>

@@ -1,0 +1,455 @@
+<%- include("partials/head.ejs") %>
+
+<style>
+		tr.filters select {
+		min-width: unset;
+	}
+
+	.container-div {
+		display: flex;
+		margin-left: 2em;
+	}
+
+	.edit-div {
+		min-width: 450px;
+		flex-grow: 1;
+
+	}
+
+	#garmentTable td {
+		padding: 1px !important;
+	}
+
+	#garmentTable {
+		cursor: default;
+		}
+
+	#sizeTable {
+		width: unset;
+	}
+
+#sizeTable td input {
+	max-width: 75px
+}
+
+#newGarmentDialog {
+	width: 400px;
+}
+
+#newGarmentDialog input:invalid {
+	border: 1px solid darkred
+}
+
+input[type=button] + input[type=button] {
+	margin-left: 3em;
+	margin-bottom: 2em
+}
+
+input:invalid {
+  border: 2px dashed red;
+}
+
+</style>
+
+
+<ul>
+	<li>Do we need the "Print List" button ?</li>
+	<li>todo: you can change a garment details or quantity, 
+		and then view another garment, 
+		and then come back to the first garment 
+		and you will see the changed values,
+		but they should revert to what's in the database
+		so get the selection event and refetch/repopulate the garment details
+		
+</li>
+</ul>
+<p><a href=/garment/deleted>View (and restore) deleted garments</a></p>
+
+<input type=button onclick="app.addNew()" value="Add a new garment" />
+<input type=button onclick="warningList()" value="Warning list" />
+
+<dialog id="newGarmentDialog" >
+	<form method="dialog" id="newGarmentForm">
+		<h3>New garment</h3>
+
+		<p>
+			<label for="newSizeCategory">Size Category</label>
+			<select id="newSizeCategory" >
+				<option>Adults</option>
+				<option>Womens</option>
+				<option>Kids</option>
+			</select>
+		</p>
+		<p>
+			<label for="newCode">Code</label>
+			<input id="newCode" required placeholder=required>
+		</p>
+		<p>
+			<label for="newType">Type</label>
+			<input id="newType" required placeholder=required />
+		</p>
+		<p>
+			<label for="newColour">Colour</label>
+			<input id="newColour" required placeholder=required />
+		</p>
+		<p>
+			<label for="newLabel">Label</label>
+			<input id="newLabel" required placeholder=required />
+		</p>
+		<p>
+			<label for="newNotes">Notes</label>
+			<textarea id="newNotes"> </textarea>
+		</p>
+		<div>
+			<button value="default" onclick="saveNewGarment()">Save</button>&emsp;
+			<input type=reset value="Cancel" novalidate onclick="document.getElementById('newGarmentDialog').close()" />
+		</div>
+	</form>
+
+</dialog>
+
+</main>
+
+<!-- <div class=container-div> -->
+	<div style="margin-left: 3em" >
+	<table id="garmentTable" class="hover">
+		<thead>
+			<tr>
+				<th>Size Category</th>
+				<th>Code</th>
+				<th>Type</th>
+				<th>Colour</th>
+				<th>Label</th>
+				<th>Notes</th>
+				<th>Last Ordered</th>
+				<th>Garment Id</th>
+			</tr>
+			<tr class="filters">
+				<th>Size Category</th>
+				<th>Code</th>
+				<th>Type</th>
+				<th>Colour</th>
+				<th>Label</th>
+				<th></th>
+				<th>Garment Id</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+</div>
+
+<main style="margin-top: 2em"> <!-- resume -->
+
+	<fieldset class="edit-div" id="vueApp">
+		<legend>{{ legend }}</legend>
+		<form id="editForm">
+		<section>
+			<div>
+				<table v-if="garment.SizeCategory" id="sizeTable">
+				<caption>{{ garment.SizeCategory }} Sizes</caption>
+				<thead>
+					<tr>
+						<th>Size</th>
+						<th>Quantity</th>
+						<th>On Order</th>
+						<th>Minimum</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="size in sizes[garment.SizeCategory]" :key="size">
+						<th>{{ size.slice(1) }}</th>
+						<td><input type=number v-model="garment[size]" /></td>
+						<td style="text-align:center">{{ garment['O' + size] }}</td>
+						<td><input type=number v-model="garment['Min' + size]" min="0" /></td>
+					</tr>
+				</tbody>
+				</table>
+				<p v-else>No garment selected</p>
+			</div>
+			<div>
+				<p>
+					<label for="sizeCategory">Size Category</label>
+					<select id="sizeCategory" v-model="garment.SizeCategory">
+						<option>Adults</option>
+						<option>Womens</option>
+						<option>Kids</option>
+					</select>
+				</p>
+				<p>
+					<label for="code">Code</label>
+					<input v-model="garment.Code" required placeholder="required" />
+				</p>
+				<p>
+					<label for="type">Type</label>
+					<input v-model="garment.Type" required placeholder="required" />
+				</p>
+				<p>
+					<label for="colour">Colour</label>
+					<input v-model="garment.Colour" required placeholder="required" />
+				</p>
+				<p>
+					<label for="label">Label</label>
+					<input v-model="garment.Label" required placeholder="required" />
+				</p>
+				<p>
+					<label for="notes">Notes</label>
+					<textarea v-model="garment.Notes"> </textarea>
+				</p>
+				<p>
+					<button @click.prevent="saveItem">&emsp;Save&emsp;</button>&emsp;<input type="reset" value="Delete" @click.prevent="deleteItem" />
+				</p>
+			</div>
+		</section>
+	</form>
+		<dialog id=success>
+			<p>✅ We have saved the garment </p>
+			<form method="dialog">
+				<button>OK</button>
+			</form>
+		</dialog>
+	
+		<ul>
+			<li>Created By: {{garment.CreatedBy }}</li>
+			<li>Created Date/time: {{garment.CreatedDateTime }}</li>
+			<li>Last Modified By: {{garment.LastModifiedBy }}</li>
+			<li>Last Modified Date/time: {{ garment.LastModifiedDateTime }}</li>
+		</ul>
+	</fieldset>
+
+<!-- </div> -->
+
+<script>
+
+	window.datatable = new DataTable("#garmentTable", {
+		orderCellsTop: true,
+		fixedHeader: true,
+		processing: true,
+		serverSide: true,
+		ajax: { 
+			url: "/garment/dt",
+			error(jqXHR, textStatus) { window.alert(`We encountered an error: ${textStatus}`) }
+	},
+		dom: "lrtip",
+		columns: [
+			{ data: "SizeCategory", width: "80px" },
+			{ data: "Code", },
+			{ data: "Type" },
+			{ data: "Colour" },
+			{ data: "Label" },
+			{ data: "Notes", orderable: false },
+			{ 
+				data: "maxdate",
+				render(data) {
+					const date = Date.parse(data)
+					if (isNaN(date))
+						return data || "no orders"
+					else 
+						return new Date(date).toLocaleDateString()
+				}
+			},
+			{ data: "GarmentId", visible: false },
+		],
+		"order": [[5, "desc"]],
+		initComplete() {
+			// support for filtering by column
+			var api = this.api();
+			// For each column
+			api.columns()[0].forEach(function (i) {
+
+				const th = Array.from(document.querySelectorAll(".filters th"))[i]
+				if (i < 5) {
+					if (i == 0) {
+						th.innerHTML = "<select><option><option>Adults<option>Womens<option>Kids</select>"
+						th.querySelector("select").addEventListener("change", function () {
+							api.column(i).search(this.value).draw()
+							window.setTimeout(function () {
+								this.focus({ preventScroll: true })
+							}, 20)
+						})
+					}
+					else {
+						th.innerHTML = "<input placeholder=search />"
+						th.querySelector("input").addEventListener("input", function () {
+							api.column(i).search(this.value).draw()
+							window.setTimeout(function () {
+								this.focus({ preventScroll: true })
+							}, 20)
+						})
+					}
+				}
+				else {
+					if (th)
+						th.innerHTML = ""
+				}
+			})
+		}
+	})
+
+
+	// highlight selected row
+	$('#garmentTable tbody').on('click', 'tr', function () {
+		if (! $(this).hasClass('selected')) {
+			window.datatable.$('tr.selected').removeClass('selected');
+			$(this).addClass('selected');
+			var data = datatable.row(this).data();
+			console.log(data)
+			app.setGarment(data)
+			app.setLegend(`${data.Code}; ${data.Type}; ${data.Label}; ${data.Colour}`)
+		}
+	});
+
+
+	// vue app
+	window.app = Vue.createApp({
+		data() {
+			return {
+				garment: {
+					SizeCategory: "",
+					Code: "",
+					Type: "",
+					Colour: "",
+					Label: "",
+					Notes: "",
+					GarmentId: 0
+				},
+				sizes: <%- sizes %>,
+				legend: "Details — select a garment from the list"
+			}
+		},
+		methods: {
+			setLegend(garmentType) {
+				this.legend = `Details — ${garmentType}`
+			},
+			setGarment(data) {
+				this.garment = data
+			},
+			addNew() {
+				document.getElementById("newGarmentDialog").showModal()
+			},
+			saveItem() {
+				if (! document.getElementById("editForm").checkValidity())
+					return
+
+				const vue = this
+				fetch(`/garment/${this.garment.GarmentId}`, {
+					method: "PUT",
+					headers: new Headers({ "Content-Type": "application/json"}),
+					body: JSON.stringify(this.garment)
+				})
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else
+						throw new Error(response.statusText)
+				})
+				.then(json => {
+					vue.garment.LastModifiedBy = json.LastModifiedBy
+					vue.garment.LastModifiedDateTime = json.LastModifiedDateTime
+					document.getElementById("success").showModal()
+					window.datatable.ajax.reload(() => document.querySelector(`tr#row-${vue.garment.GarmentId}`).classList.add("selected"), false)
+					// find the current one and select it
+					
+				})
+				.catch(err => window.alert(`We encountered an error: ${err}`))
+
+			},
+			deleteItem() {
+				const vue = this
+				fetch(`/garment/${this.garment.GarmentId}`, { method: "DELETE"})
+				.then(response => {
+					if (response.ok) {
+						vue.legend = "Details — none selected"
+						window.datatable.ajax.reload(null, false)
+						vue.garment.GarmentId = 0
+						vue.garment.SizeCategory = ""
+						vue.garment.Type = ""
+						vue.garment.Colour = ""
+						vue.garment.Code = ""
+						vue.garment.Notes = ""
+						vue.garment.Label = ""
+						vue.garment.CreatedBy = ""
+						vue.garment.CreatedDateTime = ""
+						vue.garment.LastModifiedBy = ""
+						vue.garment.LastModifiedDateTime = ""
+					}
+					else
+						throw new Error(response.statusText)
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+
+			}
+		}
+	})
+		.mount("#vueApp")
+
+function saveNewGarment() {
+	if (!document.getElementById("newGarmentForm").checkValidity())
+		return
+
+	try {
+		const newSizeCategory = document.getElementById("newSizeCategory")
+		const newCode = document.getElementById("newCode")
+		const newType = document.getElementById("newType")
+		const newColour = document.getElementById("newColour")
+		const newLabel = document.getElementById("newLabel")
+		const newNotes = document.getElementById("newNotes")
+
+		const data = {
+			SizeCategory: newSizeCategory.value,
+			Code: newCode.value,
+			Type: newType.value,
+			Colour: newColour.value,
+			Label:newLabel.value,
+			Notes: newNotes.value
+		}
+
+		fetch("/garment", {
+			method: "POST",
+			headers: new Headers({ "Content-Type": "application/json"}),
+			body: JSON.stringify(data)
+		})
+		.then(response => {
+			if (response.ok) {
+				return response.json()
+			}
+			else
+				throw new Error(response.statusText)
+		})
+		.then(json => {
+			document.getElementById("success").showModal()
+			window.datatable.ajax.reload(() => document.querySelector(`tr#row-${json.NewId}`).classList.add("selected"), true)
+			newSizeCategory.value=""
+			newCode.value=""
+			newType.value=""
+			newColour.value=""
+			newLabel.value=""
+			newNotes.value=""
+
+			data.CreatedBy = data.LastModifiedBy = json.CreatedBy
+			data.CreatedDateTime = data.LastModifiedDateTime = json.CreatedDateTime
+			app.setGarment(data)
+
+		})
+		.catch(error => window.alert(`We encountered an error: ${error}`))
+	}
+	catch(error) {
+		window.alert(`We encountered an error: ${error}`)
+	}
+}
+
+function warningList() {
+	window.open("/garment/warninglist")
+}
+
+</script>
+
+
+
+
+<main><!-- to match closing main tag in in partials/foot.ejs -->
+
+
+
+
+	<%- include("partials/foot.ejs") %>

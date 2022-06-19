@@ -1,0 +1,20 @@
+
+tr.filters select {
+	min-width: unset;
+}
+
+.chosen-garment td {
+	padding-left: 1px;
+	padding-right: 1px;
+	word-break: break-all;
+}
+.chosen-garment td:nth-child(1), .chosen-garment td:nth-child(2), .chosen-garment td:nth-child(3), .chosen-garment td:nth-child(4)  {
+	border-right: 1px #888 solid
+}
+button+button {
+	margin-left: 3em;
+}
+
+select:invalid {
+	border-color: red
+}

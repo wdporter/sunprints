@@ -1,0 +1,387 @@
+<%- include("partials/head.ejs") %>
+
+
+
+	<h3>Raise or View Purchase Orders</h3>
+<p>todo — you shouldn't be able to receive order if there are unsaved changes</p>
+
+	<p>
+		If a garment has been added by mistake, remove it by setting all sizes to 0 and click Save
+		<!-- todo maybe fix this by having a delete button alongside garments -->
+	</p>
+
+	<div id=vueApp>
+		<fieldset><legend>{{ stockOrderId == "<%= stockOrderId %>" ? "Create New" : "Edit existing"  }}</legend>
+			<p>
+				<label for="stockOrderSelect">Select existing to edit</label>
+				<select id="stockOrderSelect" v-model="stockOrderId" @change="onSelectOrder">
+					<option value="<%= stockOrderId %>">—Create new or select existing from list—</option>
+					<option v-for="stockOrder in stockOrders" :value="stockOrder.StockOrderId" :key="stockOrder.StockOrderId">{{ stockOrder.StockOrderId }} {{ new
+						Date(Date.parse(stockOrder.OrderDate)).toLocaleDateString() }} {{ stockOrder.Company }}</option>
+				</select>
+			</p>
+
+			 <p v-show="stockOrderId != ''">
+			<label for="stockOrderId">Stock Order Number: {{ stockOrderId }} </label>
+			<!--		<input id="stockOrderId" v-model="stockOrderId" :disabled="stockOrderId == ''"  /> -->
+			</p>
+
+			<p>
+				<label for="orderDate">Order Date</label>
+				<input id="orderDate" type="date"d v-model="orderDate" />
+			</p>
+
+			<p>
+				<label for="supplierSelect">Supplier</label>
+				<select id="supplierSelect" v-model="supplierId" required>
+					<option value="">—Choose a supplier—</option>
+					<option v-for="supplier in suppliers" :value="supplier.SupplierId">{{ supplier.Company }}</option>
+				</select>&emsp;
+				<span>{{ suppliers.find(s => s.SupplierId == supplierId)?.Notes ?? "" }}</span>
+			</p>
+
+			<p>
+				<label for="notes">Notes</label>
+				<textarea id="notes" v-model="notes"></textarea>
+			</p>
+
+
+		</fieldset>
+
+		<h4>Garments 
+<span v-if="(chosenGarments.Adults.length + chosenGarments.Kids.length + chosenGarments.Womens.length) == 0" style="color:darkred">*</span></h4>
+		<table v-for="(arr, sizeCategory) in chosenGarments" :key="sizeCategory" class="chosen-garment">
+			<caption>{{ sizeCategory[0].toUpperCase() + sizeCategory.slice(1) }} </caption>
+			<thead>
+				<tr>
+					<th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th v-for="size in sizes[sizeCategory]">{{ size.slice(1) }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr v-if="arr.length==0"><td :colspan="sizes[sizeCategory].length+4">Select garments from the list</td></tr>
+				<tr v-for="(garment, i) in arr" :key="i">
+					<td>{{ garment.Code }}<br>
+						<a href=# @click.prevent="receiveGarment(garment, sizeCategory)" :data-id="garment.GarmentId" 
+						title="Receive this garment into stock"><span class="fa fa-download fa-2x"></span></a>
+						
+					</td>
+					<td>{{ garment.Type }}</td>
+					<td>{{ garment.Colour }}</td>
+					<td>{{ garment.Label }}</td>
+					<td v-for="size in sizes[sizeCategory]"><input type=number min=0 v-model="garment[size]" /></td>
+				</tr>
+			</tbody>
+		</table>
+
+		<hr>
+<p>
+	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save Purchase Order</button>&emsp;
+	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == ''" value="Print Purchase Order" />&emsp;
+	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == ''">Receive Order</button>
+</p>
+
+<dialog id="successDialog">
+  <h4>Success</h4>
+	<p>Saved OK</p>
+  <form method="dialog">
+    <button>OK</button>
+  </form>
+</dialog>
+
+<p>
+to remove a garment, set all size quantities to empty or 0
+</p>
+</div>
+<hr>
+
+
+<h4>Add garments </h4>
+	<table id="garmentTable" class="hover">
+		<thead>
+			<tr>
+				<th></th><th>Size Category</th><th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th>Notes</th>
+			</tr>
+			<tr class="filters">
+				<th></th><th>Size Category</th><th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th></th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+
+
+	<script>
+
+
+function addGarment(evt, id) {
+	evt.preventDefault()
+	const data = window.datatable.row(`#row-${id}`).data()
+
+	window.vueApp.chosenGarments[data.SizeCategory].push({
+		Code: data.Code,
+		Type: data.Type,
+		Colour: data.Colour,
+		Label: data.Label,
+		GarmentId: data.GarmentId
+	})
+}
+
+		window.datatable = new DataTable("#garmentTable", {
+			orderCellsTop: true,
+			fixedHeader: true,
+			processing: true,
+			serverSide: true,
+			ajax: "/garment/purchase/dt",
+			dom: "lrtip",
+			columns: [
+			{
+					data: "GarmentId",
+					render(data, type, row) {
+						// return `<input type=button onclick="addGarment(event, ${data})" value=Add class=add-garment-buttonink />`
+						return `<a href=# onclick="addGarment(event, ${data})" title="Add garment to purchase order"><span class="fa fa-plus fa-lg"></span></a> `
+					},
+					width: "50px",
+					orderable: false
+				},
+				{ data: "SizeCategory", width: "80px" },
+				{ data: "Code", },
+				{ data: "Type" },
+				{ data: "Colour" },
+				{ data: "Label" },
+				{ 
+					data: "Notes", 
+					orderable: false 
+				}
+			],
+			"order": [[1, "asc"]],
+			initComplete() {
+				// support for filtering by column
+				var api = this.api();
+				// For each column
+				api.columns()[0].forEach(function (i) {
+
+					const th = Array.from(document.querySelectorAll(".filters th"))[i]
+					if (i > 0 && i < 5) {
+						if (i == 0) {
+							th.innerHTML = "<select><option><option>Adults<option>Womens<option>Kids</select>"
+								th.querySelector("select").addEventListener("change", function () {
+								api.column(i).search(this.value).draw()
+								window.setTimeout(function() {
+									this.focus({preventScroll:true})
+								}, 20)
+							})
+						}
+						else {
+							th.innerHTML = "<input placeholder=search />"
+							th.querySelector("input").addEventListener("input", function () {
+								api.column(i).search(this.value).draw()
+								window.setTimeout(function() {
+									this.focus({preventScroll:true})
+								}, 20)
+							})
+						}
+					}
+					else
+						th.innerHTML = ""
+				})
+			}
+
+		})
+</script>
+
+<script>
+	window.garment = <%- garment %>;
+
+		window.vueApp = Vue.createApp({
+			data() {
+				return {
+					orderDate: new Date().toISOString().slice(0, 10),
+					supplierId: "<%= supplierId %>",
+					suppliers: <%- JSON.stringify(suppliers) %>,
+					notes: "<%= orderNumber %>",
+					stockOrderId: "<%= stockOrderId %>",
+					stockOrders: <%- JSON.stringify(stockOrders) %>,
+					received: false,
+					chosenGarments: {
+						Adults: [],
+						Womens: [],
+						Kids: [],
+					},
+					sizes: <%- sizes %>,
+				}
+		},
+		methods: {
+			onSelectOrder() {
+				if (this.stockOrderId == "") {
+					// no stock order id
+					this.notes = ""
+					this.orderDate = new Date().toISOString().slice(0, 10)
+					this.chosenGarments.Adults = []
+					this.chosenGarments.Womens = []
+					this.chosenGarments.Kids = []
+					return
+				}				
+				const vue = this
+				console.log("order selected", this.stockOrderId)
+				// get details of the stock order, and populate the chosen garments
+				fetch(`/stockorder/${this.stockOrderId}`)
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then(json => {
+						vue.stockOrderId = json.StockOrderId
+						vue.notes = json.Notes
+						vue.orderDate = json.OrderDate
+						vue.supplierId = json.SupplierId
+						vue.chosenGarments.Adults = []
+						vue.chosenGarments.Womens = []
+						vue.chosenGarments.Kids = []
+						json.garments.forEach(g => {
+							const garment = {
+								Code: g.Code,
+								Type: g.Type,
+								Colour: g.Colour,
+								Label: g.Label,
+								GarmentId: g.GarmentId
+							}
+							vue.sizes.Kids.forEach(k => garment[k] = g[k])
+							vue.sizes.Womens.forEach(w => garment[w] = g[w])
+							vue.sizes.Adults.forEach(a => garment[a] = g[a])
+							vue.chosenGarments[g.SizeCategory].push(garment)
+						})
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+			},
+			saveItem(evt) {
+				evt.preventDefault()
+				console.log("saving")
+				let method = "POST" // POST to insert, when no stock order id
+				let url = "/stockorder"
+				if (this.stockOrderId != "" ) { // PUT to edit
+					url += `/${this.stockOrderId}`
+					method = "PUT"
+				}
+				const data = {
+					orderDate: this.orderDate,
+					supplierId: this.supplierId,
+					notes: this.notes,
+					chosenGarments: this.chosenGarments
+				}
+				let vue = this
+				fetch(url, {
+					method,
+					headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify(data)
+				})
+				.then(response => {
+					if (response.ok)
+						return response.text()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then(text => {
+					vue.stockOrderId = text
+					document.getElementById("successDialog").showModal()
+					vue.stockOrders.push({
+						StockOrderId: vue.stockOrderId,
+						Company: vue.suppliers.find(s => s.SupplierId == vue.supplierId).Company,
+						OrderDate: vue.orderDate,
+						Notes: vue.notes
+					})
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+
+			},
+			printItem() {
+				console.log("print item")
+				window.open("/purchasing/purchaseorder/" + this.stockOrderId)
+			},
+			receiveOrder() {
+				const vue = this
+				// I changed my mind on this. The "Receive Order" should be unavailable if there are unsaved changes
+				// const body = { 
+				// 	chosenGarments: this.chosenGarments,
+				// 	orderDate: this.orderDate,
+				// 	supplierId: this.supplierId,
+				// 	notes: this.notes
+				// }
+				fetch(`/stockorder/receiveorder/${this.stockOrderId}`, { 
+					method: "PUT",
+				// I changed my mind on this. The "Receive Order" should be unavailable if there are unsaved changes
+					// body: JSON.stringify(body), 
+					// headers: new Headers({"Content-Type": "application/json"})
+				})
+				.then(response => {
+					if (response.ok) {
+						// all garments have been received, the database deleted the stock order, so reset our UI
+						vue.chosenGarments.Adults = []
+						vue.chosenGarments.Womens = []
+						vue.chosenGarments.Kids = []
+						vue.stockOrders = vue.stockOrders.filter(s => s.StockOrderId != vue.stockOrderId)
+						vue.orderDate = new Date().toISOString().slice(0, 10)
+						vue.supplierId = ""
+						vue.notes = ""
+						vue.stockOrderId = ""
+					}
+					else {
+						throw new Error(response.statusText)
+					}
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+			},
+			receiveGarment(garment, sizeCategory) {
+				// todo, check for unsaved changes
+				const vue = this
+				console.log("receive garment", garment, sizeCategory)
+				fetch(`/stockorder/receivegarment/${this.stockOrderId}`, {
+					method: "POST", 
+					body: JSON.stringify(garment),
+					headers: new Headers({"Content-Type": "application/json"})
+				})
+				.then(response => {
+					if (response.ok) {
+						// remove it from the garment list
+						vue.chosenGarments[sizeCategory] = vue.chosenGarments[sizeCategory].filter(g => g.GarmentId != garment.GarmentId)
+						if ((vue.chosenGarments.Adults.length + vue.chosenGarments.Kids.length + vue.chosenGarments.Womens.length) == 0) {
+							// all garments have been received, the database deleted the stock order, so reset our UI
+							vue.stockOrders = vue.stockOrders.filter(s => s.StockOrderId != vue.stockOrderId)
+							vue.orderDate = new Date().toISOString().slice(0, 10)
+							vue.supplierId = ""
+							vue.notes = ""
+							vue.stockOrderId = ""
+						}
+					}
+					else {
+						throw new Error(response.statusText)
+					}
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+			},
+			isInvalid() {
+				return this.supplierId == "" || 
+					(this.chosenGarments.Adults.length==0 && this.chosenGarments.Womens.length==0 && this.chosenGarments.Kids.length==0)
+			}
+		},
+		mounted() {
+			if (window.garment) {
+				this.chosenGarments[garment.SizeCategory].push(garment)
+			}
+		}
+	}).mount("#vueApp")
+
+
+	</script>
+
+
+
+
+	<%- include("partials/foot.ejs") %>

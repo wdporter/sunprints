@@ -1,0 +1,165 @@
+<%- include("partials/head.ejs") %>
+
+<p><a href="/screen/deleted">View (and restore) deleted screens</a></p>
+
+
+<p><input type="button" value="Create New Screen" onclick="window.vueApp.new()" /></p>
+
+
+
+	<dialog id="editDialog">
+		<h3>Edit Screen</h3>
+		<form method=dialog>
+			<div id="app">
+				<input type=hidden v-model="ScreenId">
+				<label for=number>Number</label> <input id=number v-model="number"><br>
+				<label for=colour>Colour</label> <input id=colour v-model="Colour"><br>
+				<label for=name>Name</label> <input id=name v-model="Name"><br>
+				<p>
+					<button id="saveButton" value="default" @click="save">Save</button>&emsp;
+					<input type=button value="Cancel" onclick="this.closest('dialog').close()" />
+				</p>
+			</div>
+		</form>
+	</dialog>
+
+	<table id="datatable" class="stripe hover">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Number</th>
+				<th>Colour</th>
+				<th>Name</th>
+			</tr>
+		</thead>
+
+	</table>
+
+
+		<script>
+
+
+			window.datatable = new DataTable("#datatable", {
+				processing: true,
+				serverSide: true,
+				ajax: "/screen/dt",
+				language: {
+					searchPlaceholder: "Search number, colour or name"
+				},
+				order: [[0, 'desc']],
+				columns: [
+					{
+						orderable: false,
+						data: "ScreenId",
+						render(data) {
+							return `<input type=button value=Edit onclick="startEdit(this)" /> <input type=reset onclick=deleteScreen(${data}) value=Delete />`
+						}
+					},
+					{ data: "Number" },
+					{ data: "Colour", width: "150px" },
+					{ data: "Name", width: "300px" }
+				]
+			})
+
+			$("#datatable tbody").on("click", "a.editLink", function () {
+				event.preventDefault()
+				var tr = this.closest("tr")
+				var row = window.datatable.row(tr)
+				console.log(row.data())
+				const data = row.data()
+				window.vueApp.setData(data)
+				const editDialog = document.getElementById("editDialog")
+				editDialog.querySelector("h3").textContent = "Edit screen"
+				editDialog.showModal()
+			})
+
+			function deleteScreen(id) {
+				try {
+					fetch(`/screen/${id}`, {
+						method: "DELETE"
+					})
+						.then(response => {
+							if (response.ok)
+								return response.json()
+							else
+								throw new Error(response.statusText)
+						})
+						.then(json => window.datatable.ajax.reload(null, false) )
+						.catch(error => window.alert(`We encountered an error: ${json.error}`))
+				}
+				catch (err) {
+					window.alert("We encountered an error: " + err.message)
+				}
+			}
+
+
+
+			window.vueApp = Vue.createApp({
+				data() {
+					return {
+						ScreenId: 0,
+						number: "",
+						Colour: "",
+						Name: ""
+					}
+				},
+				methods: {
+					setData(data) {
+						this.ScreenId = data.ScreenId
+						this.number = data.Number
+						this.Colour = data.Colour
+						this.Name = data.Name
+					},
+					save() {
+						let body = JSON.parse(JSON.stringify(this.$data))
+						body.Number = body.number
+						delete body.number
+						try {
+							let method = "POST" 
+							let url = "/screen"
+							if (this.ScreenId > 0) {
+								method = "PUT"
+								url += `/${this.ScreenId}`
+							}
+							fetch(url, {
+								method,
+								headers: new Headers({
+									"Content-Type": "application/json"
+								}),
+								body: JSON.stringify(body)
+							})
+							.then(response => {
+								if (response.ok)
+									return response.json()
+								else
+									throw new Error(response.statusText)
+							})
+							.then(json => {
+								window.datatable.ajax.reload(null, window.vueApp.ScreenId == 0)// reset paging if it's a new item
+								//document.getElementById("editDialog").close()
+							})
+							.catch(error => window.alert(`We encountered an error: ${error}`))
+						}
+						catch (err) {
+							window.alert("We encountered an error: " + err.message)
+						}
+
+					},
+					new() {
+						this.ScreenId = 0
+						this.number = ""
+						this.Colour = ""
+						this.Name = ""
+						const editDialog = document.getElementById("editDialog")
+						editDialog.querySelector("h3").textContent = "New screen"
+						editDialog.showModal()
+					}
+				}
+			}).mount("#app")
+
+
+		</script>
+
+
+
+		<%- include("partials/foot.ejs") %>

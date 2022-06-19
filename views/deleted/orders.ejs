@@ -1,0 +1,68 @@
+<%- include("../partials/head.ejs") %>
+
+<style>
+
+	.table-holder {
+		margin-left: 3em;
+	}
+</style>
+
+<p>
+	Restoring an order does not restore the garment details (available in the audit logs if absolutely necessary)
+</p>
+<p style="margin-bottom:3em">
+	<a href="/order">Go to order list</a>
+</p>
+
+</main>
+
+<div class="table-holder">
+<table class="hover">
+	<thead>
+		<tr>
+		<% if (deleted.length > 0) { 
+			for (var item in deleted[0]) { %> <th><%= item %> 
+		<% } 
+		} %>
+	<tbody>
+		<% for (var item of deleted) { %><tr data-id="<%=item.PrintDesignId%>" >
+			<% for (var key in item) { %><td><%= item[key] %>
+			<% }  } %> 
+	</tbody>
+</table>
+</div>
+
+
+<main>
+
+<script>
+	window.datatable = new DataTable("table",{
+
+		columnDefs: [
+			{
+				targets: [0],
+				render(data) {
+					return `<button onclick="restore(${data})">Restore</button>`
+				}
+			},
+		]
+	} )
+	
+
+	function restore(id) {
+		const tr = document.querySelector(`tr[data-id="${id}"]`)
+
+		fetch(`/order/restore/${id}`, { method: "PUT" })
+		.then(response => {
+			if (response.ok) {
+				window.datatable.row(tr).remove().draw("page")
+			}
+			else {
+				window.alert(`We encountered an error: ${response.statusText}`)
+			}
+		})
+	}
+</script>
+
+
+<%- include('../partials/foot.ejs'); %>

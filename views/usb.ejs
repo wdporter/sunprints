@@ -1,0 +1,167 @@
+<%- include("partials/head.ejs") %>
+
+ <ul>
+	<li><a href=/usb/deleted>View (and restore)</a> deleted USBs</li>
+</ul>
+
+
+<p><input type="button" value="Create New USB" onclick="window.vueApp.new()" /></p>
+
+
+
+
+	<dialog id="editDialog">
+		<h3>Edit USB</h3>
+		<form method=dialog>
+			<div id="app">
+				<input type=hidden v-model="UsbId">
+				<label for=number>Number</label> <input id=number v-model="number"><br>
+				<label for=colour>Notes</label> <input id=colour v-model="Notes"><br>
+				<p>
+					<button id="saveButton" value="default" @click="save">Save</button>&emsp;
+					<input type="reset" value="Cancel" onclick="document.getElementById('editDialog').close()" />
+					
+				</p>
+			</div>
+		</form>
+	</dialog>
+
+	<table id="datatable" class=stripe>
+		<thead>
+			<tr>
+				<th></th>
+				<th>Number</th>
+				<th>Notes</th>
+			</tr>
+		</thead>
+
+	</table>
+
+
+		<script>
+
+
+			window.datatable = new DataTable("#datatable", {
+				processing: true,
+				serverSide: true,
+				ajax: "/usb/dt",
+				language: {
+					searchPlaceholder: "Search number or notes"
+				},
+				order: [[0, 'desc']],
+				columns: [
+					{
+						orderable: false,
+						data: "UsbId",
+						render(data) {
+							return `<a href=# class=editLink>Edit</a><br><a href=# data-id=${data} class=deleteLink>Delete</a>`
+						}
+					},
+					{ data: "Number" },
+					{ data: "Notes", width: "300px" },
+
+				]
+			})
+
+			$("#datatable tbody").on("click", "a.editLink", function () {
+				event.preventDefault()
+				var tr = this.closest("tr")
+				var row = window.datatable.row(tr)
+				console.log(row.data())
+				const data = row.data()
+				window.vueApp.setData(data)
+				document.getElementById("editDialog").showModal()
+			})
+
+			$("#datatable tbody").on("click", "a.deleteLink", function () {
+				event.preventDefault()
+				try {
+					fetch(`/usb/${this.dataset.id}`, {
+						method: "DELETE"
+					})
+						.then(response => {
+							if (response.ok)
+								return response.json()
+							else {
+								console.log("error", response)
+								throw new Error(response.statusText)
+							}
+						})
+						.then(json => {
+							window.datatable.ajax.reload(null, false)
+						})
+						.catch(error => window.alert(`We encountered an error: ${error} `))
+				}
+				catch (err) {
+					console.log("error", err)
+					window.alert("We encountered an error: " + err.message)
+				}
+			})
+
+
+
+			window.vueApp = Vue.createApp({
+				data() {
+					return {
+						UsbId: 0,
+						number: "",
+						Notes: ""
+					}
+				},
+				methods: {
+					setData(data) {
+						this.UsbId = data.UsbId
+						this.number = data["Number"]
+						this.Notes = data.Notes
+					},
+					save() {
+						let body = JSON.parse(JSON.stringify(this.$data))
+						body.Number = body.number
+						delete body.number
+						try {
+							let method = "POST" 
+							let url = "/usb"
+							if (this.UsbId > 0) {
+								method = "PUT"
+								url += `/${this.UsbId}`
+							}
+							fetch(url, {
+								method,
+								headers: new Headers({
+									"Content-Type": "application/json"
+								}),
+								body: JSON.stringify(body)
+							})
+							.then(response => {
+								if (response.ok)
+									return response.json()
+								else {
+									console.log("error", response)
+									throw new Error(response.statusText)
+								}
+							})
+							.then(json => {
+								window.datatable.ajax.reload(null, window.vueApp.UsbId == 0)// reset paging if it's a new item
+								//dialog.close()
+							})
+							.catch(error => window.alert("We encountered an error: " + error)) 
+						}
+						catch (err) {
+							window.alert("We encountered an error: " + err.message)
+						}
+
+					},
+					new() {
+						this.UsbId = 0
+						this.number = ""
+						this.Notes = ""
+						document.getElementById("editDialog").showModal()
+					}
+				}
+			}).mount("#app")
+
+
+		</script>
+
+
+		<%- include("partials/foot.ejs") %>

@@ -1,0 +1,66 @@
+<%- include("partials/head.ejs") %>
+
+
+	<style>
+		table, thead, tbody, tr, th, td {
+			all: revert;
+		}
+		table, th, td {
+			border: 1px solid black;
+		}
+		td {
+			text-align: right;
+		}
+		th, td {
+			padding-left: .5em;
+			padding-right: .5em;
+		}
+		hr {
+			margin: 1em;
+		}
+		#detailsDiv {
+			margin-right: 2em;
+			width: 400px;
+		}
+		div#flex {
+			display: flex;
+			page-break-inside: avoid;
+		}
+
+		@media print {
+			header, h1, footer, .no-print {
+				display: none
+			}
+		}
+
+	</style>
+<% 
+
+for (var g of garments) { %>
+	<div id=flex>
+		<div id=detailsDiv>
+			<b>Code:</b> <%= g.Code %><br>
+			<b>Label:</b> <%= g.Label %><br>
+			<b>Type:</b> <%= g.Type %><br>
+			<b>Colour:</b> <%= g.Colour %><br>
+			<b>Notes:</b><br>
+			<i><%= g.Notes %></i>
+		</div>
+		<table border=1>
+			<tr><th>Size</th><th>Quantity</th><th>Minimum</th></tr>
+			<% for (var size of sizes[g.SizeCategory]) { 
+				if (g[size]) { %>
+					<tr><th><%= size %></th><td><%= String(g[size]).replace("-", "−") %></td><td><%= g["Min" + size] %></td>
+				<% }
+			} %>
+
+		</table>
+	</div>
+
+	<hr>
+<% } %>
+
+
+
+
+<%- include("partials/foot.ejs") %>

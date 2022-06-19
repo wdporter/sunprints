@@ -1,0 +1,156 @@
+<html>
+
+<head>
+	<title>SunPrints <%= title %> <%= supplier.StockOrderId %>
+	</title>
+	<style>
+		body {
+			font-size: 16px;
+		}
+		caption {
+			font-weight: bold
+		}
+
+		.table-container {
+			display:flex; 
+			justify-content:space-between; 
+			margin-bottom: 3em;
+		}
+
+		.type-table tr td:first-child {
+			text-align: right;
+			font-weight: bold;
+		}
+
+		.sizes-table {
+			flex-grow: 1;
+		}
+
+		.sizes-table td {
+			text-align: center;
+			padding-left: .5em;
+			padding-right: .5em;
+			
+		}
+
+@media print {
+  .no-print {
+    display: none
+  }
+}
+	</style>
+</head>
+
+<body>
+
+
+
+	<h1 class="no-print">
+		<ul>
+		<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
+		<li>Use the Destination/Printer option to save a PDF 
+		<li>Under <i>More settings</i> you can remove the header/footer
+		<% if (supplier.Email != null && supplier.Email.length > 0) { %> <li><a href="mailto:<%= supplier.Email %>&subject=Sun%2Prints%2Order">Email the supplier</a><% } %>
+	</ul>
+		<hr>
+	</h1>
+<!-- <%- JSON.stringify(supplier) %><br>
+<%- JSON.stringify(garments) %> -->
+
+<div style="display:flex; justify-content: space-between">
+	<div>
+		<h2>Sun Prints Purchase Order</h2>
+		<h3>
+			Order Number: <%= supplier.StockOrderId %><br>
+			Date of Order: <%= new Date(Date.parse(supplier.OrderDate)).toLocaleDateString() %>
+		</h3>
+		<p>
+			<b>Please forward the listed items to:<br>
+			<i>Sun Prints<br>
+			5 Ferguson St,<br>
+			Underwood, Qld, 4119<br>
+			Ph: (07) 3841 1869<br>
+			E: info@sunprints.com.au</i></b>
+		</p>
+	</div>
+
+	<div>
+		<p>
+		<% if (supplier.Name != null && supplier.Name.length > 0) { %>
+			<%= supplier.Name  %> <br>
+		<% } %>
+		<%= supplier.Company %><br>
+		<%= supplier.AddressLine1 %><br>
+		<% if (supplier.AddressLine2 != null && supplier.AddressLine2.length > 0) { %>
+			<%= supplier.AddressLine2 %><br>
+		<% } %>	
+		<%= supplier?.Locality ?? ""  %> <%= supplier?.State ?? ""  %> <%= supplier?.Postcode ?? ""  %><br>
+		<% const contacts = [];
+		if (supplier.PhoneOffice ) {
+			contacts.push("O: " + supplier.PhoneOffice)
+		}
+		if (supplier.PhoneMobile ) {
+			contacts.push("M: " + supplier.PhoneMobile)
+		}
+		if (supplier.PhoneHome ) {
+			contacts.push("H: " + supplier.PhoneHome)
+		}
+		if (supplier.Email ) {
+			contacts.push("E: " + supplier.Email)
+		}
+		if (supplier.Fax ) {
+			contacts.push("F: " + supplier.Fax)
+		}
+		%>
+		<%- contacts.join("<br>") %>
+		</p>
+		<p>&emsp;</p>
+		<p>
+			<%- supplier.StockOrderNotes?.replace(/\n/g, "<br>") ?? "" %>
+		</p>
+	</div>
+</div>
+
+
+
+<% 
+for (var sizeCategory in garments) { 
+	const myGarments = garments[sizeCategory]
+	%>
+	<% if (myGarments.length > 0) { %>
+		<h4 style="width:100%;text-align: center">— <%= sizeCategory %> Sizes —</h4>
+		<% for (var garment of myGarments) { %>
+
+		<div class=table-container>
+			<table class="type-table">
+				<tr><td>Type:<td><%= garment.Type %>
+				<tr><td>Colour:<td><%= garment.Colour %>
+				<tr><td>Label:<td><%= garment.Label %>
+			</table>
+			<table class="sizes-table">
+				<tr>
+					<% for (var size of sizes[sizeCategory]) { %>
+							<th><%= size.slice(1) %>
+						<% } %>
+				<tr>
+					<% for (var size of sizes[sizeCategory]) { %>
+						<td><%= garment[size]  %>
+					<% } %>
+				<tr>
+					<td colspan=<%= sizes[sizeCategory].length %>><%= garment.Notes %>
+			</table>
+		</div>
+		<% } %>
+	
+	<% } %>
+	<% } %>
+
+
+	<script>
+		window.print()
+	</script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,317 @@
+<html>
+<head>
+	<title>SunPrints Order Number <%= order.OrderNumber %>
+	</title>
+	<style>
+		body {
+			font-family: sans-serif;
+			font-size: 11pt;
+		}
+
+		#customerTable {
+			width: 100%;
+		}
+
+		#customerTable td {
+			width: 33%;
+		}
+
+		#customerTable #middleCell {
+			padding-left: 2em;
+			padding-right: 2em;
+		}
+
+		#garmentTable {
+			margin-top: 1em; 
+			border-collapse: collapse;
+		}
+
+		#garmentTable tr.garment-row>td {
+			border-bottom: 1px  solid gray;
+			border-top: 1px  solid gray;
+		}
+
+		.quantityTable td {
+			text-align: right;
+			padding-left: .5em;
+			padding-right: .5em;
+		}
+		
+
+    #inputTable,
+    #designTable {
+      margin-top: 2em;
+    }
+
+    #inputTable {
+      border-spacing: 0 2em;
+      max-width: 100%;
+    }
+
+    #inputTable td {
+      padding: .5em;
+    }
+
+    .tdbox {
+      border: 1px black solid;
+    }
+
+    #designTable th {
+      text-align: left;
+    }
+
+    #designTable th,
+    td {
+      padding-right: 2em
+    }
+
+
+	@media print {
+		.no-print {
+			display: none
+		}
+	}
+
+	@media print {
+  .no-print {
+    display: none
+  }
+}
+
+</style>
+</head>
+
+<body>
+	<div class="no-print">
+		<ul>
+		<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
+		<li>Use the Destination/Printer option to save a PDF 
+		<li>Under <i>More settings</i> you can remove the header/footer
+	</ul>
+		<hr>
+</div>
+
+
+	<h1>Sun Prints</h1>
+
+	<table id="customerTable">
+		<tr>
+			<td>
+				<%= customer.Company %>
+				<% if (customer.AddressLine1) { %>
+					<br><%= customer.AddressLine1 %>
+				<% } %>
+				<% if (customer.AddressLine2) { %>
+					<br><%= customer.AddressLine2 %>
+				<% } %>
+				<br><%= customer.Locality %> <%= customer.State %> <%= customer.Postcode %>
+				</td>
+			<td id="middleCell"><b>Deliver To</b><br><%- customer.Notes ? customer.Notes.replace(/\n/g, "<br>") : "n/a" %></td>
+			<td>
+				<table>
+					<tr><td style="text-align:right">Order No:</td><td><%= order.OrderNumber %></td></tr>
+					<tr><td style="text-align:right">Customer Order No:</td><td><%= order.CustomerOrderNumber || 'n/a' %></td></tr>
+				</table>
+			</td>
+		</tr>
+
+		<tr>
+		<td>
+			Order Date: <%=  new Date(Date.parse(order.OrderDate)).toLocaleDateString()  %><br>
+			Delivery:&emsp;&ensp;<%= order.DeliveryDate || "n/a" %><br>
+			<div style="display:flex">
+				<div>Notes:</div>
+				<div style="margin-left: 1em; "><%- order.Notes ? order.Notes.replace(/\n/g, "<br>") : "" %></div>
+			</div>
+		</td>
+		<td style="vertical-align:text-top">
+			Invoice Date: <%= order.InvoiceDate || "n/a" %><br>
+			Terms:&emsp;&emsp;&emsp;<%= order.Terms %><br>
+			Sales Rep:&emsp;&ensp;<%= order.SalesRep || "n/a" %>
+		</td>
+		<td style="vertical-align:text-top; text-align:center; font-size:large">
+			<% if (order.Repeat) { %> <b>Repeat</b><br> <% } %>
+			<% if (order.New) { %> <b>New</b><br> <% } %>
+			<% if (order.BuyIn) { %> <b>Buy In</b><br> <% } %>
+		</td>
+		<tr>
+	</table>
+
+<table id="garmentTable">
+	<% let quantity = 0, totalPrice = 0; 
+	for (let g of garments) { 
+		quantity += g.kidsQuantity + g.womensQuantity + g.adultsQuantity;
+		totalPrice += (g.kidsQuantity + g.womensQuantity + g.adultsQuantity) * g.Price;
+		%>
+		<tr class="garment-row">
+			<td>
+				<table>
+					<tr><td>Type:</td><td><%= g.Type %></td></tr>
+					<tr><td>Colour:</td><td><%= g.Colour %></td></tr>
+					<tr><td>Label:</td><td><%= g.Label %></td></tr>
+					<tr><td>Code:</td><td><%= g.Code %></td></tr>
+				</table>
+			</td>
+			<td>
+				<table class="quantityTable">
+					<caption>
+					Design: <% 
+					let designs = [];
+					if (g.FrontPrintDesign || g.FrontScreen1 ||  g.FrontScreen2) 
+						designs.push("<b>Front</b> " + `${g.FrontPrintDesign || ""} ${g.FrontScreen1 || ""} ${g.FrontScreen2 || ""}`.trim())
+					if (g.BackPrintDesign || g.BackScreen1 || g.BackScreen2)
+						designs.push("<b>Back</b> " + `${g.BackPrintDesign || ""} ${g.BackScreen1 || ""} ${g.BackScreen2 || ""}`.trim())
+					if (g.PocketPrintDesign || g.PocketScreen1 || g.PocketScreen2)	 
+						designs.push("<b>Pocket</b> " + `${g.PocketPrintDesign || ""} ${g.PocketScreen1 || ""} ${g.PocketScreen2 || ""}`.trim()) 
+					if (g.SleevePrintDesign || g.SleeveScreen1 || g.SleeveScreen2)	
+						designs.push("<b>Sleeve</b> " + `${g.SleevePrintDesign || ""} ${g.SleeveScreen1 || ""} ${g.SleeveScreen2 || ""}`.trim()) 
+					if (g.FrontEmbroideryDesign || g.FrontUsb1 || g.FrontUsb2)	
+						designs.push("<b>Front</b> " + `${g.FrontEmbroideryDesign || ""} ${g.FrontUsb1 || ""} ${g.FrontUsb2 || ""}`.trim())
+					if (g.BackEmbroideryDesign || g.BackUsb1 || g.BackUsb2) 
+						designs.push("<b>Back</b> " + `${g.PocketEmbroideryDesign || ""} ${g.PocketUsb1 || ""} ${g.PocketUsb2 || ""}`.trim())
+					if (g.PocketEmbroideryDesign || g.PocketUsb1 || g.PocketUsb2)	 
+						designs.push("<b>Pocket</b> " + `${g.PocketEmbroideryDesign || ""} ${g.PocketUsb1 || ""} ${g.PocketUsb2 || ""}`.trim())
+					if (g.SleeveEmbroideryDesign || g.SleeveUsb1 || g.SleeveUsb2)
+						designs.push("<b>Sleeve</b> " + `${g.SleeveEmbroideryDesign || ""} ${g.SleeveUsb1 || ""} ${g.SleeveUsb2 || ""}`.trim())
+					if (g.FrontTransferDesign || g.FrontTransferName1 ||  g.FrontTransferName2) 
+						designs.push("<b>Front</b> " + `${g.FrontTransferDesign || ""} ${g.FrontTransferName1 || ""} ${g.FrontTransferName2 || ""}`.trim())
+					if (g.BackTransferDesign || g.BackTransferName1 || g.BackTransferName2)
+						designs.push("<b>Back</b> " + `${g.BackTransferDesign || ""} ${g.BackTransferName1 || ""} ${g.BackTransferName2 || ""}`.trim())
+					if (g.PocketTransferDesign || g.PocketTransferName1 || g.PocketTransferName2)	 
+						designs.push("<b>Pocket</b> " + `${g.PocketTransferDesign || ""} ${g.PocketTransferName1 || ""} ${g.PocketTransferName2 || ""}`.trim()) 
+					if (g.SleeveTransferDesign || g.SleeveTransferName1 || g.SleeveTransferName2)	
+						designs.push("<b>Sleeve</b> " + `${g.SleeveTransferDesign || ""} ${g.SleeveTransferName1 || ""} ${g.SleeveTransferName2 || ""}`.trim()) 
+					%>
+					<%- designs.length == 0 ? "n/a" : designs.join("<br>") %>
+					</caption>
+					<% if (g.kidsQuantity > 0) { %>
+					<tr><th>0</th>          <th>1</th>          <th>2</th>          <th>4</th><th>6</th><th>8</th><th>10</th><th>12</th><th>14</th><th>16</th><th></th><th></th></tr>
+					<tr><td><%= g.K0 %></td><td><%= g.K1 %></td><td><%= g.K2 %></td><td><%= g.K4 %></td><td><%= g.K6 %></td><td><%= g.K8 %></td><td><%= g.K10 %></td><td><%= g.K12 %></td><td><%= g.K14 %></td><td><%= g.K16 %></td><td></td><td></td></tr>
+					<tfoot><tr><td colspan="10" style="text-align:center">Kids</td></tr></tfoot>
+					<% } %>
+					<% if (g.womensQuantity > 0) { %>
+						<tr>
+						<th>6</th><th>8</th><th>10</th><th>12</th><th>14</th><th>16</th><th>18</th><th>20</th><th>22</th><th>24</th><th>26</th><th>28</th>
+					</tr>
+					<tr>
+						<td><%= g.W6 %></td><td><%= g.W8 %></td><td><%= g.W10 %></td><td><%= g.W12 %></td><td><%= g.W14 %></td><td><%= g.W16 %></td><td><%= g.W18 %></td><td><%= g.W20 %></td><td><%= g.W22 %></td><td><%= g.W24 %></td><td><%= g.W26 %></td><td><%= g.W28 %></td>
+					</tr>
+					<tfoot><tr><td colspan="12" style="text-align:center">Womens</td></tr></tfoot>
+					<% } %>
+					<% if (g.adultsQuantity > 0) { %>
+					<tr>
+						<th>XS</th><th>S</th><th>M</th><th>L</th><th>XL</th><th>XXL</th><th>3XL</th><th>4XL</th><th>5XL</th><th>6XL</th><th>7XL</th><th>8XL</th>
+					</tr>
+					<tr>
+						<td><%= g.AXS %></td><td><%= g.ASm %></td><td><%= g.AM %></td><td><%= g.AL %></td><td><%= g.AXL %></td><td><%= g.A2XL %></td><td><%= g.A3XL %></td><td><%= g.A4XL %></td><td><%= g.A5XL %></td><td><%= g.A6XL %></td><td><%= g.A7XL %></td><td><%= g.A8XL %></td>
+					</tr>
+					<tfoot><tr><td colspan="12" style="text-align:center">Adults</td></tr></tfoot>
+					<% } %>
+				</table>
+			</td>
+			<td>
+				<table>
+					<tr><td>Qty:</td><td style="text-align:right"><%= g.kidsQuantity + g.womensQuantity + g.adultsQuantity %></td></tr>
+					<tr><td style="border-bottom:1px dotted gray">Price:</td><td style="border-bottom:1px dotted gray;text-align:right">$<%= Number(g.Price)?.toFixed(2) %></td></tr>
+					<tr><td>Total:</td><td style="text-align:right">$<%= ((g.kidsQuantity + g.womensQuantity + g.adultsQuantity) * Number(g.Price)).toFixed(2) %></td></tr>
+				</table>
+			</td>
+		</tr>
+		<% } %>
+		<tfoot>
+			<tr><td colspan="3" style="text-align:right">
+				<table style="float:right">
+					<tr>
+						<td style="text-align:right">Total Quantity:</td><td style="text-align:right"><%= quantity %></td>
+					</tr>
+					<tr>
+						<td style="text-align:right">Total Order Value:</td><td style="text-align:right">$<%= totalPrice.toFixed(2) %></td>
+					</tr>
+				</table>
+			</td></tr>
+		</tfoot>
+</table>
+
+
+<div style="display:flex; page-break-before: always">
+    <h1>Screens and USBs</h1>
+    <h1 style="margin-left:auto">
+      <%= new Date().toLocaleDateString() %>
+    </h1>
+</div>
+
+	<table id="inputTable">
+    <tr>
+      <td>Pulled __________
+      <td></td>
+      <td></td>
+      <td>Printed __________</td>
+      <td>Checked __________</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Folded __________</td>
+      <td>Qty</td>
+      <td class="tdbox">&emsp;&emsp;</td>
+      <td>2nd Check __________</td>
+      <td>Foiled _________</td>
+      <td>Qty</td>
+      <td class="tdbox">&emsp;&emsp;</td>
+    </tr>
+
+  </table>
+
+
+	<div id="app">
+
+		<table id="designTable">
+			<thead>
+				<tr>
+					<th>Screen / Usb No.</th>
+					<th>Colour</th>
+					<th>Name</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr v-for="d in designs">
+					<td>{{d.Number}}</td>
+					<td>{{d.Colour}}</td>
+					<td>{{d.Name}}</td>
+				</tr>
+
+			</tbody>
+		</table>
+
+	<div v-if="transfers.length > 0">
+		<h2>Transfers</h2>
+		<ul>
+			<li v-for="t in transfers">{{ t }}</li>
+		</ul>
+		</table>
+	</div>
+
+</div>
+
+
+
+
+<script src="/javascripts/vue-3.2.33.js"></script>
+<script>
+Vue.createApp({
+	data() {
+		return {
+			orderNumber: "<%= order.OrderNumber %>",
+			designs: <%- JSON.stringify(designs) %>,
+			transfers: <%- JSON.stringify(transfers) %>
+		}
+	}
+}).mount("#app")
+
+  </script>
+
+	<script>
+	window.print()
+	</script>
+</body>
+
+</html>

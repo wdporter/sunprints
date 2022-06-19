@@ -1,0 +1,441 @@
+<%- include("partials/head.ejs") %>
+
+
+	<h3>About</h3>
+	<ul>
+		<li>This list shows the embroidery designs that can be chosen for a garment</li>
+		<li>Each design can be on multiple physical usbs</li>
+		<li>A usb is used in one or more locations (front, back. pocket, sleeve)</li>
+		<li>A usb is suitable according to a garment’s size category (adults, womens, kids)</li>
+		<li>Removing a usb means it can no longer be selected for a garment, but the usb still exists in the database</li>
+		<li>The full list of available usbs <a href="/usbs">is here</a></li>
+		<li><a href="/embroidery/deleted">View (and restore)</a> deleted embroidery designs </li>
+	</ul>
+
+
+	<dialog id="embroideryDialog">
+		<form method="dialog">
+			<h3 id="dialogHeading"></h3>
+			<input type="hidden" id="embroideryDesignIdInput" value="0">
+			<p>
+				<label for="codeInput">Code</label><input id="codeInput" required placeholder="enter a code" />
+			</p>
+			<p>
+				<label for="notesInput">Notes</label><input id="notesInput" />
+			</p>
+			<p>
+				<label for="commentsInput">Comments</label><textarea id="commentsInput"></textarea>
+			</p>
+			<div>
+				<button id="saveButton" value="default" onclick="saveEmbroidery()">Save</button>
+				<button value="cancel" onclick="document.getElementById('embroideryDialog').close()">Cancel</button>
+			</div>
+		</form>
+
+	</dialog>
+
+	<dialog id="addUsbDialog" >
+		<form id="addUsbForm" method="dialog">
+			<h3>Add usb</h3>
+			<p>
+				<input id=adultsRadio type=radio value=Adults name=sizeCategory checked>
+				<label for=adultsRadio>Adults</label>
+				<input id=kidsRadio type=radio value=Kids  name=sizeCategory>
+				<label for=kidsRadio>Kids</label>
+			</p>
+			<p>
+				<input type=checkbox id="frontCheckBox" /> <label for="frontCheckBox">Front</label>
+				<input type=checkbox id="backCheckBox" /> <label for="backCheckBox">Back</label>
+			</p>
+			<p>
+				<input type=checkbox id="pocketCheckBox" /> <label for="pocketCheckBox">Pocket</label>
+				<input type=checkbox id="sleeveCheckBox" /> <label for="sleeveCheckBox">Sleeve</label>
+			</p>
+			<p>
+				Usb Number: <span id="chosenUsbNumber"></span><br>
+				Usb Notes: <span id="chosenUsbNotes"></span>
+			</p>
+			<p>
+				<input id="usbFilterInput" oninput="loadUsbs(this)" placeholder="start typing to filter the list" />
+				<input id="toggleListInput" type=button value="Hide List" onclick="toggleUsbList(this)" />
+			</p>
+			<p>
+				Click to select usb <span id=totalSpan>(enter at least 3 characters)</span><br>
+			<table id="usbListTable" class="stripe">
+			</table>
+			</p>
+			<input type="hidden" id="chosenUsbId" value="0" />
+			<input type="hidden" id="currentEmbroideryDesignId" value="0" />
+			<div>
+				<button value="default" onclick="saveUsb(event)">&emsp;Save&emsp;</button>
+				<button value="cancel">Cancel</button>
+			</div>
+		</form>
+
+	</dialog>
+
+	<input type=button id="newEmbroideryButton" onclick="newEmbroideryDesign()" value="New Embroidery Design" style="margin-bottom:2em" />
+
+	<table id="datatable" class="stripe">
+		<thead>
+			<tr>
+				<th></th>
+				<th></th>
+				<th>Code</th>
+				<th>Notes</th>
+				<th>Comments</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+
+	</table>
+
+
+	<script>
+
+		function loadUsbs(input) {
+			if (input.value.length < 3) {
+				totalSpan.textContent = "(enter at least 3 characters)"
+				return 
+			}
+			const myTable = document.getElementById("usbListTable")
+			myTable.innerHTML = ""
+
+			fetch(`/usb/filter/${input.value}`)
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
+				}
+			})
+			.then(json => {
+				// for each item returned, add a row to the table
+				json.items.forEach((j, i) => myTable.innerHTML += `<tr onclick=selectUsb(this) data-id=${j.UsbId} class=${i % 2 ? 'odd' : 'even'}><td>${j.Number}<td>${j.Notes}`)
+				totalSpan.textContent = `(showing ${json.items.length} of ${json.count})`
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+		}
+
+		function saveUsb(event) {
+			if (document.getElementById("chosenUsbId").value == "0") {
+				event.preventDefault()
+				return // nothing chosen
+			}
+
+			// send to database,
+			// if successful, add a box to the dt selected row 
+			const data = {
+				EmbroideryDesignId: document.getElementById("currentEmbroideryDesignId").value,
+				UsbId: document.getElementById("chosenUsbId").value,
+				SizeCategory: document.getElementById("addUsbForm").sizeCategory.value,
+				Front: document.getElementById("frontCheckBox").checked ? 1 : 0,
+				Back: document.getElementById("backCheckBox").checked ? 1 : 0,
+				Pocket: document.getElementById("pocketCheckBox").checked ? 1 : 0,
+				Sleeve: document.getElementById("sleeveCheckBox").checked ? 1 : 0
+			}
+
+			fetch("/embroidery/usb", {
+				method: "POST",
+				headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify(data)
+			})
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
+				}
+			})
+			.then(json => {
+				// success, create a box in the row
+				const a = document.querySelector(`a[data-id="${data.EmbroideryDesignId}"]`)
+				if (a.parentElement.querySelector(".nousbs")) {
+					a.parentElement.remove(a.parentElement.querySelector(".nousbs"))
+				}
+				let insertDiv = "<div class=usbDiv>"
+				insertDiv += `Sizes: ${data.SizeCategory}<br>`
+				const locations = <%- JSON.stringify(locations) %>;
+				let myLocations = []
+				locations.forEach(loc => {
+					if (data[loc])
+						myLocations.push(loc)
+				})
+				insertDiv += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
+				insertDiv += `Usb Number: ${document.getElementById("chosenUsbNumber").textContent}<br>`
+				insertDiv += `Usb Notes: ${document.getElementById("chosenUsbNotes").textContent}<br>`
+				insertDiv += `<a href=# data-id=${data.UsbEmbroideryDesignId} class=removeUsbLink>Remove</a>`
+				insertDiv += "</div>"
+				a.insertAdjacentHTML("beforebegin", insertDiv)
+				
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+
+		}
+
+		function selectUsb(tr) {
+			document.getElementById("chosenUsbNumber").textContent = tr.children[0].textContent
+			document.getElementById("chosenUsbNotes").textContent = tr.children[1].textContent
+			document.getElementById("chosenUsbId").value = tr.dataset.id
+		}
+
+		function newEmbroideryDesign() {
+			document.getElementById("embroideryDesignIdInput").value = "0"
+			document.getElementById("codeInput").value = ""
+			document.getElementById("notesInput").value = ""
+			document.getElementById("commentsInput").value = ""
+			document.getElementById("dialogHeading").textContent = "Create New Embroidery Design"
+			document.getElementById("embroideryDialog").showModal()
+		}
+
+		function editEmbroideryDesign(rowData) {
+			document.getElementById("embroideryDesignIdInput").value = rowData.EmbroideryDesignId
+			document.getElementById("codeInput").value = rowData.Code
+			document.getElementById("notesInput").value = rowData.Notes
+			document.getElementById("commentsInput").value = rowData.Comments
+			document.getElementById("dialogHeading").textContent = "Edit Embroidery Design"
+			document.getElementById("embroideryDialog").showModal()
+		}
+
+		function saveEmbroidery() {
+			const EmbroideryDesignId = document.getElementById("embroideryDesignIdInput").value
+			const Code = document.getElementById("codeInput").value.trim()
+			if (Code == "") {
+				return;
+			}
+			const Notes = document.getElementById("notesInput").value.trim()
+			const Comments = document.getElementById("commentsInput").value.trim()
+			if (EmbroideryDesignId == "0") {
+				// save as new/create/POST
+				fetch("/embroidery", {
+					method: "POST",
+					headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify({
+						Code,
+						Notes,
+						Comments
+					})
+				})
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then(json => {
+						// when done, redraw table from scratch so that new item will be on top of list
+						window.datatable.ajax.reload()
+						console.log(json)
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+			}
+			else {
+				// save as edit/update/PUT
+				fetch(`/embroidery/${EmbroideryDesignId}`, {
+					method: "PUT",
+					headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify({
+						Code,
+						Notes,
+						Comments
+					})
+				})
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				// when done, redraw table from scratch so that new item will be on top of list
+				.then(json => window.datatable.ajax.reload(null, false))
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+			}
+
+		}
+
+		window.datatable = new DataTable("#datatable", {
+			processing: true,
+			serverSide: true,
+			ajax: "/embroidery/dt",
+			order: [[0, 'desc']],
+			columns: [
+				{
+					className: "dt-control",
+					orderable: false,
+					data: null,
+					defaultContent: "<br>",
+					sortable: false
+				},
+				{
+					orderable: false,
+					sortable: false,
+					data: "EmbroideryDesignId",
+					render(data) {
+						return `<a href=# class=editEmbroideryLink>Edit</a> <a href=# class=deleteEmbroideryLink>Delete</a>`
+					}
+				},
+				{ data: "Code" },
+				{ data: "Notes", width: "250px" },
+				{ data: "Comments", width: "250px" }
+			]
+		})
+
+		function format(rowData) {
+			const retVal = fetch(`/embroidery/usbs/${rowData.EmbroideryDesignId}`)
+				.then(response => {
+					if (response.ok) 
+						return response.json()
+					else 
+						throw new Error(response.statusText)
+				})
+				.then(data => {
+					let itemString = "<div style=display:flex>"
+					if (data.length == 0)
+						itemString += "<span class=nousbs>no usbs defined for this embroidery design<span>"
+					else {
+						for (var item of data) {
+							itemString += "<div class=usbDiv>"
+							itemString += `Sizes: ${item.SizeCategory}<br>`
+
+							const locations = <%- JSON.stringify(locations) %>;
+							let myLocations = []
+							locations.forEach(loc => {
+								if (item[loc])
+									myLocations.push(loc)
+							})
+							itemString += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
+							itemString += `Usb Number: ${item.UsbNumber}<br>`
+							itemString += `Usb Notes: ${item.UsbNotes}<br>`
+							itemString += `<a href=# data-id=${item.UsbEmbroideryDesignId} class=removeUsbLink>Remove</a>`
+							itemString += "</div>"
+						}
+					}
+					itemString += `&emsp;<a href=# class=addUsbLink data-id=${rowData.EmbroideryDesignId} style=align-self:center>Add</a>`
+					itemString += "</div>"
+					return itemString
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+
+			return retVal
+		}
+
+		function removeUsb(a) {
+			fetch(`/embroidery/removeusb/${a.dataset.id}`, {
+				method: "DELETE"
+			})
+			.then(response => { 
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
+				}
+			})
+			.then(json => {
+					// when done, remove the div from the list of usbs
+					a.parentElement.parentElement.removeChild(a.parentElement)
+				})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+		}
+
+		// can only delete a embroidery design if it's not in use
+		function deleteEmbroidery(rowData) {
+			fetch(`/embroidery/${rowData.EmbroideryDesignId}`, {method: "DELETE"})
+			.then(response => {
+				if (response.ok)
+					window.datatable.ajax.reload(null, false)
+				else
+					alert(`We encountered an error: ${response.statusText}`)
+			})
+		}
+
+		function addUsb(id) {
+			document.getElementById("currentEmbroideryDesignId").value = id
+			document.getElementById("chosenUsbId").value = 0
+			document.getElementById("usbListTable").innerHTML = ""
+			document.getElementById("chosenUsbNumber").textContent = ""
+			document.getElementById("chosenUsbNotes").textContent = ""
+
+			document.getElementById("usbFilterInput").value = ""
+			document.getElementById("addUsbDialog").showModal()
+
+		}
+
+		// Add event listener for opening and closing details
+		$("#datatable tbody").on("click", "td.dt-control", function () {
+			var tr = $(this).closest("tr");
+			var row = window.datatable.row(tr);
+
+			if (row.child.isShown()) {
+				// This row is already open - close it
+				row.child.hide();
+				tr.removeClass("shown");
+			}
+			else {
+				// Open this row
+				let myData = format(row.data())
+				myData.then(d => row.child(d).show())
+				tr.addClass('shown');
+			}
+		})
+
+		// Add event listener for edit link
+		$("#datatable tbody").on("click", "a.editEmbroideryLink", function (event) {
+			event.preventDefault()
+			var tr = $(this).closest("tr");
+			var row = window.datatable.row(tr);
+			editEmbroideryDesign(row.data())
+		})
+
+
+		// Add event listener for remove usb link
+		$("#datatable tbody").on("click", "a.removeUsbLink", function (event) {
+			event.preventDefault()
+			removeUsb(event.currentTarget)
+		})
+
+		// Add event listener for add usb link
+		$("#datatable tbody").on("click", "a.addUsbLink", function (event) {
+			event.preventDefault()
+			addUsb(event.currentTarget.dataset.id)
+		})
+
+		// Add event listener for delete embroidery link
+		// can only delete a embroidery design if it's not in use
+		$("#datatable tbody").on("click", "a.deleteEmbroideryLink", function (event) {
+			event.preventDefault()
+			var tr = $(this).closest("tr");
+			var row = window.datatable.row(tr);
+			deleteEmbroidery(row.data())
+		})
+
+
+		function toggleUsbList(btn) {
+			if (btn.value == "Hide List") {
+				document.getElementById("usbListTable").style.display = "none"
+				btn.value = "Show List"
+			}
+			else {
+				document.getElementById("usbListTable").style.display = "block"
+				btn.value = "Hide List"
+			}
+		}
+
+	</script>
+
+
+
+	<%- include("partials/foot.ejs") %>

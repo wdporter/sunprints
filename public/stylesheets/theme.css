@@ -1,0 +1,36 @@
+/* for some reason they set a colour, but this interfered
+when datatables went 100% width */
+html {
+	background-color: reset !important;
+}
+
+/* helps me put an image in the header */
+header h1 {
+	margin-block-start: 0;
+	margin-block-end: 0;
+}
+
+main.wider {
+	width:1280px; 
+	max-width:1280px
+}
+
+a.edit-link, a.delete-link  {
+	text-decoration: none;
+}
+a.edit-link:focus,
+a.delete-link:focus {
+	box-shadow: unset;
+	background-color: unset;
+
+}
+
+span.fa-edit, span.fa-plus {
+	color: #005ea5;
+}
+
+span.fa-trash {
+	color: #942514;
+}
+
+

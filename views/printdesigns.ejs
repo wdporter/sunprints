@@ -1,0 +1,136 @@
+<html>
+
+<head>
+  <title>SunPrints | Order Number <%= orderNumber %></title>
+  <style>
+    body {
+      font-family: sans-serif; 
+      
+    }
+
+    #inputTable,
+    #designTable {
+      margin-top: 2em;
+    }
+
+    #inputTable {
+      border-spacing: 0 2em;
+      max-width: 100%;
+    }
+
+    #inputTable td {
+      padding: .5em;
+    }
+
+    .tdbox {
+      border: 1px black solid;
+    }
+
+    #designTable th {
+      text-align: left;
+    }
+
+    #designTable th,
+    td {
+      padding-right: 2em
+    }
+
+		@media print {
+  .no-print {
+    display: none
+  }
+}
+</style>
+
+<body>
+
+	<h1 class="no-print">
+		<ul>
+		<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
+		<li>Use the Destination/Printer option to save a PDF 
+		<li>Under <i>More settings</i> you can remove the header/footer
+	</ul>
+		<hr>
+	</h1>
+
+
+  <div style="display:flex">
+    <h1>Screens and USBs</h1>
+    <h1 style="margin-left:auto">
+      <%= new Date().toLocaleDateString() %>
+    </h1>
+  </div>
+
+  <table id="inputTable">
+    <tr>
+      <td>Pulled __________
+      <td></td>
+      <td></td>
+      <td>Printed __________</td>
+      <td>Checked __________</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Folded __________</td>
+      <td>Qty</td>
+      <td class="tdbox">&emsp;&emsp;</td>
+      <td>2nd Check __________</td>
+      <td>Foiled _________</td>
+      <td>Qty</td>
+      <td class="tdbox">&emsp;&emsp;</td>
+    </tr>
+
+  </table>
+
+  <div id="app">
+
+  <table id="designTable">
+    <thead>
+      <tr>
+        <th>Screen / Usb No.</th>
+        <th>Colour</th>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="d in designs">
+        <td>{{d.Number}}</td>
+        <td>{{d.Colour}}</td>
+        <td>{{d.Name}}</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <div v-if="transfers.length > 0">
+    <h2>Transfers</h2>
+    <ul>
+      <li v-for="t in transfers">{{ t }}</li>
+    </ul>
+    </table>
+  </div>
+
+
+</div>
+
+
+  <script src="/javascripts/vue-3.2.33.js"></script>
+  <script>
+    Vue.createApp({
+      data() {
+        return {
+          orderNumber: "<%= orderNumber %>",
+          designs: <%- JSON.stringify(designs) %>,
+          transfers: <%- JSON.stringify(transfers) %>
+      }
+      }
+    }
+    ).mount("#app")
+
+
+    window.print()
+
+  </script>
+</body>
+
+</html>

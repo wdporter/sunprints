@@ -1,0 +1,123 @@
+<%- include("partials/head.ejs") %>
+
+	<style>
+		input#CreatedDateTime {
+			width: 7em;
+		}
+		select#ObjectName {
+			width: 6em;
+			min-width: unset;
+		}
+		select#AuditAction {
+			width: 4em;
+			min-width: unset;
+		}
+
+		.breakall {
+			word-break: break-all;
+		}
+	</style>
+
+
+	</main>
+
+	<main class="wider">
+
+		<table id="dt">
+			<thead>
+				<tr id="headRow">
+					<th>Table</th>
+					<th>Id</th>
+					<th>Action</th>
+					<th>Column</th>
+					<th>Old Value</th>
+					<th>New Value</th>
+					<th>Created By</th>
+					<th>Created Date/Time</th>
+				</tr>
+				<tr id="filterRow">
+					<th>ObjectName</th>
+					<th>Identifier</th>
+					<th>AuditAction</th>
+					<th>PropertyName</th>
+					<th>OldValue</th>
+					<th>NewValue</th>
+					<th>CreatedBy</th>
+					<th>CreatedDateTime</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+
+
+		<script>
+
+			function renderValue(data) {
+				if (!data)
+					return "<i>null</i>"
+				else
+					return data?.replace(/\.0$/, "")
+			}
+
+			window.datatable = new DataTable("table#dt", {
+				orderCellsTop: true,
+				fixedHeader: true,
+				processing: true,
+				serverSide: true,
+				dom: "lrtip",
+				ajax: {
+					url: "/auditlog/dt",
+					data(d) {
+						d.extraSearch = {}
+						for(input of document.querySelectorAll("#filterRow input, #filterRow select")) {
+							if (input.value)
+								d.extraSearch[input.getAttribute("id")] = input.value
+						}
+					}
+				},
+				language: {
+					searchPlaceholder: "Search table"
+				},
+				columns: [
+					{ data: "ObjectName", class: "breakall" },
+					{ data: "Identifier", width: "4em" },
+					{ data: "AuditAction", width: "4em" },
+					{ data: "PropertyName", class: "breakall" },
+					{ data: "OldValue", render(data) { return renderValue(data) } },
+					{ data: "NewValue", render(data) { return renderValue(data) } },
+					{ data: "CreatedBy" },
+					{ data: "CreatedDateTime" }
+				],
+				initComplete() {
+					const api = this.api()
+					Array.from(document.querySelectorAll("#filterRow th")).forEach(function (th, i) {
+							let html = ""
+							switch (th.textContent) {
+								case "ObjectName":
+									const tables = ["Customer", "EmbroideryDesign", "Garment", "OrderGarment", "Orders", "PrintDesign", "SalesRep", "Screen", "ScreenPrintDesign", "StockOrder", "StockOrderGarment", "Supplier", "TransferDesign", "TransferName", "TransferNameTransferDesign", "Usb", "UsbEmbroideryDesign", "User"]
+									html = `<select id=${th.textContent} ><option value=>—Select—${ tables.map(t => `<option>${t}`).join("")}</select> `
+									break
+								case "AuditAction":
+									html = `<select id=${th.textContent}><option value=>—Select—<option value=INS>Insert<option value=UPD>Update<option value=DEL>Delete</select> `
+									break
+								case "CreatedDateTime":
+									html = `<input type=date id=${th.textContent} /> `
+									break
+								default:
+									html += `<input id=${th.textContent}  />`
+							}
+							//html += " />"
+							th.innerHTML = html
+							th.querySelector("input, select").addEventListener("input", function () {
+								api.column(i).search(this.value).draw()
+							})
+					})
+				}
+			})
+		</script>
+
+
+	</main>
+
+	<%- include('partials/foot.ejs'); %>

@@ -1,0 +1,73 @@
+<%- include("partials/head.ejs") %>
+
+	<style>
+
+	</style>
+
+	<section>
+		<div>
+			<h5>Orders</h5>
+			<ul>
+				<li><a href=/order/new>New order</a></li>
+				<li><a href=/order>Orders</a></li>
+				<li><a href=/sales>Sales History</a></li>
+				<li><a href=/customer>Customers</a></li>
+			</ul>
+		</div>
+		<div>
+			<h5>Garments</h5>
+			<ul>
+				<li><a href=/purchasing>Purchase Orders</a></li>
+				<li><a href=/garment>Garments</a></li>
+				<li><a href=/garment/warninglist>Warnings</a></li>
+				<li><a href=/supplier>Suppliers</a></li>
+			</ul>
+		</div>
+		<div>
+			<h5>Designs</h5>
+			<ul style="column-count:2">
+					<li><a href=/print>Prints</a>
+					<li><a href=/embroidery>Embroidery</a>
+					<li><a href=/transfer>Transfers</a>
+					<li><a href=/screen>Screens</a>
+					<li><a href=/usb>Usbs</a>
+					<li><a href=/transfer/name>Transfer names</a>
+				</ul>
+		</div>
+	</section>
+<p>
+		<!-- empty space --><br>
+</p>
+	<section>
+	<div>
+		<h5>Administration</h5>
+		<ul>
+			<li><a href=/rep>Sales Reps</a></li>
+			<li><a href=/user>Users</a></li>
+			<li><a href=/auditlog>Audit Log</a></li>
+		</ul>
+	</div>
+	<div>
+		<h5>Deleted records</h5>
+		<ul style="columns:2">
+			<li><a href="/customer/deleted">Customers</a></li>
+			<li><a href="/order/deleted">Orders</a></li>
+			<li><a href="/supplier/deleted">Suppliers</a></li>
+			<li><a href="/garment/deleted">Garments</a></li>
+			<li><a href="/print/deleted">Print designs</a></li>
+			<li><a href=/screen/deleted>Screens</a></li>
+			<li><a href=/embroidery/deleted>Embroidery designs</a></li>
+			<li><a href=/usb/deleted>Usbs</a></li>
+			<li><a href=/transfer/deleted>Transfer designs</a></li>
+			<li><a href=/transfer/name/deleted>Transfer names</a></li>
+	</ul>
+	</div>
+</section>
+
+
+
+
+
+
+
+	<%- include("partials/foot.ejs") %>

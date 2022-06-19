@@ -1,0 +1,422 @@
+<%- include("partials/head.ejs") %>
+
+<h3>About</h3>
+<ul>
+	<li>This list shows the transfer designs that can be chosen for a garment</li>
+	<li>Each design has a names that are related to a location size category </li>
+	<li>A transfer design can’t be deleted if it’s in use on an order (delete the order first) </li>
+	<li>Removing the location/name from a design means it can no longer be selected for a garment, but the name still exists in the database</li>
+	<li>View <a href="/transfer/name">the full list of available names</a></li>
+	<li>View <a href="/transfer/deleted">deleted transfer designs</a>
+</ul>
+
+<input type=button onclick="newTransfer()" value="Add New Transfer" style="margin-bottom:2em" />
+
+<dialog id="addNameDialog" >
+	<form method="dialog" id="nameDialogForm">
+		<h3>Add Location/Size for Name</h3>
+		<p>
+			<input type="radio" id="Adults" value="Adults" name="sizeCategory" v-model="item.SizeCategory" />
+			<label for=Adults>Adults</label>
+			<input type="radio" id="Kids" value="Kids" name="sizeCategory" v-model="item.SizeCategory" />
+			<label for="Kids">Kids</label>
+		</p>
+		<p>
+			<input type=checkbox id="frontCheckBox" true-value="1" false-value="0" v-model="item.Front" /> <label for="frontCheckBox">Front</label>
+			<input type=checkbox id="backCheckBox" true-value="1" false-value="0" v-model="item.Back" /> <label for="backCheckBox">Back</label>
+		</p>
+		<p>
+			<input type=checkbox id="pocketCheckBox" true-value="1" false-value="0" v-model="item.Pocket" /> <label for="pocketCheckBox">Pocket</label>
+			<input type=checkbox id="sleeveCheckBox" true-value="1" false-value="0" v-model="item.Sleeve" /> <label for="sleeveCheckBox">Sleeve</label>
+		</p>
+	<p>
+			Transfer Name: <span :style="{ fontStyle: name=='none selected' ? 'italic' : 'normal' }">{{ name }}</span><hr>
+			<label for="chooseNameInput">Choose Name</label>
+			<input id="chooseNameInput" @input="onLoadNames()" v-model="term" placeholder="start typing to filter the list" />
+			<input type="button" v-model="hideList" @click="onHideList()" style="float:right" />
+			<span >{{ info }}</span>
+			<table id="nameListTable" class="stripe" v-show="hideList == 'Hide List'">
+				<tr v-for="name in nameList" key="name.TransferNameId" @click="onNameSelect(name)"><td>{{name.Name}}</td></tr>
+			</table>
+		</p>
+		<input type="hidden" v-model="item.TransferNameId" />
+		<div>
+			<button value="default" @click="saveName()">Save</button>
+			<button value="cancel">Cancel</button>
+		</div>
+	</form>
+
+</dialog>
+
+<dialog id="editDialog">
+<form method="dialog" id="editDialogForm">
+	<h3>Edit Transfer</h3>
+	<input type="hidden" value="0" id="transferDesignId" />
+	<p>
+		<label for="codeInput">Code</label><input id="codeInput" />
+	</p>
+	<p>
+		<label for="notesInput">Notes</label><input id="notesInput" />
+	</p>
+
+	<button value="default" onclick="saveTransfer(this)" id="saveButton">Save</button>
+	<button value="cancel">Cancel</button>
+
+</form>
+
+
+</dialog>
+
+
+	<table id="datatable" class=stripe>
+		<thead>
+			<tr>
+				<th></th>
+				<th></th>
+				<th>Code</th>
+				<th>Notes</th>
+			</tr>
+		</thead>
+	</table>
+
+
+	<script>
+		window.datatable = new DataTable("#datatable", {
+			processing: true,
+			serverSide: true,
+			ajax: "/transfer/dt",
+			error(xhr, error, thrown) {
+				console.log(xhr, error, thrown)
+				alert('we encountered an error' + Json.stringify(error));
+			},
+			order: [[0, 'desc']],
+			columns: [
+				{
+					className: "dt-control",
+					orderable: false,
+					data: null,
+					defaultContent: "<br>",
+					sortable: false
+				},
+				{
+					orderable: false,
+					sortable: false,
+					data: "TransferDesignId",
+					render(data) {
+						return `<a href=# class=editTransferLink data-id=${data}>Edit</a> <a href=# class=deleteTransferLink data-id=${data}>Delete</a>`
+					}
+				},
+				{ data: "Code", width: "150px" },
+				{ data: "Notes", width: "350px" },
+
+			]
+		})
+
+		// Add event listener for opening and closing details
+		$("#datatable tbody").on("click", "td.dt-control", function () {
+			var tr = $(this).closest("tr");
+			var row = window.datatable.row(tr);
+
+			if (row.child.isShown()) {
+				// This row is already open - close it
+				row.child.hide();
+				tr.removeClass("shown");
+			}
+			else {
+				// Open this row
+				let myData = format(row.data())
+				myData.then(d => row.child(d).show())
+				tr.addClass('shown');
+			}
+		})
+		
+
+		function format(rowData) {
+			const retVal = fetch(`/transfer/names/${rowData.TransferDesignId}`)
+				.then(response => {
+					if (!response.ok) {
+						response.json().then(j => alert("we encountered an error: " + j.error))
+					}
+					else {
+						return response.json()
+					}
+				})
+				.then(data => {
+					let itemString = "<div style=display:flex>"
+					if (data.length == 0)
+						itemString += "<span class=nonames>no locations defined for this transfer design</span>"
+					else {
+						for (var item of data) {
+							itemString += "<div class=nameDiv>"
+							itemString += `Sizes: ${item.SizeCategory}<br>`
+
+							const locations = <%- locations %>;
+							let myLocations = []
+							locations.forEach(loc => {
+								if (item[loc])
+									myLocations.push(loc)
+							})
+							itemString += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
+							itemString += `Name: ${item.Name}<br>`
+							itemString += `<a href=# data-id=${item.TransferNameTransferDesignId} class=removeNameLink>Remove</a>`
+							itemString += "</div>"
+						}
+					}
+					itemString += `&emsp;<a href=# class=addNameLink data-id=${rowData.TransferDesignId} style=align-self:center>Add</a>`
+					itemString += "</div>"
+					return itemString
+				})
+
+			return retVal
+		}
+
+		// Add event listener for remove name link
+		$("#datatable tbody").on("click", "a.removeNameLink", function (event) {
+			event.preventDefault()
+			const a = this
+			try {
+			fetch(`/transfer/name/${a.dataset.id}`, {
+				method: "DELETE"
+			})
+			.then(response => {
+				if (!response.ok) 
+					throw new Error(response.statusText)
+				
+				else {
+					return response.text()
+				}
+			})
+			.then(text => {
+				console.log(text)
+					// when done, remove the div from the list of names
+					const nameDiv = a.parentElement
+					const flex = nameDiv.parentElement
+					nameDiv.parentElement.removeChild(nameDiv)
+					// if there are no children, add a message
+					"<span class=nonames>no locations defined for this transfer design</span>"
+					if (flex.children.length == 1) // me
+						flex.insertAdjacentHTML("afterbegin", "<span class=nonames>no locations defined for this transfer design</span>")
+				}
+			)
+			.catch(error => window.alert("We encountered an error: " + error))
+			}
+			catch(ex) {
+				window.alert("We encountered an error: " + ex.message)
+			}
+		})
+
+		// Add event listener for add name link
+		$("#datatable tbody").on("click", "a.addNameLink", function () {
+			event.preventDefault()
+			// initialise the vue data used in the dialog
+			window.addNameApp.item.SizeCategory = "Adults"
+			window.addNameApp.item.Front = 0
+			window.addNameApp.item.Back = 0
+			window.addNameApp.item.Pocket = 0
+			window.addNameApp.item.Sleeve = 0
+			window.addNameApp.item.TransferNameId = 0
+			window.addNameApp.item.TransferDesignId = Number(this.dataset.id)
+			window.addNameApp.name = "none selected"
+			window.addNameApp.nameList = []
+			window.addNameApp.term = ""
+
+			document.getElementById("addNameDialog").showModal()
+		})
+
+
+		// add event listener for the delete transfer link
+		$("#datatable tbody").on("click", "a.deleteTransferLink", function (event) {
+			event.preventDefault()
+			fetch(`/transfer/design/${this.dataset.id}`,  {
+				method: "DELETE"
+			})
+			.then(response => {
+				if (response.ok)
+					return response
+				else
+					throw new Error(response.statusText)
+			})
+			.then(()=> {
+				window.datatable.ajax.reload(null, false)
+			})
+			.catch(error => window.alert("We encountered an error: " + error))
+		})
+
+
+		// add event listener for the edit transfer link
+		$("#datatable tbody").on("click", "a.editTransferLink", function (event) { 
+			event.preventDefault()
+			const data = window.datatable.row(this.closest("tr")).data()
+			document.getElementById("saveButton").dataset.mode = "edit"
+			const editDialog = document.getElementById("editDialog")
+			editDialog.querySelector("h3").textContent = "Edit Transfer"
+			document.getElementById("codeInput").value = data.Code
+			document.getElementById("notesInput").value = data.Notes
+			document.getElementById("transferDesignId").value = this.dataset.id
+			
+			editDialog.showModal()
+		})
+
+		function newTransfer() {
+			document.getElementById("saveButton").dataset.mode = "new"
+			const editDialog = document.getElementById("editDialog")
+			editDialog.querySelector("h3").textContent = "New Transfer"
+			document.getElementById("codeInput").value = ""
+			document.getElementById("notesInput").value = ""
+			document.getElementById("transferDesignId").value = 0
+			
+			editDialog.showModal()
+		}
+
+		function saveTransfer(button) {
+			let method = ""
+			let url = "/transfer"
+			const mode = button.dataset.mode
+			if (mode == "edit") {
+				method = "PUT"
+				url += `/${document.getElementById("transferDesignId").value}`
+			}
+			else if (mode == "new") {
+				method = "POST"
+			}
+
+			const body = JSON.stringify({
+				Code: document.getElementById("codeInput").value,
+				Notes: document.getElementById("notesInput").value
+			})
+
+		fetch(url, {
+				method,
+				headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+				body
+			})
+			.then(response => {
+				if (response.ok) {
+					return response.text()
+				}
+				else {
+					throw new Error(response.statusText)
+				}
+			})
+			.then(text => {
+					window.datatable.ajax.reload(null, mode=="new")
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}` ))
+
+
+
+		}
+	
+	</script>
+
+<script>
+	window.addNameApp = Vue.createApp({
+		data() {
+			return {
+				item: {
+					SizeCategory: "Adults",
+					Front: 0,
+					Back: 0,
+					Pocket: 0,
+					Sleeve: 0,
+					TransferNameId: 0,
+					TransferDesignId: 0,
+				},
+				
+				term: "",
+				name: "none selected",
+				nameList: [],
+				currentTarget: null,
+				info: "(enter at least three characters)",
+				hideList: "Hide List"
+			}
+		},
+		methods: {
+			onHideList () {
+				if (this.hideList == "Hide List") {
+					this.hideList  = "Show List"
+				}
+				else {
+					this.hideList  = "Hide List"
+				}
+			},
+			onLoadNames() {
+				const vue = this
+				if (this.term.length < 3) {
+					this.info = "(enter at least three characters)"
+					return
+				}
+				fetch(`/transfer/namelist/${this.term}`)
+				.then(response => {
+					if (!response.ok) 
+						throw new Error(response.statusText)
+					else 
+						return response.json()
+				})
+				.then(json => {
+					vue.nameList = json
+					vue.info = `${json.length} names`
+				})
+				.catch(function(error) {
+					window.alert("We encountered an error: " + error)
+				})
+			},
+			onNameSelect(transferName) {
+				this.name = transferName.Name
+				//this.nameList = ""
+				//this.term = ""
+				this.item.TransferNameId = transferName.TransferNameId
+			},
+			saveName() {
+				const vue = this
+				this.nameList = []
+				fetch("/transfer/namedesign", {
+					method: "POST",
+					headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify(this.$data.item)
+				})
+				.then(response => {
+					if (response.ok)
+						return response.text()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then((text) => {
+					// draw the new location in place
+					let itemString = `<div class=nameDiv>
+Sizes: ${vue.item.SizeCategory}<br>
+Location: ${vue.formatLocations()}<br>
+Name: ${vue.name}<br>
+<a href=# data-id=${text} class=removeNameLink>Remove</a>
+</div>`
+				const add = document.querySelector(`a.addNameLink[data-id='${vue.item.TransferDesignId}']`)
+				const nameDiv = add.closest("div")
+				const noname = nameDiv.querySelector(".nonames")
+				if (noname)
+					nameDiv.removeChild(noname)
+				add.insertAdjacentHTML("beforebegin", itemString)
+				})
+				.catch(error => alert("We enountered an error: " + error))
+			},
+			formatLocations() {
+				const locations = <%- locations %>;
+				let myLocations = []
+				locations.forEach(loc => {
+					if (this[locations[loc]])
+						myLocations.push(loc)
+				})
+				return myLocations.join(", ")
+			}
+		}
+	}).mount("#nameDialogForm")
+</script>
+
+
+
+	<%- include("partials/foot.ejs") %>

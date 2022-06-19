@@ -1,0 +1,67 @@
+<%- include("../partials/head.ejs") %>
+
+<p><a href=/transfer/name>Transfer names list</a></p>
+
+
+<table id="dt" class="hover stripe">
+	<thead>
+		<tr>
+			<th></th>
+			<th>Name</th>
+			<th>Deleted By</th>
+			<th>Deleted Date Time</th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+</table>
+
+
+<script>
+	window.datatable = new DataTable("#dt", {
+		ajax: {
+			url: "/transfer/deleted/name/dt",
+			method: "POST"
+		},
+		processing: true,
+		serverSide: true,
+		columns: [
+			{
+				data: "TransferNameId",
+				render(data) {
+					return `<button onclick="restore(${data})">Restore</button>`
+				}
+			},
+			{
+				data: "Name",
+				render(data) {
+					return data ? data.trim() : "<i>null</i>" 
+				}
+			},
+			{
+				data: "LastModifiedBy"
+			},
+			{
+				data: "LastModifiedDateTime"
+			}
+		]
+	})
+	
+
+	function restore(id) {
+		const tr = document.querySelector(`tr[data-id="${id}"]`)
+
+		fetch(`/transfer/restore/name/${id}`, { method: "PUT" })
+		.then(response => {
+			if (response.ok) {
+				window.datatable.row(tr).remove().draw("page")
+			}
+			else {
+				throw new Error(response.statusText)
+			}
+		})
+		.catch(err => window.alert(`We encountered an error: ${response.statusText}`))
+	}
+</script>
+
+
+<%- include('../partials/foot.ejs'); %>

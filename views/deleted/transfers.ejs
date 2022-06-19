@@ -1,0 +1,67 @@
+<%- include("../partials/head.ejs") %>
+
+<p><a href=/transfer>Transfer designs list</a></p>
+
+
+<table id="dt" class="hover stripe">
+	<thead>
+		<tr>
+			<th></th>
+			<th>Code</th>
+			<th>Comments</th>
+			<th>Deleted By</th>
+			<th>Deleted Date Time</th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+</table>
+
+
+<script>
+	window.datatable = new DataTable("#dt", {
+		ajax: {
+			url: "/transfer/deleted/dt",
+			method: "POST"
+		},
+		processing: true,
+		serverSide: true,
+		columns: [
+			{
+				data: "TransferDesignId",
+				render(data) {
+					return `<button onclick="restore(${data})">Restore</button>`
+				}
+			},
+			{
+				data: "Code"
+			},
+			{
+				data: "Notes"
+			},
+			{
+				data: "LastModifiedBy"
+			},
+			{
+				data: "LastModifiedDateTime"
+			}
+		]
+	})
+	
+
+	function restore(id) {
+		const tr = document.querySelector(`tr[data-id="${id}"]`)
+
+		fetch(`/transfer/restore/${id}`, { method: "PUT" })
+		.then(response => {
+			if (response.ok) {
+				window.datatable.row(tr).remove().draw("page")
+			}
+			else {
+				window.alert(`We encountered an error: ${response.statusText}`)
+			}
+		})
+	}
+</script>
+
+
+<%- include('../partials/foot.ejs'); %>

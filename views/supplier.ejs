@@ -1,0 +1,359 @@
+<%- include("partials/head.ejs") %>
+
+	<style>
+		.dataTables_wrapper {
+			margin-left: 3em
+		}
+
+		.dataTables_wrapper .dataTables_filter {
+			text-align: left
+		}
+
+
+		table {
+			width: 100%
+		}
+
+		.breakall {
+			word-break: break-all;
+		}
+
+		dialog {
+			width: 800px;
+		}
+	</style>
+
+	<p>
+		Deleting a suppliers will retain it for sales history, but you won’t be able to create new garments.
+		<a href=/supplier/deleted>Deleted suppliers</a>
+	</p>
+
+
+	<p><input type="button" value="Create New Supplier" onclick="window.vueApp.new()" /></p>
+
+
+	<dialog id="editDialog">
+		<form method=dialog>
+			<fieldset id="app">
+				<legend>{{ legend }}</legend>
+				<input type=hidden v-model="SupplierId">
+				<section>
+					<div>
+						<p><label for=code>Code</label> <input id=code v-model="Code" inputmode="numeric" pattern="\d*"></p>
+						<p><label for=company>Company</label> <input id=company v-model="Company"></p>
+						<p><label for=firstname>First Name</label> <input id=firstname v-model="FirstName"></p>
+						<p><label for=surname>Surname</label> <input id=surname v-model="Surname"></p>
+						<p><label for=phoneoffice>Phone Office</label> <input id=phoneoffice type="tel" v-model="PhoneOffice"></p>
+						<p><label for=phonehome>Phone Home</label> <input id=phonehome type="tel" v-model="PhoneHome"></p>
+						<p><label for=phonemobile>Phone Mobile</label> <input id=phonemmobile type="tel" v-model="PhoneMobile"></p>
+						<p><label for=fax>Fax</label> <input id=fax type="tel" v-model="Fax"></p>
+						<p><label for=email>Email</label> <input id=email type=email v-model="Email"></p>
+					</div>
+					<div>
+						<p><label for=addressline1>Address Line 1</label> <input id=addressline1 v-model="AddressLine1"></p>
+						<p><label for=addressline2>Address Line 2</label> <input id=addressline2 v-model="AddressLine2"></p>
+						<p><label for=locality>Locality</label> <input id=locality v-model="Locality"></p>
+						<p><label for=postcode>Post Code</label> <input id=postcode v-model="Postcode"></p>
+						<p><label for=state>State</label> <select id=state v-model="State">
+								<option></option>
+								<option>QLD</option>
+								<option>NSW</option>
+								<option>VIC</option>
+								<option>SA</option>
+								<option>WA</option>
+								<option>TAS</option>
+								<option>NT</option>
+								<option>ACT</option>
+							</select></p>
+						<p><label for=notes>Notes</label> <textarea id=notes v-model="Notes"></textarea></p>
+						<p>
+							<button id="saveButton" value="default" @click="save">Save</button>&emsp;
+							<input type="button" value="Cancel" onclick="this.closest('dialog').close()" />
+						</p>
+					</div>
+				</section>
+			</fieldset>
+		</form>
+	</dialog>
+
+	<dialog id="successDialog">
+		<h5>✅ Success</h5>
+		<p id="message"></p>
+		<form method="dialog">
+			<button>OK</button>
+		</form>
+	</dialog>
+
+	</main>
+
+	<main class="wider">
+
+		<table id="datatable" class="stripe hover">
+			<thead>
+				<tr>
+					<th></th>
+					<th>Code</th>
+					<th>Company</th>
+					<th>Name</th>
+					<th>first name</th>
+					<th>Contact</th>
+					<th>office phone</th>
+					<th>mobile phone</th>
+					<th>fax</th>
+					<th>email</th>
+					<th>Address</th>
+					<th>address 2</th>
+					<th>locality</th>
+					<th>post code</th>
+					<th>state</th>
+					<th>Notes</th>
+					<th>Last Purchase</th>
+				</tr>
+			</thead>
+
+		</table>
+
+	</main>
+
+
+	<script>
+
+		window.datatable = new DataTable("#datatable", {
+			processing: true,
+			serverSide: true,
+			orderMulti: false,
+			ajax: "/supplier/dt",
+			language: {
+				searchPlaceholder: "Search code, company or notes"
+			},
+			order: [[1, 'desc']],
+			columns: [
+				{
+					orderable: false,
+					data: "SupplierId",
+					width: "3em",
+					render(data) {
+						return `<a href=# class=edit-link   ><span class="fa fa-edit  fa-lg" data-id=${data} title=Edit   ></span></a>&ensp;
+							        <a href=# class=delete-link ><span class="fa fa-trash fa-lg" data-id=${data} title=Delete ></span> `
+					}
+				},
+				{ data: "Code", width: "3em" },
+				{ data: "Company" },
+				{
+					data: "Surname",
+					render(data, type, row) {
+						return `<span class=nowrap>${row.FirstName || ""} ${data || ""}</span>`
+					},
+					orderable: false
+				},
+				{ data: "FirstName", visible: false },
+				{
+					data: "PhoneOffice",
+					orderable: false,
+					render(data, type, row) {
+						var contacts = []
+						if (data)
+							contacts.push(`<a href="tel:${data}">O: ${data}</a>`)
+						if (row.PhoneHome)
+							contacts.push(`<a href="tel:${data}">H: ${row.PhoneHome}</a>`)
+						if (row.PhoneMobile)
+							contacts.push(`<a href="tel:${data}">M: ${row.PhoneMobile}</a>`)
+						if (row.Fax)
+							contacts.push(`F: ${row.Fax}`)
+						if (row.Email)
+							contacts.push(`<span class=breakall>E: <a href="mailto:${row.Email}">${row.Email}</a></span>`)
+						return contacts.join("<br>")
+					}
+				},
+				{ data: "PhoneHome", visible: false },
+				{ data: "PhoneMobile", visible: false },
+				{ data: "Fax", visible: false },
+				{ data: "Email", visible: false },
+				{
+					data: "AddressLine1",
+					orderable: false,
+					render(data, type, row) {
+						var address = []
+						if (data)
+							address.push(`<span class=nowrap>${data}</span>`)
+						if (row.AddressLine2)
+							address.push(`<span class=nowrap>${row.AddressLine2}</span>`)
+						var locality = []
+						if (row.Locality)
+							locality.push(row.Locality)
+						if (row.State)
+							locality.push(row.State)
+						if (row.Postcode)
+							locality.push(row.Postcode)
+						address.push(`<span class=nowrap>${locality.join(" ")}</span>`)
+						return address.join("<br>")
+					}
+				},
+				{ data: "AddressLine2", visible: false },
+				{ data: "Locality", visible: false },
+				{ data: "Postcode", visible: false },
+				{ data: "State", visible: false },
+				{ data: "Notes" },
+				{
+					data: "maxdate",
+					width: "4em",
+					render(data, type, row) {
+						const ts = Date.parse(data)
+						let retVal = isNaN(ts) ? "" : `${new Date(ts).toLocaleDateString()}<br>`
+						retVal += `<a href=/purchasing?supplier=${row.SupplierId}>Purchase</a>`
+						return retVal
+					}
+				}
+			]
+		})
+
+		function onEditClick(btn) {
+			var tr = btn.closest("tr")
+			var row = window.datatable.row(tr)
+			console.log(row.data())
+			const data = row.data()
+			window.vueApp.setData(data)
+			document.getElementById("editDialog").showModal()
+		}
+
+		function onDeleteClick(id) {
+			try {
+				fetch(`/supplier/${id}`, {
+					method: "DELETE"
+				})
+					.then(response => {
+						if (response.ok)
+							return response.json()
+						else
+							throw new Error(response.statusText)
+					})
+					.then(json => {
+						const dialog = document.getElementById("successDialog")
+						dialog.querySelector("#message").innerHTML = "We have removed the supplier. <a href=/supplier/deleted>It can still be restored.</a>"
+						dialog.showModal()
+						window.datatable.ajax.reload(null, false)
+					})
+					.catch(error => window.alert(`We encountered an error: ${error}`))
+			}
+			catch (err) {
+				window.alert("We encountered an error: " + err.message)
+			}
+		}
+
+		window.vueApp = Vue.createApp({
+			data() {
+				return {
+					SupplierId: 0,
+					Code: "",
+					Company: "",
+					Surname: "",
+					FirstName: "",
+					PhoneOffice: "",
+					PhoneHome: "",
+					PhoneMobile: "",
+					Fax: "",
+					Email: "",
+					AddressLine1: "",
+					AddressLine2: "",
+					Locality: "",
+					Postcode: "",
+					State: "",
+					Notes: "",
+					legend: ""
+				}
+			},
+			methods: {
+				setData(data) {
+					for (let d in data) {
+						this[d] = data[d]
+					}
+					this.legend = "Edit Supplier Details"
+				},
+				save() {
+					try {
+						let url = "/supplier"
+						let method = "POST"
+						if (this.SupplierId != 0) {
+							method = "PUT"
+							url += `/${this.SupplierId}`
+						}
+						let body = JSON.parse(JSON.stringify(this.$data))
+						delete body.legend
+						fetch(url, {
+							method,
+							headers: new Headers({
+								"Content-Type": "application/json"
+							}),
+							body: JSON.stringify(body)
+						})
+							.then(response => {
+								if (response.ok)
+									return response.json()
+								else
+									throw new Error(response.statusText)
+							})
+							.then(json => {
+								window.datatable.ajax.reload(null, window.vueApp.SupplierId == 0)// reset paging if it's a new item
+								document.getElementById("editDialog").close()
+							})
+							.catch(err => window.alert("We encountered an error: " + err.message))
+					}
+					catch (err) {
+						window.alert("We encountered an error: " + err.message)
+					}
+
+				},
+				new() {
+					this.SupplierId = 0
+					this.Code = ""
+					this.Company = ""
+					this.Surname = ""
+					this.FirstName = ""
+					this.PhoneOffice = ""
+					this.PhoneHome = ""
+					this.PhoneMobile = ""
+					this.Fax = ""
+					this.Email = ""
+					this.AddressLine1 = ""
+					this.AddressLine2 = ""
+					this.Locality = ""
+					this.Postcode = ""
+					this.State = ""
+					this.Notes = ""
+					this.legend = "New Supplier Details"
+					document.getElementById("editDialog").showModal()
+				}
+			}
+		}).mount("#app")
+
+
+		// to select a row
+		$('tbody').on('click', 'tr', function () {
+			if ($(this).hasClass('selected')) {
+				$(this).removeClass('selected');
+			}
+			else {
+				window.datatable.$('tr.selected').removeClass('selected');
+				$(this).addClass('selected');
+			}
+		})
+
+		document.querySelector("tbody").addEventListener("click", function (event) {
+			if (event.target.classList.contains("fa-edit")) {
+				onEditClick(event.target)
+			}
+			else if (event.target.classList.contains("fa-trash")) {
+				onDeleteClick(event.target.dataset.id)
+			}
+			if (event.target.classList.contains("edit-link") || event.target.classList.contains("delete-link")) {
+				event.preventDefault()
+			}
+
+		})
+
+
+	</script>
+
+
+
+	<%- include("partials/foot.ejs") %>

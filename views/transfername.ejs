@@ -1,0 +1,158 @@
+<%- include("partials/head.ejs") %>
+
+<p>
+	<a href="/transfer/name/deleted">View (and restore)</a> deleted transfer names
+</p>
+
+<input type=button onclick="createNew()" value="Create New" style="margin-bottom:2em" />
+
+<dialog id="newDialog">
+	<form method="dialog">
+		<h3>Create new Name</h3>
+		<p>
+			<label for="nameInput">Name</label><input id="nameInput" />
+		</p>
+		<button value="default" onclick="saveNewName()" id="saveButton">Save</button>&emsp;
+		<input type=reset value="Cancel" onclick="this.closest('dialog').close()" />
+	</form>
+
+</dialog>
+
+<table id="datatable" class=stripe>
+	<thead>
+		<tr>
+			<th></th>
+			<th>Name</th>
+		</tr>
+	</thead>
+</table>
+
+
+<script>
+	window.datatable = new DataTable("#datatable", {
+		processing: true,
+		serverSide: true,
+		ajax: "/transfer/name/dt",
+		error(xhr, error, thrown) {
+			console.log(xhr, error, thrown)
+			alert('we encountered an error' + Json.stringify(error));
+		},
+		order: [[0, 'desc']],
+		columns: [
+			{
+				orderable: false,
+				sortable: false,
+				data: "TransferNameId",
+				render(data) {
+					return `<a href=# class=editLink onclick="editName(${data}, this, event)">Edit</a> <a href=# class=deleteLink onclick="deleteName(${data}, event)">Delete</a>`
+				},
+				width: "150px"
+			},
+			{ data: "Name", width: "250px" },
+			]
+	})
+
+	function deleteName(id, event) {
+		event.preventDefault()
+		fetch(`/transfer/transfername/${id}`, {
+			method: "DELETE"
+		}).then(response => {
+			if (response.ok)
+				return response.text()
+			else {
+				console.log("error", response)
+				throw new Error(response.statusText)
+			}
+		})
+		.then(text => {
+			window.datatable.ajax.reload(null, false)
+		})
+		.catch(error => {
+			window.alert(`We encountered an error: ${error}`)
+		})
+	}
+
+	function editName(id, a, event) {
+		event.preventDefault()
+		const tr = a.closest("tr")
+		const td = tr.lastElementChild
+		const name = td.textContent
+		td.innerHTML = `<input type=text value="${name}" /><button onclick="saveEdit(${id}, this, event)">Save</button>&emsp;<input type=reset onclick=cancelEdit(this) value=Cancel />`
+
+	}
+
+	function cancelEdit(button) {
+		const td = button.closest("td")
+		const name = td.querySelector("input").value
+		td.innerHTML = name
+
+	}
+
+	function saveEdit(id, button, event) {
+		event.preventDefault()
+		const td = button.closest("td")
+		const newName = td.querySelector("input").value
+		const oldName = window.datatable.row(td.parentElement).data().Name
+		if (newName == oldName)
+			return
+		fetch(`/transfer/name/${id}`, {
+			method: "PUT",
+			headers: new Headers({
+				"Content-Type": "application/json"
+			}),
+			body: JSON.stringify({oldName, newName})
+		})
+		.then(response => {
+			if (response.ok)
+				return response.text()
+			else {
+				console.log("error", response)
+				throw new Error(response.statusText)
+			}
+		})
+		.then(text => {
+			window.datatable.ajax.reload(null, false)
+		})
+		.catch(error => window.alert(`We encountered an error: ${error}`))
+	}
+
+	function createNew() {
+		document.getElementById("nameInput").value = ""
+		document.getElementById("newDialog").showModal()
+	}
+
+	function saveNewName() {
+		const name = document.getElementById("nameInput").value
+		fetch(`/transfer/name`, {
+			method: "POST",
+			headers: new Headers({
+				"Content-Type": "application/json"
+			}),
+			body: JSON.stringify({name})
+		})
+		.then(response => {
+			if (response.ok)
+				return response.text()
+			else
+				throw new Error(response.statusText)
+		})
+		.then(text => {
+			window.datatable.ajax.reload(null, true)
+		})
+		.catch(error => window.alert(`We encountered an error: ${error}`))
+
+	}
+
+
+
+</script>
+
+
+
+
+
+
+
+
+
+<%- include("partials/foot.ejs") %>

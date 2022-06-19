@@ -1,0 +1,512 @@
+<%- include("partials/head.ejs") %>
+
+<style>
+.breakall {
+	word-break: break-all;
+}
+
+input:invalid {
+  border: 2px dashed red;
+}
+
+
+#createNewButton {
+	margin-bottom: 2em;
+}
+</style>
+
+<p>
+Deleting a customer will retain it for sales history, but you won’t be able to create new orders. 
+<a href=/customer/deleted>Deleted customers</a>
+</p>
+
+<input type="button" onclick="window.vueApp.createNewCustomer()" value="Create New"  id="createNewButton" />
+
+</main>
+
+<main class="wider">
+
+<div >
+<table class="hover stripe" >
+	<thead>
+		<tr>
+			<th>Id</th><!-- will be hidden -->
+			<th>Code</th>
+			<th>Company</th>
+			<th>Name</th>
+			<th>Surname</th>
+			<th>Contact</th>
+			<th>Phone Office</th>
+			<th>Phone Home</th>
+			<th>Fax</th>
+			<th>Email</th>
+			<th>Address</th>
+			<th>Address Line 2</th>
+			<th>Locality</th>
+			<th>Postcode</th>
+			<th>State</th>
+			<th>Notes</th>
+			<th>Created By</th>
+			<th>Created Date Time</th>
+			<th>Last Modified By</th>
+			<th>Last Modified Date Time</th>
+			<th>Last Order</th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+</table>
+</div>
+
+</main>
+
+<main>
+<!-- the create or edit section -->
+
+
+<article id=app>
+	<input type="button" v-if="mode != 'Edit' && mode != 'New'" @click="createNewCustomer" value="Create New" />
+	<fieldset v-if="mode != ''">
+		<legend>{{ mode }} customer details</legend>
+		<form id="customerDetailsForm">
+			<p>
+				<label for=codeInput>Code</label>
+				<input id=codeInput v-model="customer.Code" placeholder=required required />
+			</p>
+			<p>
+				<label for=companyInput>Company</label>
+				<input id=companyInput v-model="customer.Company" placeholder=required required />
+			</p>
+			<p>
+				<label for=firstNameInput>First Name</label>
+				<input id=firstNameInput v-model="customer.FirstName"  />
+			</p>
+			<p>
+				<label for=surnameInput>Surname</label>
+				<input id=surnameInput v-model="customer.Surname"  />
+			</p>
+			<p>
+				<label for=PhoneMobileInput>Phone Mobile</label>
+				<input type="tel" id=phoneMobileInput v-model="customer.PhoneMobile"  />
+			</p>
+			<p>
+				<label for=PhoneOfficeInput>Phone Office</label>
+				<input type="tel" id=phoneOfficeInput v-model="customer.PhoneOffice"  />
+			</p>
+			<p>
+				<label for=phoneHomeInput>Phone Home</label>
+				<input type=tel id=phoneHomeInput v-model="customer.PhoneHome"  />
+			</p>
+			<p>
+				<label for=faxInput>Fax</label>
+				<input type=tel id=faxInput v-model="customer.Fax"  />
+			</p>
+			<p>
+			<label for=emailInput>Email</label>
+			<input type="email" id=emailInput v-model="customer.Email"  />
+			</p>
+			<p>
+				<label for=addressLine1Input>Address Line 1</label>
+				<input id=addressLine1Input v-model="customer.AddressLine1" />
+			</p>
+			<p>
+				<label for=addressLine2Input>Address Line 2</label>
+				<input id=addressLine2Input v-model="customer.AddressLine2"  />
+			</p>
+			<p>
+				<label for=localityInput>Locality</label>
+				<input id=localityInput v-model="customer.Locality"  />
+			</p>
+			<p>
+				<label for=postcodeInput>Postcode</label>
+				<input id=postcodeInput v-model="customer.Postcode"  />
+			</p>
+			<p>
+				<label for=stateSelect style="display:block">State</label>
+				<select id=stateSelect v-model="customer.State" style="font-size: 1.1875rem">
+					<option v-for="state in states" :value="state">{{ state }}</option>
+				</select>
+			</p>
+			<p>
+				<label for=notesInput>Notes</label>
+				<textarea id=Input v-model="customer.Notes" placeholder="type notes about this customer" rows=5 cols=35></textarea>
+			</p>
+		</form>
+		<div style="display:flex; gap:5%">
+			<button id=saveCustomerButton @click="saveCustomer">&emsp;Save&emsp;</button>
+			<input type=reset n id=cancelButton @click="cancelEdit($event)" value="&ensp;Cancel&ensp;" />
+		</div>
+	</fieldset>
+	<div class="message" v-html="message" v-if="message.length > 0"></div>
+</article>
+
+	<script>
+
+		// initialise DataTable
+		window.datatable = new DataTable("table", {
+			fixedHeader: true,
+			processing: true,
+			serverSide: true,
+			ajax: "/customer/dt",
+			columns: [
+				{
+					data: "CustomerId",
+					visible: false,
+				},
+				{
+					data: "Code",
+					width: "6em",
+					render: (data, type, row) => {
+						return `<a href=# class=edit-link   ><span class="fa fa-edit  fa-lg" data-id=${row.CustomerId} title=Edit   ></span></a>&ensp;
+										<a href=# class=delete-link ><span class="fa fa-trash fa-lg" data-id=${row.CustomerId} title=Delete ></span></a>&emsp;
+										${data}`
+					}
+				},
+				{ data: "Company" },
+				{ 
+					data: "FirstName", 
+					orderable: false, 
+					render(data, type, row) {
+						const items = []
+						if (data)
+							items.push(data)
+						if (row.Surname)
+							items.push(row.Surname)
+						return items.join("<br>")
+					} 
+				},
+				{ data: "Surname", orderable: false, visible: false },
+				{ 
+					data: "PhoneMobile", 
+					orderable: false,
+					class: "breakall",
+					render: (data, type, row) => {
+						const items = []
+						if (row.PhoneMobile)
+							items.push(`M: <a href="tel:${row.PhoneMobile}>${row.PhoneMobile}</a>`)
+						if (row.PhoneOffice)
+						items.push(`O: <a href="tel:${row.PhoneOffice}>${row.PhoneOffice}</a>`)
+						if (row.PhoneHome)
+							items.push(`H: <a href="tel:${row.PhoneHome}>${row.PhoneHome}</a>`)
+						if (row.Fax)
+							items.push(`F: <a href="tel:${row.Fax}">${row.Fax}</a>`)
+						if (row.Email)
+							items.push(`E: <a href='mailto:${row.Email}'>${row.Email}</a>`)
+						return items.join("<br>")
+					}
+					},
+				{ data: "PhoneOffice",  visible: false },
+				{ data: "PhoneHome",  visible: false },
+				{ data: "Fax",  visible: false },
+				{ data: "Email",  visible: false },
+				{ 
+					data: "AddressLine1", 
+					orderable: false, 
+					render(data, type, row) { 
+						const items = []
+						if (row.AddressLine1)
+							items.push(row.AddressLine1)
+						if (row.AddressLine2)
+							items.push(row.AddressLine2)
+						if (row.Locality || row.State || row.Postcode)
+							items.push(`${row.Locality} ${row.State} ${row.Postcode}`)
+						return items.join("<br>")
+					}
+				},
+				{ data: "AddressLine2", orderable: false, visible: false },
+				{ data: "Locality", orderable: false, visible: false },
+				{ data: "Postcode", orderable: false, visible: false },
+				{ data: "State", orderable: false, visible: false },
+				{
+					data: "Notes",
+					orderable: false, 
+				},
+				{ data: "CreatedBy" , visible: false},
+				{ data: "CreatedDateTime" ,  visible: false},
+				{ data: "LastModifiedBy" ,  visible: false},
+				{ data: "LastModifiedDateTime" ,  visible: false},
+				{ 
+					data: "maxdate", 
+					width: "4em",
+					render(data, type, row) {
+						const ts = Date.parse(data)
+						let retVal = isNaN(ts) ? "" : `${new Date(ts).toLocaleDateString()}<br>`
+					retVal += `<a class=action-link href=/order/new?customerid=${row.CustomerId} title="start a new order with this customer preselected">New Order</a>`
+					return retVal
+
+					}
+				}
+			]
+		})
+
+		// event handlers for DataTable
+		$('tbody').on('click', 'tr', function () {
+			if ($(this).hasClass('selected')) {
+				$(this).removeClass('selected');
+			}
+			else {
+				window.datatable.$('tr.selected').removeClass('selected');
+				$(this).addClass('selected');
+			}
+		})
+
+
+
+		window.vueApp = Vue.createApp({
+			data() {
+				return {
+					mode: "",
+					states: ["", "QLD", "NSW", "VIC", "SA", "WA", "TAS", "NT", "ACT"],
+					message: "",
+					loading: false,
+					customer: {
+						CustomerId: null,
+						Code: "",
+						Company: "",
+						FirstName: null,
+						Surname: null,
+						PhoneMobile: null,
+						PhoneOffice: null,
+						PhoneHome: null,
+						Fax: null,
+						Email: null,
+						AddressLine1: null,
+						AddressLine2: null,
+						Locality: null,
+						Postcode: null,
+						State: null,
+						Notes: null,
+					}
+				}
+			},
+			methods: {
+				setMode(mode) {
+					this.mode = mode
+				},
+				createNewCustomer() {
+					Array.from(document.querySelectorAll("tr")).forEach(tr => tr.classList.remove("selected"))
+					this.message = ""
+					this.mode = "New"
+					this.customer = {
+						CustomerId: null,
+						Code: "",
+						Company: "",
+						FirstName: null,
+						Surname: null,
+						PhoneMobile: null,
+						PhoneOffice: null,
+						PhoneHome: null,
+						Fax: null,
+						Email: null,
+						AddressLine1: null,
+						AddressLine2: null,
+						Locality: null,
+						Postcode: null,
+						State: null,
+						Notes: null,
+					}
+					this.$nextTick(() => { 
+						document.getElementById("app").scrollIntoView({behavior:"smooth"})
+						document.getElementById("codeInput").focus()
+					})
+				},
+				saveCustomer() {
+					const form = document.getElementById("customerDetailsForm")
+					const vue = this
+					if (form.reportValidity()) {
+						// do a put for update
+						// or post for insert
+						vue.loading = true
+						vue.message = ""
+
+						for (var key in vue.customer) {
+							if (key == "CustomerId")
+								continue
+							if (vue.customer[key] != null)
+								vue.customer[key] = vue.customer[key].trim()
+						}
+						vue.customer.Code = vue.customer.Code.toUpperCase()
+						vue.customer.Company = vue.customer.Company.toUpperCase()
+
+						if (vue.mode == "New") {
+							vue.customer.CustomerId = null
+
+							try {
+								fetch("/customer", {
+									method: "POST",
+									headers: new Headers({
+										"Content-Type": "application/json"
+									}),
+									body: JSON.stringify(vue.customer)
+								})
+									.then(response => {
+										if (response.ok)
+											return response.json()
+										else {
+											throw new Error(response.statusText)
+										}
+									})
+									.then(json => {
+										console.log("seems to have worked", json)
+
+										// 1. get datatables to redraw with by customer id ascending, 
+										window.datatable.order(0, "desc")
+										window.datatable.ajax.reload(function () {
+											// 2. select newly created item
+											document.querySelector(`tr[data-id='${json.id}']`).classList.add("selected")
+										})
+										// 3. reset mode
+										vue.mode = ""
+										// 4. hide loading image
+										vue.loading = false
+										// 5. show success message
+										vue.message = "✔️ new customer saved"
+										// 6. scroll to top of table
+										document.querySelector("table").scrollIntoView({behavior: "smooth"})
+									}).catch(error => {
+										vue.message = `❌ ${error}`
+										vue.loading = false
+									})
+							} catch (error) {
+								vue.message = `❌ ${error}` 
+								vue.mode = ""
+								vue.loading = false
+							}
+						}
+						else if (vue.mode == "Edit") {
+							try {
+								fetch(`/customer/${vue.customer.CustomerId }`, {
+									method: "PUT",
+									headers: new Headers({
+										"Content-Type": "application/json"
+									}),
+									body: JSON.stringify(vue.customer)
+								})
+									.then(response => {
+										if (response.ok)
+											return response.json()
+										else {
+											throw new Error(response.statusText) 
+										}
+									})
+									.then(json => {
+										console.log("seems to have worked", json)
+
+										// 1. refetch the table, same sort
+										let tr = null
+										window.datatable.ajax.reload(function () {
+											// 2. select the edited item
+											tr = document.querySelector(`tr[data-id='${json.id}']`)
+											tr.classList.add("selected")
+										}, false)
+										// 3. change mode to ""
+										vue.mode = ""
+										// 4. hide loading image
+										vue.loading = false
+										// 5. show success message
+										vue.message = "✅ customer details saved"
+										// 5. scroll to row or if that doesn't work, the top of the table
+										document.querySelector(tr || "table").scrollIntoView({behavior: "smooth"})
+									}).catch(error => {
+										vue.message = `❌ ${error}` 
+										vue.mode = ""
+										vue.loading = false
+									})
+							} catch (error) {
+								vue.message = `❌ ${error}` 
+								vue.mode = ""
+								vue.loading = false
+
+							}
+
+						}
+
+					}
+				},
+				setCustomer(customer) {
+					this.customer = customer
+				},
+				cancelEdit(event) {
+					event.preventDefault()
+					this.mode = ""
+					this.message = ""
+				},
+				clearMessage() {
+					this.message = ""
+				},
+				setMessage(message) {
+					this.message = message
+				}
+			}
+		}).mount("#app")
+
+
+		// more event handlers for data table, for the edit and delete links
+		document.querySelector("tbody").addEventListener("click", function (event) {
+			if (event.target.classList.contains("action-link"))
+				return
+			
+			event.preventDefault()
+
+			if (event.target.classList.contains("fa-edit")) {
+				editCustomer(event.target)
+			}
+			else if (event.target.classList.contains("fa-trash")) {
+				deleteCustomer(event.target.dataset.id)
+			}
+
+
+		})
+
+		// edit customer event handler
+		function editCustomer(btn) {
+
+			var tr = btn.closest("tr")
+			tr.click() // sets selected class in the grid so  we can see in the grid which one we're working on
+			var row = window.datatable.row(tr)
+			const data = row.data()
+
+			vueApp.setMode("Edit")
+			vueApp.clearMessage()
+			document.querySelector("#app").scrollIntoView({behavior: "smooth"})
+			vueApp.setCustomer( {
+				CustomerId:   data.CustomerId,
+				Code:         data.Code,
+				Company:      data.Company,
+				FirstName:    data.FirstName,
+				Surname:      data.Surname,
+				PhoneMobile:  data.PhoneMobile,
+				PhoneOffice:  data.PhoneOffice,
+				PhoneHome:    data.PhoneHome,
+				Fax:          data.Fax,
+				Email:        data.Email,
+				AddressLine1: data.AddressLine1,
+				AddressLine2: data.AddressLine2,
+				Locality:     data.Locality,
+				Postcode:     data.Postcode,
+				State:        data.State,
+				Notes:        data.Notes
+			})
+
+		}
+
+		function deleteCustomer(id) {
+			vueApp.setMode("")
+			fetch(`/customer/${id}`, { method: "DELETE"})
+			.then(response => {
+				if (response.ok) {
+					window.datatable.ajax.reload(null, false)
+					vueApp.setMessage("✅ We removed the customer (<a href=/deletedcustomers>undo</a>)")
+				}
+				else {
+					throw new Error(response.statusText)
+				}
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+
+
+		}
+
+
+	</script>
+
+<%- include('partials/foot.ejs'); %>

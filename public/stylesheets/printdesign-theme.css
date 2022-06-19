@@ -1,0 +1,62 @@
+.screenDiv + .screenDiv,
+.usbDiv + .usbDiv,
+.nameDiv + .nameDiv {
+	margin-left: 2px
+}
+
+
+.addScreenLink, .addUsbLink, .addNameLink {
+	margin-left: 2em;
+}
+
+.screenDiv,
+.usbDiv,
+.nameDiv {
+	border: black solid 1px;
+	padding: 2px
+}
+
+#addScreenDialog,
+#addUsbDialog,
+#addNameDialog
+{
+	width: 500px
+}
+
+
+button + button {
+	margin-left: 2em;
+}
+
+button[value=cancel] {
+	background-color: rgb(148, 37, 20);
+	/* var(--color-tertiary); */
+}
+
+input:required {
+	border-color: rgb(148, 37, 20);
+	/* var(--color-tertiary); */
+}
+
+
+table#screenListTable tr.odd,
+table#usbListTable tr.odd,
+table#nameListTable tr.odd
+{
+	background-color: lightgoldenrodyellow;
+}
+
+dialog hr {
+	margin: 0
+}
+
+#toggleListInput {
+	float: right;
+}
+
+/* .editPrintLink:hover, .deletePrintLink:hover,
+.editEmbroideryLink:hover, .deleteEmbroideryLink:hover,
+.editTransferLink:hover, .deleteTransferLink:hover
+ {
+	font-weight: bold;
+} */

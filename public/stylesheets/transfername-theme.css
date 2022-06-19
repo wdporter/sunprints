@@ -1,0 +1,3 @@
+.editLink:hover, .deleteLink:hover {
+	font-weight: bold;
+}

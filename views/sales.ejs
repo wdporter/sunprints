@@ -1,0 +1,331 @@
+<%- include("partials/head.ejs") %>
+
+<p>todo clone a sale into a new order</p>
+
+<style>
+	.flex {
+		display:flex;
+	}
+
+	.flex>div + div {
+		margin-left: 1em;
+	}
+
+
+	div#dt_wrapper {
+		margin-left: 2em;
+	}
+
+	select {
+		/* max-width: unset; */
+		width: 100%;
+	}
+
+	.sales-item {
+		border: 1px black solid;
+		padding: .5em;
+	}
+	.sales-item + .sales-item {
+		margin-left: .5em;
+	}
+
+	td.centred {
+		text-align: center;
+	}
+
+</style>
+
+
+
+<section>
+	<div>
+		<fieldset>
+			<legend>Customer details</legend>
+			<p>
+				<label for="customerCode">Customer code</label>
+				<select id="customerCode" data-location="customercodes">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+			<p>
+				<label for="customerName">Customer name</label>
+				<select id="customerName" data-location="customernames">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Sales Rep.</legend>
+			<p>
+				<label for=salesRep>Name</label>
+				<select id="salesRep" data-location="salesreps">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Date range</legend>
+			<p>
+				<label for="dateFrom">Date From</label>
+				<input type=date id="dateFrom" />
+			</p>
+			<p>
+				<label for="dateTo">Date To</label><!-- one year ago -->
+				<input type=date id="dateTo" />
+			</p>
+		</fieldset>
+	</div>
+	<div>
+		<fieldset>
+			<legend>Print</legend>
+			<p>
+				<label for="print">Design</label>
+				<select id="print" data-location="prints">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+			<p>
+				<label for="screen">Screen</label>
+				<select id="screen" data-location="screens">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Embroidery</legend>
+			<p>
+				<label for="embroidery">Design</label>
+				<select id="embroidery" data-location="embroideries">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+			<p>
+				<label for="usb">Usb</label>
+				<select id="usb" data-location="usbs">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Transfer</legend>
+			<p>
+				<label for="transfer">Design</label>
+				<select id="transfer" data-location="transfers">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+			<p>
+				<label for="transferName">Name</label>
+				<select id="transferName" data-location="transfernames">
+					<option value="0">—select—</option>
+				</select>
+			</p>
+	</fieldset>
+	</div>
+</section>
+
+
+
+</main>
+
+	<table id="dt">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Order Id</th>
+				<th>Order Number</th>
+				<th>Date</th>
+				<th>Rep.</th>
+				<th>Processed</th>
+				<th>Delivery</th>
+				<th>Customer code</th>
+				<th>Customer name</th>
+				<th>Terms</th>
+				<th>Buy In</th>
+				<th>Notes</th>
+				<th>Done</th>
+			</tr>
+		</thead>
+	</table>
+
+<main>
+
+	
+<script>
+	window.datatable = new DataTable("table#dt", {
+		fixedHeader: true,
+		processing: true,
+		serverSide: true,
+		dom: "lrtip",
+		ajax: { 
+			url: "/sales/dt",
+			data: function(d) {
+				d.customSearch = {
+					Company: document.getElementById("customerName").value,
+					Code: document.getElementById("customerCode").value,
+					DateFrom: document.getElementById("dateFrom").value,
+					DateTo: document.getElementById("dateTo").value,
+					Print: document.getElementById("print").value,
+					Screen: document.getElementById("screen").value,
+					Embroidery: document.getElementById("embroidery").value,
+					Usb: document.getElementById("usb").value,
+					Transfer: document.getElementById("transfer").value,
+					TransferName: document.getElementById("transferName").value,
+					SalesRep: document.getElementById("salesRep").value
+				}
+			}
+		},
+		order: [[3, 'desc']],
+		columns: [
+			{
+				className: 'dt-control',
+				orderable: false,
+				data: null,
+				defaultContent: '',
+				title: "click to view sales details",
+				width: "1em"
+			},
+			{ data: "OrderId",
+				visible: false
+			},
+			{ data: "OrderNumber", width: "3em" }, 
+			{ data: "OrderDate", 
+				width: "3em",
+				render: function(data) {
+					const num = Date.parse(data)
+					if (isNaN(num))
+						return data
+					else
+						return new Date(num).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
+				}
+			},
+			{ data: "SalesRep" }, 
+			{ data: "DateProcessed", 
+				width: "4em",
+				render: function(data) {
+					const ts = Date.parse(data)
+					if (isNaN(ts))
+						return data
+					else
+						return new Date(ts).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
+					}
+			}, 
+			{ data: "Delivery",
+				width: "4em",
+				render: function (data) {
+					const num = Date.parse(data)
+					if (isNaN(num))
+						return data
+					else
+						return new Date(num).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
+				}
+			}, 
+			{ data: "Code", class: "centred" }, 
+			{ data: "Company"}, 
+			{ data: "Terms", width: "3em" }, 
+			{ data: "BuyIn",
+				width: "1em",
+				render: function(data) {
+					return data ? "✔️" : "❌"
+				}
+			}, 
+			{ data: "Notes",
+				width: "400px"
+			}, 
+			{ data: "Done",
+				width: "1em",
+				render: function(data) {
+					return data ? "✔️" : "❌"
+				}
+			} 
+		]
+	})
+
+	function format(data) {
+		const retVal = fetch(`/sales/${data.OrderId}/history`)
+				.then(response => {
+					if (response.ok) 
+						return response.json()
+					else 
+						throw new Error(response.statusText)
+				})
+				.then(data => {
+					console.log(data)
+					let html = "<div style=display:flex>"
+					if (data.length == 0)
+					html += "<span class=nousbs>no sales items<span>"
+					else {
+						for (var item of data) {
+							html += "<div class=sales-item>"
+							const items = []
+							for (key in item) {
+								if (item[key])
+									items.push(`${key}: ${item[key]}`)
+							}
+							html += items.join("<br>")
+							html += "</div>"
+						}
+					}
+					html += "</div>"
+					return html
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+
+			return retVal
+
+	}
+
+	// Add event listener for opening and closing details
+	document.querySelector("table#dt tbody").addEventListener("click", function(evt) {
+		const row = window.datatable.row(evt.target)
+		const data = row.data()
+
+		if (row.child.isShown()) {
+				// This row is already open - close it
+				row.child.hide();
+				evt.target.classList.remove('shown');
+		} else {
+				// Open this row
+				let myData = format(data)
+				myData.then(d => row.child(d).show())
+				evt.target.classList.add('shown');
+		}
+	})
+
+	Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
+		// when focus happens first time, load options via ajax
+		s.addEventListener("focus", function() {
+			if (this.childElementCount == 1) {
+				fetch(`/sales/${this.dataset.location}`)
+				.then(response => response.json() )
+				.then(json => {
+					for(item of json) {
+						this.insertAdjacentHTML("beforeend", `<option value="${item.value}">${item.name}`)
+					}
+				})
+			}
+		})
+		s.addEventListener("input", function() {
+			// on selection, reset all other select fields to 0
+			// we only search on one field at a time
+			Array.from(document.querySelectorAll("fieldset select")).forEach(sel => {
+				if (sel != s) {
+					sel.value= "0"	
+				}
+			})
+			window.datatable.ajax.reload()
+		})
+	})
+
+
+
+
+
+
+
+
+</script>
+
+
+
+	<%- include("partials/foot.ejs") %>

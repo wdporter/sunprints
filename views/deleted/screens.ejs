@@ -1,0 +1,64 @@
+<%- include("../partials/head.ejs") %>
+
+
+<p><a href=/screen>View the active screens</a></p>
+
+
+<table id="dt" class="hover stripe">
+	<thead>
+		<tr>
+			<th></th>
+			<th>Number</th>
+			<th>Colour</th>
+			<th>Name</th>
+			<th>Deleted By</th>
+			<th>Deleted Date Time</th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+</table>
+
+
+<script>
+	window.datatable = new DataTable("#dt", {
+		ajax: {
+			url: "/screen/deleted/dt",
+			method: "POST"
+		},
+		processing: true,
+		serverSide: true,
+		order: [[5, 'desc']],
+		columns: [
+			{
+				data: "ScreenId",
+				render(data) {
+					return `<button onclick="restore(${data})">Restore</button>`
+				}
+			},
+			{ data: "Number"},
+			{ data: "Colour"},
+			{ data: "Name"},
+			{ data: "LastModifiedBy" },
+			{ data: "LastModifiedDateTime" }
+		]
+	})
+	
+
+	function restore(id) {
+		const tr = document.querySelector(`tr[data-id="${id}"]`)
+
+		fetch(`/screen/restore/${id}`, { method: "PUT" })
+		.then(response => {
+			if (response.ok) {
+				window.datatable.row(tr).remove().draw("page")
+			}
+			else {
+				throw new Error(response.statusText)
+			}
+		})
+		.catch(err => window.alert(`We encountered an error: ${response.statusText}`))
+	}
+</script>
+
+
+<%- include('../partials/foot.ejs'); %>

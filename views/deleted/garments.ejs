@@ -1,0 +1,69 @@
+<%- include("../partials/head.ejs") %>
+
+<p><a href=/garment>Garments list</a></p>
+
+
+<table id="dt" class="hover stripe">
+	<thead>
+		<tr>
+			<th></th>
+			<th>Code</th>
+			<th>Label</th>
+			<th>Type</th>
+			<th>Colour</th>
+			<th>Notes</th>
+			<th>Sizes</th>
+			<th>Deleted By</th>
+			<th>Deleted Date Time</th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+</table>
+
+
+<script>
+	window.datatable = new DataTable("#dt", {
+		ajax: {
+			url: "/garment/deleted/dt",
+			method: "POST"
+		},
+		processing: true,
+		serverSide: true,
+		order: [[8, 'desc']],
+		columns: [
+			{
+				data: "GarmentId",
+				render(data) {
+					return `<button onclick="restore(${data})">Restore</button>`
+				}
+			},
+			{ data: "Code"},
+			{ data: "Label"},
+			{ data: "Type"},
+			{ data: "Colour"},
+			{ data: "Notes"},
+			{ data: "SizeCategory"},
+			{ data: "LastModifiedBy" },
+			{ data: "LastModifiedDateTime" }
+		]
+	})
+	
+
+	function restore(id) {
+		const tr = document.querySelector(`tr[data-id="${id}"]`)
+
+		fetch(`/garment/restore/${id}`, { method: "PUT" })
+		.then(response => {
+			if (response.ok) {
+				window.datatable.row(tr).remove().draw("page")
+			}
+			else {
+				throw new Error(response.statusText)
+			}
+		})
+		.catch(err => window.alert(`We encountered an error: ${response.statusText}`))
+	}
+</script>
+
+
+<%- include('../partials/foot.ejs'); %>

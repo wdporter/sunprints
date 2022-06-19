@@ -1,0 +1,149 @@
+<%- include("partials/head.ejs") %>
+
+<style>
+	input.green-check-box {
+		all: revert;
+		height:2em;
+		width: 2em;
+		accent-color:forestgreen;
+	}
+</style>
+
+<div id="appdiv">
+	
+	<dialog id="editDialog">
+		<form method="dialog">
+			<h3>mode Sales Rep</h3>
+			<p>
+				<label for="repName">Name</label>
+				<input id="repName" v-model="editing.Name" />
+			</p>
+			<p>
+				<input id="repDeleted" v-model="editing.active" type="checkbox" />
+				<label for="repDeleted">Active</label>
+			</p>
+			<div>
+				<button @click="saveEdit($event)">Save</button>&emsp;
+				<input type="button" value="Cancel" @click="cancelEdit($event)" />
+			</div>
+		</form>
+	</dialog>
+
+<table id="table">
+<thead>
+	<tr>
+		<th>Name</th>
+		<th>Active</th>
+		<th></th>
+	</tr>
+</thead>
+<tbody>
+		<tr v-for="rep in reps" :key="rep.SalesRepId">
+			<td>{{ rep.Name }}</td>
+			<td>{{ rep.active ? "✅" : "❌" }}</td>
+			<td><input type="button" @click="startEdit(rep, $event)" value="Edit" />
+		</tr>
+		<tr>
+			<td><input type="button" @click="startCreate()" value="Create New" /></td>
+			<td colspan=2></td>
+		</tr>
+</tbody>
+
+</table>
+</div>
+
+<script>
+
+
+window.app = Vue.createApp({
+	data() {
+		return  {
+			reps: <%- JSON.stringify(reps) %>,
+			newRepName: "",
+			newRepActive: true,
+			editing: { Name: null, active: true,  SalesRepId: 0 }
+		}
+	},
+	methods: {
+		startEdit(rep, event) {
+			event.preventDefault()
+			this.editing = rep
+			document.getElementById("editDialog").showModal()
+		},
+		cancelEdit(event) {
+			event.preventDefault()
+			document.getElementById("editDialog").close()
+		},
+		saveEdit(event) {
+			this.cancelEdit(event)
+
+			this.editing.Deleted = this.editing.active ? 0 : 1
+
+
+			let url = "/rep"
+			let method = "POST"
+			if (this.editing.SalesRepId > 0) {
+				url += `/${this.editing.SalesRepId}`
+				method = "PUT"
+			}
+
+			const vue = this
+
+			fetch(url, {
+				method,
+				headers: new Headers({
+					"Content-Type": "application/json"
+				}),
+				body: JSON.stringify(this.editing)
+			})
+			.then(response => {
+				if (response.ok)
+					return response.text()
+				else {
+					console.log(response)
+					throw new Error(response.statusText)
+				} 
+			})
+			.then(text => {
+				if (method == "POST") {
+					vue.editing.SalesRepId = text
+					vue.reps.push({
+						Name: vue.editing.Name,
+						Deleted: vue.editing.Deleted,
+						SalesRepId: vue.editing.SalesRepId,
+						active: vue.editing.Deleted == 0
+					}) // add the new item
+				}
+				
+				// sort the items
+				vue.reps.sort(function(a, b) {
+					if (a.Deleted > b.Deleted)
+						return 1
+					if (a.Deleted < b.Deleted) 
+						return -1
+					return a.Name > b.Name ? 1 : -1
+				})
+			})
+			.catch(error => {
+				window.alert(`We encountered an error: ${error}`)
+				window.location.reload()
+			})
+		},
+		startCreate() {
+			this.editing.Name = ""
+			this.editing.Deleted = 0
+			this.editing.active = true
+			this.editing.SalesRepId = 0
+			document.getElementById("editDialog").showModal()
+		}
+	}
+
+}).mount("#appdiv")
+
+
+
+</script>
+
+
+
+<%- include("partials/foot.ejs") %>

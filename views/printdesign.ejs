@@ -1,0 +1,443 @@
+<%- include("partials/head.ejs") %>
+
+
+	<h3>About</h3>
+	<ul>
+		<li>This list shows the print designs that can be chosen for a garment</li>
+		<li>Each design can be on multiple physical screens</li>
+		<li>A screen is used in one or more locations (front, back. pocket, sleeve)</li>
+		<li>A screen is suitable according to a garment’s size category (adults, womens, kids)</li>
+		<li>Removing a screen means it can no longer be selected for a garment, but the screen still exists in the database</li>
+		<li><a href="/screen">Full list of available screens</a></li>
+		<li><a href="/print/deleted">View (and restore) deleted</a></li>
+	</ul>
+
+
+	<dialog id="printDialog">
+		<form method="dialog">
+			<h3 id="dialogHeading"></h3>
+			<input type="hidden" id="printDesignIdInput" value="0">
+			<p>
+				<label for="codeInput">Code</label><input id="codeInput" required placeholder="enter a code" />
+			</p>
+			<p>
+				<label for="notesInput">Notes</label><input id="notesInput" />
+			</p>
+			<p>
+				<label for="commentsInput">Comments</label><textarea id="commentsInput"></textarea>
+			</p>
+			<div>
+				<button id="saveButton" value="default" onclick="savePrint()">&emsp;Save&emsp;</button>&emsp;
+				<input type="button" onclick="document.getElementById('printDialog').close()" value="Cancel" />
+			</div>
+		</form>
+
+	</dialog>
+
+	<dialog id="addScreenDialog" >
+		<form id="addScreenForm" method="dialog">
+			<h3>Add screen</h3>
+			<p>
+				<input id=adultsRadio type=radio value=Adults name=sizeCategory checked>
+				<label for=adultsRadio>Adults</label>
+				<input id=kidsRadio type=radio value=Kids  name=sizeCategory>
+				<label for=kidsRadio>Kids</label>
+			</p>
+			<p>
+				<input type=checkbox id="frontCheckBox" /> <label for="frontCheckBox">Front</label>
+				<input type=checkbox id="backCheckBox" /> <label for="backCheckBox">Back</label>
+			</p>
+			<p>
+				<input type=checkbox id="pocketCheckBox" /> <label for="pocketCheckBox">Pocket</label>
+				<input type=checkbox id="sleeveCheckBox" /> <label for="sleeveCheckBox">Sleeve</label>
+			</p>
+			<p>
+				Screen Number: <span id="chosenScreenNumber"></span><br>
+				Screen Colour: <span id="chosenScreenColour"></span><br>
+				Screen Name: <span id="chosenScreenName"></span>
+			</p>
+			<p>
+				<input id="screenFilterInput" oninput="loadScreens(this)" placeholder="start typing to filter the list" />
+				<input id="toggleListInput" type=button value="Hide List" onclick="toggleScreenList(this)" />
+			</p>
+			<p>
+				Click to select screen <span id=totalSpan>(enter at least 3 characters)</span><br>
+				<table id="screenListTable" class="stripe">
+				</table>
+			</p>
+			<input type="hidden" id="chosenScreenId" value="0" />
+			<input type="hidden" id="currentPrintDesignId" value="0" />
+			<div>
+				<button value="default" onclick="saveScreen(event)">&emsp;Save&emsp;</button>
+				<input type="button" value="Cancel" onclick="this.closest('dialog').close()" />
+			</div>
+		</form>
+
+	</dialog>
+
+	<!-- <button id="newPrintButton" onclick="newPrintDesign()">New Print Design</button> -->
+	<input type=button id="newPrintButton" onclick="newPrintDesign()" value="New Print Design" style="margin-bottom:2em" />
+
+	<table id="datatable" class="stripe">
+		<thead>
+			<tr>
+				<th></th>
+				<th></th>
+				<th>Code</th>
+				<th>Notes</th>
+				<th>Comments</th>
+				<th>Last Used</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+
+	</table>
+
+
+	<script>
+
+		function loadScreens(input) {
+			if (input.value.length < 3) {
+				totalSpan.textContent = "(enter at least 3 characters)"
+				return 
+			}
+			
+			const myTable = document.getElementById("screenListTable")
+			myTable.innerHTML = ""
+
+			fetch(`/screen/filter/${input.value}`)
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
+				}
+			})
+			.then(json => {
+				// for each item returned, add a row to the table
+				json.items.forEach((j, i) => myTable.innerHTML += `<tr onclick=selectScreen(this) data-id=${j.ScreenId} class=${i % 2 ? 'odd' : 'even'}><td>${j.Number}<td>${j.Colour}<td>${j.Name}`)
+				totalSpan.textContent = `(showing ${json.items.length} of ${json.count})`
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+		}
+
+		function saveScreen(event) {
+			if (document.getElementById("chosenScreenId").value == "0") {
+				event.preventDefault()
+				return // nothing chosen
+			}
+			
+			// send to database,
+			// if successful, add a box to the dt selected row
+			const data = {
+				PrintDesignId: document.getElementById("currentPrintDesignId").value,
+				ScreenId: document.getElementById("chosenScreenId").value,
+				SizeCategory: document.getElementById("addScreenForm").sizeCategory.value,
+				Front: document.getElementById("frontCheckBox").checked ? 1 : 0,
+				Back: document.getElementById("backCheckBox").checked ? 1 : 0,
+				Pocket: document.getElementById("pocketCheckBox").checked ? 1 : 0,
+				Sleeve: document.getElementById("sleeveCheckBox").checked ? 1 : 0
+			}
+			fetch("/print/screen/add", {
+				method: "POST",
+				headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify(data)
+			})
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
+				}
+				})
+			.then(json => {
+				// success, create a box in the row
+				const a = document.querySelector(`a[data-id="${data.PrintDesignId}"]`)
+				if (a.parentElement.querySelector(".noscreens")) {
+					a.parentElement.remove(a.parentElement.querySelector(".noscreens"))
+				}
+				let insertDiv = "<div class=screenDiv>"
+				insertDiv += `Sizes: ${data.SizeCategory}<br>`
+				const locations = <%- locations %>;
+				let myLocations = []
+				locations.forEach(loc => {
+					if (data[loc])
+						myLocations.push(loc)
+				})
+				insertDiv += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
+				insertDiv += `Screen Number: ${document.getElementById("chosenScreenNumber").textContent}<br>`
+				insertDiv += `Screen Colour: ${document.getElementById("chosenScreenColour").textContent}<br>`
+				insertDiv += `Screen Name: ${document.getElementById("chosenScreenName").textContent}<br>`
+				insertDiv += `<a href=# data-id=${data.ScreenPrintDesignId} class=removeScreenLink>Remove</a>`
+				insertDiv += "</div>"
+				a.insertAdjacentHTML("beforebegin", insertDiv)
+				
+			})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+		}
+
+
+		function selectScreen(tr) {
+			document.getElementById("chosenScreenNumber").textContent = tr.children[0].textContent
+			document.getElementById("chosenScreenColour").textContent = tr.children[1].textContent
+			document.getElementById("chosenScreenName").textContent = tr.children[2].textContent
+			document.getElementById("chosenScreenId").value = tr.dataset.id
+		}
+
+		function newPrintDesign() {
+			document.getElementById("printDesignIdInput").value = "0"
+			document.getElementById("codeInput").value = ""
+			document.getElementById("notesInput").value = ""
+			document.getElementById("commentsInput").value = ""
+			document.getElementById("dialogHeading").textContent = "Create New Print Design"
+			document.getElementById("printDialog").showModal()
+		}
+
+		function editPrintDesign(btn) {
+			const tr = btn.closest("tr")
+			var row = window.datatable.row(tr);
+			const rowData = row.data()
+			document.getElementById("printDesignIdInput").value = rowData.PrintDesignId
+			document.getElementById("codeInput").value = rowData.Code
+			document.getElementById("notesInput").value = rowData.Notes
+			document.getElementById("commentsInput").value = rowData.Comments
+			document.getElementById("dialogHeading").textContent = "Edit Print Design"
+			document.getElementById("printDialog").showModal()
+		}
+
+		function savePrint() {
+			const PrintDesignId = document.getElementById("printDesignIdInput").value
+			const Code = document.getElementById("codeInput").value.trim()
+			if (Code == "") {
+				return;
+			}
+			const Notes = document.getElementById("notesInput").value.trim()
+			const Comments = document.getElementById("commentsInput").value.trim()
+			if (PrintDesignId == "0") {
+				// save as new/create/POST
+				fetch("/print", {
+					method: "POST",
+					headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify({
+						Code,
+						Notes,
+						Comments
+					})
+				})
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then(json => {
+					// when done, redraw table from scratch so that new item will be on top of list
+					window.datatable.ajax.reload()
+					console.log(json)
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+			}
+			else {
+				// save as edit/update/PUT
+				fetch(`/print/${PrintDesignId}`, {
+					method: "PUT",
+					headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify({
+						Code,
+						Notes,
+						Comments
+					})
+				})
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				// when done, redraw table from scratch so that new item will be on top of list
+				.then(json => window.datatable.ajax.reload(null, false))
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+			}
+
+		}
+
+		window.datatable = new DataTable("#datatable", {
+			processing: true,
+			serverSide: true,
+			ajax: "/print/dt",
+			order: [[0, 'desc']],
+			columns: [
+				{
+					className: "dt-control",
+					orderable: false,
+					data: null,
+					defaultContent: "<br>",
+					sortable: false,
+					width: "40px"
+				},
+				{
+					orderable: false,
+					sortable: false,
+					data: "PrintDesignId",
+					width: "140px",
+					render(data) {
+						return `<input type=button value=Edit onclick="editPrintDesign(this)" /> <input type=reset value=Delete onclick="deletePrint(this)" />` 
+					}
+				},
+				{ data: "Code" },
+				{ data: "Notes" },
+				{ data: "Comments" },
+				{ data: "maxdate", orderable: false}
+			]
+		})
+
+		function format(rowData) {
+			const retVal = fetch(`/print/screens/${rowData.PrintDesignId}`)
+				.then(response => {
+					if (response.ok) 
+						return response.json()
+					else
+						throw new Error(response.statusText)
+					})
+				.then(data => {
+					let itemString = "<div style=display:flex>"
+					if (data.length == 0)
+						itemString += "<span class=noscreens>no screens defined for this print design<span>"
+					else {
+						for (var item of data) {
+							itemString += "<div class=screenDiv>"
+							itemString += `Sizes: ${item.SizeCategory}<br>`
+
+							const locations = <%- locations %>;
+							let myLocations = []
+							locations.forEach(loc => {
+								if (item[loc])
+									myLocations.push(loc)
+							})
+							itemString += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
+							itemString += `Screen Number: ${item.ScreenNumber}<br>`
+							itemString += `Screen Colour: ${item.ScreenColour}<br>`
+							itemString += `Screen Name: ${item.ScreenName}<br>`
+							itemString += `<a href=# data-id=${item.ScreenPrintDesignId} class=removeScreenLink>Remove</a>`
+							itemString += "</div>"
+						}
+					}
+					itemString += `<a href=# class=addScreenLink data-id=${rowData.PrintDesignId} style=align-self:center>Add</a>`
+					itemString += "</div>"
+					return itemString
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+
+			return retVal
+		}
+
+		function removeScreen(a) {
+			fetch(`/print/removescreen/${a.dataset.id}`, {
+				method: "DELETE"
+			})
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then(json => {
+						// when done, remove the div from the list of screens
+						a.parentElement.parentElement.removeChild(a.parentElement)
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+		}
+
+		// can only delete a print design if it's not in use
+		function deletePrint(btn) {
+			var tr = btn.closest("tr");
+			var row = window.datatable.row(tr);
+			var rowData = row.data()
+
+			fetch(`print/${rowData.PrintDesignId}`, {method: "DELETE"})
+			.then(response => {
+				if (response.ok)
+					window.datatable.ajax.reload(null, false)
+				else 
+					alert(`We encountered an error: ${response.statusText}`)
+			})
+		}
+
+		function addScreen(id) {
+			document.getElementById("currentPrintDesignId").value = id
+			document.getElementById("chosenScreenId").value = 0
+			document.getElementById("screenListTable").innerHTML = ""
+			document.getElementById("chosenScreenNumber").textContent = ""
+			document.getElementById("chosenScreenColour").textContent = ""
+			document.getElementById("chosenScreenName").textContent = ""
+
+			document.getElementById("screenFilterInput").value = ""
+			document.getElementById("addScreenDialog").showModal()
+
+		}
+
+		// Add event listener for opening and closing details
+		$("#datatable tbody").on("click", "td.dt-control", function () {
+			var tr = $(this).closest("tr");
+			var row = window.datatable.row(tr);
+
+			if (row.child.isShown()) {
+				// This row is already open - close it
+				row.child.hide();
+				tr.removeClass("shown");
+			}
+			else {
+				// Open this row
+				let myData = format(row.data())
+				myData.then(d => row.child(d).show())
+				tr.addClass('shown');
+			}
+		})
+
+
+
+		// Add event listener for remove screen link
+		$("#datatable tbody").on("click", "a.removeScreenLink", function (event) {
+			event.preventDefault()
+			removeScreen(event.currentTarget)
+		})
+
+		// Add event listener for add screen link
+		$("#datatable tbody").on("click", "a.addScreenLink", function (event) {
+			event.preventDefault()
+			addScreen(event.currentTarget.dataset.id)
+		})
+
+
+
+		function toggleScreenList(btn) {
+			if (btn.value == "Hide List") {
+				document.getElementById("screenListTable").style.display = "none"
+				btn.value = "Show List"
+			}
+			else {
+				document.getElementById("screenListTable").style.display = "block"
+				btn.value = "Hide List"
+			}
+		}
+
+	</script>
+
+
+
+	<%- include("partials/foot.ejs") %>
