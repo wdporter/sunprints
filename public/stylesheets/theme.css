@@ -33,4 +33,9 @@ span.fa-trash {
 	color: #942514;
 }
 
+button:disabled, input[type=button]:disabled, input[type=reset]:disabled, input[type=submit]:disabled {
+	opacity: 0.5;
+}
+
+
 
