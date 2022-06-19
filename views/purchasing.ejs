@@ -3,7 +3,6 @@
 
 
 	<h3>Raise or View Purchase Orders</h3>
-<p>todo — you shouldn't be able to receive order if there are unsaved changes</p>
 
 	<p>
 		If a garment has been added by mistake, remove it by setting all sizes to 0 and click Save
@@ -23,7 +22,6 @@
 
 			 <p v-show="stockOrderId != ''">
 			<label for="stockOrderId">Stock Order Number: {{ stockOrderId }} </label>
-			<!--		<input id="stockOrderId" v-model="stockOrderId" :disabled="stockOrderId == ''"  /> -->
 			</p>
 
 			<p>
@@ -68,7 +66,7 @@
 					<td>{{ garment.Type }}</td>
 					<td>{{ garment.Colour }}</td>
 					<td>{{ garment.Label }}</td>
-					<td v-for="size in sizes[sizeCategory]"><input type=number min=0 v-model="garment[size]" /></td>
+					<td v-for="size in sizes[sizeCategory]"><input type=number min=0 v-model="garment[size]" @change="dirty=true" /></td>
 				</tr>
 			</tbody>
 		</table>
@@ -76,8 +74,8 @@
 		<hr>
 <p>
 	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save Purchase Order</button>&emsp;
-	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == ''" value="Print Purchase Order" />&emsp;
-	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == ''">Receive Order</button>
+	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == '' || dirty==true" value="Print Purchase Order" />&emsp;
+	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true">Receive Order</button>
 </p>
 
 <dialog id="successDialog">
@@ -208,6 +206,7 @@ function addGarment(evt, id) {
 						Kids: [],
 					},
 					sizes: <%- sizes %>,
+					dirty: false
 				}
 		},
 		methods: {
@@ -289,6 +288,7 @@ function addGarment(evt, id) {
 					}
 				})
 				.then(text => {
+					vue.dirty = false
 					vue.stockOrderId = text
 					document.getElementById("successDialog").showModal()
 					vue.stockOrders.push({
@@ -306,19 +306,12 @@ function addGarment(evt, id) {
 				window.open("/purchasing/purchaseorder/" + this.stockOrderId)
 			},
 			receiveOrder() {
+				if (this.dirty) {
+					return
+				}
 				const vue = this
-				// I changed my mind on this. The "Receive Order" should be unavailable if there are unsaved changes
-				// const body = { 
-				// 	chosenGarments: this.chosenGarments,
-				// 	orderDate: this.orderDate,
-				// 	supplierId: this.supplierId,
-				// 	notes: this.notes
-				// }
 				fetch(`/stockorder/receiveorder/${this.stockOrderId}`, { 
 					method: "PUT",
-				// I changed my mind on this. The "Receive Order" should be unavailable if there are unsaved changes
-					// body: JSON.stringify(body), 
-					// headers: new Headers({"Content-Type": "application/json"})
 				})
 				.then(response => {
 					if (response.ok) {
@@ -339,7 +332,10 @@ function addGarment(evt, id) {
 				.catch(error => window.alert(`We encountered an error: ${error}`))
 			},
 			receiveGarment(garment, sizeCategory) {
-				// todo, check for unsaved changes
+				if (this.dirty) {
+					return
+				}
+
 				const vue = this
 				console.log("receive garment", garment, sizeCategory)
 				fetch(`/stockorder/receivegarment/${this.stockOrderId}`, {
