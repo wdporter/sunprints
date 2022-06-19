@@ -63,6 +63,7 @@ ${whereClause}`).get().count
 	catch (ex) {
 		res.statusMessage = ex.message
 		res.sendStatus(400)
+		console.log(`error: get("/dt") ${ex.message}`)
 	}
 
 	finally {
