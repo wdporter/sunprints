@@ -128,6 +128,8 @@
 
 </main>
 
+<main class="wider">
+
 	<table id="dt">
 		<thead>
 			<tr>
@@ -148,10 +150,22 @@
 		</thead>
 	</table>
 
-<main>
+
 
 	
 <script>
+	function cloneOrder(a, event) {
+		event.preventDefault()
+		const tr = a.closest("tr")
+		const api = $("table#dt").dataTable().api()
+		const row = api.row(tr)
+		const data = row.data()
+		const orderid = data.OrderId
+		window.location.href = `/order/new?clone=${orderid}`
+		console.log(orderid)
+	}
+
+
 	window.datatable = new DataTable("table#dt", {
 		fixedHeader: true,
 		processing: true,
@@ -181,7 +195,7 @@
 				className: 'dt-control',
 				orderable: false,
 				data: null,
-				defaultContent: '',
+				defaultContent: `<a href=# onclick="cloneOrder(this, event)"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span>`,
 				title: "click to view sales details",
 				width: "1em"
 			},
@@ -190,7 +204,7 @@
 			},
 			{ data: "OrderNumber", width: "3em" }, 
 			{ data: "OrderDate", 
-				width: "3em",
+				width: "4em",
 				render: function(data) {
 					const num = Date.parse(data)
 					if (isNaN(num))
@@ -199,7 +213,7 @@
 						return new Date(num).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
 				}
 			},
-			{ data: "SalesRep" }, 
+			{ data: "SalesRep", width: "6em" }, 
 			{ data: "DateProcessed", 
 				width: "4em",
 				render: function(data) {
@@ -220,7 +234,7 @@
 						return new Date(num).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
 				}
 			}, 
-			{ data: "Code", class: "centred" }, 
+			{ data: "Code", class: "centred", width: "3em" }, 
 			{ data: "Company"}, 
 			{ data: "Terms", width: "3em" }, 
 			{ data: "BuyIn",
@@ -229,9 +243,7 @@
 					return data ? "✔️" : "❌"
 				}
 			}, 
-			{ data: "Notes",
-				width: "400px"
-			}, 
+			{ data: "Notes" }, 
 			{ data: "Done",
 				width: "1em",
 				render: function(data) {
@@ -242,6 +254,8 @@
 	})
 
 	function format(data) {
+		if (!data) return // happens when you click the clone button
+
 		const retVal = fetch(`/sales/${data.OrderId}/history`)
 				.then(response => {
 					if (response.ok) 

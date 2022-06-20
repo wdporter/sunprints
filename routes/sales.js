@@ -38,14 +38,13 @@ console.log(req.query.customSearch)
 		let recordsTotal = recordsFiltered = statement.all().reduce((acc, curr) => { return acc + curr.Count}, 0)
 		
 
-		query = `SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, '' AS SalesRep, SalesTotal.DateProcessed, 
+		query = `SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, SalesRep, SalesTotal.DateProcessed, 
 		SalesTotal.Delivery, Customer.Code, Customer.Company, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done 
 		FROM SalesTotal 
-		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId 
-		INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId
-		`
-
+		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId `
 		
+		const salesJoin = ` INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId `
+		let useSalesJoin = false
 
 		const params = {}
 		const where = []
@@ -73,6 +72,7 @@ console.log(req.query.customSearch)
 			if (req.query.customSearch.Print && req.query.customSearch.Print != "0") {
 					where.push(`(Sales.FrontPrintDesignId=@Print OR Sales.BackPrintDesignId=@Print OR Sales.PocketPrintDesignId=@Print OR Sales.SleevePrintDesignId=@Print)`)
 					params.Print = req.query.customSearch.Print
+					useSalesJoin = true
 			}
 			if (req.query.customSearch.Screen && req.query.customSearch.Screen != "0") {
 				where.push(`(Sales.FrontScreenId=@Screen OR Sales.FrontScreen2Id=@Screen 
@@ -81,10 +81,12 @@ console.log(req.query.customSearch)
 									OR Sales.SleeveScreenId=@Screen OR Sales.SleeveScreen2Id=@Screen 
 									)`)
 				params.Screen = req.query.customSearch.Screen
+				useSalesJoin = true
 			}
 			if (req.query.customSearch.Embroidery && req.query.customSearch.Embroidery != "0") {
 				where.push(`(Sales.FrontEmbroideryDesignId=@Embroidery OR Sales.BackEmbroideryDesignId=@Embroidery OR Sales.PocketEmbroideryDesignId=@Embroidery OR Sales.SleeveEmbroideryDesignId=@Embroidery)`)
 				params.Embroidery = req.query.customSearch.Embroidery
+				useSalesJoin = true
 			}
 			if (req.query.customSearch.Usb && req.query.customSearch.Usb != "0") {
 				where.push(`(Sales.FrontUsbId=@Usb OR Sales.FrontUsb2Id=@Usb 
@@ -93,19 +95,40 @@ console.log(req.query.customSearch)
 									OR Sales.SleeveUsbId=@Usb OR Sales.SleeveUsb2Id=@Usb 
 									)`)
 				params.Usb = req.query.customSearch.Usb
+				useSalesJoin = true
+			}
+			if (req.query.customSearch.Transfer && req.query.customSearch.Transfer != "0") {
+				where.push(`(Sales.FrontTransferDesignId =@Transfer 
+									OR Sales.BackTransferDesignId  =@Transfer 
+									OR Sales.PocketTransferDesignId=@Transfer 
+									OR Sales.SleeveTransferDesignId=@Transfer)`)
+				params.Transfer = req.query.customSearch.Transfer
+				useSalesJoin = true
+			}
+			if (req.query.customSearch.TransferName && req.query.customSearch.TransferName != "0") {
+				where.push(`(Sales.FrontTransferNameId =@TransferName OR Sales.FrontTransferName2Id =@TransferName 
+									OR Sales.BackTransferNameId  =@TransferName OR Sales.BackTransferName2Id  =@TransferName 
+									OR Sales.PocketTransferNameId=@TransferName OR Sales.PocketTransferName2Id=@TransferName 
+									OR Sales.SleeveTransferNameId=@TransferName OR Sales.SleeveTransferName2Id=@TransferName 
+									)`)
+				params.Usb = req.query.customSearch.Usb
+				useSalesJoin = true
 			}
 
 
 			let recordsFilteredQuery = `SELECT COUNT(*) AS Count FROM SalesTotal
-			LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId 
-			INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId
-			`
+			LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId  `
+			if (useSalesJoin)
+				recordsFilteredQuery += salesJoin
 			if (where.length > 0) {
 				recordsFilteredQuery += ` WHERE ${where.join(" AND ")} `
 			}
 			recordsFiltered = db.prepare(recordsFilteredQuery).get(params).Count
 
 		}
+
+		if (useSalesJoin)
+			query += salesJoin
 
 		if (where.length > 0) 
 			query += ` WHERE ${where.join(" AND ")} `
