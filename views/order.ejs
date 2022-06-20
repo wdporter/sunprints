@@ -18,7 +18,7 @@
 <dialog id="confirmCloneDialog" >
 	<h3>Clone order</h3>
 	<p>We will clone this order to a new order, including all garment details</p>
-	<p>The garment levels will be reduced according to what's on the order</p>
+	<p>The garment levels will be reduced according to what’s on the order</p>
 	<p>The new order will be added to the Sales History table</p>
 	<p>After the clone is complete, you can change details, garments and quantities</p>
 	<h4>Continue?</h4>
@@ -60,6 +60,13 @@
 
 	<script>
 
+	function cloneOrder(id) {
+		
+		window.location.href = "/order/new?clone=" + id
+	}
+
+
+
 		function format(d) {
 			const ret = fetch(`/order/dt/garments/${d.OrderId}`)
 				.then(response => {
@@ -82,6 +89,7 @@
 				.catch(err => window.alert(`We enountered an error: ${error}`))
 			return ret
 		}
+
 
 		window.datatable = new DataTable("#orderTable", {
 			dom: "lf<'buttondiv'B>rtip",
@@ -222,6 +230,7 @@
 			order: [[0, "desc"]]
 		})
 
+
 		// Add event listener for opening and closing details
 		$('#orderTable tbody').on('click', 'td.dt-control', function () {
 			var tr = $(this).closest('tr');
@@ -240,9 +249,6 @@
 			}
 		})
 
-		function cloneOrder(id) {
-			window.location.href = "/order/new?clone=" + id
-		}
 
 		function ship(id) {
 			fetch(`/order/ship/${id}`, { method: "PUT" })
