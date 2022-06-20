@@ -38,6 +38,9 @@ router.get("/:id", function (req, res) {
 })
 
 
+/*************************************************************************** */
+
+
 // POST is insert new stock order
 router.post("/", function (req, res) {
 
@@ -137,111 +140,6 @@ router.post("/", function (req, res) {
 		db.prepare("COMMIT").run()
 
 		res.send(String(req.body.stockOrderId))
-
-
-	}
-	catch (ex) {
-		db.prepare("ROLLBACK").run()
-		res.statusMessage = ex.message
-		res.sendStatus(400)
-	}
-	finally {
-		db.close()
-	}
-
-
-})
-
-
-
-// PUT to save changes
-router.put("/:id", function (req, res) {
-
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-	try {
-
-		db.prepare("BEGIN TRANSACTION").run()
-
-		req.body.createdBy = req.body.lastModifiedBy = req.auth.user
-		req.body.createdDateTime = req.body.lastModifiedDateTime = new Date().toLocaleString()
-		req.body.stockOrderId = req.params.id
-
-		let statement = db.prepare("SELECT * FROM StockOrder WHERE StockOrderId=?")
-		const original = statement.get(req.params.id)
-		const changes = []
-		if (original.Notes != req.body.notes)
-			changes.push("Notes") //  = @notes
-		if (original.SupplierId != req.body.supplierId)
-			changes.push("SupplierId") //  = @supplierId
-		if (original.OrderDate != req.body.orderDate)
-			changes.push("OrderDate") //  = @orderDate
-
-		if (changes.length > 0) {
-
-			statement = db.prepare(`UPDATE StockOrder SET 
-				${changes.map(c => ` ${c}=@${c[0].toLowerCase()}${c.substring(1)} `).join(", ")}, 
-				LastModifiedBy = @lastModifiedBy, 
-				LastModifiedDateTime = @lastModifiedDateTime
-				WHERE StockOrderId = @stockOrderId
-			;`)
-
-			let info = statement.run(req.body)
-			console.log(info)
-
-			statement = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, ?, ?, ?)")
-			info = statement.run("StockOrder", req.body.stockOrderId, "UPD", req.body.lastModifiedBy, req.body.lastModifiedDateTime)
-			const auditLogId = info.lastInsertRowid
-			statement = db.prepare("INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)")
-			for (const change of changes) {
-				info = statement.run(auditLogId, change, original[change], req.body[`${change[0].toLowerCase()}${change.substring(1)}`])
-			}
-
-		}
-
-		// remove all items in StockOrderGarment, so we can add them back in,
-		// which is much easier than trying to figure out what has changed
-		// todo, this is lazy, do it properly, for the sake of audit logging
-		statement = db.prepare(`DELETE FROM StockOrderGarment WHERE StockOrderId=?`)
-		statement.run(req.params.id)
-
-
-		sz.sizeCategories.forEach(function (category) {
-			req.body.chosenGarments[category].forEach(function (garment) {
-				let count = 0
-				let insert = `INSERT INTO StockOrderGarment (
-					StockOrderId, GarmentId `
-				sz.allSizes.forEach(function (size) {
-					if (garment[size]) {
-						insert += ` , ${size}`
-						count += garment[size]
-					}
-				})
-
-				if (count == 0)
-					return // we don't save it if the values add up to 0
-
-
-				insert += `, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime ) VALUES ( 
-					@stockOrderId, @GarmentId `
-				sz.allSizes.forEach(function (size) {
-					if (garment[size])
-						insert += ` , @${size}`
-				})
-				insert += ` , @createdBy, @createdDateTime, @createdBy, @createdDateTime`
-				insert += ` )`
-				let statement = db.prepare(insert)
-				garment.stockOrderId = req.body.stockOrderId
-				garment.createdBy = req.body.createdBy
-				garment.createdDateTime = req.body.createdDateTime
-				const info = statement.run(garment)
-				console.log(info)
-			})
-		})
-
-
-		db.prepare("COMMIT").run()
-
-		res.send(`${req.body.stockOrderId}`)
 
 
 	}
@@ -358,6 +256,158 @@ router.post("/receivegarment/:id", function (req, res) {
 	}
 	finally {
 		db.close()
+	}
+
+})
+
+
+
+/*************************************************************************** */
+
+
+// PUT to save changes
+router.put("/:id", function (req, res) {
+
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+
+		db.prepare("BEGIN TRANSACTION").run()
+
+		req.body.createdBy = req.body.lastModifiedBy = req.auth.user
+		req.body.createdDateTime = req.body.lastModifiedDateTime = new Date().toLocaleString()
+		req.body.stockOrderId = req.params.id
+
+		let statement = db.prepare("SELECT * FROM StockOrder WHERE StockOrderId=?")
+		const original = statement.get(req.params.id)
+		const changes = []
+		if (original.Notes != req.body.notes)
+			changes.push("Notes") //  = @notes
+		if (original.SupplierId != req.body.supplierId)
+			changes.push("SupplierId") //  = @supplierId
+		if (original.OrderDate != req.body.orderDate)
+			changes.push("OrderDate") //  = @orderDate
+
+		if (changes.length > 0) {
+
+			statement = db.prepare(`UPDATE StockOrder SET 
+				${changes.map(c => ` ${c}=@${c[0].toLowerCase()}${c.substring(1)} `).join(", ")}, 
+				LastModifiedBy = @lastModifiedBy, 
+				LastModifiedDateTime = @lastModifiedDateTime
+				WHERE StockOrderId = @stockOrderId
+			;`)
+
+			let info = statement.run(req.body)
+			console.log(info)
+
+			statement = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, ?, ?, ?)")
+			info = statement.run("StockOrder", req.body.stockOrderId, "UPD", req.body.lastModifiedBy, req.body.lastModifiedDateTime)
+			const auditLogId = info.lastInsertRowid
+			statement = db.prepare("INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)")
+			for (const change of changes) {
+				info = statement.run(auditLogId, change, original[change], req.body[`${change[0].toLowerCase()}${change.substring(1)}`])
+			}
+
+		}
+
+		// remove all items in StockOrderGarment, so we can add them back in,
+		// which is much easier than trying to figure out what has changed
+		// todo, this is lazy, do it properly, for the sake of audit logging
+		statement = db.prepare(`DELETE FROM StockOrderGarment WHERE StockOrderId=?`)
+		statement.run(req.params.id)
+
+
+		sz.sizeCategories.forEach(function (category) {
+			req.body.chosenGarments[category].forEach(function (garment) {
+				let count = 0
+				let insert = `INSERT INTO StockOrderGarment (
+					StockOrderId, GarmentId `
+				sz.allSizes.forEach(function (size) {
+					if (garment[size]) {
+						insert += ` , ${size}`
+						count += garment[size]
+					}
+				})
+
+				if (count == 0)
+					return // we don't save it if the values add up to 0
+
+
+				insert += `, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime ) VALUES ( 
+					@stockOrderId, @GarmentId `
+				sz.allSizes.forEach(function (size) {
+					if (garment[size])
+						insert += ` , @${size}`
+				})
+				insert += ` , @createdBy, @createdDateTime, @createdBy, @createdDateTime`
+				insert += ` )`
+				let statement = db.prepare(insert)
+				garment.stockOrderId = req.body.stockOrderId
+				garment.createdBy = req.body.createdBy
+				garment.createdDateTime = req.body.createdDateTime
+				const info = statement.run(garment)
+				console.log(info)
+			})
+		})
+
+
+		db.prepare("COMMIT").run()
+
+		res.send(`${req.body.stockOrderId}`)
+
+
+	}
+	catch (ex) {
+		db.prepare("ROLLBACK").run()
+		res.statusMessage = ex.message
+		res.sendStatus(400)
+	}
+	finally {
+		db.close()
+	}
+
+
+})
+
+
+router.put("/removegarment/:stockorderid/:garmentid", (req, res) => {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+		db.prepare("BEGIN TRANSACTION").run()
+		const myStockOrderGarment = db.prepare("SELECT * FROM StockOrderGarment WHERE StockOrderId=? AND GarmentId=?").get(req.params.stockorderid, req.params.garmentid)
+
+		let info = db.prepare("DELETE FROM StockOrderGarment WHERE StockOrderGarmentId=?").run(myStockOrderGarment.StockOrderGarmentId)
+		console.log(info)
+
+		let statement = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, ?, ?, ?)")
+		info = statement.run("StockOrderGarment", myStockOrderGarment.StockOrderGarmentId, "DEL", req.auth.user, Date.now().toLocaleString())
+		console.log(info)
+		const auditLogId = info.lastInsertRowid
+
+		statement = db.prepare("INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)")
+		info = statement.run(auditLogId, "StockOrderId", req.params.stockorderid, null)
+		console.log(info)
+		info = statement.run(auditLogId, "GarmentId", req.params.garmentid, null)
+		console.log(info)
+		for (size of sz.allSizes) {
+			if (myStockOrderGarment[size] != 0) {
+				info = statement.run(auditLogId, size, myStockOrderGarment[size], null)
+				console.log(info)
+			}
+		}
+
+
+		db.prepare("COMMIT").run()
+
+		res.send("ok").end()
+	}
+	catch (ex) {
+		db.prepare("ROLLBACK").run()
+		res.statusMessage = ex.message
+		res.status(400).end()
+		console.log(`error: put("/removegarment/:stockorderid/:garmentid") ${ex.message}`)
+	}
+	finally {
+			db.close()
 	}
 
 })

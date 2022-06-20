@@ -1,13 +1,14 @@
 <%- include("partials/head.ejs") %>
 
+<style>
+	span.fa-trash, span.fa-download {
+		margin-top: .5em;
+	}
+
+</style>
 
 
 	<h3>Raise or View Purchase Orders</h3>
-
-	<p>
-		If a garment has been added by mistake, remove it by setting all sizes to 0 and click Save
-		<!-- todo maybe fix this by having a delete button alongside garments -->
-	</p>
 
 	<div id=vueApp>
 		<fieldset><legend>{{ stockOrderId == "<%= stockOrderId %>" ? "Create New" : "Edit existing"  }}</legend>
@@ -58,10 +59,11 @@
 			<tbody>
 				<tr v-if="arr.length==0"><td :colspan="sizes[sizeCategory].length+4">Select garments from the list</td></tr>
 				<tr v-for="(garment, i) in arr" :key="i">
-					<td>{{ garment.Code }}<br>
+					<td>{{ garment.Code }} <br>
 						<a href=# @click.prevent="receiveGarment(garment, sizeCategory)" :data-id="garment.GarmentId" 
-						title="Receive this garment into stock"><span class="fa fa-download fa-2x"></span></a>
-						
+						title="Receive this garment into stock"><span class="fa fa-download fa-lg"></span></a><br>
+						<a href=# @click.prevent="removeGarment(garment.GarmentId, sizeCategory)" :data-id="garment.GarmentId" 
+						title="Remove this garment from this order"><span class="fa fa-trash fa-lg"></span></a>
 					</td>
 					<td>{{ garment.Type }}</td>
 					<td>{{ garment.Colour }}</td>
@@ -71,7 +73,7 @@
 			</tbody>
 		</table>
 
-		<hr>
+<hr>
 <p>
 	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save Purchase Order</button>&emsp;
 	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == '' || dirty==true" value="Print Purchase Order" />&emsp;
@@ -86,9 +88,6 @@
   </form>
 </dialog>
 
-<p>
-to remove a garment, set all size quantities to empty or 0
-</p>
 </div>
 <hr>
 
@@ -221,7 +220,6 @@ function addGarment(evt, id) {
 					return
 				}				
 				const vue = this
-				console.log("order selected", this.stockOrderId)
 				// get details of the stock order, and populate the chosen garments
 				fetch(`/stockorder/${this.stockOrderId}`)
 				.then(response => {
@@ -233,6 +231,7 @@ function addGarment(evt, id) {
 					}
 				})
 				.then(json => {
+						vue.dirty = false
 						vue.stockOrderId = json.StockOrderId
 						vue.notes = json.Notes
 						vue.orderDate = json.OrderDate
@@ -258,7 +257,6 @@ function addGarment(evt, id) {
 			},
 			saveItem(evt) {
 				evt.preventDefault()
-				console.log("saving")
 				let method = "POST" // POST to insert, when no stock order id
 				let url = "/stockorder"
 				if (this.stockOrderId != "" ) { // PUT to edit
@@ -302,7 +300,6 @@ function addGarment(evt, id) {
 
 			},
 			printItem() {
-				console.log("print item")
 				window.open("/purchasing/purchaseorder/" + this.stockOrderId)
 			},
 			receiveOrder() {
@@ -337,7 +334,6 @@ function addGarment(evt, id) {
 				}
 
 				const vue = this
-				console.log("receive garment", garment, sizeCategory)
 				fetch(`/stockorder/receivegarment/${this.stockOrderId}`, {
 					method: "POST", 
 					body: JSON.stringify(garment),
@@ -361,6 +357,22 @@ function addGarment(evt, id) {
 					}
 				})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
+			},
+			removeGarment(id, sizeCategory) {
+				const vue = this
+				fetch(`/stockorder/removegarment/${this.stockOrderId}/${id}`, {method: "PUT"})
+				.then(response => {
+					if (response.ok) return response.text()
+					else  {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then(text => {
+					vue.chosenGarments[sizeCategory] = vue.chosenGarments[sizeCategory].filter(g => g.GarmentId != id)
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+
 			},
 			isInvalid() {
 				return this.supplierId == "" || 
