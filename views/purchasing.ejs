@@ -113,14 +113,15 @@
 function addGarment(evt, id) {
 	evt.preventDefault()
 	const data = window.datatable.row(`#row-${id}`).data()
-
-	window.vueApp.chosenGarments[data.SizeCategory].push({
+	window.vueApp.addChosenGarment(data.SizeCategory, {
 		Code: data.Code,
 		Type: data.Type,
 		Colour: data.Colour,
 		Label: data.Label,
 		GarmentId: data.GarmentId
 	})
+
+	
 }
 
 		window.datatable = new DataTable("#garmentTable", {
@@ -254,6 +255,10 @@ function addGarment(evt, id) {
 						})
 				})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
+			},
+			addChosenGarment(sizeCategory, data) {
+				if (!this.chosenGarments[sizeCategory].find(g => g.GarmentId == data.GarmentId ))
+					this.chosenGarments[sizeCategory].push(data)
 			},
 			saveItem(evt) {
 				evt.preventDefault()
