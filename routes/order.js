@@ -79,6 +79,7 @@ router.get("/new", function (req, res, next) {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	let customer = null
 	let garments = []
+	let order = null
 
 	try {
 		if (req.query.customerid) {
@@ -86,20 +87,12 @@ router.get("/new", function (req, res, next) {
 			customer = statement.get(req.query.customerid)
 		}
 
-		if (req.query.garmentid) {
-			statement = db.prepare(`SELECT * FROM Garment WHERE Deleted=0 AND GarmentId=?`)
-			const garment = statement.get(req.query.garmentid)
-			if (garment) {
-				garment.Quantities = {
-					Adults: {
-						XS: 0, Sm: 0, M: 0, L: 0, XL: 0, "2XL": 0, "3XL": 0, "4XL": 0, "5XL": 0, "6XL": 0, "7XL": 0, "8XL": 0
-					},
-					Womens: { "6": 0, "8": 0, "10": 0, "12": 0, "14": 0, "16": 0, "18": 0, "20": 0, "22": 0, "24": 0, "26": 0, "28": 0 },
-					Kids: { "0": 0, "1": 0, "2": 0, "4": 0, "6": 0, "8": 0, "10": 0, "12": 0, "14": 0, "16": 0 }
-				}
-
-				garments = [garment]
-			}
+		if (req.query.clone) {
+			order = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(req.query.clone)
+			order.OrderId = 0
+			order.OrderDate = new Date().toISOString()
+			order.DeliverDate = ""
+			customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(order.CustomerId)
 		}
 
 		const salesReps = db.prepare("SELECT Name, Deleted FROM SalesRep WHERE Deleted=0").all()
@@ -108,7 +101,7 @@ router.get("/new", function (req, res, next) {
 			title: "New Order",
 			mode: "new",
 			customer,
-			order: null,
+			order,
 			garments,
 			user: req.auth.user,
 			salesReps,
@@ -336,8 +329,7 @@ router.get("/edit", function (req, res, next) {
 				query = `SELECT ${sz.locations.join(",")}, UsbEmbroideryDesignId, Usb.UsbId, Number, Notes
 				FROM UsbEmbroideryDesign 
 				INNER JOIN Usb ON Usb.UsbId = UsbEmbroideryDesign.UsbId
-				WHERE UsbEmbroideryDesign.Deleted=0 
-				AND SizeCategory=? 
+				WHERE SizeCategory=? 
 				AND EmbroideryDesignId=? `
 				const usbEmbroideryDesigns = db.prepare(query).all(g.SizeCategory, g.selectedEmbroideryDesign.EmbroideryDesignId)
 				usbEmbroideryDesigns.forEach(de => {
@@ -619,6 +611,7 @@ router.get("/printdesigns/:id", function (req, res) {
 
 })
 
+
 /* GET the garments on an order, used when you click a datatables row on the Order list page. */
 router.get("/dt/garments/:orderId", function (req, res) {
 	
@@ -738,6 +731,7 @@ router.get("/dt/garments/:orderId", function (req, res) {
 	}
 
 })
+
 
 /****************************************************************************** */
 
@@ -1300,12 +1294,17 @@ router.put("/ship/:id", function (req, res) {
 		let info = statement.run(params)
 		console.log(info)
 
+		delete params.LastModifiedBy
+		delete params.LastModifiedDateTime
+
 		// add to audit logs
 		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
 		info = statement.run("Orders", req.params.id, "UPD", req.auth.user, date)
 		console.log(info)
 		const auditLogId = info.lastInsertRowid
 		delete params.OrderId
+		delete params.LastModifiedBy
+		delete params.LastModifiedDateTime
 		for (const param in params) {
 			statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
 			info = statement.run(auditLogId, param, order[param], params[param])
@@ -1344,7 +1343,7 @@ router.put("/ship/:id", function (req, res) {
 
 
 
-// PUT to undelete an order
+// PUT to undelete an order, also adds it back to SalesTotal
 router.put("/restore/:id", (req, res) => {
 
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
@@ -1354,13 +1353,25 @@ router.put("/restore/:id", (req, res) => {
 
 		const date = new Date().toLocaleString()
 		let statement = db.prepare("UPDATE Orders SET Deleted=0, LastModifiedBy=?, LastModifiedDateTime=? WHERE OrderId=?")
-		statement.run(req.auth.user, date, req.params.id)
+		let info = statement.run(req.auth.user, date, req.params.id)
+		console.log(info)
 
 		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
 		info = statement.run("Order", req.params.id, "UPD", req.auth.user, date)
 
 		statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES (?, ?, ?, ?)")
 		info = statement.run(info.lastInsertRowid, "Deleted", 1, 0)
+
+		// add it to the SalesTotal table
+		const myOrder = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(req.params.id)
+		statement = db.prepare(`INSERT INTO SalesTotal (
+OrderId, OrderNumber, CustomerId, SalesRep, OrderDate, Repeat, New, BuyIn, Terms, Delivery, Notes, CustomerOrderNumber, 
+Company, DateProcessed, DateInvoiced, InvoiceNumber, Done
+) VALUES ( 
+@OrderId, @OrderNumber, @CustomerId, @SalesRep, @OrderDate, @Repeat, @New, @BuyIn, @Terms, @DeliveryDate, @Notes, @CustomerOrderNumber,
+@Company, @ProcessedDate, @InvoiceDate, @InvoiceNumber, @Done)`)		
+		info = statement.run(myOrder)
+
 
 		db.prepare("COMMIT").run()
 

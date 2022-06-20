@@ -60,8 +60,8 @@ table#stockWarningTable {
 
 <fieldset>
 	<legend>1. Order details</legend>
-	<input type=hidden id=orderId value=<%=mode=="edit" ? orderid : "0" %> />
-	<details id=chooseCustomerDetails style="margin-top:2em" <% if (mode=="new") { %>open<% } %> >
+	<input type=hidden id=orderId value=<%= mode=="edit" ? orderid : "0" %> />
+	<details id=chooseCustomerDetails style="margin-top:2em" <% if (mode == "new" && customer == null) { %>open<% } %> >
 		<input type=hidden id=selectedCustomerId value="<%= customer ? customer.CustomerId : '' %>" />
 		<summary>Choose customer</summary>
 		<input id=searchCustomerInput placeholder="type a code or company" autofocus />
