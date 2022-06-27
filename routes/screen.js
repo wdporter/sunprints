@@ -74,18 +74,59 @@ router.get("/filter/:term", function(request, response) {
 /* get screens for data tables server side processing */
 router.get("/dt", function(req, res) {
 
-	let db = null
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 		
 		// first get count of all records
 		let statement = db.prepare("SELECT COUNT(*) as Count FROM Screen WHERE Deleted=0 ")
 		const recordsTotal = statement.get().Count
 		let recordsFiltered = recordsTotal
 
-		let query = "SELECT * FROM Screen "
-		let	whereClause = "WHERE Deleted=0"
+		let query = `SELECT Screen.ScreenId, Number, Colour, Name, s.maxdate AS LastUsed FROM Screen
+		LEFT OUTER JOIN 
+		(SELECT Sales.FrontScreenId AS ScreenId, MAX(SalesTotal.OrderDate, 0) AS maxdate
+		FROM Sales
+		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+		GROUP BY Sales.FrontScreenId
+		UNION ALL 
+		SELECT Sales.FrontScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+		FROM Sales
+		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+		GROUP BY Sales.FrontScreenId
+		UNION ALL 
+		SELECT Sales.BackScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+		FROM Sales
+		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+		GROUP BY Sales.BackScreenId
+		UNION ALL 
+		SELECT Sales.BackScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+		FROM Sales
+		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+		GROUP BY Sales.BackScreen2Id
+		UNION ALL 
+		SELECT Sales.PocketScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+		FROM Sales
+		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+		GROUP BY Sales.PocketScreenId
+		UNION ALL 
+		SELECT Sales.PocketScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+		FROM Sales
+		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+		GROUP BY Sales.PocketScreen2Id
+		UNION ALL 
+		SELECT Sales.SleeveScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+		FROM Sales
+		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+		GROUP BY Sales.SleeveScreenId
+		UNION ALL 
+		SELECT Sales.SleeveScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+		FROM Sales
+		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+		GROUP BY Sales.SleeveScreen2Id
+		) s
+		ON  s.ScreenId=Screen.ScreenId `
+		let	whereClause = " WHERE Deleted=0 "
 		if (req.query.search.value)
 			req.query.search.value = req.query.search.value.trim()
 		if (req.query.search.value) {
@@ -99,11 +140,9 @@ router.get("/dt", function(req, res) {
 
 		query += whereClause
 
-		const columns = ["ScreenId", "Number", "Colour", "Name"]
-		const orderByClause = req.query.order.map(o => ` ${columns[o.column]} COLLATE NOCASE ${o.dir} `)
-		query += ` ORDER BY ${orderByClause.join(",")}`
+		query += ` ORDER BY ${parseInt(req.query.order[0].column) + 1} COLLATE NOCASE ${req.query.order[0].dir} `
 
-		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
+		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start} `
 		const data = db.prepare(query).all()
 
 
@@ -112,16 +151,16 @@ router.get("/dt", function(req, res) {
 			recordsTotal,
 			recordsFiltered,
 			data
-		})
+		}).end()
 
 	}
 	catch(ex) {
 		res.statusMessage = ex.message
-		res.status(400)
+		res.status(400).end()
+		console.log(ex)
 	}
 	finally {
-		if (db != null)
-			db.close()
+		db.close()
 	}
 
 })

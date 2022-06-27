@@ -30,6 +30,7 @@
 				<th>Number</th>
 				<th>Colour</th>
 				<th>Name</th>
+				<th>Last Used</th>
 			</tr>
 		</thead>
 
@@ -46,7 +47,7 @@
 				language: {
 					searchPlaceholder: "Search number, colour or name"
 				},
-				order: [[0, 'desc']],
+				order: [[3, 'asc']],
 				columns: [
 					{
 						orderable: false,
@@ -56,8 +57,18 @@
 						}
 					},
 					{ data: "Number" },
-					{ data: "Colour", width: "150px" },
-					{ data: "Name", width: "300px" }
+					{ data: "Colour" },
+					{ data: "Name" },
+					{ 
+						data: "LastUsed",
+						render: function(data) {
+							const ts = Date.parse(data)
+							if (isNaN(ts))
+								return ""
+							return new Date(ts).toLocaleDateString()
+
+						}  
+					}
 				]
 			})
 
