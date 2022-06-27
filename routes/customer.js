@@ -41,7 +41,7 @@ router.get("/dt", function (req, res, next) {
 		let query = `SELECT Customer.*, s.maxdate FROM Customer 
 		LEFT OUTER JOIN 
 		(SELECT CustomerId, MAX(OrderDate) AS maxdate
-		FROM Sales 
+		FROM SalesTotal 
 		GROUP BY CustomerId
 		) s
 		ON  s.CustomerId=Customer.CustomerId 
