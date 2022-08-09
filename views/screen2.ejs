@@ -1,0 +1,233 @@
+<%- include("partials/head2.ejs") %>
+
+	<p><a href="/screen/deleted">View (and restore) deleted screens</a></p>
+
+
+
+	<div id=app>
+
+	<dialog id=errorDialog style="max-width: 300px">
+		<h4>❌ We encountered an error</h4>
+		<p v-text="errorMessage"></p>
+		<form method="dialog">
+			<button>OK</button>
+		</form>
+	</dialog>
+		
+
+	<dialog id=editDialog >
+		<h3>{{ editItem.ScreenId == "0" ? "New" : "Edit" }} Screen</h3>
+		<form method=dialog id=editForm>
+			<div id=app>
+				<input type=hidden v-model="editItem.ScreenId">
+				<p>
+					<label for=number>Number:</label> 
+					<input id=number v-model="editItem.Number" placeholder=required required autofocus>
+				</p>
+				<p>
+					<label for=colour>Colour:</label> 
+					<input id=colour v-model="editItem.Colour">
+				</p>
+				<p>
+					<label for=name>Name:</label> 
+					<textarea id=name rows=4 v-model="editItem.Name"></textarea>
+				</p>
+				<p>
+					<input type=submit value=Save @click="save" />&emsp;
+					<input type=button value=Cancel @click="$event.target.closest('dialog').close()" />
+				</p>
+			</div>
+		</form>
+	</dialog>
+
+		<p><input type="button" value="Create New Screen" @click="newScreen" /></p>
+		<p>
+			<label for=searchValue>Search:</label><input type=search id=searchValue v-model=searchValue @input="onSearchValueInput" />
+		</p>
+		<p><br></p>
+		<easy-data-table 
+			v-model:server-options="serverOptions" 
+			:server-items-length="serverItemsLength" 
+			:loading="loading"
+			:headers="headers" 
+			:items="items" 
+			buttons-pagination 
+			alternating
+			:rows-items="[10, 25, 50, 100]"
+			> 
+			<template #item-screenid="{ScreenId}">
+				<span role=button tabindex=0 aria-label=edit   @click="edit  (ScreenId)" @keydown.enter.space.prevent="edit  (ScreenId)" title="edit this item"  ><span class="fa fa-lg fa-edit" ></span></span>&ensp;
+				<span role=button tabindex=0 aria-label=delete @click="remove(ScreenId)" @keydown.enter.space.prevent="remove(ScreenId)" title="delete this item"><span class="fa fa-lg fa-trash"></span></span>
+			</template>
+			<template #item-lastused="{LastUsed}">
+				{{ formatDate(LastUsed) }}
+			</template>
+	</div>
+
+
+	<script>
+
+
+
+		const App = {
+			components: {
+				EasyDataTable: window["vue3-easy-data-table"],
+			},
+			data() {
+				return {
+					headers: [
+						{ text: "Actions", value: "screenid", sortable: false },
+						{ text: "Number", value: "Number", sortable: true },
+						{ text: "Colour", value: "Colour", sortable: true },
+						{ text: "Name", value: "Name", sortable: true },
+						{ text: "Last Used", value: "lastused", sortable: true }
+					],
+					items: [],
+					serverOptions: {
+						page: 1,
+						rowsPerPage: 10,
+						sortBy: "Number",
+						sortType: "asc",
+						
+					},
+					searchValue: "",
+					serverItemsLength: 0,
+					loading: false,
+					errorMessage: "",
+					editItem: { 
+						ScreenId:0,
+						Number: "",
+						Colour: "",
+						Name: ""
+					}
+				}
+			},
+			methods: {
+
+				loadFromServer() {
+					this.loading = true
+					const data = Object.assign({searchValue: this.searchValue}, this.serverOptions)
+					//data.sortBy = data.sortBy[0].toUpperCase() + data.sortBy.slice(1)
+					fetch(`/screen/vt`, {
+						method: "POST",
+						headers: new Headers({"Content-Type": "application/json"}),
+						body: JSON.stringify(data)
+					})
+						.then(response => response.json())
+						.then(json => {
+							console.log(json)
+							json.data.forEach(d => d.colour = d.Colour)
+							this.items = json.data
+							this.serverItemsLength = json.count
+							this.loading = false
+						}
+						)
+				},
+				formatDate(d) {
+					const ts = Date.parse(d)
+					if (isNaN(ts))
+						return "never"
+					else 
+						return new Date(ts).toLocaleDateString("en-au", {year: "numeric", day: "numeric", month:
+				"numeric"}) 
+				},
+				newScreen() {
+					this.editItem.ScreenId = 0
+					this.editItem.Number = ""
+					this.editItem.Colour = ""
+					this.editItem.Name = ""
+					document.getElementById("editDialog").showModal()
+				},
+				save() {
+					if (document.getElementById("editForm").reportValidity()) {
+						let method = "POST" 
+						let url = "/screen"
+						if (this.editItem.ScreenId > 0) {
+							method = "PUT"
+							url += `/${this.editItem.ScreenId}`
+						}
+						const body = Object.assign({}, this.editItem)
+						delete body.LastUsed
+						fetch(url, {
+							method,
+							headers: new Headers({
+								"Content-Type": "application/json"
+							}),
+							body: JSON.stringify(body)
+						})
+						.then(response => {
+							if (response.ok)
+								return response.json()
+							else
+								throw new Error(response.statusText)
+						})
+						.then(json => {
+							if (this.editItem.ScreenId == 0) {
+								this.serverOptions.sortBy = "1"
+								this.serverOptions.sortType = "desc",
+								this.loadFromServer()
+							}
+							else {
+								const currentItem = this.items.find(i => i.ScreenId == this.editItem.ScreenId)
+								currentItem.Name = this.editItem.Name
+								currentItem.Colour = this.editItem.Colour
+								currentItem.Number = this.editItem.Number
+							}
+						})
+						.catch(error => {
+							this.errorMessage = error
+							document.getElementById("errorDialog").showModal()
+						})
+					}
+				},
+				edit(screenid) {
+					console.log("edit", screenid)
+					const currentItem = this.items.find(i => i.ScreenId==screenid)
+					this.editItem = Object.assign({}, currentItem)
+					document.getElementById("editDialog").showModal()
+				},
+				remove(screenid) {
+					console.log("remove", screenid)
+					fetch(`/screen/${screenid}`, {
+						method: "DELETE"
+					})
+						.then(response => {
+							if (response.ok)
+								return response.json()
+							else
+								throw new Error(response.statusText)
+						})
+						.then(json => this.loadFromServer() )
+						.catch(error => {
+							this.errorMessage = error
+							document.getElementById("errorDialog").showModal()
+						})
+				},
+				create() {
+
+				},
+				onSearchValueInput: debounce(() => window.app.loadFromServer())
+			},
+			watch: {
+				serverOptions: {
+					handler(value) {
+						console.log(value)
+						this.loadFromServer()
+					},
+					deep: true
+				}
+			},
+			mounted() {
+				this.loadFromServer()
+			}
+		}
+		window.app = Vue.createApp(App).mount("#app")
+	</script>
+
+
+
+
+
+
+
+	<%- include("partials/foot.ejs") %>

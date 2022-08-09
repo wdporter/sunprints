@@ -6,7 +6,7 @@ const Database = require("better-sqlite3")
 
 /* GET Screens page. */
 router.get("/", function (req, res, next) {
-	res.render("screen.ejs", { 
+	res.render("screen2.ejs", { 
 		title: "Screens",
 		user: req.auth.user
 	 })
@@ -69,6 +69,7 @@ router.get("/filter/:term", function(request, response) {
 
 
 })
+
 
 
 /* get screens for data tables server side processing */
@@ -248,6 +249,7 @@ router.post("/", function(req, res) {
 
 	}
 	catch(ex) {
+		console.log(ex)
 		res.statusMessage = ex.message
 		res.status(400).end()
 	}
@@ -300,6 +302,93 @@ router.post("/deleted/dt", function(req, res) {
 })
 
 
+// POST get screens in vue data table format
+router.post("/vt", (req, res) => {
+
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+
+		let query = "SELECT COUNT(*) AS Count FROM Screen WHERE DELETED = 0"
+		let search = ""
+		if (req.body.searchValue.trim()) {
+			search = `%${decodeURIComponent(req.body.searchValue.trim())}%`
+			query += ` AND ( Number LIKE @search OR Colour LIKE @search OR Name LIKE @search ) `
+		}
+		const count = db.prepare(query).get({search}).Count
+	
+
+	query = `SELECT Screen.ScreenId, Number, Colour, Name, s.maxdate AS LastUsed FROM Screen
+	LEFT OUTER JOIN 
+	(SELECT Sales.FrontScreenId AS ScreenId, MAX(SalesTotal.OrderDate, 0) AS maxdate
+	FROM Sales
+	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	GROUP BY Sales.FrontScreenId
+	UNION ALL 
+	SELECT Sales.FrontScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	FROM Sales
+	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	GROUP BY Sales.FrontScreenId
+	UNION ALL 
+	SELECT Sales.BackScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	FROM Sales
+	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	GROUP BY Sales.BackScreenId
+	UNION ALL 
+	SELECT Sales.BackScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	FROM Sales
+	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	GROUP BY Sales.BackScreen2Id
+	UNION ALL 
+	SELECT Sales.PocketScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	FROM Sales
+	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	GROUP BY Sales.PocketScreenId
+	UNION ALL 
+	SELECT Sales.PocketScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	FROM Sales
+	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	GROUP BY Sales.PocketScreen2Id
+	UNION ALL 
+	SELECT Sales.SleeveScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	FROM Sales
+	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	GROUP BY Sales.SleeveScreenId
+	UNION ALL 
+	SELECT Sales.SleeveScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	FROM Sales
+	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	GROUP BY Sales.SleeveScreen2Id
+	) s
+	ON  s.ScreenId=Screen.ScreenId 
+	WHERE Deleted=0  `
+
+	if (search) {
+		query += ` AND ( Number LIKE @search OR Colour LIKE @search OR Name LIKE @search ) `
+	}
+
+
+	query += `ORDER BY ${req.body.sortBy} COLLATE NOCASE ${req.body.sortType}`
+	query += ` LIMIT ${req.body.rowsPerPage} OFFSET ${req.body.rowsPerPage * (req.body.page-1)} `
+	const data = db.prepare(query).all({search})
+
+	res.send({
+		data,
+		count
+	}).end()
+
+	}
+	catch(ex) {
+		console.log(ex)
+		res.statusMessage = ex.message
+		res.status(400).end()
+	}
+	finally {
+		db.close()
+	}
+
+})
+
 
 
 
@@ -315,6 +404,7 @@ router.put("/:id", function(req, res) {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	req.body.ScreenId = req.params.id
+	delete req.body.LastUsed
 
 	try {
 		req.body.LastModifiedDateTime = new Date().toLocaleString()
