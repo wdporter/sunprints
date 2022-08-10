@@ -750,6 +750,8 @@ router.post("/", function (req, res) {
 
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
+		req.body.Done= 0
+
 
 		db.prepare("BEGIN TRANSACTION").run()
 
@@ -759,11 +761,13 @@ router.post("/", function (req, res) {
 			if (req.body[column])
 				columns.push(column)
 		}
+		columns.push("Done") // was missed by the "if", database should have had a default 0 on this column
 		query += columns.join(", ")
 		query += " ) VALUES ( "
 		const values = []
 		for (let column of columns)
 			values.push(`@${column}`)
+		
 		query += values.join(", ")
 		query += " ) "
 		let statement = db.prepare(query)

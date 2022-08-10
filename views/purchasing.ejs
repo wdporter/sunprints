@@ -364,6 +364,13 @@ function addGarment(evt, id) {
 				.catch(error => window.alert(`We encountered an error: ${error}`))
 			},
 			removeGarment(id, sizeCategory) {
+
+				if (this.stockOrderId == "") {
+					// the order hasn't been saved yet, so just remove the garment from the UI
+					this.chosenGarments[sizeCategory] = this.chosenGarments[sizeCategory].filter(g => g.GarmentId != id)
+					return
+				}
+
 				const vue = this
 				fetch(`/stockorder/removegarment/${this.stockOrderId}/${id}`, {method: "PUT"})
 				.then(response => {
