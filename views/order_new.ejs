@@ -15,7 +15,7 @@ section {
 	word-break: break-all;
 }
 
-input:invalid {
+input:invalid, select:invalid {
   border: 2px dashed red;
 }
 
@@ -100,7 +100,7 @@ table#stockWarningTable {
 		<div>
 			<p>
 				<label for=terms>Terms</label>
-				<select id=terms required>
+				<select id=terms>
 					<option value="">—choose—</option>
 					<option value="C.O.D." <%=(order && order.Terms=='C.O.D.' ) ? 'selected' : '' %> >C.O.D.</option>
 					<option value="Nett 7 days" <%=(order && order.Terms=='Nett 7 days' ) ? 'selected' : '' %> >Nett 7 days
@@ -111,8 +111,8 @@ table#stockWarningTable {
 			</p>
 			<p>
 				<label for="salesRep">Sales Rep.</label>
-				<select id="salesRep">
-					<option value=0>&mdash;choose&mdash;</option>
+				<select id="salesRep" required>
+					<option value="">&mdash;choose&mdash;</option>
 					<% salesReps.forEach(rep => { %>
 						<option <% if (order && order.SalesRep && order.SalesRep == rep.Name) { %>selected<% } %>><%= rep.Name %> 
 					<% }) %>
@@ -413,6 +413,11 @@ table#stockWarningTable {
 				return
 			}
 
+			const salesRepSelect = document.getElementById("salesRep")
+			if (!salesRepSelect.checkValidity()) {
+				document.getElementById("detailsMessage").textContent += "❌💡 We require a sales rep.\n"
+				return
+			}
 
 			// gather the input fields into an order object
 			const order = {
@@ -424,7 +429,7 @@ table#stockWarningTable {
 				Repeat: document.getElementById("repeat").checked ? 1 : 0,
 				New: document.getElementById("newDesign").checked ? 1 : 0,
 				BuyIn: document.getElementById("buyIn").checked ? 1 : 0,
-				SalesRep: document.getElementById("salesRep").value,
+				SalesRep: salesRepSelect.value,
 				Terms: document.getElementById("terms").value,
 				Notes: document.getElementById("orderNotes").value.trim() || null,
 				CustomerOrderNumber: document.getElementById("customerOrderNumber").value.trim() || null,
