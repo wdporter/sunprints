@@ -761,7 +761,7 @@ router.post("/", function (req, res) {
 			if (req.body[column])
 				columns.push(column)
 		}
-		columns.push("Done") // was missed by the "if", database should have had a default 0 on this column
+		columns.push("Done") // was missed by the "if(req.body[column])", database should have had a default 0 on this column
 		query += columns.join(", ")
 		query += " ) VALUES ( "
 		const values = []
