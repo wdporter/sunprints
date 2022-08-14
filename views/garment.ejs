@@ -57,14 +57,14 @@ input:invalid {
 </style>
 
 
-<p><a href=/garment/deleted>View (and restore) deleted garments</a></p>
+<p><a href=/garment/deleted>View (and restore) deleted products</a></p>
 
 <input type=button onclick="app.addNew()" value="Add new item" />
 <input type=button onclick="warningList()" value="Warning list" />
 
 <dialog id="newGarmentDialog" >
 	<form method="dialog" id="newGarmentForm">
-		<h3>New garment</h3>
+		<h3>New product</h3>
 
 		<p>
 			<label for="newSizeCategory">Size Category</label>
@@ -159,7 +159,7 @@ input:invalid {
 					</tr>
 				</tbody>
 				</table>
-				<p v-else>No garment selected</p>
+				<p v-else>No product selected</p>
 			</div>
 			<div>
 				<p>
@@ -214,6 +214,8 @@ input:invalid {
 
 
 <script>
+
+	document.getElementsByTagName("h2")[0].textContent = "Products"
 
 	window.datatable = new DataTable("#garmentTable", {
 		orderCellsTop: true,
@@ -315,7 +317,7 @@ input:invalid {
 					GarmentId: 0
 				},
 				sizes: <%- sizes %>,
-				legend: "Details — select a garment from the list"
+				legend: "Details — select a product from the list"
 			}
 		},
 		methods: {
