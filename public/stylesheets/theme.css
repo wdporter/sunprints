@@ -9,11 +9,11 @@ body {
 }
 
 main {
-	background-color: whitesmoke;
+	background-color: white;
 }
 
 div#orderTable_wrapper {
-	background-color: whitesmoke;
+	background-color: white;
 }
 
 /* helps me put an image in the header */

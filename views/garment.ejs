@@ -1,7 +1,12 @@
 <%- include("partials/head.ejs") %>
 
 <style>
-		tr.filters select {
+
+	main.wider {
+		padding-top: 2em;
+	}
+
+	tr.filters select {
 		min-width: unset;
 	}
 
@@ -54,7 +59,7 @@ input:invalid {
 
 <p><a href=/garment/deleted>View (and restore) deleted garments</a></p>
 
-<input type=button onclick="app.addNew()" value="Add a new garment" />
+<input type=button onclick="app.addNew()" value="Add new item" />
 <input type=button onclick="warningList()" value="Warning list" />
 
 <dialog id="newGarmentDialog" >
@@ -103,6 +108,7 @@ input:invalid {
 	<table id="garmentTable" class="hover">
 		<thead>
 			<tr>
+				<th style="width:2em"></th>
 				<th>Size Category</th>
 				<th>Code</th>
 				<th>Type</th>
@@ -110,16 +116,16 @@ input:invalid {
 				<th>Label</th>
 				<th>Notes</th>
 				<th>Last Ordered</th>
-				<th>Garment Id</th>
 			</tr>
 			<tr class="filters">
+				<th></th>
 				<th>Size Category</th>
 				<th>Code</th>
 				<th>Type</th>
 				<th>Colour</th>
 				<th>Label</th>
 				<th></th>
-				<th>Garment Id</th>
+				<th></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -220,6 +226,13 @@ input:invalid {
 	},
 		dom: "lrtip",
 		columns: [
+			{
+				data: "GarmentId", 
+				orderable: false,
+				render(data) {
+					return `<a href=# onclick="cloneItem(this, event)" title="Clone this item" ><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span>`
+				}
+			},
 			{ data: "SizeCategory", width: "80px" },
 			{ data: "Code", },
 			{ data: "Type" },
@@ -236,9 +249,8 @@ input:invalid {
 						return new Date(date).toLocaleDateString()
 				}
 			},
-			{ data: "GarmentId", visible: false },
 		],
-		"order": [[5, "desc"]],
+		order: [[6, "desc"]],
 		initComplete() {
 			// support for filtering by column
 			var api = this.api();
@@ -246,8 +258,8 @@ input:invalid {
 			api.columns()[0].forEach(function (i) {
 
 				const th = Array.from(document.querySelectorAll(".filters th"))[i]
-				if (i < 5) {
-					if (i == 0) {
+				if (i > 0 && i < 5) {
+					if (i == 1) {
 						th.innerHTML = "<select><option><option>Adults<option>Womens<option>Kids</select>"
 						th.querySelector("select").addEventListener("change", function () {
 							api.column(i).search(this.value).draw()
@@ -370,6 +382,22 @@ input:invalid {
 		}
 	})
 		.mount("#vueApp")
+
+
+function cloneItem(a, event) {
+	event.preventDefault()
+
+	const data = datatable.row(a.closest("tr")).data()
+
+	document.getElementById("newSizeCategory").value = data.SizeCategory
+	document.getElementById("newCode").value = data.Code
+	document.getElementById("newType").value = data.Type
+	document.getElementById("newLabel").value = data.Label
+	document.getElementById("newNotes").value = data.Notes
+
+	window.app.addNew()
+
+}
 
 function saveNewGarment() {
 	if (!document.getElementById("newGarmentForm").checkValidity())
