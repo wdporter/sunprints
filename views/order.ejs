@@ -5,7 +5,8 @@
 
 <ul>
 	<!-- <li>todo: clone an order</li> -->
-	<li>To complete an Order, select the Order and click Ship (sets done=true. If invoice/processed dates are empty, they are set to today)</li>
+	<li>To ship an Order, select the Order and click Ship. Sets the processed date to today</li>
+	<li>To complete an Order, click Done. The order is removed from this list</li>
 	<li>To add/remove garments, or change details, select the Order and click Edit (or double click)</li>
 	<li>The green + plus icon reveals the garments.  </li>
 	<li>Deleting an order returns the garment quantities back into stock levels on the garments page</li>
@@ -28,6 +29,8 @@
 	</form>
 </dialog>
 
+
+<main class="wider">
 
 <table id=orderTable class=hover>
 	<thead>
@@ -54,6 +57,7 @@
 	<tbody></tbody>
 </table>
 
+</main>
 
 <main>
 
@@ -61,7 +65,6 @@
 	<script>
 
 	function cloneOrder(id) {
-		
 		window.location.href = "/order/new?clone=" + id
 	}
 
@@ -98,7 +101,7 @@
 			serverSide: true,
 			ajax: "/order/dt",
 			language: {
-				searchPlaceholder: "Search order number, customer or notes"
+				searchPlaceholder: "number, customer, notes"
 			},
 			buttons: [
 				{
@@ -116,6 +119,14 @@
 						var tr = dt.row("tr.selected")
 						if (tr.length)
 							ship(tr.data().OrderId)
+					}
+				},
+				{
+					text: "Done",
+					action: (e, dt) =>  {
+						var tr = dt.row("tr.selected")
+						if (tr.length)
+							done(tr.data().OrderId)
 					}
 				},
 				{
@@ -166,6 +177,7 @@
 				},
 				{ 
 					data: "OrderNumber",
+					width: "4em",
 					render(data, type, row) {
 						return `<span title="id: ${row.OrderId}">${data}</span>`
 					}
@@ -179,22 +191,22 @@
 					visible: false
 				},
 				{ data: "CustomerName" },
-				{ data: "CustomerOrderNumber" },
+				{ data: "CustomerOrderNumber", visible: false },
 				{
 					data: "OrderDate",
+					width: "5em",
 					render(od) {
 						return od ? new Date(Date.parse(od)).toLocaleDateString() : ""
 					}
 				},
 				{
 					data: "InvoiceDate",
-					render(id) {
-						return id ? new Date(Date.parse(id)).toLocaleDateString() : ""
-					}
+					visible: false
 				},
 				{
 					data: "Repeat",
 					className: "alignCentre",
+					width: "1em",
 					render(r) {
 						return r == 0 ? "" : "✔️"
 					},
@@ -202,6 +214,7 @@
 				{
 					data: "New",
 					className: "alignCentre",
+					width: "1em",
 					render(n) {
 						return n == 0 ? "" : "✔️"
 					},
@@ -209,19 +222,20 @@
 				{
 					data: "BuyIn",
 					className: "alignCentre",
+					width: "1em",
 					render(r) {
 						return r == 0 ? "" : "✔️"
 					},
 				},
-				{ data: "Terms" },
+				{ data: "Terms", width: "4em" },
 				{ data: "SalesRep" },
 				{
 					data: "Notes",
-					width: "200px"
 				},
-				{ data: "DeliveryDate" },
+				{ data: "DeliveryDate", width: "5em"},
 				{
 					data: "ProcessedDate",
+					width: "5em",
 					render(id) {
 						return id ? new Date(Date.parse(id)).toLocaleDateString() : ""
 					}
@@ -252,6 +266,17 @@
 
 		function ship(id) {
 			fetch(`/order/ship/${id}`, { method: "PUT" })
+			.then(response => {
+				if (response.ok)
+					window.datatable.ajax.reload(null, false)
+				else
+					throw new Error(response.statusText)
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+		}
+
+		function done(id) {
+			fetch(`/order/done/${id}`, { method: "PUT" })
 			.then(response => {
 				if (response.ok)
 					window.datatable.ajax.reload(null, false)

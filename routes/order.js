@@ -1267,9 +1267,92 @@ router.put("/:id", function (req, res) {
 
 
 // PUT  'ship' an order 
-// set done=1 (won't be shown in order list) and set invoice date and processed date if not already
-// there may be some connection to Print Invoice here also 
+// set set invoice date and processed date if not already
+
 router.put("/ship/:id", function (req, res) {
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+		db.prepare("BEGIN TRANSACTION").run()
+
+		let statement = db.prepare(`SELECT * FROM Orders WHERE OrderId=?`)
+		const order = statement.get(req.params.id)
+
+		const date = new Date().toLocaleString()
+		let params = {
+			LastModifiedBy: req.auth.user,
+			LastModifiedDateTime: date
+		}
+
+		if (!order.InvoiceDate)
+			params.InvoiceDate = new Date().toISOString().slice(0, 10)
+		if (!order.ProcessedDate)
+			params.ProcessedDate = new Date().toISOString().slice(0, 10)
+
+		let query = ` UPDATE Orders SET ${Object.keys(params).map(p => ` ${p}=@${p} `).join(", ")} `
+		params.OrderId = req.params.id
+		query += " WHERE OrderId=@OrderId "
+
+		statement = db.prepare(query)
+		let info = statement.run(params)
+		console.log(info)
+
+		delete params.LastModifiedBy
+		delete params.LastModifiedDateTime
+
+		// add to audit logs
+		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+		info = statement.run("Orders", req.params.id, "UPD", req.auth.user, date)
+		console.log(info)
+		const auditLogId = info.lastInsertRowid
+		delete params.OrderId
+		delete params.LastModifiedBy
+		delete params.LastModifiedDateTime
+		for (const param in params) {
+			statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
+			info = statement.run(auditLogId, param, order[param], params[param])
+			console.log(info)
+		}
+
+		//update fields in the SalesTotal table
+		const salesTotalParams = {  }
+		if (params.InvoiceDate) {
+			salesTotalParams.DateInvoiced = params.InvoiceDate
+		}
+		if (params.ProcessedDate) {
+			salesTotalParams.DateProcessed = params.ProcessedDate
+		}
+		query = ` UPDATE SalesTotal SET ${Object.keys(salesTotalParams).map(p => ` ${p}=@${p} `).join(", ")} WHERE OrderId=@OrderId `
+		salesTotalParams.OrderId = req.params.id
+		info = db.prepare(query).run(salesTotalParams)
+		console.log(info)
+
+
+
+		db.prepare("COMMIT").run()
+
+		res.send("ok").end()
+
+	}
+	catch (ex) {
+		db.prepare(`ROLLBACK`).run()
+		res.statusMessage = ex.message
+		res.status(400).end()
+	}
+	finally {
+		db.close()
+	}
+})
+
+
+
+
+
+// PUT  mark an order as done
+// set Done to "1" (that is, true)
+// set set invoice date and processed date if not already
+
+router.put("/done/:id", function (req, res) {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {

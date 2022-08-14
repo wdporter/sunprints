@@ -1,7 +1,11 @@
-.dataTables_wrapper {
-	margin-left: 3em
+
+main {
+	padding-bottom: 1em;
 }
 
+main.wider {
+	padding-top: 2em;
+}
 
 table#orderTable {
 	font-size: .75rem;
