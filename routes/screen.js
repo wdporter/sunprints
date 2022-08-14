@@ -192,10 +192,10 @@ router.post("/", function(req, res) {
 
 	try {
 
-		let statement = db.prepare(`SELECT COUNT(*) AS Count FROM Screen WHERE Number=?`)
-		let count = statement.get(req.body.Number)
+		let statement = db.prepare(`SELECT COUNT(*) AS Count FROM Screen WHERE Number=? AND Colour=? AND Name=?`)
+		let count = statement.get(req.body.Number, req.body.Colour, req.body.Name).Count
 		if (count > 0) {
-			res.statusMessage = `We already have that Screen Number ${req.body.Number}.`
+			res.statusMessage = `We already have a Screen with these details.`
 			res.status(400).end()
 			return
 		}

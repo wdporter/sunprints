@@ -1,5 +1,14 @@
 <%- include("partials/head.ejs") %>
 
+<style>
+
+.addScreenLink, .newScreenLink {
+	align-self:center; 
+	cursor:pointer;
+}
+
+</style>
+
 
 	<h3>About</h3>
 	<ul>
@@ -75,6 +84,28 @@
 			</div>
 		</form>
 
+	</dialog>
+
+	<dialog id=createScreenDialog>
+		<h3>New Screen</h3>
+		<form method=dialog id=createScreenForm>
+				<p>
+					<label for=newScreenNumber>Number:</label> 
+					<input id=newScreenNumber placeholder=required required autofocus>
+				</p>
+				<p>
+					<label for=newScreenColour>Colour:</label> 
+					<input id=newScreenColour>
+				</p>
+				<p>
+					<label for=newScreenMame>Name:</label> 
+					<textarea id=newScreenName rows=4></textarea>
+				</p>
+				<p>
+					<input type=submit value=Save onclick="saveNewScreen()" />&emsp;
+					<input type=button value=Cancel onclick="this.closest('dialog').close()" />
+				</p>
+		</form>
 	</dialog>
 
 	<!-- <button id="newPrintButton" onclick="newPrintDesign()">New Print Design</button> -->
@@ -159,9 +190,9 @@
 				})
 			.then(json => {
 				// success, create a box in the row
-				const a = document.querySelector(`a[data-id="${data.PrintDesignId}"]`)
-				if (a.parentElement.querySelector(".noscreens")) {
-					a.parentElement.remove(a.parentElement.querySelector(".noscreens"))
+				const span = document.querySelector(`span[data-id="${data.PrintDesignId}"]`)
+				if (span.parentElement.querySelector(".noscreens")) {
+					span.parentElement.remove(a.parentElement.querySelector(".noscreens"))
 				}
 				let insertDiv = "<div class=screenDiv>"
 				insertDiv += `Sizes: ${data.SizeCategory}<br>`
@@ -177,7 +208,7 @@
 				insertDiv += `Screen Name: ${document.getElementById("chosenScreenName").textContent}<br>`
 				insertDiv += `<a href=# data-id=${data.ScreenPrintDesignId} class=removeScreenLink>Remove</a>`
 				insertDiv += "</div>"
-				a.insertAdjacentHTML("beforebegin", insertDiv)
+				span.insertAdjacentHTML("beforebegin", insertDiv)
 				
 			})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
@@ -296,7 +327,7 @@
 					data: "PrintDesignId",
 					width: "140px",
 					render(data) {
-						return `<input type=button value=Edit onclick="editPrintDesign(this)" /> <input type=reset value=Delete onclick="deletePrint(this)" />` 
+						return `<span class="fa fa-lg fa-edit" onclick="editPrintDesign(this)" style=cursor:pointer title=edit></span>&emsp;<span class="fa fa-lg fa-trash" onclick="deletePrint(this)" style=cursor:pointer title=delete></span>` 
 					}
 				},
 				{ data: "Code" },
@@ -337,7 +368,9 @@
 							itemString += "</div>"
 						}
 					}
-					itemString += `<a href=# class=addScreenLink data-id=${rowData.PrintDesignId} style=align-self:center>Add</a>`
+					itemString += `<span tabindex=0 class="fa fa-lg fa-plus addScreenLink" data-id=${rowData.PrintDesignId} title="add exsiting screen"></span>&emsp;`
+					itemString += `<span tabindex=0 class="fa fa-lg fa-file-o newScreenLink" data-id=${rowData.PrintDesignId} title="add new screen"></span>`
+
 					itemString += "</div>"
 					return itemString
 				})
@@ -390,7 +423,47 @@
 
 			document.getElementById("screenFilterInput").value = ""
 			document.getElementById("addScreenDialog").showModal()
+		}
 
+		function createScreen(id) {
+			document.getElementById("currentPrintDesignId").value = id
+			document.getElementById("newScreenNumber").value = ""
+			document.getElementById("newScreenColour").value = ""
+			document.getElementById("newScreenName").value = ""
+			document.getElementById("createScreenDialog").showModal()
+		}
+
+		function saveNewScreen() {
+			if (document.getElementById("createScreenForm").checkValidity()) {
+				fetch(`/screen`, {
+					method: "POST",
+					headers: new Headers({ "Content-Type": "application/json"}),
+					body: JSON.stringify({
+						Number: document.getElementById("newScreenNumber").value,
+						Colour: document.getElementById("newScreenColour").value,
+						Name: document.getElementById("newScreenName").value
+					})
+				})
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
+				}
+			})
+			.then(json => {
+				document.getElementById("chosenScreenId").value = json.id
+				document.getElementById("screenListTable").innerHTML = ""
+				document.getElementById("chosenScreenNumber").textContent = document.getElementById("newScreenNumber").value
+				document.getElementById("chosenScreenColour").textContent = document.getElementById("newScreenColour").value
+				document.getElementById("chosenScreenName").textContent = document.getElementById("newScreenName").value
+				document.getElementById("screenFilterInput").value = ""
+				document.getElementById("addScreenDialog").showModal()
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+			}
+			
 		}
 
 		// Add event listener for opening and closing details
@@ -419,12 +492,17 @@
 			removeScreen(event.currentTarget)
 		})
 
-		// Add event listener for add screen link
-		$("#datatable tbody").on("click", "a.addScreenLink", function (event) {
+		// Add event listener for add existing screen link
+		$("#datatable tbody").on("click", "span.addScreenLink", function (event) {
 			event.preventDefault()
 			addScreen(event.currentTarget.dataset.id)
 		})
 
+		// Add event listener for add new screen link
+		$("#datatable tbody").on("click", "span.newScreenLink", function (event) {
+			event.preventDefault()
+			createScreen(event.currentTarget.dataset.id)
+		})
 
 
 		function toggleScreenList(btn) {
