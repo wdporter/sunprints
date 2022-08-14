@@ -4,6 +4,18 @@ html {
 	background-color: reset !important;
 }
 
+body {
+	background-color: gray;
+}
+
+main {
+	background-color: whitesmoke;
+}
+
+div#orderTable_wrapper {
+	background-color: whitesmoke;
+}
+
 /* helps me put an image in the header */
 header h1 {
 	margin-block-start: 0;
