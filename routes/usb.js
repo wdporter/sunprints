@@ -126,6 +126,14 @@ router.post("/", function(req, res) {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
+
+		let statement = db.prepare("SELECT COUNT(*) AS Count FROM Usb WHERE Number=? AND Notes=?")
+		const count = statement.get(req.body.Number, req.body.Notes).Count
+		if (count > 0) {
+			res.statusMessage = "This usb already exists."
+			res.sendStatus(400).end()
+		}
+
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
 
@@ -145,7 +153,7 @@ router.post("/", function(req, res) {
 		db.prepare("BEGIN TRANSACTION").run()
 
 
-		let statement = db.prepare(`INSERT INTO Usb ( ${columns.join(", ")}
+		statement = db.prepare(`INSERT INTO Usb ( ${columns.join(", ")}
 ) VALUES (
 ${columns.map(c => `@${c}`).join(", ")}
 )`)
@@ -322,7 +330,7 @@ router.put("/restore/:id", (req, res) => {
 			console.log(info)
 
 			statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES (?, ?, ?, ?)")
-			info = statement.run(info.lastInsertRowid, "Deleted", 1, 0)
+			info = statement.run(info.lastInsertRowid, "Deleted", 1, 0)	
 			console.log(info)
 
 			db.prepare("COMMIT").run()

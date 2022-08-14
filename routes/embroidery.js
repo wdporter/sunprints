@@ -138,8 +138,7 @@ router.get("/usbs/:id", function (req, res) {
 		const statement = db.prepare(`SELECT UsbEmbroideryDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Number as UsbNumber, Notes as UsbNotes 
 		FROM UsbEmbroideryDesign 
 		LEFT JOIN Usb ON Usb.UsbId=UsbEmbroideryDesign.UsbId 
-		WHERE UsbEmbroideryDesign.Deleted=0 
-		AND EmbroideryDesignId=?`)
+		WHERE EmbroideryDesignId=?`)
 		const usbs = statement.all(req.params.id)
 		res.send(usbs).end()
 	}
@@ -253,7 +252,6 @@ router.post("/usb", function (req, res) {
 		FROM UsbEmbroideryDesign 
 		WHERE
 		UsbId = ? 
-		AND Deleted=0 
 		AND SizeCategory =? `
 		if (req.body.Front == 1)
 			query += " AND Front=1 "

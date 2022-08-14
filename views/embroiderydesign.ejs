@@ -3,11 +3,11 @@
 
 	<h3>About</h3>
 	<ul>
-		<li>This list shows the embroidery designs that can be chosen for a garment</li>
+		<li>This list shows the embroidery designs that can be chosen for a product</li>
 		<li>Each design can be on multiple physical usbs</li>
 		<li>A usb is used in one or more locations (front, back. pocket, sleeve)</li>
-		<li>A usb is suitable according to a garment’s size category (adults, womens, kids)</li>
-		<li>Removing a usb means it can no longer be selected for a garment, but the usb still exists in the database</li>
+		<li>A usb is suitable according to a product’s size category (adults, womens, kids)</li>
+		<li>Removing a usb means it can no longer be selected for a product, but the usb still exists in the database</li>
 		<li>The full list of available usbs <a href="/usbs">is here</a></li>
 		<li><a href="/embroidery/deleted">View (and restore)</a> deleted embroidery designs </li>
 	</ul>
@@ -34,9 +34,27 @@
 
 	</dialog>
 
-	<dialog id="addUsbDialog" >
+	<dialog id="createUsbDialog">
+		<form id="createUsbForm" method="dialog">
+			<h3>Create Usb</h3>
+			<p>
+				<label for="createUsbNumber">Number</label>
+				<input id="createUsbNumber" />
+			</p>
+			<p>
+				<label for="createUsbNotes">Notes</label>
+				<textarea id="createUsbNotes"></textarea>
+			</p>
+			<div>
+				<button value="default" onclick="saveNewUsb(event)">&emsp;Save&emsp;</button>
+				<button value="cancel" >Cancel</button>
+			</div>
+		</form>
+	</dialog>
+
+	<dialog id="addUsbDialog">
 		<form id="addUsbForm" method="dialog">
-			<h3>Add usb</h3>
+			<h3>Add Usb</h3>
 			<p>
 				<input id=adultsRadio type=radio value=Adults name=sizeCategory checked>
 				<label for=adultsRadio>Adults</label>
@@ -71,7 +89,6 @@
 				<button value="cancel">Cancel</button>
 			</div>
 		</form>
-
 	</dialog>
 
 	<input type=button id="newEmbroideryButton" onclick="newEmbroideryDesign()" value="New Embroidery Design" style="margin-bottom:2em" />
@@ -284,7 +301,7 @@
 					sortable: false,
 					data: "EmbroideryDesignId",
 					render(data) {
-						return `<a href=# class=editEmbroideryLink>Edit</a> <a href=# class=deleteEmbroideryLink>Delete</a>`
+						return `<a href=# class=editEmbroideryLink title=Edit><span class="fa fa-lg fa-edit"</span></a>&emsp;<a href=# class=deleteEmbroideryLink title=Delete><span class="fa fa-lg fa-trash"></span></a>`
 					}
 				},
 				{ data: "Code" },
@@ -323,7 +340,8 @@
 							itemString += "</div>"
 						}
 					}
-					itemString += `&emsp;<a href=# class=addUsbLink data-id=${rowData.EmbroideryDesignId} style=align-self:center>Add</a>`
+					itemString += `&emsp;<a href=# class=addUsbLink data-id=${rowData.EmbroideryDesignId} style=align-self:center title="Add existing usb"><span class="fa fa-lg fa-plus"></span></a>`
+					itemString += `&emsp;<a href=# class=createUsbLink data-id=${rowData.EmbroideryDesignId} style=align-self:center title="Create new usb"><span class="fa fa-lg fa-file-o"></span></a>`
 					itemString += "</div>"
 					return itemString
 				})
@@ -362,6 +380,7 @@
 			})
 		}
 
+
 		function addUsb(id) {
 			document.getElementById("currentEmbroideryDesignId").value = id
 			document.getElementById("chosenUsbId").value = 0
@@ -371,6 +390,45 @@
 
 			document.getElementById("usbFilterInput").value = ""
 			document.getElementById("addUsbDialog").showModal()
+		}
+
+
+		// opens the dialog for create new usb
+		function createUsb(id) {
+			document.getElementById("currentEmbroideryDesignId").value = id
+			document.getElementById("createUsbDialog").showModal()
+		}
+
+
+		// called by the create new usb dialog save button
+		function saveNewUsb(event) {
+			if (document.getElementById("createUsbForm").checkValidity()) {
+				fetch(`/usb`, {
+					method: "POST",
+					headers: new Headers({ "Content-Type": "application/json"}),
+					body: JSON.stringify({
+						Number: document.getElementById("createUsbNumber").value,
+						Notes: document.getElementById("createUsbNotes").value
+					})
+				})
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
+				}
+			})
+			.then(json => {
+				document.getElementById("chosenUsbId").value = json.id
+				document.getElementById("usbListTable").innerHTML = ""
+				document.getElementById("chosenUsbNumber").textContent = document.getElementById("createUsbNumber").value
+				document.getElementById("chosenUsbNotes").textContent = document.getElementById("createUsbNotes").value
+				document.getElementById("usbFilterInput").value = ""
+				document.getElementById("addUsbDialog").showModal()
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+			}
 
 		}
 
@@ -407,11 +465,21 @@
 			removeUsb(event.currentTarget)
 		})
 
+
 		// Add event listener for add usb link
 		$("#datatable tbody").on("click", "a.addUsbLink", function (event) {
 			event.preventDefault()
 			addUsb(event.currentTarget.dataset.id)
 		})
+
+
+		// Add event listener for creating a new usb link
+		$("#datatable tbody").on("click", "a.createUsbLink", function (event) {
+			event.preventDefault()
+			event.stopImmediatePropagation()
+			createUsb(event.currentTarget.dataset.id)
+		})
+
 
 		// Add event listener for delete embroidery link
 		// can only delete a embroidery design if it's not in use
