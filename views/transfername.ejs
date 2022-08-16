@@ -44,7 +44,7 @@
 				sortable: false,
 				data: "TransferNameId",
 				render(data) {
-					return `<a href=# class=editLink onclick="editName(${data}, this, event)">Edit</a> <a href=# class=deleteLink onclick="deleteName(${data}, event)">Delete</a>`
+					return `<a href=# class=editLink onclick="editName(${data}, this, event)" title=Edit><span class="fa fa-lg fa-edit"</span></a> <a href=# class=deleteLink onclick="deleteName(${data}, event)" title=Delete><span class="fa fa-lg fa-trash"></span></a>`
 				},
 				width: "150px"
 			},
@@ -132,11 +132,11 @@
 		})
 		.then(response => {
 			if (response.ok)
-				return response.text()
+				return response.json()
 			else
 				throw new Error(response.statusText)
 		})
-		.then(text => {
+		.then(json => {
 			window.datatable.ajax.reload(null, true)
 		})
 		.catch(error => window.alert(`We encountered an error: ${error}`))

@@ -12,6 +12,20 @@
 
 <input type=button onclick="newTransfer()" value="Add New Transfer" style="margin-bottom:2em" />
 
+<dialog id="createNameDialog">
+	<form method="dialog" id="createNameForm">
+		<h3>Create new Name</h3>
+		<p>
+			<label for="createNameInput">Name:</label>
+			<input id="createNameInput" required placeholder=required />
+		</p>
+		<div>
+			<button value="default" onclick="createNewName()">Save</button>
+			<button value="cancel">Cancel</button>
+		</div>
+	</form>
+</dialog>
+
 <dialog id="addNameDialog" >
 	<form method="dialog" id="nameDialogForm">
 		<h3>Add Location/Size for Name</h3>
@@ -103,7 +117,7 @@
 					sortable: false,
 					data: "TransferDesignId",
 					render(data) {
-						return `<a href=# class=editTransferLink data-id=${data}>Edit</a> <a href=# class=deleteTransferLink data-id=${data}>Delete</a>`
+						return `<a href=# class=editTransferLink data-id=${data} title=Edit><span class="fa fa-lg fa-edit"></span></a>&emsp;<a href=# class=deleteTransferLink data-id=${data} title=Delete><span class="fa fa-lg fa-trash"></span></a>`
 					}
 				},
 				{ data: "Code", width: "150px" },
@@ -162,7 +176,7 @@
 							itemString += "</div>"
 						}
 					}
-					itemString += `&emsp;<a href=# class=addNameLink data-id=${rowData.TransferDesignId} style=align-self:center>Add</a>`
+					itemString += `&emsp;<a href=# class=addNameLink data-id=${rowData.TransferDesignId} style=align-self:center title="Add existing"><span class="fa fa-lg fa-plus"></span></a>&emsp;<a href=# class=createNameLink data-id=${rowData.TransferDesignId} style=align-self:center title="Create new"><span class="fa fa-lg fa-file-o"></span></a>`
 					itemString += "</div>"
 					return itemString
 				})
@@ -222,6 +236,51 @@
 
 			document.getElementById("addNameDialog").showModal()
 		})
+
+
+		// add an event listener for the create a new name link
+		// open the new name dialog
+		$("#datatable tbody").on("click", "a.createNameLink", function () {
+			event.preventDefault()
+
+			window.addNameApp.item.TransferDesignId = Number(this.dataset.id)
+
+			document.getElementById("createNameInput").value = ""
+			document.getElementById("createNameDialog").showModal()
+		})
+
+
+		// called when hitting save on the create new name dialog
+		function createNewName() {
+			const name = document.getElementById("createNameInput").value
+			fetch(`/transfer/name`, {
+			method: "POST",
+			headers: new Headers({
+				"Content-Type": "application/json"
+			}),
+			body: JSON.stringify({name})
+		})
+		.then(response => {
+			if (response.ok)
+				return response.json()
+			else
+				throw new Error(response.statusText)
+		})
+		.then(json => {
+			window.addNameApp.item.SizeCategory = "Adults"
+			window.addNameApp.item.Front = 0
+			window.addNameApp.item.Back = 0
+			window.addNameApp.item.Pocket = 0
+			window.addNameApp.item.Sleeve = 0
+			window.addNameApp.item.TransferNameId = json.id
+			window.addNameApp.name = document.getElementById("createNameInput").value
+			window.addNameApp.nameList = []
+			window.addNameApp.term = ""
+			document.getElementById("addNameDialog").showModal()	
+		})
+		.catch(error => window.alert(`We encountered an error: ${error}`))
+
+		}
 
 
 		// add event listener for the delete transfer link

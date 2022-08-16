@@ -457,6 +457,7 @@ router.post("/name", function(req, res) {
 		
 		let info = statement.run(req.body.name, req.auth.user, date, req.auth.user, date)
 		console.log(info)
+		res.json({id: info.lastInsertRowid})//todo: test, this was changed
 
 		statement = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, ?, ?, ?)")
 		info = statement.run("TransferName", info.lastInsertRowid, "INS", req.auth.user, date)
@@ -468,7 +469,7 @@ router.post("/name", function(req, res) {
 		db.prepare("COMMIT").run()
 
 		
-		res.send("ok").end()
+		res.end()
 
 	}
 	catch (ex) {
