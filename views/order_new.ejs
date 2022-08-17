@@ -146,7 +146,7 @@ table#stockWarningTable {
 
 	<div id="garmentSection">
 
-	<h5 style="display:inline-block" >2. Choose garments</h5> <input type=button style="margin-left:5em" onclick="toggleGarments(this, event)" value="Hide Garment List" />
+	<h5 style="display:inline-block" >2. Choose Products</h5> <input type=button style="margin-left:5em" onclick="toggleGarments(this, event)" value="Hide Product List" />
 
 	<table id=garmentTable class=hover style="width:100%">
 		<thead>
@@ -166,11 +166,11 @@ table#stockWarningTable {
 
 
 
-	<h5>3. Garment Details</h5>
+	<h5>3. Product Details</h5>
 
 
 	<div id="garmentApp">
-		<p v-if="garments.length == 0">Select garments from the table above…</p>
+		<p v-if="garments.length == 0">Select products from the table above…</p>
 		<div v-for="g in garments" class="selected-garment" :key="g.GarmentId" style="border: 1px black solid; padding: 1em; margin-bottom: 1em">
 			<dl>
 				<dt>Code</dt>
@@ -197,12 +197,12 @@ table#stockWarningTable {
 			</fieldset>
 			<section class=price-section>
 				<div>
-					<label for="Price">{{ getGarmentQuantity(g) }} garments @ Price ($)</label>
+					<label for="Price">{{ getGarmentQuantity(g) }} products @ Price ($)</label>
 					<input id="Price" inputmode=numeric pattern="\d*\.?\d*?" v-model="g.Price"
-						placeholder="add price per garment">
+						placeholder="add price per product">
 				</div>
 				<div>
-					<label>= Total (for this garment)</label>
+					<label>= Total (for this product)</label>
 					<input disabled :value="getTotalPrice(g).toFixed(2)" />
 				</div>
 			</section>
@@ -236,11 +236,20 @@ table#stockWarningTable {
 			<div style="display:flex;justify-content:space-around">
 				<fieldset v-for="(printLocation, key) in g.printLocations" :key="key[0]">
 					<legend>{{key}} Screen (choose one{{printLocation.length > 1 ? ' or two' : ''}})</legend>
-					<p v-for="screen in printLocation" :key="screen.ScreenPrintDesignId">
-						<input type="checkbox" @change="screenChange(g, key)" :value="screen.ScreenId"
-							v-model="g.checkedScreens[key]" :id="'screen' + screen.ScreenId">
-						<label :for="'screen' + screen.ScreenId">{{screen.Number}} {{screen.Name}} {{screen.Colour}}</label>
-					</p>
+						<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
+							<p v-if="screen.Name != null">
+								<input type="checkbox" @change="screenChange(g, key)" :value="screen.ScreenId"
+									v-model="g.checkedScreens[key]" :id="'screen' + screen.ScreenId" >
+								<label :for="'screen' + screen.ScreenId">{{screen.Number}} {{screen.Colour}} {{screen.Name ?? "(Standard/Unnamed)"}} </label>
+							</p>
+					</div>
+					<hr>
+					<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
+						<p v-if="screen.Name == null">
+							<input type="checkbox" :value="screen.ScreenId" :checked="g.checkedScreens[key].length>0" :id="'screen' + screen.ScreenId" disabled>
+							<label :for="'screen' + screen.ScreenId">{{screen.Number}} {{screen.Colour}} {{screen.Name ?? "(Standard/Unnamed)"}} </label>
+						</p>
+					</div>
 				</fieldset>
 			</div>
 
@@ -317,7 +326,7 @@ table#stockWarningTable {
 				</fieldset>
 			</div>
 			<p>
-				<button @click="saveGarment(g)">Save garment</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete garment" /><br>
+				<button @click="saveGarment(g)">Save product</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
 				<span v-text="errorMessage"></span>
 			</p>
 			<table v-if="buyin && g.stockWarning" id="stockWarningTable">
@@ -507,7 +516,7 @@ table#stockWarningTable {
 					data: "GarmentId",
 					width: "1em",
 					render: (data) => {
-						return `<a href=# class=add-garment-link ><span class="fa fa-plus   fa-lg" data-id=${data} title="Add garment to order" onclick="addGarment(${data}, event)" ></span></a>`
+						return `<a href=# class=add-garment-link ><span class="fa fa-plus   fa-lg" data-id=${data} title="Add product to order" onclick="addGarment(${data}, event)" ></span></a>`
 					},
 					orderable: false
 				},
@@ -688,9 +697,9 @@ table#stockWarningTable {
 				selectPrintDesign(event, garment) {
 					// add to garment
 					garment.selectedPrintDesign = {
-						Code: event.currentTarget.children[0].textContent,
-						Notes: event.currentTarget.children[1].textContent,
-						Comments: event.currentTarget.children[2].textContent,
+						Code: event.currentTarget.children[1].textContent,
+						Notes: event.currentTarget.children[2].textContent,
+						Comments: event.currentTarget.children[3].textContent,
 						PrintDesignId: event.currentTarget.dataset.id
 					}
 					// reset ui
@@ -703,7 +712,7 @@ table#stockWarningTable {
 
 					const locationNames = <%- JSON.stringify(locations) %>;
 					garment.checkedScreens = {}
-					locationNames.forEach(name => garment.checkedScreens[name] = [])
+					locationNames.forEach(loc => garment.checkedScreens[loc] = [])
 
 					fetch(`/screen/ordersearch?printdesignid=${garment.selectedPrintDesign.PrintDesignId}&sizes=${garment.SizeCategory}`).
 						then(response => {
@@ -714,9 +723,9 @@ table#stockWarningTable {
 							})
 						.then(json => {
 							json.forEach(j => {
-								locationNames.forEach(name => {
-									if (j[name] == 1)
-										garment.printLocations[name] ? garment.printLocations[name].push(j) : garment.printLocations[name] = [j]
+								locationNames.forEach(loc => {
+									if (j[loc] == 1)
+										garment.printLocations[loc] ? garment.printLocations[loc].push(j) : garment.printLocations[loc] = [j]
 								})
 							})
 						})
@@ -867,7 +876,7 @@ table#stockWarningTable {
 							count += requestBody.quantities[size]
 						}
 						if (count == 0) {
-							this.errorMessage = "❌ We require some garment sizes"
+							this.errorMessage = "❌ We require some product sizes"
 							return
 						}
 
@@ -887,7 +896,7 @@ table#stockWarningTable {
 							if (garment.OrderGarmentId == 0)
 								garment.OrderGarmentId = json.OrderGarmentId
 							const successDialog = document.getElementById("success")
-							successDialog.querySelector("p").textContent = "We have saved the garment to this order"
+							successDialog.querySelector("p").textContent = "We have saved the product to this order"
 							successDialog.showModal()
 							garment.stockWarning = json.warnings ? json.warnings : ""
 							
@@ -959,11 +968,11 @@ table#stockWarningTable {
 			event.preventDefault()
 			if (button.value.startsWith("Hide")) {
 				document.getElementById("garmentTable_wrapper").style.display = "none"
-				button.value = "Show Garment List"
+				button.value = "Show Product List"
 			}
 			else {
 				document.getElementById("garmentTable_wrapper").style.display = "block"
-				button.value = "Hide Garment List"
+				button.value = "Hide Product List"
 			}
 		}
 

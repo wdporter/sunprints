@@ -24,8 +24,8 @@ router.get("/ordersearch", function (req, res, next) {
 FROM ScreenPrintDesign 
 INNER JOIN Screen on Screen.ScreenId = ScreenPrintDesign.ScreenId 
 WHERE PrintDesignId = ${req.query.printdesignid} 
-AND Screen.Name IS NOT NULL 
-AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'  `)
+AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}' 
+ORDER BY Name IS NULL`)
 
 		const records = statement.all()
 		res.send(records)
