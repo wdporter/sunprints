@@ -547,12 +547,27 @@ router.get("/jobsheet/:id", function (req, res) {
 
 		const designResults = getDesigns(db, req.params.id)
 
+		const screensCount = sz.locations.reduce(function(acc, curr){
+			return acc + designResults.screens[curr].length
+		}, 0)
+		const usbsCount = sz.locations.reduce(function(acc, curr){
+			return acc + designResults.usbs[curr].length
+		}, 0)
+		const transfersCount = sz.locations.reduce(function(acc, curr){
+			return acc + designResults.transfers[curr].length
+		}, 0)
+
 		res.render("jobsheet.ejs", {
 			customer,
 			order,
 			garments,
+			screens: designResults.screens,
+			usbs: designResults.usbs,
 			transfers: designResults.transfers,
-			designs: designResults.designs
+			locations: sz.locations,
+			screensCount,
+			usbsCount,
+			transfersCount
 		})
 
 	}
@@ -594,7 +609,7 @@ router.get("/printdesigns/:id", function (req, res) {
 		let statement = db.prepare(`SELECT OrderNumber FROM Orders WHERE OrderId=?`)
 		results.orderNumber = statement.get(req.params.id).OrderNumber
 
-
+		results.locations = sz.locations
 
 		res.render("printdesigns.ejs", results)
 
@@ -1728,117 +1743,109 @@ function getWarnings(db, garmentId) {
 function getDesigns(db, orderid) {
 
 	let statement = db.prepare(`SELECT  
-	 IFNULL(ScreenF1.Number, '') AS ScreenF1Number, IFNULL(ScreenF1.Name, '') AS ScreenF1Name, IFNULL(ScreenF1.Colour, '') AS ScreenF1Colour
-	,IFNULL(ScreenF2.Number, '') AS ScreenF2Number, IFNULL(ScreenF2.Name, '') AS ScreenF2Name, IFNULL(ScreenF2.Colour, '') AS ScreenF2Colour
-	,IFNULL(ScreenB1.Number, '') AS ScreenB1Number, IFNULL(ScreenB1.Name, '') AS ScreenB1Name, IFNULL(ScreenB1.Colour, '') AS ScreenB1Colour
-	,IFNULL(ScreenB2.Number, '') AS ScreenB2Number, IFNULL(ScreenB2.Name, '') AS ScreenB2Name, IFNULL(ScreenB2.Colour, '') AS ScreenB2Colour
-	,IFNULL(ScreenP1.Number, '') AS ScreenP1Number, IFNULL(ScreenP1.Name, '') AS ScreenP1Name, IFNULL(ScreenP1.Colour, '') AS ScreenP1Colour
-	,IFNULL(ScreenP2.Number, '') AS ScreenP2Number, IFNULL(ScreenP2.Name, '') AS ScreenP2Name, IFNULL(ScreenP2.Colour, '') AS ScreenP2Colour
-	,IFNULL(ScreenS1.Number, '') AS ScreenS1Number, IFNULL(ScreenS1.Name, '') AS ScreenS1Name, IFNULL(ScreenS1.Colour, '') AS ScreenS1Colour
-	,IFNULL(ScreenS2.Number, '') AS ScreenS2Number, IFNULL(ScreenS2.Name, '') AS ScreenS2Name, IFNULL(ScreenS2.Colour, '') AS ScreenS2Colour
-	,IFNULL(UsbF1.Number, '') AS UsbF1Number, IFNULL(UsbF1.Notes, '') AS UsbF1Notes
-	,IFNULL(UsbF2.Number, '') AS UsbF2Number, IFNULL(UsbF2.Notes, '') AS UsbF2Notes
-	,IFNULL(UsbB1.Number, '') AS UsbB1Number, IFNULL(UsbB1.Notes, '') AS UsbB1Notes
-	,IFNULL(UsbB2.Number, '') AS UsbB2Number, IFNULL(UsbB2.Notes, '') AS UsbB2Notes
-	,IFNULL(UsbP1.Number, '') AS UsbP1Number, IFNULL(UsbP1.Notes, '') AS UsbP1Notes
-	,IFNULL(UsbP2.Number, '') AS UsbP2Number, IFNULL(UsbP2.Notes, '') AS UsbP2Notes
-	,IFNULL(UsbS1.Number, '') AS UsbS1Number, IFNULL(UsbS1.Notes, '') AS UsbS1Notes
-	,IFNULL(UsbS2.Number, '') AS UsbS2Number, IFNULL(UsbS2.Notes, '') AS UsbS2Notes
-	,IFNULL(TransferNameF1.Name, '') AS TransferNameF1Name
-	,IFNULL(TransferNameF2.Name, '') AS TransferNameF2Name
-	,IFNULL(TransferNameB1.Name, '') AS TransferNameB1Name
-	,IFNULL(TransferNameB2.Name, '') AS TransferNameB2Name
-	,IFNULL(TransferNameP1.Name, '') AS TransferNameP1Name
-	,IFNULL(TransferNameP2.Name, '') AS TransferNameP2Name
-	,IFNULL(TransferNameS1.Name, '') AS TransferNameS1Name
-	,IFNULL(TransferNameS2.Name, '') AS TransferNameS2Name
+	FrontPrintDesignId, BackPrintDesignId, PocketPrintDesignId, SleevePrintDesignId,
+	 IFNULL(ScreenFront1.Number,  '') AS ScreenFront1Number,  IFNULL(ScreenFront1.Name, '')  AS ScreenFront1Name,  IFNULL(ScreenFront1.Colour, '') AS ScreenFront1Colour
+	,IFNULL(ScreenFront2.Number,  '') AS ScreenFront2Number,  IFNULL(ScreenFront2.Name, '')  AS ScreenFront2Name,  IFNULL(ScreenFront2.Colour, '') AS ScreenFront2Colour
+	,IFNULL(ScreenBack1.Number,   '') AS ScreenBack1Number,   IFNULL(ScreenBack1.Name, '')   AS ScreenBack1Name,   IFNULL(ScreenBack1.Colour, '') AS ScreenBack1Colour
+	,IFNULL(ScreenBack2.Number,   '') AS ScreenBack2Number,   IFNULL(ScreenBack2.Name, '')   AS ScreenBack2Name,   IFNULL(ScreenBack2.Colour, '') AS ScreenBack2Colour
+	,IFNULL(ScreenPocket1.Number, '') AS ScreenPocket1Number, IFNULL(ScreenPocket1.Name, '') AS ScreenPocket1Name, IFNULL(ScreenPocket1.Colour, '') AS ScreenPocket1Colour
+	,IFNULL(ScreenPocket2.Number, '') AS ScreenPocket2Number, IFNULL(ScreenPocket2.Name, '') AS ScreenPocket2Name, IFNULL(ScreenPocket2.Colour, '') AS ScreenPocket2Colour
+	,IFNULL(ScreenSleeve1.Number, '') AS ScreenSleeve1Number, IFNULL(ScreenSleeve1.Name, '') AS ScreenSleeve1Name, IFNULL(ScreenSleeve1.Colour, '') AS ScreenSleeve1Colour
+	,IFNULL(ScreenSleeve2.Number, '') AS ScreenSleeve2Number, IFNULL(ScreenSleeve2.Name, '') AS ScreenSleeve2Name, IFNULL(ScreenSleeve2.Colour, '') AS ScreenSleeve2Colour
+	,IFNULL(UsbFront1.Number, '')  AS UsbFront1Number,  IFNULL(UsbFront1.Notes, '')  AS UsbFront1Notes
+	,IFNULL(UsbFront2.Number, '')  AS UsbFront2Number,  IFNULL(UsbFront2.Notes, '')  AS UsbFront2Notes
+	,IFNULL(UsbBack1.Number, '')   AS UsbBack1Number,   IFNULL(UsbBack1.Notes, '')   AS UsbBack1Notes
+	,IFNULL(UsbBack2.Number, '')   AS UsbBack2Number,   IFNULL(UsbBack2.Notes, '')   AS UsbBack2Notes
+	,IFNULL(UsbPocket1.Number, '') AS UsbPocket1Number, IFNULL(UsbPocket1.Notes, '') AS UsbPocket1Notes
+	,IFNULL(UsbPocket2.Number, '') AS UsbPocket2Number, IFNULL(UsbPocket2.Notes, '') AS UsbPocket2Notes
+	,IFNULL(UsbSleeve1.Number, '') AS UsbSleeve1Number, IFNULL(UsbSleeve1.Notes, '') AS UsbSleeve1Notes
+	,IFNULL(UsbSleeve2.Number, '') AS UsbSleeve2Number, IFNULL(UsbSleeve2.Notes, '') AS UsbSleeve2Notes
+	,IFNULL(TransferNameFront1.Name, '')  AS TransferNameFront1Name
+	,IFNULL(TransferNameFront2.Name, '')  AS TransferNameFront2Name
+	,IFNULL(TransferNameBack1.Name, '')   AS TransferNameBack1Name
+	,IFNULL(TransferNameBack2.Name, '')   AS TransferNameBack2Name
+	,IFNULL(TransferNamePocket1.Name, '') AS TransferNamePocket1Name
+	,IFNULL(TransferNamePocket2.Name, '') AS TransferNamePocket2Name
+	,IFNULL(TransferNameSleeve1.Name, '') AS TransferNameSleeve1Name
+	,IFNULL(TransferNameSleeve2.Name, '') AS TransferNameSleeve2Name
 	FROM OrderGarment
-	LEFT JOIN Screen AS ScreenF1 ON ScreenF1.ScreenId=FrontScreenId
-	LEFT JOIN Screen AS ScreenF2 ON ScreenF2.ScreenId=FrontScreen2Id
-	LEFT JOIN Screen AS ScreenB1 ON ScreenB1.ScreenId=BackScreenId
-	LEFT JOIN Screen AS ScreenB2 ON ScreenB2.ScreenId=BackScreen2Id
-	LEFT JOIN Screen AS ScreenP1 ON ScreenP1.ScreenId=PocketScreenId
-	LEFT JOIN Screen AS ScreenP2 ON ScreenP2.ScreenId=PocketScreen2Id
-	LEFT JOIN Screen AS ScreenS1 ON ScreenS1.ScreenId=SleeveScreenId
-	LEFT JOIN Screen AS ScreenS2 ON ScreenS2.ScreenId=SleeveScreen2Id
-	LEFT JOIN Usb AS UsbF1 ON UsbF1.UsbId=FrontUsbId
-	LEFT JOIN Usb AS UsbF2 ON UsbF2.UsbId=FrontUsb2Id
-	LEFT JOIN Usb AS UsbB1 ON UsbB1.UsbId=BackUsbId
-	LEFT JOIN Usb AS UsbB2 ON UsbB2.UsbId=BackUsb2Id
-	LEFT JOIN Usb AS UsbP1 ON UsbP1.UsbId=PocketUsbId
-	LEFT JOIN Usb AS UsbP2 ON UsbP2.UsbId=PocketUsb2Id
-	LEFT JOIN Usb AS UsbS1 ON UsbS1.UsbId=SleeveUsbId
-	LEFT JOIN Usb AS UsbS2 ON UsbS2.UsbId=SleeveUsb2Id
-	LEFT JOIN TransferName AS TransferNameF1 ON TransferNameF1.TransferNameId=FrontTransferNameId
-	LEFT JOIN TransferName AS TransferNameF2 ON TransferNameF2.TransferNameId=FrontTransferName2Id
-	LEFT JOIN TransferName AS TransferNameB1 ON TransferNameB1.TransferNameId=BackTransferNameId
-	LEFT JOIN TransferName AS TransferNameB2 ON TransferNameB2.TransferNameId=BackTransferName2Id
-	LEFT JOIN TransferName AS TransferNameP1 ON TransferNameP1.TransferNameId=PocketTransferNameId
-	LEFT JOIN TransferName AS TransferNameP2 ON TransferNameP2.TransferNameId=PocketTransferName2Id
-	LEFT JOIN TransferName AS TransferNameS1 ON TransferNameS1.TransferNameId=SleeveTransferNameId
-	LEFT JOIN TransferName AS TransferNameS2 ON TransferNameS2.TransferNameId=SleeveTransferName2Id
+	LEFT JOIN Screen AS ScreenFront1  ON  ScreenFront1.ScreenId=FrontScreenId
+	LEFT JOIN Screen AS ScreenFront2  ON  ScreenFront2.ScreenId=FrontScreen2Id
+	LEFT JOIN Screen AS ScreenBack1   ON   ScreenBack1.ScreenId=BackScreenId
+	LEFT JOIN Screen AS ScreenBack2   ON   ScreenBack2.ScreenId=BackScreen2Id
+	LEFT JOIN Screen AS ScreenPocket1 ON ScreenPocket1.ScreenId=PocketScreenId
+	LEFT JOIN Screen AS ScreenPocket2 ON ScreenPocket2.ScreenId=PocketScreen2Id
+	LEFT JOIN Screen AS ScreenSleeve1 ON ScreenSleeve1.ScreenId=SleeveScreenId
+	LEFT JOIN Screen AS ScreenSleeve2 ON ScreenSleeve2.ScreenId=SleeveScreen2Id
+	LEFT JOIN Usb AS UsbFront1  ON UsbFront1.UsbId =FrontUsbId
+	LEFT JOIN Usb AS UsbFront2  ON UsbFront2.UsbId =FrontUsb2Id
+	LEFT JOIN Usb AS UsbBack1   ON UsbBack1.UsbId  =BackUsbId
+	LEFT JOIN Usb AS UsbBack2   ON UsbBack2.UsbId  =BackUsb2Id
+	LEFT JOIN Usb AS UsbPocket1 ON UsbPocket1.UsbId=PocketUsbId
+	LEFT JOIN Usb AS UsbPocket2 ON UsbPocket2.UsbId=PocketUsb2Id
+	LEFT JOIN Usb AS UsbSleeve1 ON UsbSleeve1.UsbId=SleeveUsbId
+	LEFT JOIN Usb AS UsbSleeve2 ON UsbSleeve2.UsbId=SleeveUsb2Id
+	LEFT JOIN TransferName AS TransferNameFront1  ON  TransferNameFront1.TransferNameId=FrontTransferNameId
+	LEFT JOIN TransferName AS TransferNameFront2  ON  TransferNameFront2.TransferNameId=FrontTransferName2Id
+	LEFT JOIN TransferName AS TransferNameBack1   ON   TransferNameBack1.TransferNameId=BackTransferNameId
+	LEFT JOIN TransferName AS TransferNameBack2   ON   TransferNameBack2.TransferNameId=BackTransferName2Id
+	LEFT JOIN TransferName AS TransferNamePocket1 ON TransferNamePocket1.TransferNameId=PocketTransferNameId
+	LEFT JOIN TransferName AS TransferNamePocket2 ON TransferNamePocket2.TransferNameId=PocketTransferName2Id
+	LEFT JOIN TransferName AS TransferNameSleeve1 ON TransferNameSleeve1.TransferNameId=SleeveTransferNameId
+	LEFT JOIN TransferName AS TransferNameSleeve2 ON TransferNameSleeve2.TransferNameId=SleeveTransferName2Id
 	WHERE OrderId=?
 		`)
 
-	const designResults = statement.all(orderid)
-	const transfers = []
-	let designs = []
-	designResults.forEach(r => {
-		if (r.ScreenF1Number.length > 0 || r.ScreenF1Name.length > 0 || r.ScreenF1Colour.length > 0)
-			designs.push({ Number: r.ScreenF1Number, Colour: r.ScreenF1Colour, Name: r.ScreenF1Name })
-		if (r.ScreenF2Number.length > 0 || r.ScreenF2Name.length > 0 || r.ScreenF2Colour.length > 0)
-			designs.push({ Number: r.ScreenF2Number, Colour: r.ScreenF2Colour, Name: r.ScreenF2Name })
-		if (r.ScreenB1Number.length > 0 || r.ScreenB1Name.length > 0 || r.ScreenB1Colour.length > 0)
-			designs.push({ Number: r.ScreenB1Number, Colour: r.ScreenB1Colour, Name: r.ScreenB1Name })
-		if (r.ScreenB2Number.length > 0 || r.ScreenB2Name.length > 0 || r.ScreenB2Colour.length > 0)
-			designs.push({ Number: r.ScreenB2Number, Colour: r.ScreenB2Colour, Name: r.ScreenB2Name })
-		if (r.ScreenP1Number.length > 0 || r.ScreenP1Name.length > 0 || r.ScreenP1Colour.length > 0)
-			designs.push({ Number: r.ScreenP1Number, Colour: r.ScreenP1Colour, Name: r.ScreenP1Name })
-		if (r.ScreenP2Number.length > 0 || r.ScreenP2Name.length > 0 || r.ScreenP2Colour.length > 0)
-			designs.push({ Number: r.ScreenP2Number, Colour: r.ScreenP2Colour, Name: r.ScreenP2Name })
-		if (r.ScreenS1Number.length > 0 || r.ScreenS1Name.length > 0 || r.ScreenS1Colour.length > 0)
-			designs.push({ Number: r.ScreenS1Number, Colour: r.ScreenS1Colour, Name: r.ScreenS1Name })
-		if (r.ScreenS2Number.length > 0 || r.ScreenS2Name.length > 0 || r.ScreenS2Colour.length > 0)
-			designs.push({ Number: r.ScreenS2Number, Colour: r.ScreenS2Colour, Name: r.ScreenS2Name })
+	const results = statement.all(orderid)
+	const transfers = {}
+	const usbs = {}
+	const screens = {}
 
-		if (r.UsbF1Number.length > 0 || r.UsbF1Notes.length > 0)
-			designs.push({ Number: r.UsbF1Number, Colour: "", Notes: r.UsbF1Notes })
-		if (r.UsbF2Number.length > 0 || r.UsbF2Notes.length > 0)
-			designs.push({ Number: r.UsbF2Number, Colour: "", Notes: r.UsbF2Notes })
-		if (r.UsbB1Number.length > 0 || r.UsbB1Notes.length > 0)
-			designs.push({ Number: r.UsbB1Number, Colour: "", Notes: r.UsbB1Notes })
-		if (r.UsbB2Number.length > 0 || r.UsbB2Notes.length > 0)
-			designs.push({ Number: r.UsbB2Number, Colour: "", Notes: r.UsbB2Notes })
-		if (r.UsbP1Number.length > 0 || r.UsbP1Notes.length > 0)
-			designs.push({ Number: r.UsbP1Number, Colour: "", Notes: r.UsbP1Notes })
-		if (r.UsbP2Number.length > 0 || r.UsbP2Notes.length > 0)
-			designs.push({ Number: r.UsbP2Number, Colour: "", Notes: r.UsbP2Notes })
-		if (r.UsbS1Number.length > 0 || r.UsbS1Notes.length > 0)
-			designs.push({ Number: r.UsbS1Number, Colour: "", Notes: r.UsbS1Notes })
-		if (r.UsbS2Number.length > 0 || r.UsbS2Notes.length > 0)
-			designs.push({ Number: r.UsbS2Number, Colour: "", Notes: r.UsbS2Notes })
-
-		if (r.TransferNameF1Name.length > 0)
-			transfers.push(r.TransferNameF1Name)
-		if (r.TransferNameF2Name.length > 0)
-			transfers.push(r.TransferNameF2Name)
-		if (r.TransferNameB1Name.length > 0)
-			transfers.push(r.TransferNameB1Name)
-		if (r.TransferNameB2Name.length > 0)
-			transfers.push(r.TransferNameB2Name)
-		if (r.TransferNameP1Name.length > 0)
-			transfers.push(r.TransferNameP1Name)
-		if (r.TransferNameP2Name.length > 0)
-			transfers.push(r.TransferNameP2Name)
-		if (r.TransferNameS1Name.length > 0)
-			transfers.push(r.TransferNameS1Name)
-		if (r.TransferNameS2Name.length > 0)
-			transfers.push(r.TransferNameS2Name)
+	sz.locations.forEach(loc => {
+		screens[loc] = []
+		usbs[loc] = []
+		transfers[loc] = []
 	})
 
+	results.forEach(r => {
+		sz.locations.forEach(loc => {
+			if (r[loc + "PrintDesignId"]) {
+				// get the standard/unnamed screens for this
+				statement = db.prepare(`SELECT Screen.* FROM Screen
+				INNER JOIN ScreenPrintDesign ON ScreenPrintDesign.ScreenId=Screen.ScreenId
+				WHERE Name is null
+				AND PrintDesignId=?
+				`)
+				const standardScreens = statement.all(r[loc + "PrintDesignId"])
+				
+				standardScreens.forEach(screen => {
+					screens[loc].push(screen)
+				})
+
+			}
+
+			if (r[`Screen${loc}1Number`].length > 0 )
+				screens[loc].push({ Number: r[`Screen${loc}1Number`], Colour: r[`Screen${loc}1Colour`], Name: r[`Screen${loc}1Name`] })
+			if (r[`Screen${loc}2Number`].length > 0 )
+				screens[loc].push({ Number: r[`Screen${loc}2Number`], Colour: r[`Screen${loc}2Colour`], Name: r[`Screen${loc}2Name`] })
+
+			if (r[`Usb${loc}1Number`].length > 0 )
+				usbs[loc].push({ Number: r[`Usb${loc}1Number`], Colour: r[`Usb${loc}1Notes`] })
+			if (r[`Usb${loc}2Number`].length > 0 )
+				usbs[loc].push({ Number: r[`Usb${loc}2Number`], Colour: r[`Usb${loc}2Notes`] })
+
+			if (r[`TransferName${loc}1Name`].length > 0 )
+				transfers[loc].push(r[`TransferName${loc}1Name`])
+			
+
+		})
+	})
+
+
 	return {
-		transfers,
-		designs
+		screens,
+		usbs,
+		transfers
 	}
 
 }

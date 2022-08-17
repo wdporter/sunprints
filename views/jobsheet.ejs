@@ -38,8 +38,8 @@
 		}
 		
 
-    #inputTable,
-    #designTable {
+    #inputTable, table.list
+    {
       margin-top: 2em;
     }
 
@@ -56,14 +56,27 @@
       border: 1px black solid;
     }
 
-    #designTable th {
+    table.list th {
       text-align: left;
     }
 
-    #designTable th,
-    td {
-      padding-right: 2em
+    table.list th,
+    table.list td {
+      padding-top: .5em;
+			padding-right: 1em;
+			padding-bottom: .5em;
+			padding-left: 1em;
     }
+
+		table.list, table.list * {
+			border: 1px black solid;
+			border-collapse: collapse;
+		}
+
+		table.list caption {
+			font-size: 1.5em;
+			font-weight: bold;;
+		}
 
 
 	@media print {
@@ -97,7 +110,7 @@
 	<table id="customerTable">
 		<tr>
 			<td>
-				<%= customer.Company %>
+				<b><%= customer.Company %></b>
 				<% if (customer.AddressLine1) { %>
 					<br><%= customer.AddressLine1 %>
 				<% } %>
@@ -109,25 +122,25 @@
 			<td id="middleCell"><b>Deliver To</b><br><%- customer.Notes ? customer.Notes.replace(/\n/g, "<br>") : "n/a" %></td>
 			<td>
 				<table>
-					<tr><td style="text-align:right">Order No:</td><td><%= order.OrderNumber %></td></tr>
-					<tr><td style="text-align:right">Customer Order No:</td><td><%= order.CustomerOrderNumber || 'n/a' %></td></tr>
+					<tr><td style="text-align:right"><b>Order No:</b></td><td><%= order.OrderNumber %></td></tr>
+					<tr><td style="text-align:right"><b>Customer Order No:</b></td><td><%= order.CustomerOrderNumber || 'n/a' %></td></tr>
 				</table>
 			</td>
 		</tr>
 
 		<tr>
 		<td>
-			Order Date: <%=  new Date(Date.parse(order.OrderDate)).toLocaleDateString()  %><br>
-			Delivery:&emsp;&ensp;<%= order.DeliveryDate || "n/a" %><br>
+			<b>Order Date:</b> <%=  new Date(Date.parse(order.OrderDate)).toLocaleDateString()  %><br>
+			<b>Delivery:</b>&emsp;&ensp;<%= order.DeliveryDate || "n/a" %><br>
 			<div style="display:flex">
-				<div>Notes:</div>
+				<div><b>Notes:</b></div>
 				<div style="margin-left: 1em; "><%- order.Notes ? order.Notes.replace(/\n/g, "<br>") : "" %></div>
 			</div>
 		</td>
 		<td style="vertical-align:text-top">
-			Invoice Date: <%= order.InvoiceDate || "n/a" %><br>
-			Terms:&emsp;&emsp;&emsp;<%= order.Terms %><br>
-			Sales Rep:&emsp;&ensp;<%= order.SalesRep || "n/a" %>
+			<b>Invoice Date:</b> <%= order.InvoiceDate || "n/a" %><br>
+			<b>Terms:</b>&emsp;&emsp;&emsp;<%= order.Terms %><br>
+			<b>Sales Rep:</b>&emsp;&ensp;<%= order.SalesRep || "n/a" %>
 		</td>
 		<td style="vertical-align:text-top; text-align:center; font-size:large">
 			<% if (order.Repeat) { %> <b>Repeat</b><br> <% } %>
@@ -146,43 +159,42 @@
 		<tr class="garment-row">
 			<td>
 				<table>
-					<tr><td>Type:</td><td><%= g.Type %></td></tr>
-					<tr><td>Colour:</td><td><%= g.Colour %></td></tr>
-					<tr><td>Label:</td><td><%= g.Label %></td></tr>
-					<tr><td>Code:</td><td><%= g.Code %></td></tr>
+					<tr><td><b>Type:</b></td><td><%= g.Type %></td></tr>
+					<tr><td><b>Colour:</b></td><td><%= g.Colour %></td></tr>
+					<tr><td><b>Label:</b></td><td><%= g.Label %></td></tr>
+					<tr><td><b>Code:</b></td><td><%= g.Code %></td></tr>
 				</table>
 			</td>
 			<td>
 				<table class="quantityTable">
 					<caption>
-					Design: <% 
-					let designs = [];
+					<% let designs = [];
 					if (g.FrontPrintDesign || g.FrontScreen1 ||  g.FrontScreen2) 
-						designs.push("<b>Front</b> " + `${g.FrontPrintDesign || ""} ${g.FrontScreen1 || ""} ${g.FrontScreen2 || ""}`.trim())
+						designs.push(`<b>Front</b> ${g.FrontPrintDesign || ""} ${g.FrontScreen1 || ""} ${g.FrontScreen2 || ""}`.trim() )
 					if (g.BackPrintDesign || g.BackScreen1 || g.BackScreen2)
-						designs.push("<b>Back</b> " + `${g.BackPrintDesign || ""} ${g.BackScreen1 || ""} ${g.BackScreen2 || ""}`.trim())
+						designs.push(`<b>Back</b> ${g.BackPrintDesign || ""} ${g.BackScreen1 || ""} ${g.BackScreen2 || ""}`.trim())
 					if (g.PocketPrintDesign || g.PocketScreen1 || g.PocketScreen2)	 
-						designs.push("<b>Pocket</b> " + `${g.PocketPrintDesign || ""} ${g.PocketScreen1 || ""} ${g.PocketScreen2 || ""}`.trim()) 
+						designs.push(`<b>Pocket</b> ${g.PocketPrintDesign || ""} ${g.PocketScreen1 || ""} ${g.PocketScreen2 || ""}`.trim()) 
 					if (g.SleevePrintDesign || g.SleeveScreen1 || g.SleeveScreen2)	
-						designs.push("<b>Sleeve</b> " + `${g.SleevePrintDesign || ""} ${g.SleeveScreen1 || ""} ${g.SleeveScreen2 || ""}`.trim()) 
+						designs.push(`<b>Sleeve</b> ${g.SleevePrintDesign || ""} ${g.SleeveScreen1 || ""} ${g.SleeveScreen2 || ""}`.trim()) 
 					if (g.FrontEmbroideryDesign || g.FrontUsb1 || g.FrontUsb2)	
-						designs.push("<b>Front</b> " + `${g.FrontEmbroideryDesign || ""} ${g.FrontUsb1 || ""} ${g.FrontUsb2 || ""}`.trim())
+						designs.push(`<b>Front</b> ${g.FrontEmbroideryDesign || ""} ${g.FrontUsb1 || ""} ${g.FrontUsb2 || ""}`.trim())
 					if (g.BackEmbroideryDesign || g.BackUsb1 || g.BackUsb2) 
-						designs.push("<b>Back</b> " + `${g.PocketEmbroideryDesign || ""} ${g.PocketUsb1 || ""} ${g.PocketUsb2 || ""}`.trim())
+						designs.push(`<b>Back</b> ${g.PocketEmbroideryDesign || ""} ${g.PocketUsb1 || ""} ${g.PocketUsb2 || ""}`.trim())
 					if (g.PocketEmbroideryDesign || g.PocketUsb1 || g.PocketUsb2)	 
-						designs.push("<b>Pocket</b> " + `${g.PocketEmbroideryDesign || ""} ${g.PocketUsb1 || ""} ${g.PocketUsb2 || ""}`.trim())
+						designs.push(`<b>Pocket</b> ${g.PocketEmbroideryDesign || ""} ${g.PocketUsb1 || ""} ${g.PocketUsb2 || ""}`.trim())
 					if (g.SleeveEmbroideryDesign || g.SleeveUsb1 || g.SleeveUsb2)
-						designs.push("<b>Sleeve</b> " + `${g.SleeveEmbroideryDesign || ""} ${g.SleeveUsb1 || ""} ${g.SleeveUsb2 || ""}`.trim())
+						designs.push(`<b>Sleeve</b> ${g.SleeveEmbroideryDesign || ""} ${g.SleeveUsb1 || ""} ${g.SleeveUsb2 || ""}`.trim())
 					if (g.FrontTransferDesign || g.FrontTransferName1 ||  g.FrontTransferName2) 
-						designs.push("<b>Front</b> " + `${g.FrontTransferDesign || ""} ${g.FrontTransferName1 || ""} ${g.FrontTransferName2 || ""}`.trim())
+						designs.push(`<b>Front</b> ${g.FrontTransferDesign || ""} ${g.FrontTransferName1 || ""} ${g.FrontTransferName2 || ""}`.trim())
 					if (g.BackTransferDesign || g.BackTransferName1 || g.BackTransferName2)
-						designs.push("<b>Back</b> " + `${g.BackTransferDesign || ""} ${g.BackTransferName1 || ""} ${g.BackTransferName2 || ""}`.trim())
+						designs.push(`<b>Back</b> ${g.BackTransferDesign || ""} ${g.BackTransferName1 || ""} ${g.BackTransferName2 || ""}`.trim())
 					if (g.PocketTransferDesign || g.PocketTransferName1 || g.PocketTransferName2)	 
-						designs.push("<b>Pocket</b> " + `${g.PocketTransferDesign || ""} ${g.PocketTransferName1 || ""} ${g.PocketTransferName2 || ""}`.trim()) 
+						designs.push(`<b>Pocket</b> ${g.PocketTransferDesign || ""} ${g.PocketTransferName1 || ""} ${g.PocketTransferName2 || ""}`.trim()) 
 					if (g.SleeveTransferDesign || g.SleeveTransferName1 || g.SleeveTransferName2)	
-						designs.push("<b>Sleeve</b> " + `${g.SleeveTransferDesign || ""} ${g.SleeveTransferName1 || ""} ${g.SleeveTransferName2 || ""}`.trim()) 
+						designs.push(`<b>Sleeve</b> ${g.SleeveTransferDesign || ""} ${g.SleeveTransferName1 || ""} ${g.SleeveTransferName2 || ""}`.trim()) 
 					%>
-					<%- designs.length == 0 ? "n/a" : designs.join("<br>") %>
+					<%- designs.length == 0 ? "" : `Designs: ${designs.join("<br>")}` %>
 					</caption>
 					<% if (g.kidsQuantity > 0) { %>
 					<tr><th>0</th>          <th>1</th>          <th>2</th>          <th>4</th><th>6</th><th>8</th><th>10</th><th>12</th><th>14</th><th>16</th><th></th><th></th></tr>
@@ -211,9 +223,9 @@
 			</td>
 			<td>
 				<table>
-					<tr><td>Qty:</td><td style="text-align:right"><%= g.kidsQuantity + g.womensQuantity + g.adultsQuantity %></td></tr>
-					<tr><td style="border-bottom:1px dotted gray">Price:</td><td style="border-bottom:1px dotted gray;text-align:right">$<%= Number(g.Price)?.toFixed(2) %></td></tr>
-					<tr><td>Total:</td><td style="text-align:right">$<%= ((g.kidsQuantity + g.womensQuantity + g.adultsQuantity) * Number(g.Price)).toFixed(2) %></td></tr>
+					<tr><td><b>Qty:</b></td><td style="text-align:right"><%= g.kidsQuantity + g.womensQuantity + g.adultsQuantity %></td></tr>
+					<tr><td style="border-bottom:1px dotted gray"><b>Price:</b></td><td style="border-bottom:1px dotted gray;text-align:right">$<%= Number(g.Price)?.toFixed(2) %></td></tr>
+					<tr><td><b>Total:</b></td><td style="text-align:right">$<%= ((g.kidsQuantity + g.womensQuantity + g.adultsQuantity) * Number(g.Price)).toFixed(2) %></td></tr>
 				</table>
 			</td>
 		</tr>
@@ -222,10 +234,10 @@
 			<tr><td colspan="3" style="text-align:right">
 				<table style="float:right">
 					<tr>
-						<td style="text-align:right">Total Quantity:</td><td style="text-align:right"><%= quantity %></td>
+						<td style="text-align:right"><b>Total Quantity:</b></td><td style="text-align:right"><%= quantity %></td>
 					</tr>
 					<tr>
-						<td style="text-align:right">Total Order Value:</td><td style="text-align:right">$<%= totalPrice.toFixed(2) %></td>
+						<td style="text-align:right"><b>Total Order Value:</b></td><td style="text-align:right">$<%= totalPrice.toFixed(2) %></td>
 					</tr>
 				</table>
 			</td></tr>
@@ -235,7 +247,7 @@
 
 <div style="break-inside:avoid;margin-top: 3em;">
 	<div style="display:flex;  ">
-			<h1>Screens and USBs</h1>
+			<h1>Screens, Transfers and USBs</h1>
 			<h1 style="margin-left:auto">
 				<%= new Date().toLocaleDateString() %>
 			</h1>
@@ -265,31 +277,59 @@
 
 	<div id="app">
 
-			<table id="designTable">
-				<thead>
-					<tr>
-						<th>Screen / Usb No.</th>
-						<th>Colour</th>
-						<th>Name</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="d in designs">
-						<td>{{d.Number}}</td>
-						<td>{{d.Colour}}</td>
-						<td>{{d.Name}}</td>
-					</tr>
+		<table class="list" v-if="screensCount>0">
+		<caption>Screens</caption>
+    <thead>
+      <tr>
+				<th>Location</th>
+        <th>Number</th>
+        <th>Colour</th>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody v-for="loc in locations">
+      <tr v-for="(s, i) in screens[loc]">
+				<th :rowspan="screens[loc].length" v-if="i==0">{{loc}}</th>
+        <td>{{s.Number}}</td>
+        <td>{{s.Colour}}</td>
+        <td>{{s.Name}}</td>
+      </tr>
+    </tbody>
+  </table>
 
-				</tbody>
-			</table>
+  <table class=list v-if="usbsCount>0">
+		<caption>Usbs</caption>
+    <thead>
+      <tr>
+				<th>Location</th>
+        <th>Number</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody v-for="loc in locations">
+      <tr v-for="(u, i) in usbs[loc]">
+				<th :rowspan="usbs[loc].length" v-if="i==0">{{loc}}</th>
+        <td>{{u.Number}}</td>
+        <td>{{u.Notes}}</td>
+      </tr>
+    </tbody>
+  </table>
 
-		<div v-if="transfers.length > 0">
-			<h2>Transfers</h2>
-			<ul>
-				<li v-for="t in transfers">{{ t }}</li>
-			</ul>
-			</table>
-		</div>
+	<table class="list" v-if="transfersCount>0">
+		<caption>Transfers</caption>
+    <thead>
+      <tr>
+				<th>Location</th>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody v-for="loc, i in locations">
+      <tr v-for="(t, i) in transfers[loc]">
+				<th :rowspan="transfers[loc].length" v-if="i==0">{{loc}}</th>
+        <td>{{t}}</td>
+      </tr>
+    </tbody>
+  </table> 
 
 	</div>
 
@@ -302,8 +342,13 @@ Vue.createApp({
 	data() {
 		return {
 			orderNumber: "<%= order.OrderNumber %>",
-			designs: <%- JSON.stringify(designs) %>,
-			transfers: <%- JSON.stringify(transfers) %>
+			screens: <%- JSON.stringify(screens) %>,
+			usbs: <%- JSON.stringify(usbs) %>,
+			transfers: <%- JSON.stringify(transfers) %>,
+			locations: <%- JSON.stringify(locations) %>,
+			screensCount: <%- screensCount %>,
+			usbsCount: <%- usbsCount %>,
+			transfersCount: <%- transfersCount %>,
 		}
 	}
 }).mount("#app")
@@ -311,7 +356,8 @@ Vue.createApp({
   </script>
 
 	<script>
-	window.print()
+		//if (window.location.hostname != "localhost")
+			window.print()
 	</script>
 </body>
 

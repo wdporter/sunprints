@@ -8,8 +8,7 @@
       
     }
 
-    #inputTable,
-    #designTable {
+    table.list {
       margin-top: 2em;
     }
 
@@ -26,11 +25,11 @@
       border: 1px black solid;
     }
 
-    #designTable th {
+    table.list th {
       text-align: left;
     }
 
-    #designTable th,
+    table.list th,
     td {
       padding-right: 2em
     }
@@ -55,7 +54,7 @@
 
 
   <div style="display:flex">
-    <h1>Screens and USBs</h1>
+    <h1>Screens, Transfers and USBs</h1>
     <h1 style="margin-left:auto">
       <%= new Date().toLocaleDateString() %>
     </h1>
@@ -84,31 +83,59 @@
 
   <div id="app">
 
-  <table id="designTable">
+  <table class="list">
+		<caption>Screens</caption>
     <thead>
       <tr>
-        <th>Screen / Usb No.</th>
+				<th>Location</th>
+        <th>Number</th>
         <th>Colour</th>
         <th>Name</th>
       </tr>
     </thead>
-    <tbody>
-      <tr v-for="d in designs">
-        <td>{{d.Number}}</td>
-        <td>{{d.Colour}}</td>
-        <td>{{d.Name}}</td>
+    <tbody v-for="loc in locations">
+      <tr v-for="(s, i) in screens[loc]">
+				<td :rowspan="screens[loc].length" v-if="i==0">{{loc}}</td>
+        <td>{{s.Number}}</td>
+        <td>{{s.Colour}}</td>
+        <td>{{s.Name}}</td>
       </tr>
-
     </tbody>
   </table>
 
-  <div v-if="transfers.length > 0">
-    <h2>Transfers</h2>
-    <ul>
-      <li v-for="t in transfers">{{ t }}</li>
-    </ul>
-    </table>
-  </div>
+  <table class=list>
+		<caption>Usbs</caption>
+    <thead>
+      <tr>
+				<th>Location</th>
+        <th>Number</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody v-for="loc in locations">
+      <tr v-for="(u, i) in usbs[loc]">
+				<td :rowspan="usbs[loc].length" v-if="i==0">{{loc}}</td>
+        <td>{{u.Number}}</td>
+        <td>{{u.Notes}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+	<table class="list">
+		<caption>Transfers</caption>
+    <thead>
+      <tr>
+				<th>Location</th>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody v-for="loc, i in locations">
+      <tr v-for="(t, i) in transfers[loc]">
+				<td :rowspan="transfers[loc].length" v-if="i==0">{{loc}}</td>
+        <td>{{t}}</td>
+      </tr>
+    </tbody>
+  </table> 
 
 
 </div>
@@ -116,12 +143,14 @@
 
   <script src="/javascripts/vue-3.2.33.js"></script>
   <script>
-    Vue.createApp({
+    window.app = Vue.createApp({
       data() {
         return {
           orderNumber: "<%= orderNumber %>",
-          designs: <%- JSON.stringify(designs) %>,
-          transfers: <%- JSON.stringify(transfers) %>
+          screens: <%- JSON.stringify(screens) %>,
+          usbs: <%- JSON.stringify(usbs) %>,
+          transfers: <%- JSON.stringify(transfers) %>,
+					locations: <%- JSON.stringify(locations) %>
       }
       }
     }
