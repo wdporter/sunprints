@@ -193,12 +193,14 @@ router.post("/", function(req, res) {
 	try {
 
 		let statement = db.prepare(`SELECT COUNT(*) AS Count FROM Screen WHERE Number=? AND Colour=? AND Name=?`)
-		let count = statement.get(req.body.Number, req.body.Colour, req.body.Name).Count
-		if (count > 0) {
-			res.statusMessage = `We already have a Screen with these details.`
-			res.status(400).end()
-			return
-		}
+
+		// it's ok to save duplicates
+		// let count = statement.get(req.body.Number, req.body.Colour, req.body.Name).Count
+		// if (count > 0) {
+		// 	res.statusMessage = `We already have a Screen with these details.`
+		// 	res.status(400).end()
+		// 	return
+		// }
 
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
