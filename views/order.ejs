@@ -4,15 +4,16 @@
 <h3>Showing currently outstanding orders</h3>
 
 <ul>
-	<!-- <li>todo: clone an order</li> -->
+	<li><a href="/order/new">Create a new order</a></li>
 	<li>To ship an Order, select the Order and click Ship. Sets the processed date to today</li>
 	<li>To complete an Order, click Done. The order is removed from this list</li>
 	<li>To add/remove garments, or change details, select the Order and click Edit (or double click)</li>
 	<li>The green + plus icon reveals the garments.  </li>
 	<li>Deleting an order returns the garment quantities back into stock levels on the garments page</li>
-	<li><a href="/order/new">Create a new order</a></li>
+	<li>Print outstanding orders: <a href="/order/outstanding/print">Prints</a>, <a href="/order/outstanding/embroidery">Embroidery</a>, <a href="/order/outstanding/transfer">Transfers</a></li>
 	<li style="margin-bottom:3em"><a href=/order/deleted>View deleted orders</a></li>
 </ul>
+
 </main>
 
 
@@ -241,7 +242,7 @@
 					}
 				},
 			],
-			order: [[0, "desc"]]
+			order: [[0, "desc"]] // order date
 		})
 
 
