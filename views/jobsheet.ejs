@@ -3,6 +3,7 @@
 	<title>SunPrints Order Number <%= order.OrderNumber %>
 	</title>
 	<style>
+
 		body {
 			font-family: sans-serif;
 			font-size: 11pt;
@@ -30,6 +31,11 @@
 			border-bottom: 1px  solid gray;
 			border-top: 1px  solid gray;
 		}
+
+		/* center by default, not sure what's best 
+		tr.garment-row td:nth-child(2), tr.garment-row td:nth-child(3) {
+			vertical-align: bottom; 
+		}*/
 
 		.quantityTable td {
 			text-align: right;
@@ -159,6 +165,42 @@
 		<tr class="garment-row">
 			<td>
 				<table>
+					<% if (g.FrontPrintDesign) { %>
+							<tr><td><b>Front:</b><td><%= g.FrontPrintDesign %>
+					<% } %>
+					<% if (g.BackPrintDesign) { %>
+						<tr><td><b>Back:<td><%= g.BackPrintDesign %>
+					<% } %>
+					<% if (g.PocketPrintDesign) { %> 
+						<tr><td><b>Pocket:<td><%= g.PocketPrintDesign %>
+					<% } %>
+					<% if (g.SleevePrintDesign) { %>
+						<tr><td><b>Sleeve<td><%= g.SleevePrintDesign %>
+					<% } %>
+					<% if (g.FrontEmbroideryDesign) { %>
+						<tr><td><b>Front:</b><td><%= g.FrontEmbroideryDesign %>
+					<% } %>
+					<% if (g.BackEmbroideryDesign) { %>
+						<tr><td><b>Back:</b><td><%= g.BackEmbroideryDesign %>
+					<% } %>
+					<% if (g.PocketEmbroideryDesign) { %>
+						<tr><td><b>Pocket:</b><td><%= g.PocketEmbroideryDesign %>
+					<% } %>
+					<% if (g.SleeveEmbroideryDesign) { %>
+						<tr><td><b>Sleeve:</b><td><%= g.SleeveEmbroideryDesign %>
+					<% } %>
+					<% if (g.FrontTransferDesign) { %>
+						<tr><td><b>Front:</b><td><%= g.FrontTransferDesign %>
+					<% } %>
+					<% if (g.BackTransferDesign) { %>
+						<tr><td><b>Back:</b><td><%= g.BackTransferDesign %>
+					<% } %>
+					<% if (g.PocketTransferDesign) { %>
+						<tr><td><b>Pocket:</b><td><%= g.PocketTransferDesign %>
+					<% } %>
+					<% if (g.SleeveTransferDesign) { %>
+						<tr><td><b>Sleeve:</b><td><%= g.SleeveTransferDesign %>
+					<% } %>
 					<tr><td><b>Type:</b></td><td><%= g.Type %></td></tr>
 					<tr><td><b>Colour:</b></td><td><%= g.Colour %></td></tr>
 					<tr><td><b>Label:</b></td><td><%= g.Label %></td></tr>
@@ -167,35 +209,7 @@
 			</td>
 			<td>
 				<table class="quantityTable">
-					<caption>
-					<% let designs = [];
-					if (g.FrontPrintDesign || g.FrontScreen1 ||  g.FrontScreen2) 
-						designs.push(`<b>Front</b> ${g.FrontPrintDesign || ""} ${g.FrontScreen1 || ""} ${g.FrontScreen2 || ""}`.trim() )
-					if (g.BackPrintDesign || g.BackScreen1 || g.BackScreen2)
-						designs.push(`<b>Back</b> ${g.BackPrintDesign || ""} ${g.BackScreen1 || ""} ${g.BackScreen2 || ""}`.trim())
-					if (g.PocketPrintDesign || g.PocketScreen1 || g.PocketScreen2)	 
-						designs.push(`<b>Pocket</b> ${g.PocketPrintDesign || ""} ${g.PocketScreen1 || ""} ${g.PocketScreen2 || ""}`.trim()) 
-					if (g.SleevePrintDesign || g.SleeveScreen1 || g.SleeveScreen2)	
-						designs.push(`<b>Sleeve</b> ${g.SleevePrintDesign || ""} ${g.SleeveScreen1 || ""} ${g.SleeveScreen2 || ""}`.trim()) 
-					if (g.FrontEmbroideryDesign || g.FrontUsb1 || g.FrontUsb2)	
-						designs.push(`<b>Front</b> ${g.FrontEmbroideryDesign || ""} ${g.FrontUsb1 || ""} ${g.FrontUsb2 || ""}`.trim())
-					if (g.BackEmbroideryDesign || g.BackUsb1 || g.BackUsb2) 
-						designs.push(`<b>Back</b> ${g.PocketEmbroideryDesign || ""} ${g.PocketUsb1 || ""} ${g.PocketUsb2 || ""}`.trim())
-					if (g.PocketEmbroideryDesign || g.PocketUsb1 || g.PocketUsb2)	 
-						designs.push(`<b>Pocket</b> ${g.PocketEmbroideryDesign || ""} ${g.PocketUsb1 || ""} ${g.PocketUsb2 || ""}`.trim())
-					if (g.SleeveEmbroideryDesign || g.SleeveUsb1 || g.SleeveUsb2)
-						designs.push(`<b>Sleeve</b> ${g.SleeveEmbroideryDesign || ""} ${g.SleeveUsb1 || ""} ${g.SleeveUsb2 || ""}`.trim())
-					if (g.FrontTransferDesign || g.FrontTransferName1 ||  g.FrontTransferName2) 
-						designs.push(`<b>Front</b> ${g.FrontTransferDesign || ""} ${g.FrontTransferName1 || ""} ${g.FrontTransferName2 || ""}`.trim())
-					if (g.BackTransferDesign || g.BackTransferName1 || g.BackTransferName2)
-						designs.push(`<b>Back</b> ${g.BackTransferDesign || ""} ${g.BackTransferName1 || ""} ${g.BackTransferName2 || ""}`.trim())
-					if (g.PocketTransferDesign || g.PocketTransferName1 || g.PocketTransferName2)	 
-						designs.push(`<b>Pocket</b> ${g.PocketTransferDesign || ""} ${g.PocketTransferName1 || ""} ${g.PocketTransferName2 || ""}`.trim()) 
-					if (g.SleeveTransferDesign || g.SleeveTransferName1 || g.SleeveTransferName2)	
-						designs.push(`<b>Sleeve</b> ${g.SleeveTransferDesign || ""} ${g.SleeveTransferName1 || ""} ${g.SleeveTransferName2 || ""}`.trim()) 
-					%>
-					<%- designs.length == 0 ? "" : `Designs: ${designs.join("<br>")}` %>
-					</caption>
+
 					<% if (g.kidsQuantity > 0) { %>
 					<tr><th>0</th>          <th>1</th>          <th>2</th>          <th>4</th><th>6</th><th>8</th><th>10</th><th>12</th><th>14</th><th>16</th><th></th><th></th></tr>
 					<tr><td><%= g.K0 %></td><td><%= g.K1 %></td><td><%= g.K2 %></td><td><%= g.K4 %></td><td><%= g.K6 %></td><td><%= g.K8 %></td><td><%= g.K10 %></td><td><%= g.K12 %></td><td><%= g.K14 %></td><td><%= g.K16 %></td><td></td><td></td></tr>
