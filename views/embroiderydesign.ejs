@@ -39,7 +39,7 @@
 			<h3>Create Usb</h3>
 			<p>
 				<label for="createUsbNumber">Number</label>
-				<input id="createUsbNumber" />
+				<input id="createUsbNumber" required />
 			</p>
 			<p>
 				<label for="createUsbNotes">Notes</label>
@@ -47,7 +47,7 @@
 			</p>
 			<div>
 				<button value="default" onclick="saveNewUsb(event)">&emsp;Save&emsp;</button>
-				<button value="cancel" >Cancel</button>
+				<button value="cancel" onclick="this.closest('dialog').close()">Cancel</button>
 			</div>
 		</form>
 	</dialog>
@@ -396,6 +396,8 @@
 		// opens the dialog for create new usb
 		function createUsb(id) {
 			document.getElementById("currentEmbroideryDesignId").value = id
+			document.getElementById("createUsbNumber").value = "" // initialise in case there's a value from last time
+			document.getElementById("createUsbNotes").value = "" // initialise in case there's a value from last time
 			document.getElementById("createUsbDialog").showModal()
 		}
 
