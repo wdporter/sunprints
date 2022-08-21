@@ -626,6 +626,8 @@ table#stockWarningTable {
 		}
 		//)
 
+		
+
 		window.app = Vue.createApp({
 			data() {
 				return {
@@ -852,7 +854,14 @@ table#stockWarningTable {
 				getAllGarmentsValue() {
 					let val = 0
 					this.garments.forEach(g => val += this.getTotalPrice(g))
-					return val?.toFixed(2) ?? ""
+					if (val) {
+						let ret = val?.toFixed(2)
+						if (ret.includes("e")) // it's a pain when this happens, 
+							ret =  "0" 
+						return  ret
+					}
+					else 
+						return ""
 				},
 				saveGarment(garment) {
 						console.log(`saving garment id !${JSON.stringify(garment)}!`)
