@@ -279,9 +279,9 @@ table#stockWarningTable {
 				<fieldset v-for="(location, key) in g.transferLocations">
 					<legend>{{key}} (choose one or two)</legend>
 					<p v-for="locName in location" :key="locName.TransferNameTransferDesignId">
-						<input type="checkbox" @change="transferNameChange(g, key)" :value="locName.TransferNameTransferDesignId"
-							v-model="g.checkedTransferNames[key]" :id="'transferName' + locName.TransferNameTransferDesignId">
-						<label :for="'transferName' + locName.TransferNameTransferDesignId">{{locName.Name}}</label>
+						<input type="checkbox" @change="transferNameChange(g, key)" :value="locName.TransferNameId"
+							v-model="g.checkedTransferNames[key]" :id="'transferName' + locName.TransferNameId">
+						<label :for="'transferName' + locName.TransferNameId">{{locName.Name}}</label>
 					</p>
 				</fieldset>
 			</div>
