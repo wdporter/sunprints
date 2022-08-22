@@ -1,0 +1,89 @@
+<html>
+	<title>Outstanding Orders — Prints <% new Date().toLocaleDateString() %></title>
+<style>
+
+/* * {
+	border: 1px solid purple;
+} */
+
+td {
+	vertical-align: text-top;
+}
+
+	/* order date and delivery date */
+	td:nth-child(2), td:nth-child(3) {
+		text-align: right;
+	}
+
+	/* buy in */
+	td:nth-child(4) {
+		text-align: center;
+	}
+	
+	/* customer */
+	td:nth-child(5) {
+		max-width: 150px;
+		white-space: nowrap;
+		overflow: hidden;
+	}
+
+	/* qty */
+	td:nth-child(6) { 
+		text-align: right;
+	}
+
+	@media print {
+  .no-print {
+    display: none
+  }
+}
+
+</style>
+
+<div class="no-print">
+	<ul>
+	<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
+	<li>Use the Destination/Printer option to save a PDF 
+	<li>Under <i>More settings</i> you can remove the header/footer
+</ul>
+	<hr>
+</div>
+
+<h1>Outstanding Orders — <%= name %> <% new Date().toLocaleDateString() %></h1>
+
+<table>
+	<thead>
+		<tr>
+			<th>Number
+			<th>Date
+			<th>Delivery
+			<th>BuyIn
+			<th>Customer
+			<th>Qty
+			<th>Front
+			<th>Back
+			<th>Pocket
+			<th>Sleeve
+		</tr>
+	<tbody>
+
+<% for( let i = 1; i < results.length; ++i) { %>
+
+	<tr>
+		<td><%= results[i].OrderNumber %>
+		<td><%= new Date(Date.parse(results[i].OrderDate)).toLocaleDateString().replace(/\/0/g, "/").replace(/^0/, "") %>
+		<td><%= results[i].DeliveryDate.replace(/\/0/g, "/").replace(/^0/, "") %>
+		<td><%= results[i].BuyIn == 1 ? "✓" : "☓" %>
+		<td><%= results[i].Company %>
+		<td><%= results[i].Qty %>
+		<td><%- results[i].FrontDesign %></td>
+		<td><%- results[i].BackDesign  %></td>
+		<td><%- results[i].PocketDesign %></td>
+		<td><%- results[i].SleeveDesign %></td> 
+	</tr>
+
+<% } %>
+	</tbody>
+</table>
+
+

@@ -748,6 +748,241 @@ router.get("/dt/garments/:orderId", function (req, res) {
 })
 
 
+router.get("/outstanding/print", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+
+		const statement = db.prepare(`SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn,
+		Customer.Company, 
+		fpd.Code AS FrontDesign, 
+		bpd.Code AS BackDesign, 
+		ppd.Code AS PocketDesign, 
+		spd.Code AS SleeveDesign,
+		K0 + K1 + K2 + K4 + K6 + K8 + K10 + K12 + K14 + K16 + W6 + W8 + W10 + W12 + W14 + W16 + W18 + W20 + W22 + W24 + W26 + W28 + AXS + ASm + AM + AL + AXL + A2XL + A3XL + A4XL + A6XL + A7XL + A8XL AS Qty
+		FROM Orders
+		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
+		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
+		LEFT JOIN PrintDesign fpd ON fpd.PrintDesignId=OrderGarment.FrontPrintDesignId
+		LEFT JOIN PrintDesign bpd ON bpd.PrintDesignId=OrderGarment.BackPrintDesignId
+		LEFT JOIN PrintDesign ppd ON ppd.PrintDesignId=OrderGarment.PocketPrintDesignId
+		LEFT JOIN PrintDesign spd ON spd.PrintDesignId=OrderGarment.SleevePrintDesignId
+		WHERE Done=0
+		AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
+		ORDER BY 2 ASC`)
+
+		const resultset = statement.all()
+
+		const r2 = {}
+
+		resultset.forEach(r => {
+			// if we don't already have it in r2, it's the first time we found it
+			if (!r2[r.OrderNumber]) {
+				r2[r.OrderNumber] = {
+					OrderNumber: r.OrderNumber,
+					OrderDate: r.OrderDate,
+					DeliveryDate: r.DeliveryDate,
+					BuyIn: r.BuyIn,
+					Company: r.Company,
+					Qty: r.Qty,
+					FrontDesign: r.FrontDesign,
+					BackDesign: r.BackDesign,
+					PocketDesign: r.PocketDesign,
+					SleeveDesign: r.SleeveDesign
+				}
+			}
+			else {
+				// already exists, so we need to consolidate this item into it
+				if (r.FrontDesign) 
+					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>") ) +  r.FrontDesign
+				if (r.BackDesign)
+					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>") ) +  r.BackDesign
+				if (r.PocketDesign)
+					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>") ) +  r.PocketDesign
+				if (r.SleeveDesign)
+					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>") ) +  r.SleeveDesign
+
+				r2[r.OrderNumber].Qty += r.Qty
+			}
+		})
+
+		const r2set = []
+		for (r in r2)
+			r2set.push(r2[r])
+
+		res.render("outstanding/print.ejs", { name: "Print Designs",
+			results: r2set})
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.status(400)
+	}
+	finally {
+		if (db != null) 
+			db.close()
+	}
+
+
+})
+
+router.get("/outstanding/embroidery", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+
+		const statement = db.prepare(`SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn,
+		Customer.Company, 
+		fed.Code AS FrontDesign, 
+		bed.Code AS BackDesign, 
+		ped.Code AS PocketDesign, 
+		sed.Code AS SleeveDesign,
+		K0 + K1 + K2 + K4 + K6 + K8 + K10 + K12 + K14 + K16 + W6 + W8 + W10 + W12 + W14 + W16 + W18 + W20 + W22 + W24 + W26 + W28 + AXS + ASm + AM + AL + AXL + A2XL + A3XL + A4XL + A6XL + A7XL + A8XL AS Qty
+		FROM Orders
+		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
+		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
+		LEFT JOIN EmbroideryDesign fed ON fed.EmbroideryDesignId=OrderGarment.FrontEmbroideryDesignId
+		LEFT JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=OrderGarment.BackEmbroideryDesignId
+		LEFT JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=OrderGarment.PocketEmbroideryDesignId
+		LEFT JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=OrderGarment.SleeveEmbroideryDesignId
+		WHERE Done=0
+		AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
+		ORDER BY 2 ASC`)
+
+		const resultset = statement.all()
+
+		const r2 = {}
+
+		resultset.forEach(r => {
+			// if we don't already have it in r2, it's the first time we found it
+			if (!r2[r.OrderNumber]) {
+				r2[r.OrderNumber] = {
+					OrderNumber: r.OrderNumber,
+					OrderDate: r.OrderDate,
+					DeliveryDate: r.DeliveryDate,
+					BuyIn: r.BuyIn,
+					Company: r.Company,
+					Qty: r.Qty,
+					FrontDesign: r.FrontDesign,
+					BackDesign: r.BackDesign,
+					PocketDesign: r.PocketDesign,
+					SleeveDesign: r.SleeveDesign
+				}
+			}
+			else {
+				// already exists, so we need to consolidate this item into it
+				if (r.FrontDesign) 
+					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>") ) +  r.FrontDesign
+				if (r.BackDesign)
+					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>") ) +  r.BackDesign
+				if (r.PocketDesign)
+					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>") ) +  r.PocketDesign
+				if (r.SleeveDesign)
+					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>") ) +  r.SleeveDesign
+
+				r2[r.OrderNumber].Qty += r.Qty
+			}
+		})
+
+		const r2set = []
+		for (r in r2)
+			r2set.push(r2[r])
+
+		res.render("outstanding/print.ejs", { name: "Embroidery Designs",
+			results: r2set})
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.status(400)
+	}
+	finally {
+		if (db != null) 
+			db.close()
+	}
+
+
+})
+
+router.get("/outstanding/transfer", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+
+		const statement = db.prepare(`SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn,
+		Customer.Company, 
+		ftd.Code AS FrontDesign, 
+		btd.Code AS BackDesign, 
+		ptd.Code AS PocketDesign, 
+		std.Code AS SleeveDesign,
+		K0 + K1 + K2 + K4 + K6 + K8 + K10 + K12 + K14 + K16 + W6 + W8 + W10 + W12 + W14 + W16 + W18 + W20 + W22 + W24 + W26 + W28 + AXS + ASm + AM + AL + AXL + A2XL + A3XL + A4XL + A6XL + A7XL + A8XL AS Qty
+		FROM Orders
+		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
+		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
+		LEFT JOIN TransferDesign ftd ON ftd.TransferDesignId=OrderGarment.FrontTransferDesignId
+		LEFT JOIN TransferDesign btd ON btd.TransferDesignId=OrderGarment.BackTransferDesignId
+		LEFT JOIN TransferDesign ptd ON ptd.TransferDesignId=OrderGarment.PocketTransferDesignId
+		LEFT JOIN TransferDesign std ON std.TransferDesignId=OrderGarment.SleeveTransferDesignId
+		WHERE Done=0
+		AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
+		ORDER BY 2 ASC`)
+
+		const resultset = statement.all()
+
+		const r2 = {}
+
+		resultset.forEach(r => {
+			// if we don't already have it in r2, it's the first time we found it
+			if (!r2[r.OrderNumber]) {
+				r2[r.OrderNumber] = {
+					OrderNumber: r.OrderNumber,
+					OrderDate: r.OrderDate,
+					DeliveryDate: r.DeliveryDate,
+					BuyIn: r.BuyIn,
+					Company: r.Company,
+					Qty: r.Qty,
+					FrontDesign: r.FrontDesign,
+					BackDesign: r.BackDesign,
+					PocketDesign: r.PocketDesign,
+					SleeveDesign: r.SleeveDesign
+				}
+			}
+			else {
+				// already exists, so we need to consolidate this item into it
+				if (r.FrontDesign) 
+					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>") ) +  r.FrontDesign
+				if (r.BackDesign)
+					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>") ) +  r.BackDesign
+				if (r.PocketDesign)
+					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>") ) +  r.PocketDesign
+				if (r.SleeveDesign)
+					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>") ) +  r.SleeveDesign
+
+				r2[r.OrderNumber].Qty += r.Qty
+			}
+		})
+
+		const r2set = []
+		for (r in r2)
+			r2set.push(r2[r])
+
+		res.render("outstanding/print.ejs", { name: "Transfer Designs",
+			results: r2set})
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.status(400)
+	}
+	finally {
+		if (db != null) 
+			db.close()
+	}
+
+
+})
+
+
 /****************************************************************************** */
 
 
@@ -1767,7 +2002,8 @@ function getDesigns(db, orderid) {
 	,IFNULL(TransferNamePocket1.Name, '') AS TransferNamePocket1Name
 	,IFNULL(TransferNamePocket2.Name, '') AS TransferNamePocket2Name
 	,IFNULL(TransferNameSleeve1.Name, '') AS TransferNameSleeve1Name
-	,IFNULL(TransferNameSleeve2.Name, '') AS TransferNameSleeve2Name
+	,IFNULL(TransferNameSleeve2.Name, '') AS TransferNameSleeve2Name,
+	Garment.SizeCategory AS SizeCategory
 	FROM OrderGarment
 	LEFT JOIN Screen AS ScreenFront1  ON  ScreenFront1.ScreenId=FrontScreenId
 	LEFT JOIN Screen AS ScreenFront2  ON  ScreenFront2.ScreenId=FrontScreen2Id
@@ -1793,6 +2029,7 @@ function getDesigns(db, orderid) {
 	LEFT JOIN TransferName AS TransferNamePocket2 ON TransferNamePocket2.TransferNameId=PocketTransferName2Id
 	LEFT JOIN TransferName AS TransferNameSleeve1 ON TransferNameSleeve1.TransferNameId=SleeveTransferNameId
 	LEFT JOIN TransferName AS TransferNameSleeve2 ON TransferNameSleeve2.TransferNameId=SleeveTransferName2Id
+	INNER JOIN Garment ON Garment.GarmentId=OrderGarment.GarmentId
 	WHERE OrderId=?
 		`)
 
@@ -1814,9 +2051,11 @@ function getDesigns(db, orderid) {
 				statement = db.prepare(`SELECT Screen.* FROM Screen
 				INNER JOIN ScreenPrintDesign ON ScreenPrintDesign.ScreenId=Screen.ScreenId
 				WHERE Name is null
+				AND SizeCategory = ?
 				AND PrintDesignId=?
+				AND ${loc}=1
 				`)
-				const standardScreens = statement.all(r[loc + "PrintDesignId"])
+				const standardScreens = statement.all(r.SizeCategory, r[loc + "PrintDesignId"])
 				
 				standardScreens.forEach(screen => {
 					screens[loc].push(screen)
@@ -1829,13 +2068,14 @@ function getDesigns(db, orderid) {
 			if (r[`Screen${loc}2Number`].length > 0 )
 				screens[loc].push({ Number: r[`Screen${loc}2Number`], Colour: r[`Screen${loc}2Colour`], Name: r[`Screen${loc}2Name`] })
 
-			if (r[`Usb${loc}1Number`].length > 0 )
+				if (r[`TransferName${loc}1Name`].length > 0 )
+				transfers[loc].push(r[`TransferName${loc}1Name`])
+
+				if (r[`Usb${loc}1Number`].length > 0 )
 				usbs[loc].push({ Number: r[`Usb${loc}1Number`], Colour: r[`Usb${loc}1Notes`] })
 			if (r[`Usb${loc}2Number`].length > 0 )
 				usbs[loc].push({ Number: r[`Usb${loc}2Number`], Colour: r[`Usb${loc}2Notes`] })
 
-			if (r[`TransferName${loc}1Name`].length > 0 )
-				transfers[loc].push(r[`TransferName${loc}1Name`])
 			
 
 		})
