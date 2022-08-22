@@ -81,11 +81,16 @@
 				})
 				.then(data => {
 					var ret = "<div style=display:flex>"
-					for (var item of data) {
-						ret += "<div class=garmentDiv>"
-						for (var d in item)
-							ret += `${d}: ${item[d]}</br>`
-						ret += "</div>"
+					if (data.length == 0) {
+						ret += "<div class=garmentDiv>&emsp;no garments to display&emsp;</div>"
+					}
+					else {
+						for (var item of data) {
+							ret += "<div class=garmentDiv>"
+							for (var d in item)
+								ret += `${d}: ${item[d]}</br>`
+							ret += "</div>"
+						}
 					}
 					ret += "</div>"
 					return ret
