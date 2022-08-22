@@ -13,17 +13,16 @@
 <input type=button onclick="newTransfer()" value="Add New Transfer" style="margin-bottom:2em" />
 
 <dialog id="createNameDialog">
-	<form method="dialog" id="createNameForm">
-		<h3>Create new Name</h3>
-		<p>
-			<label for="createNameInput">Name:</label>
-			<input id="createNameInput" required placeholder=required />
-		</p>
-		<div>
-			<button value="default" onclick="createNewName()">Save</button>
-			<button value="cancel">Cancel</button>
-		</div>
-	</form>
+	<h3>Create new Name</h3>
+	<p>
+		<label for="createNameInput">Name:</label>
+		<input id="createNameInput" required placeholder=required />
+	</p>
+	<p id="newNameSuccessMessage" style="display:none">✅ We have saved the name. <br />You can now select size/location</p>
+	<div>
+		<button value="default" onclick="createNewName()">Save</button>
+		<button value="cancel" onclick="this.closest('dialog').close()">Cancel</button>
+	</div>
 </dialog>
 
 <dialog id="addNameDialog" >
@@ -43,8 +42,11 @@
 			<input type=checkbox id="pocketCheckBox" true-value="1" false-value="0" v-model="item.Pocket" /> <label for="pocketCheckBox">Pocket</label>
 			<input type=checkbox id="sleeveCheckBox" true-value="1" false-value="0" v-model="item.Sleeve" /> <label for="sleeveCheckBox">Sleeve</label>
 		</p>
-	<p>
-			Transfer Name: <span :style="{ fontStyle: name=='none selected' ? 'italic' : 'normal' }">{{ name }}</span><hr>
+		<p>
+			Transfer Name: <span :style="{ fontStyle: name=='none selected' ? 'italic' : 'normal' }">{{ name }}</span>
+		</p>
+			<hr>
+		<p v-show="showNameChooser">
 			<label for="chooseNameInput">Choose Name</label>
 			<input id="chooseNameInput" @input="onLoadNames()" v-model="term" placeholder="start typing to filter the list" />
 			<input type="button" v-model="hideList" @click="onHideList()" style="float:right" />
@@ -233,6 +235,7 @@
 			window.addNameApp.name = "none selected"
 			window.addNameApp.nameList = []
 			window.addNameApp.term = ""
+			window.addNameApp.showNameChooser = true
 
 			document.getElementById("addNameDialog").showModal()
 		})
@@ -246,6 +249,7 @@
 			window.addNameApp.item.TransferDesignId = Number(this.dataset.id)
 
 			document.getElementById("createNameInput").value = ""
+			document.getElementById("newNameSuccessMessage").style.display = "none"
 			document.getElementById("createNameDialog").showModal()
 		})
 
@@ -253,30 +257,40 @@
 		// called when hitting save on the create new name dialog
 		function createNewName() {
 			const name = document.getElementById("createNameInput").value
+			if (name == "")
+				return;
+
 			fetch(`/transfer/name`, {
-			method: "POST",
-			headers: new Headers({
-				"Content-Type": "application/json"
-			}),
-			body: JSON.stringify({name})
-		})
-		.then(response => {
-			if (response.ok)
-				return response.json()
-			else
-				throw new Error(response.statusText)
-		})
-		.then(json => {
-			window.addNameApp.item.SizeCategory = "Adults"
-			window.addNameApp.item.Front = 0
-			window.addNameApp.item.Back = 0
-			window.addNameApp.item.Pocket = 0
-			window.addNameApp.item.Sleeve = 0
-			window.addNameApp.item.TransferNameId = json.id
-			window.addNameApp.name = document.getElementById("createNameInput").value
-			window.addNameApp.nameList = []
-			window.addNameApp.term = ""
-			document.getElementById("addNameDialog").showModal()	
+				method: "POST",
+				headers: new Headers({
+					"Content-Type": "application/json"
+				}),
+				body: JSON.stringify({name})
+			})
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else
+					throw new Error(response.statusText)
+			})
+			.then(json => {
+				window.addNameApp.item.SizeCategory = "Adults"
+				window.addNameApp.item.Front = 0
+				window.addNameApp.item.Back = 0
+				window.addNameApp.item.Pocket = 0
+				window.addNameApp.item.Sleeve = 0
+				window.addNameApp.item.TransferNameId = json.id
+				window.addNameApp.name = document.getElementById("createNameInput").value
+				window.addNameApp.nameList = []
+				window.addNameApp.term = ""
+				document.getElementById("newNameSuccessMessage").style.display = "inline"
+
+				window.setTimeout( function () {
+					document.getElementById("createNameDialog").close()
+					window.addNameApp.hideNameChooser()
+					document.getElementById("addNameDialog").showModal()
+				}, 1500) 
+			
 		})
 		.catch(error => window.alert(`We encountered an error: ${error}`))
 
@@ -370,7 +384,7 @@
 	
 	</script>
 
-<script>
+<script> 
 	window.addNameApp = Vue.createApp({
 		data() {
 			return {
@@ -389,7 +403,8 @@
 				nameList: [],
 				currentTarget: null,
 				info: "(enter at least three characters)",
-				hideList: "Hide List"
+				hideList: "Hide List",
+				showNameChooser: true
 			}
 		},
 		methods: {
@@ -460,7 +475,9 @@ Name: ${vue.name}<br>
 				if (noname)
 					nameDiv.removeChild(noname)
 				add.insertAdjacentHTML("beforebegin", itemString)
+				newNameCreated = false
 				})
+				
 				.catch(error => alert("We enountered an error: " + error))
 			},
 			formatLocations() {
@@ -471,6 +488,9 @@ Name: ${vue.name}<br>
 						myLocations.push(loc)
 				})
 				return myLocations.join(", ")
+			},
+			hideNameChooser() {
+				this.showNameChooser = false
 			}
 		}
 	}).mount("#nameDialogForm")

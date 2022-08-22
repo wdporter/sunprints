@@ -444,13 +444,7 @@ router.post("/name", function(req, res) {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	const date = new Date().toLocaleString()
 	try {
-		const name = db.prepare("SELECT 1 FROM TransferName WHERE Name=? AND Deleted=0").get(req.body.name)
-		if (name) {
-			res.statusMessage = "We already have that name"
-			res.sendStatus(400).end()
-			return
-		}
-
+		
 		let statement = db.prepare("INSERT INTO TransferName VALUES(null, ?, 0, ?, ?, ?, ?)")
 
 		db.prepare("BEGIN TRANSACTION").run()
