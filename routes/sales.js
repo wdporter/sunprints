@@ -39,7 +39,7 @@ console.log(req.query.customSearch)
 		
 
 		query = `SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, SalesRep, SalesTotal.DateProcessed, 
-		SalesTotal.Delivery, Customer.Code, Customer.Company, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done 
+		SalesTotal.Delivery, Customer.Code, Customer.Company, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
 		FROM SalesTotal 
 		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId `
 		

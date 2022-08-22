@@ -1,7 +1,10 @@
 <%- include("partials/head.ejs") %>
 
+<link rel=stylesheet href=/stylesheets/buttons.dataTables-2.2.3.css>
+<script src="/javascripts/dataTables.buttons-2.2.3.js"></script>
 
 <style>
+
 div#dt_wrapper {
 	padding-top: 2em;
 }
@@ -19,6 +22,11 @@ div#dt_wrapper {
 		margin-left: 2em;
 	}
 
+	.buttondiv {
+		clear:both;
+	}
+
+
 	select {
 		/* max-width: unset; */
 		width: 100%;
@@ -31,6 +39,10 @@ div#dt_wrapper {
 	.sales-item + .sales-item {
 		margin-left: .5em;
 	}
+
+	table#dt {
+	font-size: .75rem;
+}
 
 	td.centred {
 		text-align: center;
@@ -143,7 +155,6 @@ div#dt_wrapper {
 				<th>Rep.</th>
 				<th>Processed</th>
 				<th>Delivery</th>
-				<th>Customer code</th>
 				<th>Customer name</th>
 				<th>Terms</th>
 				<th>Buy In</th>
@@ -173,7 +184,8 @@ div#dt_wrapper {
 		fixedHeader: true,
 		processing: true,
 		serverSide: true,
-		dom: "lrtip",
+		dom: "l<'buttondiv'B>rtip", 
+
 		ajax: { 
 			url: "/sales/dt",
 			data: function(d) {
@@ -205,9 +217,9 @@ div#dt_wrapper {
 			{ data: "OrderId",
 				visible: false
 			},
-			{ data: "OrderNumber", width: "3em" }, 
+			{ data: "OrderNumber", width: "2em" }, 
 			{ data: "OrderDate", 
-				width: "4em",
+				width: "3em",
 				render: function(data) {
 					const num = Date.parse(data)
 					if (isNaN(num))
@@ -216,9 +228,9 @@ div#dt_wrapper {
 						return new Date(num).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
 				}
 			},
-			{ data: "SalesRep", width: "6em" }, 
+			{ data: "SalesRep", width: "3em" }, 
 			{ data: "DateProcessed", 
-				width: "4em",
+				width: "3em",
 				render: function(data) {
 					const ts = Date.parse(data)
 					if (isNaN(ts))
@@ -228,7 +240,7 @@ div#dt_wrapper {
 					}
 			}, 
 			{ data: "Delivery",
-				width: "4em",
+				width: "3em",
 				render: function (data) {
 					const num = Date.parse(data)
 					if (isNaN(num))
@@ -237,9 +249,8 @@ div#dt_wrapper {
 						return new Date(num).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
 				}
 			}, 
-			{ data: "Code", class: "centred", width: "3em" }, 
 			{ data: "Company"}, 
-			{ data: "Terms", width: "3em" }, 
+			{ data: "Terms", width: "2em" }, 
 			{ data: "BuyIn",
 				width: "1em",
 				render: function(data) {
@@ -253,6 +264,27 @@ div#dt_wrapper {
 					return data ? "✔️" : "❌"
 				}
 			} 
+		],
+		buttons: [
+			{
+				text: "Expand all",
+				action: (e, dt, node, config) => {
+					if (dt.buttons().text()[0] == "Expand all") {
+						Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
+							if (!td.classList.contains("shown"))
+								$(td).trigger("click")
+						})
+						dt.buttons(0).text("Collapse all")
+					} 
+					else if (dt.buttons().text()[0] == "Collapse all") {
+						Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
+							if (td.classList.contains("shown"))
+								$(td).trigger("click")
+						})
+						dt.buttons(0).text("Expand all")
+					}
+				}
+			},
 		]
 	})
 
@@ -267,7 +299,6 @@ div#dt_wrapper {
 						throw new Error(response.statusText)
 				})
 				.then(data => {
-					console.log(data)
 					let html = "<div style=display:flex>"
 					if (data.length == 0)
 					html += "<span class=nousbs>no sales items<span>"
