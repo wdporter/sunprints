@@ -37,7 +37,7 @@
 	<thead>
 		<tr>
 			<th></th>
-			<th>Action</th>
+			<th>Details</th>
 			<th>Order Number</th>
 			<th>Updated</th>
 			<th>Done</th>
@@ -69,7 +69,6 @@
 	function cloneOrder(id) {
 		window.location.href = "/order/new?clone=" + id
 	}
-
 
 
 		function format(d) {
@@ -106,6 +105,25 @@
 				searchPlaceholder: "number, customer, notes"
 			},
 			buttons: [
+				{
+					text: "Expand all",
+					action: (e, dt, node, config) => {
+						if (dt.buttons().text()[0] == "Expand all") {
+							Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
+								if (!td.closest("tr").classList.contains("shown"))
+									$(td).trigger("click")
+							})
+							dt.buttons(0).text("Collapse all")
+						} 
+						else if (dt.buttons().text()[0] == "Collapse all") {
+							Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
+								if (td.closest("tr").classList.contains("shown"))
+									$(td).trigger("click")
+							})
+							dt.buttons(0).text("Expand all")
+						}
+					}
+				},
 				{
 					text: "Edit",
 					action: (e, dt) => {
@@ -169,7 +187,7 @@
 					className: "dt-control",
 					orderable: false,
 					data: null,
-					defaultContent: "<br>",
+					defaultContent: "",
 					sortable: false,
 					width: "1em"
 				},
@@ -270,6 +288,9 @@
 				tr.addClass('shown');
 			}
 		})
+
+
+
 
 
 		function ship(id) {
