@@ -52,6 +52,49 @@ ${whereClause}`).get().count
 		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
 		const orders = db.prepare(query).all()
 
+		// we have to get all the designs used on this order
+		orders.forEach(o => {
+			o.Designs = new Set()
+
+			const query = db.prepare(`select 
+			fp.Code || fp.Notes as FP
+			,bp.Code || bp.Notes as BP
+			,pp.Code || pp.Notes as PP
+			,sp.Code || sp.Notes as SP
+			,fe.Code || fe.Notes as FE
+			,be.Code || be.Notes as BE
+			,pe.Code || pe.Notes as PE
+			,se.Code || se.Notes as SE
+			,ft.Code || ft.Notes as FT
+			,bt.Code || bt.Notes as BT
+			,pt.Code || pt.Notes as PT
+			,st.Code || st.Notes as ST
+			from OrderGarment
+			left join PrintDesign fp ON fp.PrintDesignId=OrderGarment.FrontPrintDesignId
+			left join PrintDesign bp ON bp.PrintDesignId=OrderGarment.BackPrintDesignId
+			left join PrintDesign pp ON pp.PrintDesignId=OrderGarment.PocketPrintDesignId
+			left join PrintDesign sp ON sp.PrintDesignId=OrderGarment.SleevePrintDesignId
+			left join PrintDesign fe ON fe.PrintDesignId=OrderGarment.FrontEmbroideryDesignId
+			left join PrintDesign be ON be.PrintDesignId=OrderGarment.BackEmbroideryDesignId
+			left join PrintDesign pe ON pe.PrintDesignId=OrderGarment.PocketEmbroideryDesignId
+			left join PrintDesign se ON se.PrintDesignId=OrderGarment.SleeveEmbroideryDesignId
+			left join PrintDesign ft ON ft.PrintDesignId=OrderGarment.FrontTransferDesignId
+			left join PrintDesign bt ON bt.PrintDesignId=OrderGarment.BackTransferDesignId
+			left join PrintDesign pt ON pt.PrintDesignId=OrderGarment.PocketTransferDesignId
+			left join PrintDesign st ON st.PrintDesignId=OrderGarment.SleeveTransferDesignId
+			WHERE OrderGarment.OrderId=?`)
+			const printDesignResults = query.all(o.OrderId)
+			printDesignResults.forEach(pdr => {
+				Object.keys(pdr).forEach(key => {
+					if (pdr[key] ) {
+						o.Designs.add(pdr[key])
+					}
+						
+				})
+			})
+			o.Designs = [...o.Designs]
+		})
+
 
 		res.send({
 			draw: Number(req.query.draw),

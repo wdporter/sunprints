@@ -53,6 +53,7 @@
 			<th>Notes</th>
 			<th>Delivery Date</th>
 			<th>Processed Date</th>
+			<th>Designs</th>
 		</tr>
 	</thead>
 	<tbody></tbody>
@@ -241,6 +242,12 @@
 						return id ? new Date(Date.parse(id)).toLocaleDateString() : ""
 					}
 				},
+				{
+					data: "Designs",
+					render(d) {
+						return d.join("<br>")
+					}
+				}
 			],
 			order: [[0, "desc"]] // order date
 		})
