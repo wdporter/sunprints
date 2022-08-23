@@ -143,6 +143,50 @@ console.log(req.query.customSearch)
 
 		data = db.prepare(query).all(params)
 
+		// now we have to get the designs used for each sale
+		const query2 = db.prepare(`SELECT 
+		fpd.Code || ' ' || fpd.Notes AS FrontPrintDesign
+		,bpd.Code || ' ' || bpd.Notes AS BackPrintDesign 
+		,ppd.Code || ' ' || ppd.Notes AS PocketPrintDesign
+		,spd.Code || ' ' || spd.Notes AS SleevePrintDesign 
+		,fed.Code || ' ' || fed.Notes AS FrontEmbroideryDesign
+		,bed.Code || ' ' || bed.Notes AS BackEmbroideryDesign 
+		,ped.Code || ' ' || ped.Notes AS PocketEmbroideryDesign
+		,sed.Code || ' ' || sed.Notes AS SleeveEmbroideryDesign 
+		,ftd.Code || ' ' || ftd.Notes AS FrontTransferDesign
+		,btd.Code || ' ' || btd.Notes AS BackTransferDesign 
+		,ptd.Code || ' ' || ptd.Notes AS PocketTransferDesign
+		,std.Code || ' ' || std.Notes AS SleeveTransferDesign 
+		FROM Sales
+		LEFT OUTER JOIN PrintDesign fpd ON fpd.PrintDesignId=Sales.FrontPrintDesignId
+		LEFT OUTER JOIN PrintDesign bpd ON bpd.PrintDesignId=Sales.BackPrintDesignId
+		LEFT OUTER JOIN PrintDesign ppd ON ppd.PrintDesignId=Sales.PocketPrintDesignId
+		LEFT OUTER JOIN PrintDesign spd ON spd.PrintDesignId=Sales.SleevePrintDesignId
+		LEFT OUTER JOIN PrintDesign fed ON fed.PrintDesignId=Sales.FrontEmbroideryDesignId
+		LEFT OUTER JOIN PrintDesign bed ON bed.PrintDesignId=Sales.BackEmbroideryDesignId
+		LEFT OUTER JOIN PrintDesign ped ON ped.PrintDesignId=Sales.PocketEmbroideryDesignId
+		LEFT OUTER JOIN PrintDesign sed ON sed.PrintDesignId=Sales.SleeveEmbroideryDesignId
+		LEFT OUTER JOIN PrintDesign ftd ON ftd.PrintDesignId=Sales.FrontTransferDesignId
+		LEFT OUTER JOIN PrintDesign btd ON btd.PrintDesignId=Sales.BackTransferDesignId
+		LEFT OUTER JOIN PrintDesign ptd ON ptd.PrintDesignId=Sales.PocketTransferDesignId
+		LEFT OUTER JOIN PrintDesign std ON std.PrintDesignId=Sales.SleeveTransferDesignId
+		WHERE 
+		OrderId=?
+		AND NOT (FrontPrintDesign IS NULL AND BackPrintDesign IS NULL AND PocketPrintDesign IS NULL AND SleevePrintDesign IS NULL
+		AND FrontEmbroideryDesign IS NULL AND BackEmbroideryDesign IS NULL AND PocketEmbroideryDesign IS NULL AND SleeveEmbroideryDesign IS NULL
+		AND FrontTransferDesign IS NULL AND BackTransferDesign IS NULL AND PocketTransferDesign IS NULL AND SleeveTransferDesign IS NULL)
+		`)
+		data.forEach(d => {
+			const designs = query2.all(d.OrderId)
+			d.designItems = []
+			designs.forEach(design => {
+				Object.keys(design).forEach(k => {
+					if (design[k]) 
+						d.designItems.push(design[k])
+				})
+			})
+		})
+
 		res.send({
 			data,
 			recordsTotal,
@@ -432,7 +476,7 @@ router.get("/:orderid/history", (req, res) => {
 
 
 	try {
-		let query = `SELECT Garment.Code || ' ' || Garment.Label || ' ' || Garment.Type || ' ' || Garment.Colour AS Garment 
+		let query = `SELECT Garment.Code || ' ' || Garment.Label || ' ' || Garment.Type || ' ' || Garment.Colour AS Product 
 		,fpd.Code || ' | ' || fpd.Notes AS FrontPrintDesign
 		,bpd.Code || ' | ' || bpd.Notes AS BackPrintDesign
 		,ppd.Code || ' | ' || ppd.Notes AS PocketPrintDesign

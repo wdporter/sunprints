@@ -100,7 +100,7 @@ div#dt_wrapper {
 				</select>
 			</p>
 			<p>
-				<label for="screen">Screen (todo does not include standard/unnamed screens)</label>
+				<label for="screen">Screen</label>
 				<select id="screen" data-location="screens">
 					<option value="0">—select—</option>
 				</select>
@@ -160,6 +160,7 @@ div#dt_wrapper {
 				<th>Buy In</th>
 				<th>Notes</th>
 				<th>Done</th>
+				<th>Designs</th>
 			</tr>
 		</thead>
 	</table>
@@ -263,7 +264,12 @@ div#dt_wrapper {
 				render: function(data) {
 					return data ? "✔️" : "❌"
 				}
-			} 
+			} ,
+			{
+				data: "designItems",
+				render(data) { return data.join("<br>")},
+				orderable: false
+			}
 		],
 		buttons: [
 			{
