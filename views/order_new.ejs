@@ -207,133 +207,138 @@ table#stockWarningTable {
 				</div>
 			</section>
 
-			<!-- print design -->
-			<details>
-				<summary>Choose print design </summary>
-				<input @input="getPrintDesigns(g.SizeCategory)" v-model="printDesignTypeAhead"
-					placeholder="start typing design code or notes — click row to select" />
-				<table class="design-table">
-					<tr v-for="item in printDesignItems" @click="selectPrintDesign($event, g)" :data-id="item.PrintDesignId" title="click to select">
-						<td><span class="fa fa-plus" title="Add print design" ></span></td>
-						<td>{{ item.Code }}</td>
-						<td>{{ item.Notes}}</td>
-						<td>{{ item.Comments }}</td>
-					</tr>
-				</table>
-			</details>
+			<div><!-- print design -->
+				<details>
+					<summary>Choose print design </summary>
+					<input @input="getPrintDesigns(g.SizeCategory)" v-model="printDesignTypeAhead"
+						placeholder="start typing design code or notes — click row to select" />
+					<table class="design-table">
+						<tr v-for="item in printDesignItems" @click="selectPrintDesign($event, g)" :data-id="item.PrintDesignId" title="click to select">
+							<td><span class="fa fa-plus" title="Add print design" ></span></td>
+							<td>{{ item.Code }}</td>
+							<td>{{ item.Notes}}</td>
+							<td>{{ item.Comments }}</td>
+						</tr>
+					</table>
+				</details>
 
-			<dl v-if="g.selectedPrintDesign" class="chosen-design">
-				<dt>Code</dt>
-				<dd>{{g.selectedPrintDesign.Code}}</dd>
-				<dt>Notes</dt>
-				<dd>{{g.selectedPrintDesign.Notes}}</dd>
-				<template v-if="g.selectedPrintDesign.Comments">
-				<dt>Comments</dt>
-				<dd>{{g.selectedPrintDesign.Comments}}</dd>
-			</template>
-			</dl>
+				<dl v-if="g.selectedPrintDesign" class="chosen-design">
+					<dt>Code</dt>
+					<dd>{{g.selectedPrintDesign.Code}}</dd>
+					<dt>Notes</dt>
+					<dd>{{g.selectedPrintDesign.Notes}}</dd>
+					<template v-if="g.selectedPrintDesign.Comments">
+					<dt>Comments</dt>
+					<dd>{{g.selectedPrintDesign.Comments}}</dd>
+				</template>
+				</dl>
 
-			<div style="display:flex;justify-content:space-around">
-				<fieldset v-for="(printLocation, key) in g.printLocations" :key="key[0]">
-					<legend>{{key}} Screen (choose one{{printLocation.length > 1 ? ' or two' : ''}})</legend>
+				<div style="display:flex;justify-content:space-around">
+					<fieldset v-for="(printLocation, key) in g.printLocations" :key="key[0]">
+						<legend>{{key}} Screen (choose one{{printLocation.length > 1 ? ' or two' : ''}})</legend>
+							<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
+								<p v-if="screen.Name != null">
+									<input type="checkbox" @change="screenChange(g, key)" :value="screen.ScreenId"
+										v-model="g.checkedScreens[key]" :id="'screen' + screen.ScreenId" />
+									<label :for="'screen' + screen.ScreenId">{{screen.Number}} {{screen.Colour}} {{screen.Name ?? "(Standard/Unnamed)"}} </label>
+								</p>
+						</div>
+						<hr>
 						<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
-							<p v-if="screen.Name != null">
-								<input type="checkbox" @change="screenChange(g, key)" :value="screen.ScreenId"
-									v-model="g.checkedScreens[key]" :id="'screen' + screen.ScreenId" >
+							<p v-if="screen.Name == null">
+								<input type="checkbox" :value="screen.ScreenId" :checked="g.checkedScreens[key].length>0" :id="'screen' + screen.ScreenId" disabled>
 								<label :for="'screen' + screen.ScreenId">{{screen.Number}} {{screen.Colour}} {{screen.Name ?? "(Standard/Unnamed)"}} </label>
 							</p>
-					</div>
-					<hr>
-					<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
-						<p v-if="screen.Name == null">
-							<input type="checkbox" :value="screen.ScreenId" :checked="g.checkedScreens[key].length>0" :id="'screen' + screen.ScreenId" disabled>
-							<label :for="'screen' + screen.ScreenId">{{screen.Number}} {{screen.Colour}} {{screen.Name ?? "(Standard/Unnamed)"}} </label>
+						</div>
+					</fieldset>
+				</div>
+			</div>
+
+			<div><!-- transfer design -->
+				<details>
+					<summary>Choose transfer design </summary>
+					<input @input="getTransferDesigns(g.SizeCategory)" v-model="transferDesignTypeAhead"
+						placeholder="start typing design code or notes — click row to select" />
+					<table class="design-table">
+						<tr v-for="item in transferDesignItems" @click="selectTransferDesign($event, g)"
+							:data-id="item.TransferDesignId">
+							<td><span class="fa fa-plus" title="Add transfer design" ></span></td>
+							<td>{{ item.Code }}</td>
+							<td>{{ item.Notes}}</td>
+						</tr>
+					</table>
+				</details>
+
+				<dl v-if="g.selectedTransferDesign" class="chosen-design">
+					<dt>Code</dt>
+					<dd>{{g.selectedTransferDesign.Code}}</dd>
+					<dt>Notes</dt>
+					<dd>{{g.selectedTransferDesign.Notes}}</dd>
+				</dl>
+
+				<div style="display:flex;justify-content:space-around">
+					<fieldset v-for="(location, key) in g.transferLocations">
+						<legend>{{key}} (choose one or two)</legend>
+						<p v-for="locName in location" :key="locName.TransferNameTransferDesignId">
+							<input type="checkbox" @change="transferNameChange(g, key)" :value="locName.TransferNameId"
+								v-model="g.checkedTransferNames[key]" :id="'transferName' + locName.TransferNameId">
+							<label :for="'transferName' + locName.TransferNameId">{{locName.Name}}</label>
 						</p>
-					</div>
-				</fieldset>
+					</fieldset>
+				</div>
 			</div>
 
-			<!-- transfer design -->
-			<details>
-				<summary>Choose transfer design </summary>
-				<input @input="getTransferDesigns(g.SizeCategory)" v-model="transferDesignTypeAhead"
-					placeholder="start typing design code or notes — click row to select" />
-				<table class="design-table">
-					<tr v-for="item in transferDesignItems" @click="selectTransferDesign($event, g)"
-						:data-id="item.TransferDesignId">
-						<td><span class="fa fa-plus" title="Add transfer design" ></span></td>
-						<td>{{ item.Code }}</td>
-						<td>{{ item.Notes}}</td>
-					</tr>
-				</table>
-			</details>
+			<div><!-- embroidery design -->
+				<details> <!-- list of designs to choose -->
+					<summary>Choose embroidery design </summary>
+					<input @input="getEmbroideryDesigns(g.SizeCategory)" v-model="embroideryDesignTypeAhead"
+						placeholder="start typing design code or notes — click row to select" />
+					<table class="design-table">
+						<tr v-for="item in embroideryDesignItems" @click="selectEmbroideryDesign($event, g)"
+							:data-id="item.EmbroideryDesignId">
+							<td><span class="fa fa-plus" title="Add embroidery design" ></span></td>
+							<td>{{ item.Code }}</td>
+							<td>{{ item.Notes}}</td>
+							<td>{{ item.Comments }}</td>
+						</tr>
+					</table>
+				</details>
 
-			<dl v-if="g.selectedTransferDesign" class="chosen-design">
-				<dt>Code</dt>
-				<dd>{{g.selectedTransferDesign.Code}}</dd>
-				<dt>Notes</dt>
-				<dd>{{g.selectedTransferDesign.Notes}}</dd>
-			</dl>
+				<dl v-if="g.selectedEmbroideryDesign" class="chosen-design"> <!-- details of the chosen design-->
+					<dt>Code</dt>
+					<dd>{{g.selectedEmbroideryDesign.Code}}</dd>
+					<dt>Notes</dt>
+					<dd>{{g.selectedEmbroideryDesign.Notes}}</dd>
+					<template v-if="g.selectedEmbroideryDesign.Comments">
+					<dt>Comments</dt>
+					<dd>{{g.selectedEmbroideryDesign.Comments}}</dd>
+				</template>
+				</dl>
 
-			<div style="display:flex;justify-content:space-around">
-				<fieldset v-for="(location, key) in g.transferLocations">
-					<legend>{{key}} (choose one or two)</legend>
-					<p v-for="locName in location" :key="locName.TransferNameTransferDesignId">
-						<input type="checkbox" @change="transferNameChange(g, key)" :value="locName.TransferNameId"
-							v-model="g.checkedTransferNames[key]" :id="'transferName' + locName.TransferNameId">
-						<label :for="'transferName' + locName.TransferNameId">{{locName.Name}}</label>
-					</p>
-				</fieldset>
+				<div style="display:flex;justify-content:space-around"> <!-- the usbs that can be chosen -->
+					<fieldset v-for="(embroideryLocation, key) in g.embroideryLocations" :key="key[0]">
+						<legend>{{key}} (choose one or two)</legend>
+						<p v-for="usb in embroideryLocation" :key="usb.UsbEmbroideryDesignId">
+							<input type="checkbox" @change="usbChange(g, key)" :value="usb.UsbId"
+								v-model="g.checkedUsbs[key]" :id="'usb' + usb.UsbId" />
+							<label :for="'usb' + usb.UsbId">{{usb.Number}} {{usb.Notes}}</label>
+						</p>
+					</fieldset>
+				</div>
+
 			</div>
-			
 
-
-			<!-- embroidery design -->
-			<details>
-				<summary>Choose embroidery design </summary>
-				<input @input="getEmbroideryDesigns(g.SizeCategory)" v-model="embroideryDesignTypeAhead"
-					placeholder="start typing design code or notes — click row to select" />
-				<table class="design-table">
-					<tr v-for="item in embroideryDesignItems" @click="selectEmbroideryDesign($event, g)"
-						:data-id="item.EmbroideryDesignId">
-						<td><span class="fa fa-plus" title="Add embroidery design" ></span></td>
-						<td>{{ item.Code }}</td>
-						<td>{{ item.Notes}}</td>
-						<td>{{ item.Comments }}</td>
-					</tr>
-				</table>
-			</details>
-
-			<dl v-if="g.selectedEmbroideryDesign" class="chosen-design">
-				<dt>Code</dt>
-				<dd>{{g.selectedEmbroideryDesign.Code}}</dd>
-				<dt>Notes</dt>
-				<dd>{{g.selectedEmbroideryDesign.Notes}}</dd>
-				<template v-if="g.selectedEmbroideryDesign.Comments">
-				<dt>Comments</dt>
-				<dd>{{g.selectedEmbroideryDesign.Comments}}</dd>
-			</template>
-			</dl>
-
-			<div style="display:flex;justify-content:space-around">
-				<fieldset v-for="(location, key) in g.embroideryLocations">
-					<legend>{{key}} (choose one or two)</legend>
-					<p v-for="usb in location" :key="usb.UsbEmbroideryDesignId">
-						<input type="checkbox" @change="usbChange(g, key)" :value="usb.UsbEmbroideryDesignId"
-							v-model="g.checkedUsbs[key]" :id="'usb' + usb.UsbEmbroideryDesignId">
-						<label :for="'usb' + usb.UsbEmbroideryDesignId">{{usb.Number}} {{usb.Notes}}</label>
-					</p>
-				</fieldset>
-			</div>
 			<p>
 				<button @click="saveGarment(g)">Save product</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
 				<span v-text="errorMessage"></span>
 			</p>
-			<table v-if="buyin && g.stockWarning" id="stockWarningTable">
-				<caption>Stock Warnings</caption>
-				<tr><th>Size</th><th>Quantity</th><th>Minimum</th></tr>
-				<tr v-for="sw in g.stockWarning"><td>{{sw.size}}</td><td>{{sw.current}}</td><td>{{sw.min}}</td></tr>
-			</table>
+			<details><summary>Stock Warnings</summary>
+				<table v-if="buyin && g.stockWarning" id="stockWarningTable">
+					<caption></caption>
+					<tr><th>Size</th><th>Quantity</th><th>Minimum</th></tr>
+					<tr v-for="sw in g.stockWarning"><td>{{sw.size}}</td><td>{{sw.current}}</td><td>{{sw.min}}</td></tr>
+				</table>
+			</details>
 		</div>
 		<h4>Order total value: ${{ getAllGarmentsValue() }}</h4>
 
