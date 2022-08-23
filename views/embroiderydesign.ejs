@@ -35,7 +35,7 @@
 	</dialog>
 
 	<dialog id="createUsbDialog">
-		<form id="createUsbForm" method="dialog">
+		<form id="createUsbForm">
 			<h3>Create Usb</h3>
 			<p>
 				<label for="createUsbNumber">Number</label>
@@ -45,11 +45,12 @@
 				<label for="createUsbNotes">Notes</label>
 				<textarea id="createUsbNotes"></textarea>
 			</p>
-			<div>
-				<button value="default" onclick="saveNewUsb(event)">&emsp;Save&emsp;</button>
-				<button value="cancel" onclick="this.closest('dialog').close()">Cancel</button>
-			</div>
 		</form>
+		<p id="newNameSuccessMessage" style="display:none">✅ We have saved the usb. <br />You can now select size/location</p>
+		<div>
+			<button onclick="saveNewUsb(event)">&emsp;Save&emsp;</button>
+			<button value=cancel onclick="this.closest('dialog').close()">Cancel</button>
+		</div>
 	</dialog>
 
 	<dialog id="addUsbDialog">
@@ -73,15 +74,17 @@
 				Usb Number: <span id="chosenUsbNumber"></span><br>
 				Usb Notes: <span id="chosenUsbNotes"></span>
 			</p>
-			<p>
-				<input id="usbFilterInput" oninput="loadUsbs(this)" placeholder="start typing to filter the list" />
-				<input id="toggleListInput" type=button value="Hide List" onclick="toggleUsbList(this)" />
-			</p>
-			<p>
-				Click to select usb <span id=totalSpan>(enter at least 3 characters)</span><br>
-			<table id="usbListTable" class="stripe">
-			</table>
-			</p>
+			<div id="usbChooser">
+				<p>
+					<input id="usbFilterInput" oninput="loadUsbs(this)" placeholder="start typing to filter the list" />
+					<input id="toggleListInput" type=button value="Hide List" onclick="toggleUsbList(this)" />
+				</p>
+				<p>
+					Click to select usb <span id=totalSpan>(enter at least 3 characters)</span><br>
+				<table id="usbListTable" class="stripe">
+				</table>
+				</p>
+			</div>
 			<input type="hidden" id="chosenUsbId" value="0" />
 			<input type="hidden" id="currentEmbroideryDesignId" value="0" />
 			<div>
@@ -389,6 +392,7 @@
 			document.getElementById("chosenUsbNotes").textContent = ""
 
 			document.getElementById("usbFilterInput").value = ""
+			document.getElementById("usbChooser").style.display = "inline"
 			document.getElementById("addUsbDialog").showModal()
 		}
 
@@ -398,6 +402,8 @@
 			document.getElementById("currentEmbroideryDesignId").value = id
 			document.getElementById("createUsbNumber").value = "" // initialise in case there's a value from last time
 			document.getElementById("createUsbNotes").value = "" // initialise in case there's a value from last time
+
+			document.getElementById("newNameSuccessMessage").style.display = "none"
 			document.getElementById("createUsbDialog").showModal()
 		}
 
@@ -413,23 +419,29 @@
 						Notes: document.getElementById("createUsbNotes").value
 					})
 				})
-			.then(response => {
-				if (response.ok)
-					return response.json()
-				else {
-					console.log("error", response)
-					throw new Error(response.statusText)
-				}
-			})
-			.then(json => {
-				document.getElementById("chosenUsbId").value = json.id
-				document.getElementById("usbListTable").innerHTML = ""
-				document.getElementById("chosenUsbNumber").textContent = document.getElementById("createUsbNumber").value
-				document.getElementById("chosenUsbNotes").textContent = document.getElementById("createUsbNotes").value
-				document.getElementById("usbFilterInput").value = ""
-				document.getElementById("addUsbDialog").showModal()
-			})
-			.catch(error => window.alert(`We encountered an error: ${error}`))
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then(json => {
+					document.getElementById("chosenUsbId").value = json.id
+					document.getElementById("usbListTable").innerHTML = ""
+					document.getElementById("chosenUsbNumber").textContent = document.getElementById("createUsbNumber").value
+					document.getElementById("chosenUsbNotes").textContent = document.getElementById("createUsbNotes").value
+					document.getElementById("usbFilterInput").value = ""
+					document.getElementById("newNameSuccessMessage").style.display = "inline"
+
+					window.setTimeout( function () {
+						document.getElementById("createUsbDialog").close()
+						document.getElementById("usbChooser").style.display = "none"
+						document.getElementById("addUsbDialog").showModal()
+					}, 1500) 
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
 			}
 
 		}
