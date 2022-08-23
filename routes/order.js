@@ -21,13 +21,13 @@ router.get("/dt", function (req, res, next) {
 
 		const recordsTotal = db.prepare(`SELECT Count(*) as count 
 FROM Orders  
-WHERE Done=0 AND Deleted=0  `).get().count
+WHERE Deleted=0 AND ProcessedDate IS NULL  `).get().count
 		let recordsFiltered = recordsTotal
 
 		let query = `SELECT Orders.*, Customer.Company AS CustomerName 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId   
-WHERE Orders.Done=0 AND Orders.Deleted=0  `
+WHERE Orders.Deleted=0 AND ProcessedDate IS NULL  `
 		if (req.query.search.value)
 			req.query.search.value = req.query.search.value.trim()
 
@@ -38,7 +38,7 @@ WHERE Orders.Done=0 AND Orders.Deleted=0  `
 			recordsFiltered = db.prepare(`SELECT Count(*) AS count 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
-WHERE Orders.Done=0 AND Orders.Deleted=0
+WHERE Orders.Deleted=0 AND ProcessedDate ISNULL
 ${whereClause}`).get().count
 			query += whereClause
 		}
@@ -400,7 +400,7 @@ router.get("/edit", function (req, res, next) {
 
 					for (var usb of usbEmbroideryDesigns) {
 						if (usb[loc] == 1)
-							g.checkedUsbs[loc].push(usb.UsbEmbroideryDesignId)
+							g.checkedUsbs[loc].push(usb.UsbId)
 					}
 
 					delete g[loc + "UsbId"]
@@ -1574,13 +1574,11 @@ router.put("/ship/:id", function (req, res) {
 		const date = new Date().toLocaleString()
 		let params = {
 			LastModifiedBy: req.auth.user,
-			LastModifiedDateTime: date
+			LastModifiedDateTime: date,
+			InvoiceDate: new Date().toISOString().slice(0, 10),
+			ProcessedDate: new Date().toISOString().slice(0, 10)
 		}
 
-		if (!order.InvoiceDate)
-			params.InvoiceDate = new Date().toISOString().slice(0, 10)
-		if (!order.ProcessedDate)
-			params.ProcessedDate = new Date().toISOString().slice(0, 10)
 
 		let query = ` UPDATE Orders SET ${Object.keys(params).map(p => ` ${p}=@${p} `).join(", ")} `
 		params.OrderId = req.params.id
@@ -1608,12 +1606,10 @@ router.put("/ship/:id", function (req, res) {
 		}
 
 		//update fields in the SalesTotal table
-		const salesTotalParams = {  }
-		if (params.InvoiceDate) {
-			salesTotalParams.DateInvoiced = params.InvoiceDate
-		}
-		if (params.ProcessedDate) {
-			salesTotalParams.DateProcessed = params.ProcessedDate
+		// TODO sometimes salesTotalParams is null
+		const salesTotalParams = { 
+			DateInvoiced: params.InvoiceDate,
+			DateProcessed: params.ProcessedDate
 		}
 		query = ` UPDATE SalesTotal SET ${Object.keys(salesTotalParams).map(p => ` ${p}=@${p} `).join(", ")} WHERE OrderId=@OrderId `
 		salesTotalParams.OrderId = req.params.id
@@ -1661,11 +1657,6 @@ router.put("/done/:id", function (req, res) {
 			LastModifiedDateTime: date
 		}
 
-		if (!order.InvoiceDate)
-			params.InvoiceDate = new Date().toISOString().slice(0, 10)
-		if (!order.ProcessedDate)
-			params.ProcessedDate = new Date().toISOString().slice(0, 10)
-
 		let query = ` UPDATE Orders SET ${Object.keys(params).map(p => ` ${p}=@${p} `).join(", ")} `
 		params.OrderId = req.params.id
 		query += " WHERE OrderId=@OrderId "
@@ -1692,16 +1683,8 @@ router.put("/done/:id", function (req, res) {
 		}
 
 		//update fields in the SalesTotal table
-		const salesTotalParams = { Done: 1 }
-		if (params.InvoiceDate) {
-			salesTotalParams.DateInvoiced = params.InvoiceDate
-		}
-		if (params.ProcessedDate) {
-			salesTotalParams.DateProcessed = params.ProcessedDate
-		}
-		query = ` UPDATE SalesTotal SET ${Object.keys(salesTotalParams).map(p => ` ${p}=@${p} `).join(", ")} WHERE OrderId=@OrderId `
-		salesTotalParams.OrderId = req.params.id
-		info = db.prepare(query).run(salesTotalParams)
+		query = ` UPDATE SalesTotal SET Done=1 WHERE OrderId=? `
+		info = db.prepare(query).run(req.params.id)
 		console.log(info)
 
 

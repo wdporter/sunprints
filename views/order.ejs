@@ -5,8 +5,8 @@
 
 <ul>
 	<li><a href="/order/new">Create a new order</a></li>
-	<li>To ship an Order, select the Order and click Ship. Sets the processed date to today</li>
-	<li>To complete an Order, click Done. The order is removed from this list</li>
+	<li>Done: select the Order and click Done. Sets the "done" flag</li>
+	<li>Ship: select the order and click Ship. The order is removed from this list, and processed date is set to today</li>
 	<li>To add/remove garments, or change details, select the Order and click Edit (or double click)</li>
 	<li>The green + plus icon reveals the garments. Standard/Unnamed screens are not shown in this view.</li>
 	<li>Deleting an order returns the garment quantities back into stock levels on the garments page</li>
@@ -48,11 +48,12 @@
 			<th>Repeat</th>
 			<th>New</th>
 			<th>Buy In</th>
+			<th>Done</th>
 			<th>Terms</th>
 			<th>Sales<br />Rep.</th>
 			<th>Notes</th>
 			<th>Delivery Date</th>
-			<th>Processed Date</th>
+			<!-- no longer used <th>Processed Date</th> -->
 			<th>Designs</th>
 		</tr>
 	</thead>
@@ -139,19 +140,19 @@
 					}
 				},
 				{
-					text: "Ship",
-					action: (e, dt) =>  {
-						var tr = dt.row("tr.selected")
-						if (tr.length)
-							ship(tr.data().OrderId)
-					}
-				},
-				{
 					text: "Done",
 					action: (e, dt) =>  {
 						var tr = dt.row("tr.selected")
 						if (tr.length)
 							done(tr.data().OrderId)
+					}
+				},
+				{
+					text: "Ship",
+					action: (e, dt) =>  {
+						var tr = dt.row("tr.selected")
+						if (tr.length)
+							ship(tr.data().OrderId)
 					}
 				},
 				{
@@ -252,19 +253,27 @@
 						return r == 0 ? "" : "✔️"
 					},
 				},
+				{
+					data: "Done",
+					className: "alignCentre",
+					width: "1em",
+					render(r) {
+						return r == 0 ? "" : "✔️"
+					},
+				},
 				{ data: "Terms", width: "4em" },
 				{ data: "SalesRep" },
 				{
 					data: "Notes",
 				},
 				{ data: "DeliveryDate", width: "5em"},
-				{
-					data: "ProcessedDate",
-					width: "5em",
-					render(id) {
-						return id ? new Date(Date.parse(id)).toLocaleDateString() : ""
-					}
-				},
+				// no longer used {
+				// 	data: "ProcessedDate",
+				// 	width: "5em",
+				// 	render(id) {
+				// 		return id ? new Date(Date.parse(id)).toLocaleDateString() : ""
+				// 	}
+				// },
 				{
 					data: "Designs",
 					render(d) {
