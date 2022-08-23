@@ -39,7 +39,7 @@
 			</p>
 			<div>
 				<button id="saveButton" value="default" onclick="savePrint()">&emsp;Save&emsp;</button>&emsp;
-				<input type="button" onclick="document.getElementById('printDialog').close()" value="Cancel" />
+				<input type="button" onclick="this.closest('dialog').close()" value="Cancel" />
 			</div>
 		</form>
 
@@ -67,15 +67,17 @@
 				Screen Colour: <span id="chosenScreenColour"></span><br>
 				Screen Name: <span id="chosenScreenName"></span>
 			</p>
-			<p>
-				<input id="screenFilterInput" oninput="loadScreens(this)" placeholder="start typing to filter the list" />
-				<input id="toggleListInput" type=button value="Hide List" onclick="toggleScreenList(this)" />
-			</p>
-			<p>
-				Click to select screen <span id=totalSpan>(enter at least 3 characters)</span><br>
-				<table id="screenListTable" class="stripe">
-				</table>
-			</p>
+			<div id="selectUsb">
+				<p>
+					<input id="screenFilterInput" oninput="loadScreens(this)" placeholder="start typing to filter the list" />
+					<input id="toggleListInput" type=button value="Hide List" onclick="toggleScreenList(this)" />
+				</p>
+				<p>
+					Click to select screen <span id=totalSpan>(enter at least 3 characters)</span><br>
+					<table id="screenListTable" class="stripe">
+					</table>
+				</p>
+			</div>
 			<input type="hidden" id="chosenScreenId" value="0" />
 			<input type="hidden" id="currentPrintDesignId" value="0" />
 			<div>
@@ -88,24 +90,25 @@
 
 	<dialog id=createScreenDialog>
 		<h3>New Screen</h3>
-		<form method=dialog id=createScreenForm>
-				<p>
-					<label for=newScreenNumber>Number:</label> 
-					<input id=newScreenNumber placeholder=required required autofocus>
-				</p>
-				<p>
-					<label for=newScreenColour>Colour:</label> 
-					<input id=newScreenColour>
-				</p>
-				<p>
-					<label for=newScreenMame>Name:</label> 
-					<textarea id=newScreenName rows=4></textarea>
-				</p>
-				<p>
-					<input type=submit value=Save onclick="saveNewScreen()" />&emsp;
-					<input type=button value=Cancel onclick="this.closest('dialog').close()" />
-				</p>
+		<form  id=createScreenForm>
+			<p>
+				<label for=newScreenNumber>Number:</label> 
+				<input id=newScreenNumber placeholder=required required autofocus>
+			</p>
+			<p>
+				<label for=newScreenColour>Colour:</label> 
+				<input id=newScreenColour>
+			</p>
+			<p>
+				<label for=newScreenMame>Name:</label> 
+				<textarea id=newScreenName rows=4></textarea>
+			</p>
 		</form>
+		<p id="newScreenSuccessMessage" style="display:none">✅ We have saved the usb. <br />You can now select size/location</p>
+		<p>
+			<input type=submit value=Save onclick="saveNewScreen()" />&emsp;
+			<input type=button value=Cancel onclick="this.closest('dialog').close()" />
+		</p>
 	</dialog>
 
 	<!-- <button id="newPrintButton" onclick="newPrintDesign()">New Print Design</button> -->
@@ -422,6 +425,7 @@
 			document.getElementById("chosenScreenName").textContent = ""
 
 			document.getElementById("screenFilterInput").value = ""
+			document.getElementById("selectUsb").style.display = "inline"
 			document.getElementById("addScreenDialog").showModal()
 		}
 
@@ -430,6 +434,7 @@
 			document.getElementById("newScreenNumber").value = ""
 			document.getElementById("newScreenColour").value = ""
 			document.getElementById("newScreenName").value = ""
+			document.getElementById("newScreenSuccessMessage").style.display = "none"
 			document.getElementById("createScreenDialog").showModal()
 		}
 
@@ -444,25 +449,33 @@
 						Name: document.getElementById("newScreenName").value
 					})
 				})
-			.then(response => {
-				if (response.ok)
-					return response.json()
-				else {
-					console.log("error", response)
-					throw new Error(response.statusText)
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
+					}
+				})
+				.then(json => {
+					document.getElementById("chosenScreenId").value = json.id
+					document.getElementById("screenListTable").innerHTML = ""
+					document.getElementById("chosenScreenNumber").textContent = document.getElementById("newScreenNumber").value
+					document.getElementById("chosenScreenColour").textContent = document.getElementById("newScreenColour").value
+					document.getElementById("chosenScreenName").textContent = document.getElementById("newScreenName").value
+					document.getElementById("screenFilterInput").value = ""
+
+					document.getElementById("newScreenSuccessMessage").style.display = "inline"
+					window.setTimeout(function() {
+						document.getElementById("createScreenDialog").close()
+						document.getElementById("selectUsb").style.display = "none"
+						document.getElementById("addScreenDialog").showModal()
+					}, 1500)
+
+					
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
 				}
-			})
-			.then(json => {
-				document.getElementById("chosenScreenId").value = json.id
-				document.getElementById("screenListTable").innerHTML = ""
-				document.getElementById("chosenScreenNumber").textContent = document.getElementById("newScreenNumber").value
-				document.getElementById("chosenScreenColour").textContent = document.getElementById("newScreenColour").value
-				document.getElementById("chosenScreenName").textContent = document.getElementById("newScreenName").value
-				document.getElementById("screenFilterInput").value = ""
-				document.getElementById("addScreenDialog").showModal()
-			})
-			.catch(error => window.alert(`We encountered an error: ${error}`))
-			}
 			
 		}
 
