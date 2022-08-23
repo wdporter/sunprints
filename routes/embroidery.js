@@ -27,7 +27,6 @@ INNER JOIN Usb ON Usb.UsbId = UsbEmbroideryDesign.UsbId
 WHERE (Code LIKE '%${req.query.q}%' OR EmbroideryDesign.Notes LIKE '%${req.query.q}%') 
 AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'  
 AND EmbroideryDesign.Deleted=0 
-AND UsbEmbroideryDesign.Deleted=0 
 AND Usb.Deleted=0 
 ORDER BY EmbroideryDesign.Notes `)
 		const records = statement.all()
@@ -55,7 +54,6 @@ router.get("/usb/ordersearch", function (req, res, next) {
 		const statement = db.prepare(`SELECT UsbEmbroideryDesignId, UsbEmbroideryDesign.UsbId, Front, Back, Pocket, Sleeve, Number, Notes
 FROM UsbEmbroideryDesign 
 INNER JOIN Usb on Usb.UsbId = UsbEmbroideryDesign.UsbId 
-WHERE UsbEmbroideryDesign.Deleted=0 
 AND EmbroideryDesignId = ${req.query.embroiderydesignid} 
 AND Usb.Notes IS NOT NULL 
 AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'  `)
