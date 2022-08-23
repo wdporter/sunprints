@@ -1,66 +1,101 @@
-<%- include("partials/head.ejs") %>
+<html>
+	<title>Products Stock Warnings <%= new Date().toLocaleDateString() %></title>
 
 
-	<style>
-		table, thead, tbody, tr, th, td {
-			all: revert;
-		}
-		table, th, td {
-			border: 1px solid black;
-		}
-		td {
-			text-align: right;
-		}
-		th, td {
-			padding-left: .5em;
-			padding-right: .5em;
-		}
-		hr {
-			margin: 1em;
-		}
-		#detailsDiv {
-			margin-right: 2em;
-			width: 400px;
-		}
-		div#flex {
-			display: flex;
-			page-break-inside: avoid;
-		}
+
+<style>
+	/* * {
+		border: 1px dashed purple;
+	} */
+
+	h1 { font-size: 1.5em;}
+
+	th {
+		text-align: left;
+	}
+
+	#qtyTable {
+		border-collapse: collapse;
+	}
+
+#qtyTable th, #qtyTable td {
+	border: 1px black solid;
+	text-align:right;
+	padding-left: .5em;
+	padding-right: .5em;
+}
 
 		@media print {
-			header, h1, footer, .no-print {
+			.no-print {
 				display: none
+			}
+			div * {
+				font-size: 12px;
 			}
 		}
 
 	</style>
-<% 
 
-for (var g of garments) { %>
-	<div id=flex>
-		<div id=detailsDiv>
-			<b>Code:</b> <%= g.Code %><br>
-			<b>Label:</b> <%= g.Label %><br>
-			<b>Type:</b> <%= g.Type %><br>
-			<b>Colour:</b> <%= g.Colour %><br>
-			<b>Notes:</b><br>
-			<i><%= g.Notes %></i>
-		</div>
-		<table border=1>
-			<tr><th>Size</th><th>Quantity</th><th>Minimum</th></tr>
-			<% for (var size of sizes[g.SizeCategory]) { 
-				if (g[size]) { %>
-					<tr><th><%= size %></th><td><%= String(g[size]).replace("-", "−") %></td><td><%= g["Min" + size] %></td>
-				<% }
-			} %>
-
-		</table>
-	</div>
-
+<div class="no-print">
+	<ul>
+	<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
+	<li>Use the Destination/Printer option to save a PDF 
+	<li>Under <i>More settings</i> you can remove the header/footer
+</ul>
 	<hr>
-<% } %>
+</div>
+
+
+<h1>Product Stock Warnings — <%= new Date().toLocaleDateString() %></h1>
+<p>The following products have one or more sizes below the minimum quantity.
+
+<% garments.forEach(g => { %>
+<div style="break-inside:avoid">
+<table>
+	<tr><th>Code<th>Type<th>Colour<th>Label<th>Notes
+	<tr><td><%= g.Code %><td><%= g.Type %><td><%= g.Colour %><td><%= g.Label %><td><%= g.Notes %>
+</table>
+
+<table id="qtyTable">
+	<tr>
+		<th></th>
+		<% sizes[g.SizeCategory].forEach(size => { 
+			if (g[size]) { %>
+				<th><%= size %>
+			<% }
+		}) %>
+	<tr>
+		<th>Stock
+		<% sizes[g.SizeCategory].forEach(size => { 
+			if (g[size]) { %>
+				<td><%= g[size] %>
+			<% }
+		}) %>
+		<tr>
+		<th>Min.
+		<% sizes[g.SizeCategory].forEach(size => { 
+			if (g[size]) { %>
+				<td><%= g[`Min${size}`] %>
+			<% }
+		}) %>
+		<tr>
+		<th>On Order
+		<% sizes[g.SizeCategory].forEach(size => { 
+			if (g[size]) { %>
+				<td><%= g[`OnOrder${size}`] %>
+			<% }
+		}) %>
+
+		
+</table>
+<hr>
+</div>
+<% }) %>
 
 
 
 
-<%- include("partials/foot.ejs") %>
+
+<script>
+	window.print()
+</script>

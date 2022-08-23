@@ -18,36 +18,58 @@ router.get("/", function (req, res, next) {
 router.get("/warninglist", function (req, res, next) {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
-		let query = "SELECT * FROM Garment WHERE Deleted=0 AND ( "
-		sizeTerms = []
-		for (let sizeCategory in sz.sizes) {
-			for (let size of sz.sizes[sizeCategory]) {
-				sizeTerms.push(`${size} < Min${size}`)
-			}
-		}
-		query += sizeTerms.join(" OR ")
-		query += " )"
 
-		let statement = db.prepare(query)
-		let garments = statement.all()
+		
 
-		// we have retrieved balances for all sizes, remove sizes where the balance is ok
-		garments.forEach(g => {
-			for (let sizeCategory in sz.sizes) {
-				for (let size of sz.sizes[sizeCategory]) {
-					if (g[size] >= g["Min" + size]) {
-						delete g[size]
-						delete g["Min" + size]
+		const statement = db.prepare(`SELECT Garment.*, ${sz.allSizes.map(sz => `StockOrderGarment.${sz} AS sog${sz}`).join(",")} FROM Garment 
+		LEFT JOIN StockOrderGarment ON StockOrderGarment.GarmentId=Garment.GarmentId
+		WHERE Deleted=0
+		ORDER BY Garment.GarmentId`)
+
+		const results = statement.all()
+
+		const garments = {}
+
+		// save the ones that have a size value that is less that min value for every size
+		results.forEach(g => {
+			if (!garments[g]) {
+				for (let size of sz.allSizes) {
+					if (g[size] < g[`Min${size}`]) {
+						// initialise on order values
+						sz.allSizes.forEach(sz => g[`OnOrder${sz}`] = 0 + g[`sog${sz}`])
+						garments[g.GarmentId] = g
+						break
 					}
 				}
 			}
+			else {
+				// we already have it in our list, so we must be looking at a result from Stock Order Garment
+				// so find any values we have on order and add it to the garment
+				sz.allSizes.forEach(size => {
+					if (g[`sog${size}`] > 0)
+						g[`OnOrder${size}`] += g[`sog${size}`]
+				})
+			}
 		})
 
+		// we have retrieved balances for all sizes, remove sizes where the balance is ok
+		for (let g in garments) {
+			for (let size of sz.allSizes) {
+					if (garments[g][size] >= garments[g][`Min${size}`]) {
+						delete garments[g][size]
+						delete garments[g][`Min${size}`]
+					}
+				}
+			}
+
+		const returnGarments = []
+		for (g in garments)
+			returnGarments.push(garments[g])
 
 		res.render("warninglist.ejs", {
 			title: "Garment Warning List",
 			user: req.auth.user,
-			garments,
+			garments: returnGarments,
 			sizes: sz.sizes
 		})
 
