@@ -56,32 +56,32 @@ ${whereClause}`).get().count
 		orders.forEach(o => {
 			o.Designs = new Set()
 
-			const query = db.prepare(`select 
-			fp.Code || fp.Notes as FP
-			,bp.Code || bp.Notes as BP
-			,pp.Code || pp.Notes as PP
-			,sp.Code || sp.Notes as SP
-			,fe.Code || fe.Notes as FE
-			,be.Code || be.Notes as BE
-			,pe.Code || pe.Notes as PE
-			,se.Code || se.Notes as SE
-			,ft.Code || ft.Notes as FT
-			,bt.Code || bt.Notes as BT
-			,pt.Code || pt.Notes as PT
-			,st.Code || st.Notes as ST
-			from OrderGarment
-			left join PrintDesign fp ON fp.PrintDesignId=OrderGarment.FrontPrintDesignId
-			left join PrintDesign bp ON bp.PrintDesignId=OrderGarment.BackPrintDesignId
-			left join PrintDesign pp ON pp.PrintDesignId=OrderGarment.PocketPrintDesignId
-			left join PrintDesign sp ON sp.PrintDesignId=OrderGarment.SleevePrintDesignId
-			left join PrintDesign fe ON fe.PrintDesignId=OrderGarment.FrontEmbroideryDesignId
-			left join PrintDesign be ON be.PrintDesignId=OrderGarment.BackEmbroideryDesignId
-			left join PrintDesign pe ON pe.PrintDesignId=OrderGarment.PocketEmbroideryDesignId
-			left join PrintDesign se ON se.PrintDesignId=OrderGarment.SleeveEmbroideryDesignId
-			left join PrintDesign ft ON ft.PrintDesignId=OrderGarment.FrontTransferDesignId
-			left join PrintDesign bt ON bt.PrintDesignId=OrderGarment.BackTransferDesignId
-			left join PrintDesign pt ON pt.PrintDesignId=OrderGarment.PocketTransferDesignId
-			left join PrintDesign st ON st.PrintDesignId=OrderGarment.SleeveTransferDesignId
+			const query = db.prepare(`SELECT 
+			fp.Code || fp.Notes AS fp
+			,bp.Code || bp.Notes AS bp
+			,pp.Code || pp.Notes AS pp
+			,sp.Code || sp.Notes AS sp
+			,fe.Code || fe.Notes AS fe
+			,be.Code || be.Notes AS be
+			,pe.Code || pe.Notes AS pe
+			,se.Code || se.Notes AS se
+			,ft.Code || ft.Notes AS ft
+			,bt.Code || bt.Notes AS bt
+			,pt.Code || pt.Notes AS pt
+			,st.Code || st.Notes AS st
+			FROM OrderGarment
+			LEFT JOIN PrintDesign fp ON fp.PrintDesignId=OrderGarment.FrontPrintDesignId
+			LEFT JOIN PrintDesign bp ON bp.PrintDesignId=OrderGarment.BackPrintDesignId
+			LEFT JOIN PrintDesign pp ON pp.PrintDesignId=OrderGarment.PocketPrintDesignId
+			LEFT JOIN PrintDesign sp ON sp.PrintDesignId=OrderGarment.SleevePrintDesignId
+			LEFT JOIN EmbroideryDesign fe ON fe.EmbroideryDesignId=OrderGarment.FrontEmbroideryDesignId
+			LEFT JOIN EmbroideryDesign be ON be.EmbroideryDesignId=OrderGarment.BackEmbroideryDesignId
+			LEFT JOIN EmbroideryDesign pe ON pe.EmbroideryDesignId=OrderGarment.PocketEmbroideryDesignId
+			LEFT JOIN EmbroideryDesign se ON se.EmbroideryDesignId=OrderGarment.SleeveEmbroideryDesignId
+			LEFT JOIN TransferDesign ft ON ft.TransferDesignId=OrderGarment.FrontTransferDesignId
+			LEFT JOIN TransferDesign bt ON bt.TransferDesignId=OrderGarment.BackTransferDesignId
+			LEFT JOIN TransferDesign pt ON pt.TransferDesignId=OrderGarment.PocketTransferDesignId
+			LEFT JOIN TransferDesign st ON st.TransferDesignId=OrderGarment.SleeveTransferDesignId
 			WHERE OrderGarment.OrderId=?`)
 			const printDesignResults = query.all(o.OrderId)
 			printDesignResults.forEach(pdr => {
