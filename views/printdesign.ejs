@@ -24,7 +24,7 @@
 	</ul>
 
 
-	<dialog id="printDialog">
+	<dialog id=printDialog>
 		<form method="dialog">
 			<h3 id="dialogHeading"></h3>
 			<input type="hidden" id="printDesignIdInput" value="0">
@@ -45,7 +45,7 @@
 
 	</dialog>
 
-	<dialog id="addScreenDialog" >
+	<dialog id=addScreenDialog >
 		<form id="addScreenForm" method="dialog">
 			<h3>Add screen</h3>
 			<p>
@@ -89,8 +89,9 @@
 	</dialog>
 
 	<dialog id=createScreenDialog>
-		<h3>New Screen</h3>
-		<form  id=createScreenForm>
+		<h3 id=addScreenDialogHeading>New Screen</h3>
+		<form id=createScreenForm>
+			<input type=hidden id=editScreenId value=0 />
 			<p>
 				<label for=newScreenNumber>Number:</label> 
 				<input id=newScreenNumber placeholder=required required autofocus>
@@ -104,7 +105,7 @@
 				<textarea id=newScreenName rows=4></textarea>
 			</p>
 		</form>
-		<p id="newScreenSuccessMessage" style="display:none">✅ We have saved the usb. <br />You can now select size/location</p>
+		<p id=newScreenSuccessMessage style=display:none>✅ We have saved the usb. <br />You can now select size/location</p>
 		<p>
 			<input type=submit value=Save onclick="saveNewScreen()" />&emsp;
 			<input type=button value=Cancel onclick="this.closest('dialog').close()" />
@@ -205,12 +206,13 @@
 					if (data[loc])
 						myLocations.push(loc)
 				})
-				insertDiv += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
-				insertDiv += `Screen Number: ${document.getElementById("chosenScreenNumber").textContent}<br>`
-				insertDiv += `Screen Colour: ${document.getElementById("chosenScreenColour").textContent}<br>`
-				insertDiv += `Screen Name: ${document.getElementById("chosenScreenName").textContent}<br>`
-				insertDiv += `<a href=# data-id=${data.ScreenPrintDesignId} class=removeScreenLink>Remove</a>`
-				insertDiv += "</div>"
+				insertDiv += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>
+				Screen Number: <span class=screenNumberSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenNumber").textContent}</span><br>
+				Screen Colour: <span class=screenColourSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenColour").textContent}</span><br>
+				Screen Name: <span class=screenNameSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenName").textContent}</span><br>
+				<a href=# data-id=${data.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
+				<a href=# data-id=${json.id} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>
+				</div>`
 				span.insertAdjacentHTML("beforebegin", insertDiv)
 				
 			})
@@ -363,12 +365,13 @@
 								if (item[loc])
 									myLocations.push(loc)
 							})
-							itemString += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
-							itemString += `Screen Number: ${item.ScreenNumber}<br>`
-							itemString += `Screen Colour: ${item.ScreenColour}<br>`
-							itemString += `Screen Name: ${item.ScreenName}<br>`
-							itemString += `<a href=# data-id=${item.ScreenPrintDesignId} class=removeScreenLink>Remove</a>`
-							itemString += "</div>"
+							itemString += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>
+							Screen Number: <span class=screenNumberSpan data-id=${item.ScreenId}>${item.ScreenNumber}</span><br>
+							Screen Colour: <span class=screenColourSpan data-id=${item.ScreenId}>${item.ScreenColour}</span><br>
+							Screen Name: <span class=screenNameSpan data-id=${item.ScreenId}>${item.ScreenName}</span><br>
+							<a href=# data-id=${item.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
+							<a href=# data-id=${item.ScreenPrintDesignId} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>
+							</div>`
 						}
 					}
 					itemString += `<span tabindex=0 class="fa fa-lg fa-plus addScreenLink" data-id=${rowData.PrintDesignId} title="add exsiting screen"></span>&emsp;`
@@ -431,17 +434,46 @@
 
 		function createScreen(id) {
 			document.getElementById("currentPrintDesignId").value = id
+
 			document.getElementById("newScreenNumber").value = ""
 			document.getElementById("newScreenColour").value = ""
 			document.getElementById("newScreenName").value = ""
+			document.getElementById("editScreenId").value = 0
 			document.getElementById("newScreenSuccessMessage").style.display = "none"
+			document.getElementById("addScreenDialogHeading").textContent = "Create a new screen"
 			document.getElementById("createScreenDialog").showModal()
 		}
 
-		function saveNewScreen() {
+		function editScreen(id) {
+			document.getElementById("editScreenId").value = id
+			document.getElementById("newScreenSuccessMessage").style.display = "none"
+			document.getElementById("addScreenDialogHeading").textContent = "Edit existing screen"
+			fetch(`screen/${id}`)
+			.then(response => response.json())
+			.then(json => {
+				document.getElementById("newScreenNumber").value = json.Number
+				document.getElementById("newScreenColour").value = json.Colour
+				document.getElementById("newScreenName").value = json.Name
+				document.getElementById("createScreenDialog").showModal()
+			})
+
+
+		}
+
+		function saveNewScreen() { // is for editing also
 			if (document.getElementById("createScreenForm").checkValidity()) {
-				fetch(`/screen`, {
-					method: "POST",
+				const id = document.getElementById("editScreenId").value
+				let method = "PUT"
+				let url = "/screen"
+				if (id == 0) {
+					method = "POST"
+				}
+				else {
+					url += `/${id}`
+				}
+
+				fetch(url, {
+					method,
 					headers: new Headers({ "Content-Type": "application/json"}),
 					body: JSON.stringify({
 						Number: document.getElementById("newScreenNumber").value,
@@ -458,20 +490,31 @@
 					}
 				})
 				.then(json => {
-					document.getElementById("chosenScreenId").value = json.id
-					document.getElementById("screenListTable").innerHTML = ""
-					document.getElementById("chosenScreenNumber").textContent = document.getElementById("newScreenNumber").value
-					document.getElementById("chosenScreenColour").textContent = document.getElementById("newScreenColour").value
-					document.getElementById("chosenScreenName").textContent = document.getElementById("newScreenName").value
-					document.getElementById("screenFilterInput").value = ""
-
-					document.getElementById("newScreenSuccessMessage").style.display = "inline"
-					window.setTimeout(function() {
+					if (id != 0) {
+						// it was an edit, just close the dialog
 						document.getElementById("createScreenDialog").close()
-						document.getElementById("selectUsb").style.display = "none"
-						document.getElementById("addScreenDialog").showModal()
-					}, 1500)
+						// todo, how do we update the display ?
+						document.querySelector(`span.screenNumberSpan[data-id='${id}']`).textContent = document.getElementById("newScreenNumber").value
+						document.querySelector(`span.screenColourSpan[data-id='${id}']`).textContent = document.getElementById("newScreenColour").value
+						document.querySelector(`span.screenNameSpan[data-id='${id}']`).textContent = document.getElementById("newScreenName").value
+						
 
+					}
+					else {
+						document.getElementById("chosenScreenId").value = json.id
+						document.getElementById("screenListTable").innerHTML = ""
+						document.getElementById("chosenScreenNumber").textContent = document.getElementById("newScreenNumber").value
+						document.getElementById("chosenScreenColour").textContent = document.getElementById("newScreenColour").value
+						document.getElementById("chosenScreenName").textContent = document.getElementById("newScreenName").value
+						document.getElementById("screenFilterInput").value = ""
+
+						document.getElementById("newScreenSuccessMessage").style.display = "inline"
+						window.setTimeout(function() {
+							document.getElementById("createScreenDialog").close()
+							document.getElementById("selectUsb").style.display = "none"
+							document.getElementById("addScreenDialog").showModal()
+						}, 1500)
+					}
 					
 				})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
@@ -504,6 +547,13 @@
 			event.preventDefault()
 			removeScreen(event.currentTarget)
 		})
+
+		// Add event listener for edit screen link
+		$("#datatable tbody").on("click", "a.editScreenLink", function (event) {
+			event.preventDefault()
+			editScreen(event.currentTarget.dataset.id)
+		})
+
 
 		// Add event listener for add existing screen link
 		$("#datatable tbody").on("click", "span.addScreenLink", function (event) {

@@ -133,7 +133,7 @@ router.get("/usbs/:id", function (req, res) {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
-		const statement = db.prepare(`SELECT UsbEmbroideryDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Number as UsbNumber, Notes as UsbNotes 
+		const statement = db.prepare(`SELECT UsbEmbroideryDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Usb.UsbId AS UsbId ,Number as UsbNumber, Notes as UsbNotes 
 		FROM UsbEmbroideryDesign 
 		LEFT JOIN Usb ON Usb.UsbId=UsbEmbroideryDesign.UsbId 
 		WHERE EmbroideryDesignId=?`)
@@ -527,21 +527,31 @@ router.delete("/:id", function (req, res) {
 router.delete("/removeusb/:id", (req, res) => {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
+		const oldEntry = db.prepare("SELECT * FROM UsbEmbroideryDesign WHERE UsbEmbroideryDesignId=?").get(req.params.id)
+
 		const date = new Date().toLocaleString()
-		let statement = db.prepare(`UPDATE UsbEmbroideryDesign SET Deleted=1, LastModifiedBy=?, LastModifiedDateTime=? WHERE UsbEmbroideryDesignId=?`)
+		let statement = db.prepare(`DELETE FROM UsbEmbroideryDesign WHERE UsbEmbroideryDesignId=?`)
 
 		db.prepare("BEGIN TRANSACTION").run()
 
-		info = statement.run(req.auth.user, date, req.params.id)
+		info = statement.run(req.params.id)
 		res.send({ message: "success" }).end()
 		console.log(info)
 
-			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-			info = statement.run("UsbEmbroideryDesign", req.params.id, "DEL", req.auth.user, date)
-			console.log(info)
-			// no AuditLogEntry, assumed as OldValue=0 NewValue=1
+		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+		info = statement.run("UsbEmbroideryDesign", req.params.id, "DEL", req.auth.user, date)
+		const auditLogId = info.lastInsertRowid
+		console.log(info)
 
-			db.prepare("COMMIT").run()
+		statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue) VALUES (?, ?, ?)")
+		const props = ["UsbId", "EmbroideryDesignId", "SizeCategory", "Front", "Back", "Pocket", "Sleeve"]
+		props.forEach(prop => {
+			info = statement.run(auditLogId, prop, oldEntry[prop])
+			console.log(info)
+		})
+
+
+		db.prepare("COMMIT").run()
 	}
 	catch (ex) {
 		db.prepare("ROLLBACK").run()

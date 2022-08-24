@@ -183,6 +183,28 @@ router.get("/deleted", (req, res) => {
 })
 
 
+// GET details of a screen
+router.get("/:id", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+		const query = `SELECT * FROM Screen WHERE ScreenId=?`
+		const statement = db.prepare(query)
+		const screen = statement.get(req.params.id)
+		res.json(screen).end()
+	}
+	catch(ex) {
+		response.statusMessage = ex.message
+		response.status(400).end
+	}
+	finally {
+		db.close()
+	}
+
+
+})
+
+
 /*************************************************************************** */
 
 /// POST to create a new screen

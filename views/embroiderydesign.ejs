@@ -36,7 +36,8 @@
 
 	<dialog id="createUsbDialog">
 		<form id="createUsbForm">
-			<h3>Create Usb</h3>
+			<input type=hidden id=editUsbId value=0 />
+			<h3 id=addUsbDialogHeading>Create Usb</h3>
 			<p>
 				<label for="createUsbNumber">Number</label>
 				<input id="createUsbNumber" required />
@@ -46,7 +47,7 @@
 				<textarea id="createUsbNotes"></textarea>
 			</p>
 		</form>
-		<p id="newNameSuccessMessage" style="display:none">✅ We have saved the usb. <br />You can now select size/location</p>
+		<p id="newUsbSuccessMessage" style="display:none">✅ We have saved the usb. <br />You can now select size/location</p>
 		<div>
 			<button onclick="saveNewUsb(event)">&emsp;Save&emsp;</button>
 			<button value=cancel onclick="this.closest('dialog').close()">Cancel</button>
@@ -187,9 +188,10 @@
 						myLocations.push(loc)
 				})
 				insertDiv += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
-				insertDiv += `Usb Number: ${document.getElementById("chosenUsbNumber").textContent}<br>`
-				insertDiv += `Usb Notes: ${document.getElementById("chosenUsbNotes").textContent}<br>`
-				insertDiv += `<a href=# data-id=${data.UsbEmbroideryDesignId} class=removeUsbLink>Remove</a>`
+				insertDiv += `Usb Number: <span class="usbNumberSpan" data-id=${data.UsbId}>${document.getElementById("chosenUsbNumber").textContent}</span><br>`
+				insertDiv += `Usb Notes: <span class="usbNotesSpan" data-id=${data.UsbId}>${document.getElementById("chosenUsbNotes").textContent}</span><br>`
+				insertDiv += `<a href=# data-id=${data.UsbId} class=editUsbLink><span class="fa fa-lg fa-edit" title="change usb details"></span></a>&emsp;`
+				insertDiv += `<a href=# data-id=${json.id} class=removeUsbLink><span class="fa fa-lg fa-trash" title="remove usb from this design"></span></a>`
 				insertDiv += "</div>"
 				a.insertAdjacentHTML("beforebegin", insertDiv)
 				
@@ -337,9 +339,10 @@
 									myLocations.push(loc)
 							})
 							itemString += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
-							itemString += `Usb Number: ${item.UsbNumber}<br>`
-							itemString += `Usb Notes: ${item.UsbNotes}<br>`
-							itemString += `<a href=# data-id=${item.UsbEmbroideryDesignId} class=removeUsbLink>Remove</a>`
+							itemString += `Usb Number: <span class=usbNumberSpan data-id=${item.UsbId}>${item.UsbNumber}</span><br>`
+							itemString += `Usb Notes: <span class=usbNotesSpan data-id=${item.UsbId}>${item.UsbNotes}</span><br>`
+							itemString += `<a href=# data-id=${item.UsbId} class=editUsbLink><span class="fa fa-lg fa-edit" title="change usb details"></span></a>&emsp;`
+							itemString += `<a href=# data-id=${item.UsbEmbroideryDesignId} class=removeUsbLink><span class="fa fa-lg fa-trash" title="remove usb from this design"></span></a>`
 							itemString += "</div>"
 						}
 					}
@@ -402,17 +405,43 @@
 			document.getElementById("currentEmbroideryDesignId").value = id
 			document.getElementById("createUsbNumber").value = "" // initialise in case there's a value from last time
 			document.getElementById("createUsbNotes").value = "" // initialise in case there's a value from last time
-
-			document.getElementById("newNameSuccessMessage").style.display = "none"
+			document.getElementById("editUsbId").value = 0
+			document.getElementById("addUsbDialogHeading").textContent = "Create a new usb"
+			document.getElementById("newUsbSuccessMessage").style.display = "none"
 			document.getElementById("createUsbDialog").showModal()
+		}
+
+		function editUsb(id) {
+			document.getElementById("editUsbId").value = id
+			document.getElementById("newUsbSuccessMessage").style.display = "none"
+			document.getElementById("addUsbDialogHeading").textContent = "Edit existing Usb"
+			fetch(`usb/${id}`)
+			.then(response => response.json())
+			.then(json => {
+				document.getElementById("createUsbNumber").value = json.Number
+				document.getElementById("createUsbNotes").value = json.Notes
+				document.getElementById("createUsbDialog").showModal()
+			})
+
+
 		}
 
 
 		// called by the create new usb dialog save button
 		function saveNewUsb(event) {
 			if (document.getElementById("createUsbForm").checkValidity()) {
-				fetch(`/usb`, {
-					method: "POST",
+				const id = document.getElementById("editUsbId").value
+				let method = "PUT"
+				let url = "/usb"
+				if (id == 0) {
+					method = "POST"
+				}
+				else {
+					url += `/${id}`
+				}
+
+				fetch(url, {
+					method,
 					headers: new Headers({ "Content-Type": "application/json"}),
 					body: JSON.stringify({
 						Number: document.getElementById("createUsbNumber").value,
@@ -428,18 +457,29 @@
 					}
 				})
 				.then(json => {
-					document.getElementById("chosenUsbId").value = json.id
-					document.getElementById("usbListTable").innerHTML = ""
-					document.getElementById("chosenUsbNumber").textContent = document.getElementById("createUsbNumber").value
-					document.getElementById("chosenUsbNotes").textContent = document.getElementById("createUsbNotes").value
-					document.getElementById("usbFilterInput").value = ""
-					document.getElementById("newNameSuccessMessage").style.display = "inline"
-
-					window.setTimeout( function () {
+					if (id != 0) {
+						// it was an edit, just close the dialog
 						document.getElementById("createUsbDialog").close()
-						document.getElementById("usbChooser").style.display = "none"
-						document.getElementById("addUsbDialog").showModal()
-					}, 1500) 
+						// todo, how do we update the display ?
+						document.querySelector(`span.usbNumberSpan[data-id='${id}']`).textContent = document.getElementById("createUsbNumber").value
+						document.querySelector(`span.usbNotesSpan[data-id='${id}']`).textContent = document.getElementById("createUsbNotes").value
+						
+
+					}
+					else {
+						document.getElementById("chosenUsbId").value = json.id
+						document.getElementById("usbListTable").innerHTML = ""
+						document.getElementById("chosenUsbNumber").textContent = document.getElementById("createUsbNumber").value
+						document.getElementById("chosenUsbNotes").textContent = document.getElementById("createUsbNotes").value
+						document.getElementById("usbFilterInput").value = ""
+						document.getElementById("newUsbSuccessMessage").style.display = "inline"
+
+						window.setTimeout( function () {
+							document.getElementById("createUsbDialog").close()
+							document.getElementById("usbChooser").style.display = "none"
+							document.getElementById("addUsbDialog").showModal()
+						}, 1500) 
+					}
 				})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
 			}
@@ -477,6 +517,13 @@
 		$("#datatable tbody").on("click", "a.removeUsbLink", function (event) {
 			event.preventDefault()
 			removeUsb(event.currentTarget)
+		})
+
+
+		// Add event listener for edit usb link
+		$("#datatable tbody").on("click", "a.editUsbLink", function (event) {
+			event.preventDefault()
+			editUsb(event.currentTarget.dataset.id)
 		})
 
 
