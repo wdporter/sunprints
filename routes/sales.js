@@ -162,14 +162,14 @@ console.log(req.query.customSearch)
 		LEFT OUTER JOIN PrintDesign bpd ON bpd.PrintDesignId=Sales.BackPrintDesignId
 		LEFT OUTER JOIN PrintDesign ppd ON ppd.PrintDesignId=Sales.PocketPrintDesignId
 		LEFT OUTER JOIN PrintDesign spd ON spd.PrintDesignId=Sales.SleevePrintDesignId
-		LEFT OUTER JOIN PrintDesign fed ON fed.PrintDesignId=Sales.FrontEmbroideryDesignId
-		LEFT OUTER JOIN PrintDesign bed ON bed.PrintDesignId=Sales.BackEmbroideryDesignId
-		LEFT OUTER JOIN PrintDesign ped ON ped.PrintDesignId=Sales.PocketEmbroideryDesignId
-		LEFT OUTER JOIN PrintDesign sed ON sed.PrintDesignId=Sales.SleeveEmbroideryDesignId
-		LEFT OUTER JOIN PrintDesign ftd ON ftd.PrintDesignId=Sales.FrontTransferDesignId
-		LEFT OUTER JOIN PrintDesign btd ON btd.PrintDesignId=Sales.BackTransferDesignId
-		LEFT OUTER JOIN PrintDesign ptd ON ptd.PrintDesignId=Sales.PocketTransferDesignId
-		LEFT OUTER JOIN PrintDesign std ON std.PrintDesignId=Sales.SleeveTransferDesignId
+		LEFT OUTER JOIN EmbroideryDesign fed ON fed.EmbroideryDesignId=Sales.FrontEmbroideryDesignId
+		LEFT OUTER JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=Sales.BackEmbroideryDesignId
+		LEFT OUTER JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=Sales.PocketEmbroideryDesignId
+		LEFT OUTER JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=Sales.SleeveEmbroideryDesignId
+		LEFT OUTER JOIN TransferDesign ftd ON ftd.TransferDesignId=Sales.FrontTransferDesignId
+		LEFT OUTER JOIN TransferDesign btd ON btd.TransferDesignId=Sales.BackTransferDesignId
+		LEFT OUTER JOIN TransferDesign ptd ON ptd.TransferDesignId=Sales.PocketTransferDesignId
+		LEFT OUTER JOIN TransferDesign std ON std.TransferDesignId=Sales.SleeveTransferDesignId
 		WHERE 
 		OrderId=?
 		AND NOT (FrontPrintDesign IS NULL AND BackPrintDesign IS NULL AND PocketPrintDesign IS NULL AND SleevePrintDesign IS NULL

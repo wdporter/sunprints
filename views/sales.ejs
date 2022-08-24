@@ -145,7 +145,7 @@ div#dt_wrapper {
 
 <main class="wider">
 
-	<table id="dt">
+	<table id="dt" class="stripe">
 		<thead>
 			<tr>
 				<th></th>
@@ -267,7 +267,7 @@ div#dt_wrapper {
 			} ,
 			{
 				data: "designItems",
-				render(data) { return "pending fix" /*data.join("<br>")*/},
+				render(data) { return data.join("<br>")},
 				orderable: false
 			}
 		],
