@@ -50,7 +50,7 @@
 		<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
 		<li>Use the Destination/Printer option to save a PDF 
 		<li>Under <i>More settings</i> you can remove the header/footer
-		<% if (supplier.Email != null && supplier.Email.length > 0) { %> <li><a href="mailto:<%= supplier.Email %>&subject=Sun%2Prints%2Order">Email the supplier</a><% } %>
+		<% if (supplier.Email != null && supplier.Email.length > 0) { %> <li><a href="mailto:<%= supplier.Email %>&subject=SunPrints%20Order">Email the supplier</a><% } %>
 	</ul>
 		<hr>
 	</h1>
@@ -59,14 +59,14 @@
 
 <div style="display:flex; justify-content: space-between">
 	<div>
-		<h2>Sun Prints Purchase Order</h2>
+		<h2>SunPrints Purchase Order</h2>
 		<h3>
 			Order Number: <%= supplier.StockOrderId %><br>
 			Date of Order: <%= new Date(Date.parse(supplier.OrderDate)).toLocaleDateString() %>
 		</h3>
 		<p>
 			<b>Please forward the listed items to:<br>
-			<i>Sun Prints<br>
+			<i>SunPrints<br>
 			5 Ferguson St,<br>
 			Underwood, Qld, 4119<br>
 			Ph: (07) 3841 1869<br>
