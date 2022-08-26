@@ -317,7 +317,7 @@ router.put("/:id", function (req, res) {
 		for (let key in garment) {
 			if (key == "GarmentId" || key.startsWith("Created"))
 				continue
-			if (req.body[key].trim)
+			if (req.body[key] != null &&  req.body[key].trim)
 				req.body[key] = req.body[key].trim()
 			if (garment[key] != req.body[key]) 
 				changes.push(key)
