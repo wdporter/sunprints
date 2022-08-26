@@ -369,17 +369,22 @@ div#dt_wrapper {
 		})
 	})
 
-	document.getElementById("orderNumber").addEventListener("input", function(input) {
-			// on selection, reset all other select fields to 0
-			// we only search on one field at a time
+	Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
+		s.addEventListener("change", function(input) {
 			Array.from(document.querySelectorAll("fieldset select")).forEach(sel => {
-				if (sel != input) {
+				if (sel != input.currentTarget) {
 					sel.value= "0"	
 				}
 			})
 			window.datatable.ajax.reload()
 		})
+	})
 
+	Array.from(document.querySelectorAll("fieldset input")).forEach(s => {
+		s.addEventListener("input", function() {
+			window.datatable.ajax.reload()
+		})
+	})
 
 
 
