@@ -53,7 +53,8 @@
 						orderable: false,
 						data: "ScreenId",
 						render(data) {
-							return `<input type=button value=Edit onclick="startEdit(this)" /> <input type=reset onclick=deleteScreen(${data}) value=Delete />`
+							return `<a href=# class=editLink><span class="fa fa-edit fa-lg" title=Edit></span></a>&emsp;
+							<a href=# class=deleteLink><span class="fa fa-trash fa-lg" title=Delete>`
 						}
 					},
 					{ data: "Number" },
@@ -84,9 +85,15 @@
 				editDialog.showModal()
 			})
 
-			function deleteScreen(id) {
+			$("#datatable tbody").on("click", "a.deleteLink", function () {
+				event.preventDefault()
+				var tr = this.closest("tr")
+				var row = window.datatable.row(tr)
+				console.log(row.data())
+				const data = row.data()
+
 				try {
-					fetch(`/screen/${id}`, {
+					fetch(`/screen/${data.ScreenId}`, {
 						method: "DELETE"
 					})
 						.then(response => {
@@ -101,7 +108,7 @@
 				catch (err) {
 					window.alert("We encountered an error: " + err.message)
 				}
-			}
+			})
 
 
 
