@@ -6,7 +6,7 @@ const Database = require("better-sqlite3")
 
 /* GET Screens page. */
 router.get("/", function (req, res, next) {
-	res.render("screen2.ejs", { 
+	res.render("screen.ejs", { 
 		title: "Screens",
 		user: req.auth.user
 	 })
