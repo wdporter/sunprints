@@ -7,7 +7,7 @@ const sz = require("../sizes.js");
 // GET the garments page
 router.get("/", function (req, res, next) {
 	res.render("garment.ejs", {
-		title: "Garments",
+		title: "Products",
 		user: req.auth.user,
 		sizes: JSON.stringify(sz.sizes)
 	})
