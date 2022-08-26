@@ -94,7 +94,8 @@ td {
 	</tbody>
 </table>
 
-<p>Total: <%= results.length %></p>
+<p>Total Orders: <%= results.length %></p>
+<p>Total Quantity: <%= results.reduce((acc, curr) => { return acc + curr.Qty}, 0 ) %></p>
 
 <script>
 //	window.print()
