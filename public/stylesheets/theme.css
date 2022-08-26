@@ -20,6 +20,7 @@ div#orderTable_wrapper {
 header h1 {
 	margin-block-start: 0;
 	margin-block-end: 0;
+	max-width:360px;
 }
 
 main.wider {
