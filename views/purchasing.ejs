@@ -58,18 +58,21 @@
 			</thead>
 			<tbody>
 				<tr v-if="arr.length==0"><td :colspan="sizes[sizeCategory].length+4">Select garments from the list</td></tr>
-				<tr v-for="(garment, i) in arr" :key="i">
-					<td>{{ garment.Code }} <br>
-						<a href=# @click.prevent="receiveGarment(garment, sizeCategory)" :data-id="garment.GarmentId" 
-						title="Receive this garment into stock"><span class="fa fa-download fa-lg"></span></a><br>
-						<a href=# @click.prevent="removeGarment(garment.GarmentId, sizeCategory)" :data-id="garment.GarmentId" 
-						title="Remove this garment from this order"><span class="fa fa-trash fa-lg"></span></a>
-					</td>
-					<td>{{ garment.Type }}</td>
-					<td>{{ garment.Colour }}</td>
-					<td>{{ garment.Label }}</td>
-					<td v-for="size in sizes[sizeCategory]"><input type=number min=0 v-model="garment[size]" @change="dirty=true" /></td>
-				</tr>
+				<template v-for="(garment, i) in arr" :key="i">
+					<tr style="border-bottom:unset">
+						<td rowspan=2>{{ garment.Code }} <br>
+							<a href=# @click.prevent="receiveGarment(garment, sizeCategory)" :data-id="garment.GarmentId" 
+							title="Receive this garment into stock"><span class="fa fa-download fa-lg"></span></a><br>
+							<a href=# @click.prevent="removeGarment(garment.GarmentId, sizeCategory)" :data-id="garment.GarmentId" 
+							title="Remove this garment from this order"><span class="fa fa-trash fa-lg"></span></a>
+						</td>
+						<td rowspan=2>{{ garment.Type }}</td>
+						<td rowspan=2>{{ garment.Colour }}</td>
+						<td rowspan=2>{{ garment.Label }}</td>
+						<td v-for="size in sizes[sizeCategory]" style="padding-bottom:0"><input type=number min=0 v-model="garment[size]" @change="dirty=true" /></td>
+					</tr>
+					<tr><td :colspan="sizes[sizeCategory].length" style="text-align:center;padding-top:0">Total: {{getCount(sizeCategory, garment)}}</tr>
+				</template>
 			</tbody>
 		</table>
 
@@ -389,6 +392,11 @@ function addGarment(evt, id) {
 			isInvalid() {
 				return this.supplierId == "" || 
 					(this.chosenGarments.Adults.length==0 && this.chosenGarments.Womens.length==0 && this.chosenGarments.Kids.length==0)
+			},
+			getCount(sizeCategory, garment) {
+				return this.sizes[sizeCategory].reduce((acc, curr) => {
+					return acc += garment[curr]
+				}, 0)
 			}
 		},
 		mounted() {
