@@ -114,6 +114,10 @@ console.log(req.query.customSearch)
 				params.Usb = req.query.customSearch.Usb
 				useSalesJoin = true
 			}
+			if (req.query.customSearch.OrderNumber.trim()) {
+				where.push( ` OrderNumber LIKE @OrderNumber `)
+				params.OrderNumber = `%${req.query.customSearch.OrderNumber}%`
+			}
 
 
 			let recordsFilteredQuery = `SELECT COUNT(*) AS Count FROM SalesTotal

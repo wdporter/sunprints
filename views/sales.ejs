@@ -89,6 +89,13 @@ div#dt_wrapper {
 				<input type=date id="dateTo" />
 			</p>
 		</fieldset>
+		<fieldset>
+			<legend>Order Number</legend>
+			<p>
+				<label for=orderNumber>Order Number</label>
+				<input type=search id=orderNumber />
+			</p>
+		</fieldset>
 	</div>
 	<div>
 		<fieldset>
@@ -201,7 +208,8 @@ div#dt_wrapper {
 					Usb: document.getElementById("usb").value,
 					Transfer: document.getElementById("transfer").value,
 					TransferName: document.getElementById("transferName").value,
-					SalesRep: document.getElementById("salesRep").value
+					SalesRep: document.getElementById("salesRep").value,
+					OrderNumber: document.getElementById("orderNumber").value
 				}
 			}
 		},
@@ -359,17 +367,19 @@ div#dt_wrapper {
 				})
 			}
 		})
-		s.addEventListener("input", function() {
+	})
+
+	document.getElementById("orderNumber").addEventListener("input", function(input) {
 			// on selection, reset all other select fields to 0
 			// we only search on one field at a time
 			Array.from(document.querySelectorAll("fieldset select")).forEach(sel => {
-				if (sel != s) {
+				if (sel != input) {
 					sel.value= "0"	
 				}
 			})
 			window.datatable.ajax.reload()
 		})
-	})
+
 
 
 
