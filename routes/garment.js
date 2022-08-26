@@ -66,6 +66,25 @@ router.get("/warninglist", function (req, res, next) {
 		for (g in garments)
 			returnGarments.push(garments[g])
 
+			returnGarments.sort(function(a, b) {
+				if (a.Type > b.Type)
+					return 1
+				else if (a.Type < b.Type)
+					return -1
+				else {
+					if (a.Code > b.Code)
+						return 1
+					else if (a.Code < b.Code)
+						return -1
+					else {
+						if (a.Colour > b.Colour)
+							return 1
+						else if (a.Colour < b.Colour)
+							return -1
+					}
+				}
+			})
+
 		res.render("warninglist.ejs", {
 			title: "Garment Warning List",
 			user: req.auth.user,

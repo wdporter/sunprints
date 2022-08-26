@@ -52,8 +52,18 @@
 <% garments.forEach(g => { %>
 <div style="break-inside:avoid">
 <table>
-	<tr><th>Code<th>Type<th>Colour<th>Label<th>Notes
-	<tr><td><%= g.Code %><td><%= g.Type %><td><%= g.Colour %><td><%= g.Label %><td><%= g.Notes %>
+	<tr>
+		<th>Type
+		<th>Code
+		<th>Colour
+		<th>Label
+		<th>Notes
+	<tr>
+		<td><%= g.Type %>
+		<td><%= g.Code %>
+		<td><%= g.Colour %>
+		<td><%= g.Label %>
+		<td><%= g.Notes %>
 </table>
 
 <table id="qtyTable">
