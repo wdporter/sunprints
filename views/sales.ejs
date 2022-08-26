@@ -234,7 +234,7 @@ div#dt_wrapper {
 					if (isNaN(num))
 						return data
 					else
-						return new Date(num).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
+						return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
 				}
 			},
 			{ data: "SalesRep", width: "3em" }, 
@@ -245,7 +245,7 @@ div#dt_wrapper {
 					if (isNaN(ts))
 						return data
 					else
-						return new Date(ts).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
+						return new Date(ts).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
 					}
 			}, 
 			{ data: "Delivery",
@@ -255,7 +255,7 @@ div#dt_wrapper {
 					if (isNaN(num))
 						return data
 					else
-						return new Date(num).toLocaleDateString().split("/").map(d => d.replace(/^0/, "")).join("/")
+						return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
 				}
 			}, 
 			{ data: "Company"}, 
