@@ -159,7 +159,7 @@ function addGarment(evt, id) {
 				api.columns()[0].forEach(function (i) {
 
 					const th = Array.from(document.querySelectorAll(".filters th"))[i]
-					if (i > 0 && i < 5) {
+					if (i > 0 && i < 6) {
 						if (i == 0) {
 							th.innerHTML = "<select><option><option>Adults<option>Womens<option>Kids</select>"
 								th.querySelector("select").addEventListener("change", function () {
