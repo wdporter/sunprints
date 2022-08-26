@@ -89,7 +89,7 @@
 						for (var item of data) {
 							ret += "<div class=garmentDiv>"
 							for (var d in item)
-								ret += `${d}: ${item[d]}</br>`
+								ret += `${d == 'ASm' ? "AS" : d}: ${item[d]}</br>`
 							ret += "</div>"
 						}
 					}

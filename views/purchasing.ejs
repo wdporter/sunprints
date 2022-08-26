@@ -53,7 +53,7 @@
 			<caption>{{ sizeCategory[0].toUpperCase() + sizeCategory.slice(1) }} </caption>
 			<thead>
 				<tr>
-					<th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th v-for="size in sizes[sizeCategory]">{{ size.slice(1) }}</th>
+					<th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th v-for="size in sizes[sizeCategory]">{{ size == "ASm" ? "S" : size.slice(1) }}</th>
 				</tr>
 			</thead>
 			<tbody>

@@ -152,7 +152,7 @@ input:invalid {
 				</thead>
 				<tbody>
 					<tr v-for="size in sizes[garment.SizeCategory]" :key="size">
-						<th>{{ size.slice(1) }}</th>
+						<th>{{ size == "ASm" ? "S" : size.slice(1) }}</th>
 						<td><input type=number v-model="garment[size]" /></td>
 						<td style="text-align:center">{{ garment['O' + size] }}</td>
 						<td><input type=number v-model="garment['Min' + size]" min="0" /></td>

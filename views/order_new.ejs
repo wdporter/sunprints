@@ -190,7 +190,7 @@ table#stockWarningTable {
 				<legend>Quantities ({{g.SizeCategory}})</legend>
 				<div style="display:flex">
 					<p v-for="(data, key) in g.Quantities[g.SizeCategory]">
-						<label :for="key" class=quantity-label> {{ key }}</label>
+						<label :for="key" class=quantity-label>{{ key == "Sm" ? "S" : key }}</label>
 						<input type=number id="key" min="0" v-model="g.Quantities[g.SizeCategory][key]" class="quantity-num" />
 					</p>
 				</div>

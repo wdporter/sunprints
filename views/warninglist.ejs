@@ -61,7 +61,7 @@
 		<th></th>
 		<% sizes[g.SizeCategory].forEach(size => { 
 			if (g[size]) { %>
-				<th><%= size %>
+				<th><%= size == "ASm" ? "AS" : size %>
 			<% }
 		}) %>
 	<tr>
