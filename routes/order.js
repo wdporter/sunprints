@@ -796,7 +796,10 @@ router.get("/outstanding/print", (req, res) => {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
 
-		const statement = db.prepare(`SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn,
+		if (req.query.rep == null)
+			req.query.rep = "All"
+
+		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, 
 		Customer.Company, 
 		fpd.Code AS FrontDesign, 
 		bpd.Code AS BackDesign, 
@@ -810,11 +813,26 @@ router.get("/outstanding/print", (req, res) => {
 		LEFT JOIN PrintDesign bpd ON bpd.PrintDesignId=OrderGarment.BackPrintDesignId
 		LEFT JOIN PrintDesign ppd ON ppd.PrintDesignId=OrderGarment.PocketPrintDesignId
 		LEFT JOIN PrintDesign spd ON spd.PrintDesignId=OrderGarment.SleevePrintDesignId
-		WHERE Done=0
-		AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
-		ORDER BY 2 ASC`)
+		WHERE 1=1 `
 
-		const resultset = statement.all()
+		if (req.query.rep !== "All") {
+			if (req.query.rep == "none")
+				query += " AND IFNULL(SalesRep, '')='' "
+			else
+				query += " AND SalesRep = ? "
+		}
+
+
+		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
+		ORDER BY 2 ASC`
+
+		const statement = db.prepare(query)
+
+		if (req.query.rep == "All" || req.query.rep == "none")
+			var resultset = statement.all()
+		else
+			var resultset = statement.all(req.query.rep)
+
 
 		const r2 = {}
 
@@ -853,8 +871,16 @@ router.get("/outstanding/print", (req, res) => {
 		for (r in r2)
 			r2set.push(r2[r])
 
-		res.render("outstanding/print.ejs", { name: "Print Designs",
-			results: r2set})
+		const salesReps =   db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
+		salesReps.push("none")
+
+		res.render("outstanding/print.ejs", { 
+			name: "Print Designs",
+			results: r2set,
+			salesReps,
+			chosenRep: req.query?.rep ?? "All"
+		})
+		console.log(r2set.length)
 
 	}
 	catch (ex) {

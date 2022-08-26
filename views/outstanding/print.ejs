@@ -46,10 +46,18 @@ td {
 	<li>Use the Destination/Printer option to save a PDF 
 	<li>Under <i>More settings</i> you can remove the header/footer
 </ul>
+<label for="salesRep">Filter by sales rep.</label>
+<select onchange="window.location.search='?rep=' + this.value">
+	<option>All</option>
+	<% salesReps.forEach(rep => { %>
+	 <option <%= chosenRep==rep ? "selected" : "" %>><%= rep %></option>
+	<% }) %>
+</select>
 	<hr>
 </div>
 
 <h1>Outstanding Orders — <%= name %> <% new Date().toLocaleDateString() %></h1>
+
 
 <table>
 	<thead>
@@ -67,7 +75,7 @@ td {
 		</tr>
 	<tbody>
 
-<% for( let i = 1; i < results.length; ++i) { %>
+<% for( let i = 0; i < results.length; ++i) { %>
 
 	<tr>
 		<td><%= results[i].OrderNumber %>
@@ -86,7 +94,8 @@ td {
 	</tbody>
 </table>
 
+<p>Total: <%= results.length %></p>
 
 <script>
-	window.print()
+//	window.print()
 </script>
