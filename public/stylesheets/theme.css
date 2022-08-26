@@ -78,3 +78,24 @@ button:disabled, input[type=button]:disabled, input[type=reset]:disabled, input[
 }
 
 
+#footLinks {
+	list-style-type: none;
+	float: left;
+}
+
+#footLinks li {
+	display: inline-block;
+}
+#footLinks li + li {
+	margin-left: 1em;
+}
+#footLinks li a {
+	text-decoration: none;
+}
+#footLinks li a:hover {
+	text-decoration: underline;
+	color: var(--color-body)
+}
+#footLinks li a:active, #footLinks li a:visited {
+	color: var(--color-body);
+}
