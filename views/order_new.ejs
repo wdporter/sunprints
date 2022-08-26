@@ -235,19 +235,19 @@ table#stockWarningTable {
 
 				<div style="display:flex;justify-content:space-around">
 					<fieldset v-for="(printLocation, key) in g.printLocations" :key="key[0]">
-						<legend>{{key}} Screen (choose one{{printLocation.length > 1 ? ' or two' : ''}})</legend>
+						<legend>{{key}} Screen (choose one {{printLocation.length > 1 ? ' or two' : ''}})</legend>
 							<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
 								<p v-if="screen.Name != null">
 									<input type="checkbox" @change="screenChange(g, key)" :value="screen.ScreenId"
 										v-model="g.checkedScreens[key]" :id="'screen' + screen.ScreenId" />
-									<label :for="'screen' + screen.ScreenId">{{screen.Number}} {{screen.Colour}} {{screen.Name ?? "(Standard/Unnamed)"}} </label>
+									<label :for="'screen' + screen.ScreenId">{{screen.Name}} — {{screen.Number}} — {{screen.Colour}} </label>
 								</p>
 						</div>
 						<hr>
 						<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
 							<p v-if="screen.Name == null">
 								<input type="checkbox" :value="screen.ScreenId" :checked="g.checkedScreens[key].length>0" :id="'screen' + screen.ScreenId" disabled>
-								<label :for="'screen' + screen.ScreenId">{{screen.Number}} {{screen.Colour}} {{screen.Name ?? "(Standard/Unnamed)"}} </label>
+								<label :for="'screen' + screen.ScreenId">{{screen.Number}} — {{screen.Colour}} (Standard)"}} </label>
 							</p>
 						</div>
 					</fieldset>
@@ -732,6 +732,7 @@ table#stockWarningTable {
 							json.forEach(j => {
 								locationNames.forEach(loc => {
 									if (j[loc] == 1)
+										// if we have this location, pus it, otherwise, create a new array for it
 										garment.printLocations[loc] ? garment.printLocations[loc].push(j) : garment.printLocations[loc] = [j]
 								})
 							})
@@ -942,6 +943,28 @@ table#stockWarningTable {
 				},
 				setBuyIn(val) {
 					this.buyin = val
+				},
+				sortByName(printLocation) {
+					// sort by name, if they're the same, sort by number, if they're the same, sort by colour
+					return printLocation.sort(function(a, b) {
+						if (a.Name?.toUpperCase() ?? "" < b.Name?.toUpperCase() ?? "")
+							return -1
+						else if (a.Name?.toUpperCase() ?? "" > b.Name?.toUpperCase() ?? "")
+							return 1
+						else {
+							if (a.Number.toUpperCase() ?? "" < b.Number.toUpperCase() ?? "")
+								return -1
+							else if (a.Number.toUpperCase() ?? "" > b.Number.toUpperCase() ?? "")
+								return 1
+							else {
+								if (a.Colour.toUpperCase() ?? "" < b.Colour.toUpperCase() ?? "")
+									return -1
+								else if (a.Colour.toUpperCase() ?? "" > b.Colour.toUpperCase() ?? "")
+									return 1
+							}
+						}
+					})
+					
 				}
 			}
 

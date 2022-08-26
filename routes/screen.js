@@ -25,7 +25,7 @@ FROM ScreenPrintDesign
 INNER JOIN Screen on Screen.ScreenId = ScreenPrintDesign.ScreenId 
 WHERE PrintDesignId = ${req.query.printdesignid} 
 AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}' 
-ORDER BY Name IS NULL`)
+ORDER BY Name COLLATE NOCASE, Number COLLATE NOCASE, Colour COLLATE NOCASE`)
 
 		const records = statement.all()
 		res.send(records)
