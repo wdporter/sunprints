@@ -1,6 +1,15 @@
 <%- include("partials/head.ejs") %>
 
 <style>
+
+main {
+	padding-bottom: 1em;
+}
+
+main.wider {
+	padding-top: 2em;
+}
+
 	.dataTables_wrapper {
 		margin-left: 3em
 	}
@@ -24,7 +33,7 @@
 </style>
 
 <ul>
-	<li>Separate multiple email addresses with a comma or semi-colon
+	<li>Separate multiple email addresses with a semi-colon ( ; )
 	<li>Deleting a suppliers will retain it for sales history, but you won’t be able to create new garments.
 	<li><a href=/supplier/deleted>Deleted suppliers</a>
 </ul>
@@ -201,7 +210,7 @@
 				render(data, type, row) {
 					const ts = Date.parse(data)
 					let retVal = isNaN(ts) ? "" : `${new Date(ts).toLocaleDateString()}<br>`
-					retVal += `<a href=/purchasing?supplier=${row.SupplierId}>Purchase</a>`
+					retVal += `<a href=/purchasing?supplier=${row.SupplierId} title="Create a new purchase order for this supplier">New</a>`
 					return retVal
 				}
 			}
