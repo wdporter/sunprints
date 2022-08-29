@@ -84,10 +84,11 @@ router.get("/screens/:id", function (req, res) {
 
 	try {
 
-		const statement = db.prepare(`SELECT ScreenPrintDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Screen.ScreenId, Number as ScreenNumber, Colour as ScreenColour, Name as ScreenName 
+		const statement = db.prepare(`SELECT ScreenPrintDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Screen.ScreenId, Name as ScreenName, Number as ScreenNumber, Colour as ScreenColour 
 		FROM ScreenPrintDesign 
 		LEFT JOIN Screen ON Screen.ScreenId = ScreenPrintDesign.ScreenId 
-		WHERE PrintDesignId=?`)
+		WHERE PrintDesignId=?
+		ORDER BY Name, Number, Colour`)
 		const screens = statement.all(req.params.id)
 
 		res.send(screens).end()
