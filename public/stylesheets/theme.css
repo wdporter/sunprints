@@ -8,6 +8,14 @@ body {
 	background-color: #bbb;
 }
 
+header {
+	background-color: orange;
+}
+
+body>header a {
+	color: darkblue;
+}
+
 main {
 	background-color: white;
 }
