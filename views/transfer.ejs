@@ -164,7 +164,7 @@
 					else {
 						for (var item of data) {
 							itemString += "<div class=nameDiv>"
-							itemString += `Sizes: ${item.SizeCategory}<br>`
+							itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>`
 
 							const locations = <%- locations %>;
 							let myLocations = []
@@ -172,8 +172,8 @@
 								if (item[loc])
 									myLocations.push(loc)
 							})
-							itemString += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
-							itemString += `Name: ${item.Name}<br>`
+							itemString += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>`
+							itemString += `<b>Name:</b> ${item.Name}<br>`
 							itemString += `<a href=# data-id=${item.TransferNameTransferDesignId} class=removeNameLink>Remove</a>`
 							itemString += "</div>"
 						}

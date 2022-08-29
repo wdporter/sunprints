@@ -180,16 +180,16 @@
 					a.parentElement.remove(a.parentElement.querySelector(".nousbs"))
 				}
 				let insertDiv = "<div class=usbDiv>"
-				insertDiv += `Sizes: ${data.SizeCategory}<br>`
+				insertDiv += `<b>Sizes:</b> ${data.SizeCategory}<br>`
 				const locations = <%- JSON.stringify(locations) %>;
 				let myLocations = []
 				locations.forEach(loc => {
 					if (data[loc])
 						myLocations.push(loc)
 				})
-				insertDiv += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
-				insertDiv += `Usb Number: <span class="usbNumberSpan" data-id=${data.UsbId}>${document.getElementById("chosenUsbNumber").textContent}</span><br>`
-				insertDiv += `Usb Notes: <span class="usbNotesSpan" data-id=${data.UsbId}>${document.getElementById("chosenUsbNotes").textContent}</span><br>`
+				insertDiv += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>`
+				insertDiv += `<b>Usb Number:</b> <span class="usbNumberSpan" data-id=${data.UsbId}>${document.getElementById("chosenUsbNumber").textContent}</span><br>`
+				insertDiv += `<b>Usb Notes:</b> <span class="usbNotesSpan" data-id=${data.UsbId}>${document.getElementById("chosenUsbNotes").textContent}</span><br>`
 				insertDiv += `<a href=# data-id=${data.UsbId} class=editUsbLink><span class="fa fa-lg fa-edit" title="change usb details"></span></a>&emsp;`
 				insertDiv += `<a href=# data-id=${json.id} class=removeUsbLink><span class="fa fa-lg fa-trash" title="remove usb from this design"></span></a>`
 				insertDiv += "</div>"
@@ -330,7 +330,7 @@
 					else {
 						for (var item of data) {
 							itemString += "<div class=usbDiv>"
-							itemString += `Sizes: ${item.SizeCategory}<br>`
+							itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>`
 
 							const locations = <%- JSON.stringify(locations) %>;
 							let myLocations = []
@@ -338,9 +338,9 @@
 								if (item[loc])
 									myLocations.push(loc)
 							})
-							itemString += `Location${myLocations.length > 1 ? 's' : ''}: ${myLocations.join(", ")}<br>`
-							itemString += `Usb Number: <span class=usbNumberSpan data-id=${item.UsbId}>${item.UsbNumber}</span><br>`
-							itemString += `Usb Notes: <span class=usbNotesSpan data-id=${item.UsbId}>${item.UsbNotes}</span><br>`
+							itemString += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>`
+							itemString += `<b>Usb Number:</b> <span class=usbNumberSpan data-id=${item.UsbId}>${item.UsbNumber}</span><br>`
+							itemString += `<b>Usb Notes:</b> <span class=usbNotesSpan data-id=${item.UsbId}>${item.UsbNotes}</span><br>`
 							itemString += `<a href=# data-id=${item.UsbId} class=editUsbLink><span class="fa fa-lg fa-edit" title="change usb details"></span></a>&emsp;`
 							itemString += `<a href=# data-id=${item.UsbEmbroideryDesignId} class=removeUsbLink><span class="fa fa-lg fa-trash" title="remove usb from this design"></span></a>`
 							itemString += "</div>"
