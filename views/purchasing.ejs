@@ -10,7 +10,12 @@
 
 	<h3>Raise or View Purchase Orders</h3>
 
+
 	<div id=vueApp>
+		<p>
+			<input type=button @click="reset()" value="Create new purchase order" />
+		</p>
+
 		<fieldset><legend>{{ stockOrderId == "<%= stockOrderId %>" ? "Create New" : "Edit existing"  }}</legend>
 			<p>
 				<label for="stockOrderSelect">Select existing to edit</label>
@@ -95,19 +100,20 @@
 
 
 <h4>Add products </h4>
-	<table id="garmentTable" class="hover">
-		<thead>
-			<tr>
-				<th></th><th>Size Category</th><th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th>Notes</th>
-			</tr>
-			<tr class="filters">
-				<th></th><th>Size Category</th><th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th></th>
-			</tr>
-		</thead>
-		<tbody>
-		</tbody>
-	</table>
+<table id="garmentTable" class="hover">
+	<thead>
+		<tr>
+			<th></th><th>Size Category</th><th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th>Notes</th>
+		</tr>
+		<tr class="filters">
+			<th></th><th>Size Category</th><th>Code</th><th>Type</th><th>Colour</th><th>Label</th><th></th>
+		</tr>
+	</thead>
+	<tbody>
+	</tbody>
+</table>
 
+<p style="height:2em"></p>
 
 	<script>
 
@@ -216,6 +222,7 @@ function addGarment(evt, id) {
 				if (this.stockOrderId == "") {
 					// no stock order id
 					this.notes = ""
+					this.supplierId = ""
 					this.orderDate = new Date().toISOString().slice(0, 10)
 					this.chosenGarments.Adults = []
 					this.chosenGarments.Womens = []
@@ -416,6 +423,10 @@ function addGarment(evt, id) {
 					}
 				}
 				return total
+			},
+			reset() {
+				this.stockOrderId=''
+				this.onSelectOrder()
 			}
 				
 			
