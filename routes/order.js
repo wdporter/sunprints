@@ -1723,7 +1723,8 @@ router.put("/ship/:id", function (req, res) {
 			LastModifiedBy: req.auth.user,
 			LastModifiedDateTime: date,
 			InvoiceDate: new Date().toISOString().slice(0, 10),
-			ProcessedDate: new Date().toISOString().slice(0, 10)
+			ProcessedDate: new Date().toISOString().slice(0, 10),
+			Done: 1
 		}
 
 
@@ -1756,7 +1757,8 @@ router.put("/ship/:id", function (req, res) {
 		// TODO sometimes salesTotalParams is null
 		const salesTotalParams = { 
 			DateInvoiced: params.InvoiceDate,
-			DateProcessed: params.ProcessedDate
+			DateProcessed: params.ProcessedDate,
+			Done: params.Done
 		}
 		query = ` UPDATE SalesTotal SET ${Object.keys(salesTotalParams).map(p => ` ${p}=@${p} `).join(", ")} WHERE OrderId=@OrderId `
 		salesTotalParams.OrderId = req.params.id
