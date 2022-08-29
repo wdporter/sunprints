@@ -799,7 +799,7 @@ router.get("/outstanding/print", (req, res) => {
 		if (req.query.rep == null)
 			req.query.rep = "All"
 
-		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, 
+		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, Done, 
 		Customer.Company, 
 		fpd.Code AS FrontDesign, 
 		bpd.Code AS BackDesign, 
@@ -839,18 +839,7 @@ router.get("/outstanding/print", (req, res) => {
 		resultset.forEach(r => {
 			// if we don't already have it in r2, it's the first time we found it
 			if (!r2[r.OrderNumber]) {
-				r2[r.OrderNumber] = {
-					OrderNumber: r.OrderNumber,
-					OrderDate: r.OrderDate,
-					DeliveryDate: r.DeliveryDate,
-					BuyIn: r.BuyIn,
-					Company: r.Company,
-					Qty: r.Qty,
-					FrontDesign: r.FrontDesign,
-					BackDesign: r.BackDesign,
-					PocketDesign: r.PocketDesign,
-					SleeveDesign: r.SleeveDesign
-				}
+				r2[r.OrderNumber] = r
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
@@ -880,7 +869,7 @@ router.get("/outstanding/print", (req, res) => {
 			salesReps,
 			chosenRep: req.query?.rep ?? "All"
 		})
-		console.log(r2set.length)
+
 
 	}
 	catch (ex) {
@@ -900,7 +889,10 @@ router.get("/outstanding/embroidery", (req, res) => {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
 
-		const statement = db.prepare(`SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn,
+		if (req.query.rep == null)
+			req.query.rep = "All"
+
+		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, Done, 
 		Customer.Company, 
 		fed.Code AS FrontDesign, 
 		bed.Code AS BackDesign, 
@@ -914,29 +906,30 @@ router.get("/outstanding/embroidery", (req, res) => {
 		LEFT JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=OrderGarment.BackEmbroideryDesignId
 		LEFT JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=OrderGarment.PocketEmbroideryDesignId
 		LEFT JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=OrderGarment.SleeveEmbroideryDesignId
-		WHERE Done=0
-		AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
-		ORDER BY 2 ASC`)
+		WHERE 1=1 `
 
-		const resultset = statement.all()
+		if (req.query.rep !== "All") {
+			if (req.query.rep == "none")
+				query += " AND IFNULL(SalesRep, '')='' "
+			else
+				query += " AND SalesRep = ? "
+		}
+
+		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
+		ORDER BY 2 ASC`
+
+		const statement = db.prepare(query)
+		if (req.query.rep == "All" || req.query.rep == "none")
+			var resultset = statement.all()
+		else
+			var resultset = statement.all(req.query.rep)
 
 		const r2 = {}
 
 		resultset.forEach(r => {
 			// if we don't already have it in r2, it's the first time we found it
 			if (!r2[r.OrderNumber]) {
-				r2[r.OrderNumber] = {
-					OrderNumber: r.OrderNumber,
-					OrderDate: r.OrderDate,
-					DeliveryDate: r.DeliveryDate,
-					BuyIn: r.BuyIn,
-					Company: r.Company,
-					Qty: r.Qty,
-					FrontDesign: r.FrontDesign,
-					BackDesign: r.BackDesign,
-					PocketDesign: r.PocketDesign,
-					SleeveDesign: r.SleeveDesign
-				}
+				r2[r.OrderNumber] = r
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
@@ -957,8 +950,15 @@ router.get("/outstanding/embroidery", (req, res) => {
 		for (r in r2)
 			r2set.push(r2[r])
 
-		res.render("outstanding/print.ejs", { name: "Embroidery Designs",
-			results: r2set})
+		const salesReps =   db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
+		salesReps.push("none")
+
+		res.render("outstanding/print.ejs", { 
+			name: "Embroidery Designs",
+			results: r2set,
+			salesReps,
+			chosenRep: req.query?.rep ?? "All"
+		})
 
 	}
 	catch (ex) {
@@ -978,7 +978,10 @@ router.get("/outstanding/transfer", (req, res) => {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
 
-		const statement = db.prepare(`SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn,
+		if (req.query.rep == null)
+			req.query.rep = "All"
+
+		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Done, 
 		Customer.Company, 
 		ftd.Code AS FrontDesign, 
 		btd.Code AS BackDesign, 
@@ -992,29 +995,31 @@ router.get("/outstanding/transfer", (req, res) => {
 		LEFT JOIN TransferDesign btd ON btd.TransferDesignId=OrderGarment.BackTransferDesignId
 		LEFT JOIN TransferDesign ptd ON ptd.TransferDesignId=OrderGarment.PocketTransferDesignId
 		LEFT JOIN TransferDesign std ON std.TransferDesignId=OrderGarment.SleeveTransferDesignId
-		WHERE Done=0
-		AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
-		ORDER BY 2 ASC`)
+		WHERE 1=1 `
 
-		const resultset = statement.all()
+		if (req.query.rep !== "All") {
+			if (req.query.rep == "none")
+				query += " AND IFNULL(SalesRep, '')='' "
+			else
+				query += " AND SalesRep = ? "
+		}
+
+		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
+		ORDER BY 2 ASC`
+
+		const statement = db.prepare(query)
+
+		if (req.query.rep == "All" || req.query.rep == "none")
+			var resultset = statement.all()
+		else
+			var resultset = statement.all(req.query.rep)
 
 		const r2 = {}
 
 		resultset.forEach(r => {
 			// if we don't already have it in r2, it's the first time we found it
 			if (!r2[r.OrderNumber]) {
-				r2[r.OrderNumber] = {
-					OrderNumber: r.OrderNumber,
-					OrderDate: r.OrderDate,
-					DeliveryDate: r.DeliveryDate,
-					BuyIn: r.BuyIn,
-					Company: r.Company,
-					Qty: r.Qty,
-					FrontDesign: r.FrontDesign,
-					BackDesign: r.BackDesign,
-					PocketDesign: r.PocketDesign,
-					SleeveDesign: r.SleeveDesign
-				}
+				r2[r.OrderNumber] = r
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
@@ -1035,8 +1040,15 @@ router.get("/outstanding/transfer", (req, res) => {
 		for (r in r2)
 			r2set.push(r2[r])
 
-		res.render("outstanding/print.ejs", { name: "Transfer Designs",
-			results: r2set})
+		const salesReps =   db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
+		salesReps.push("none")
+
+		res.render("outstanding/print.ejs", { 
+			name: "Transfer Designs",
+			results: r2set,
+			salesReps,
+			chosenRep: req.query?.rep ?? "All"
+		})
 
 	}
 	catch (ex) {
@@ -1049,6 +1061,92 @@ router.get("/outstanding/transfer", (req, res) => {
 	}
 
 
+})
+
+router.get("/outstanding/promo", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+
+		if (req.query.rep == null)
+			req.query.rep = "All"
+
+		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, 
+		Customer.Company, 
+		${sz.allSizes.join(" + ")} AS Qty,
+		FrontPrintDesignId, BackPrintDesignId, PocketPrintDesignId, SleevePrintDesignId,
+		FrontEmbroideryDesignId, BackEmbroideryDesignId, PocketEmbroideryDesignId, SleeveEmbroideryDesignId,
+		FrontTransferDesignId, BackTransferDesignId, PocketTransferDesignId, SleeveTransferDesignId
+		FROM Orders
+		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
+		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
+		WHERE 1=1 `
+
+		if (req.query.rep !== "All") {
+			if (req.query.rep == "none")
+				query += " AND IFNULL(SalesRep, '')='' "
+			else
+				query += " AND SalesRep = ? "
+		}
+		query += " ORDER BY OrderDate "
+
+		const statement = db.prepare(query)
+
+		if (req.query.rep == "All" || req.query.rep == "none")
+			var resultset = statement.all()
+		else
+			var resultset = statement.all(req.query.rep)
+
+
+		const r2 = {}
+		const rejected = new Set()
+
+		resultset.forEach(r => {
+			// rejected are when we have seen the first one in the series, and decided it's not promo
+			const orderNumberStem = r.OrderNumber.match(/([A-Z]|[a-z])$/) ? r.OrderNumber.slice(0, -1) : r.OrderNumber
+			if (!rejected.has(orderNumberStem)) {
+				// if we don't already have it in r2, it's the first time we found it
+				if (!r2[r.OrderNumber] ) {
+					// we only keep it if it has no designs on it
+					if (r.FrontPrintDesignId == null && r.BackPrintDesignId == null && r.PocketPrintDesignId == null && r.SleevePrintDesignId == null 
+							&& r.FrontEmbroideryDesignId == null && r.BackEmbroideryDesignId == null && r.PocketEmbroideryDesignId == null && r.SleeveEmbroideryDesignId == null 
+							&& r.FrontTransferDesignId == null && r.BackTransferDesignId == null && r.PocketTransferDesignId == null && r.SleeveTransferDesignId == null) {
+						r2[r.OrderNumber] = r
+					}
+					else {
+						rejected.add(orderNumberStem)
+					}
+				} else {
+					// already exists, so add the quantity
+					r2[r.OrderNumber].Qty += r.Qty
+				}
+			}
+		})
+
+		const r2set = []
+		for (r in r2)
+			r2set.push(r2[r])
+
+		const salesReps =   db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
+		salesReps.push("none")
+
+		res.render("outstanding/print.ejs", { 
+			name: "Promo / Sub",
+			results: r2set,
+			salesReps,
+			chosenRep: req.query?.rep ?? "All"
+		})
+
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.status(400)
+	}
+	finally {
+		if (db != null) 
+			db.close()
+	}
 })
 
 

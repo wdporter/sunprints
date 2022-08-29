@@ -1,5 +1,5 @@
 <html>
-	<title>Outstanding Orders — Prints <% new Date().toLocaleDateString() %></title>
+	<title>Outstanding Orders — <%= name %> <% new Date().toLocaleDateString() %></title>
 <style>
 
 /* * {
@@ -15,20 +15,20 @@ td {
 		text-align: right;
 	}
 
-	/* buy in */
-	td:nth-child(4) {
+	/* buy in, done */
+	td:nth-child(4), td:nth-child(5) {
 		text-align: center;
 	}
 	
 	/* customer */
-	td:nth-child(5) {
+	td:nth-child(6) {
 		max-width: 150px;
 		white-space: nowrap;
 		overflow: hidden;
 	}
 
 	/* qty */
-	td:nth-child(6) { 
+	td:nth-child(7) { 
 		text-align: right;
 	}
 
@@ -66,6 +66,7 @@ td {
 			<th>Date
 			<th>Delivery
 			<th>BuyIn
+			<th>Done
 			<th>Customer
 			<th>Qty
 			<th>Front
@@ -82,6 +83,7 @@ td {
 		<td><%= new Date(Date.parse(results[i].OrderDate)).toLocaleDateString().replace(/\/0/g, "/").replace(/^0/, "") %>
 		<td><%= results[i].DeliveryDate.replace(/\/0/g, "/").replace(/^0/, "") %>
 		<td><%= results[i].BuyIn == 1 ? "✓" : "☓" %>
+		<td><%= results[i].Done == 1 ? "✓" : "☓" %>
 		<td><%= results[i].Company %>
 		<td><%= results[i].Qty %>
 		<td><%- results[i].FrontDesign %></td>
