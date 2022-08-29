@@ -75,7 +75,7 @@
 				</template>
 			</tbody>
 		</table>
-
+		<p>Total Products: {{ getTotalProducts() }}</p>
 <hr>
 <p>
 	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save Purchase Order</button>&emsp;
@@ -260,8 +260,15 @@ function addGarment(evt, id) {
 				.catch(error => window.alert(`We encountered an error: ${error}`))
 			},
 			addChosenGarment(sizeCategory, data) {
-				if (!this.chosenGarments[sizeCategory].find(g => g.GarmentId == data.GarmentId ))
+				if (!this.chosenGarments[sizeCategory].find(g => g.GarmentId == data.GarmentId )) {
 					this.chosenGarments[sizeCategory].push(data)
+
+					const caption = Array.from(document.querySelectorAll("caption")).find(c => c.textContent == sizeCategory)
+					const table = caption.closest("table")
+					const tr = table.querySelector("tr:last-child")
+					tr.scrollIntoView({behavior:"smooth"})
+				}
+
 			},
 			saveItem(evt) {
 				evt.preventDefault()
@@ -395,8 +402,21 @@ function addGarment(evt, id) {
 			},
 			getCount(sizeCategory, garment) {
 				return this.sizes[sizeCategory].reduce((acc, curr) => {
-					return acc += garment[curr]
+					return acc += garment[curr] ?? 0
 				}, 0)
+			},
+			getTotalProducts() {
+				let total = 0
+				for (sizeCategory in this.chosenGarments) {
+					for (garment of this.chosenGarments[sizeCategory]) {
+						for (size of this.sizes[sizeCategory]) {
+							if (garment[size]) {
+								total += garment[size]
+							}
+						}
+					}
+				}
+				return total
 			}
 		},
 		mounted() {
