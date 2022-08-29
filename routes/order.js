@@ -21,13 +21,13 @@ router.get("/dt", function (req, res, next) {
 
 		const recordsTotal = db.prepare(`SELECT Count(*) as count 
 FROM Orders  
-WHERE Deleted=0 AND ProcessedDate IS NULL  `).get().count
+WHERE Deleted=0 AND Done=0  `).get().count
 		let recordsFiltered = recordsTotal
 
 		let query = `SELECT Orders.*, Customer.Company AS CustomerName 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId   
-WHERE Orders.Deleted=0 AND ProcessedDate IS NULL  `
+WHERE Orders.Deleted=0 AND Done=0  `
 		if (req.query.search.value)
 			req.query.search.value = req.query.search.value.trim()
 
@@ -38,7 +38,7 @@ WHERE Orders.Deleted=0 AND ProcessedDate IS NULL  `
 			recordsFiltered = db.prepare(`SELECT Count(*) AS count 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
-WHERE Orders.Deleted=0 AND ProcessedDate ISNULL
+WHERE Orders.Deleted=0 AND Done=0
 ${whereClause}`).get().count
 			query += whereClause
 		}
