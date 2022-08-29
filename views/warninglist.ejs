@@ -69,35 +69,27 @@
 <table id="qtyTable">
 	<tr>
 		<th></th>
-		<% sizes[g.SizeCategory].forEach(size => { 
-			if (g[size]) { %>
+		<% sizes[g.SizeCategory].forEach(size => { %>
 				<th><%= size == "ASm" ? "AS" : size %>
-			<% }
-		}) %>
+		<% }) %>
 	<tr>
 		<th>Stock
-		<% sizes[g.SizeCategory].forEach(size => { 
-			if (g[size]) { %>
-				<td><%= g[size] %>
-			<% }
-		}) %>
-		<tr>
+		<% sizes[g.SizeCategory].forEach(size => { %>
+			<td><%= g[size] %>
+		<% }) %>
+	<tr>
 		<th>Min.
-		<% sizes[g.SizeCategory].forEach(size => { 
-			if (g[size]) { %>
-				<td><%= g[`Min${size}`] %>
-			<% }
-		}) %>
-		<tr>
+		<% sizes[g.SizeCategory].forEach(size => { %>
+			<td><%= g[`Min${size}`] %>
+		<% }) %>
+	<tr>
 		<th>On Order
-		<% sizes[g.SizeCategory].forEach(size => { 
-			if (g[size]) { %>
-				<td><%= g[`OnOrder${size}`] %>
-			<% }
-		}) %>
+		<% sizes[g.SizeCategory].forEach(size => { %>
+			<td><%= g[`OnOrder${size}`] %>
+		<% }) %>
+	</table>
 
-		
-</table>
+
 <hr>
 </div>
 <% }) %>

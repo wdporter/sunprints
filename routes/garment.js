@@ -30,16 +30,20 @@ router.get("/warninglist", function (req, res, next) {
 
 		const garments = {}
 
-		// save the ones that have a size value that is less that min value for every size
+		// save the ones that have a size value that is less that min value for every relevant size
 		results.forEach(g => {
 			if (!garments[g]) {
+				let found = false
 				for (let size of sz.sizes[g.SizeCategory]) {
 					if (g[size] < g[`Min${size}`]) {
-						// initialise on order values
-						sz.allSizes.forEach(sz => g[`OnOrder${sz}`] = 0 + g[`sog${sz}`])
-						garments[g.GarmentId] = g
-						break
+						found = true // if one is to be displayed, display all
+						break;
 					}
+				}
+				if (found) { // if one is to be displayed, display all
+					// initialise on order values
+					sz.sizes[g.SizeCategory].forEach(sz => g[`OnOrder${sz}`] = 0 + g[`sog${sz}`])
+					garments[g.GarmentId] = g
 				}
 			}
 			else {
@@ -53,19 +57,19 @@ router.get("/warninglist", function (req, res, next) {
 		})
 
 		// we have retrieved balances for all sizes, remove sizes where the balance is ok
-		for (let g in garments) {
-			for (let size of sz.sizes[garments[g].SizeCategory]) {
-					if (garments[g][size] >= garments[g][`Min${size}`]) {
-						delete garments[g][size]
-						delete garments[g][`Min${size}`]
-					}
-				}
-			}
+		// for (let g in garments) {
+		// 	for (let size of sz.sizes[garments[g].SizeCategory]) {
+		// 			if (garments[g][size] >= garments[g][`Min${size}`]) {
+		// 				delete garments[g][size]
+		// 				delete garments[g][`Min${size}`]
+		// 			}
+		// 		}
+		// 	}
 
 		const returnGarments = []
 		for (g in garments)
 			returnGarments.push(garments[g])
-
+		
 			returnGarments.sort(function(a, b) {
 				if (a.Type > b.Type)
 					return 1
