@@ -147,12 +147,13 @@ router.post("/", function(req, res) {
 
 	try {
 
-		let statement = db.prepare("SELECT COUNT(*) AS Count FROM Usb WHERE Number=? AND Notes=?")
-		const count = statement.get(req.body.Number, req.body.Notes).Count
-		if (count > 0) {
-			res.statusMessage = "This usb already exists."
-			res.sendStatus(400).end()
-		}
+		// duplicates OK
+		// let statement = db.prepare("SELECT COUNT(*) AS Count FROM Usb WHERE Number=? AND Notes=?")
+		// const count = statement.get(req.body.Number, req.body.Notes).Count
+		// if (count > 0) {
+		// 	res.statusMessage = "This usb already exists."
+		// 	res.sendStatus(400).end()
+		// }
 
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
