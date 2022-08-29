@@ -16,8 +16,7 @@
 				<label for="stockOrderSelect">Select existing to edit</label>
 				<select id="stockOrderSelect" v-model="stockOrderId" @change="onSelectOrder">
 					<option value="<%= stockOrderId %>">—Create new or select existing from list—</option>
-					<option v-for="stockOrder in stockOrders" :value="stockOrder.StockOrderId" :key="stockOrder.StockOrderId">{{ stockOrder.StockOrderId }} {{ new
-						Date(Date.parse(stockOrder.OrderDate)).toLocaleDateString() }} {{ stockOrder.Company }}</option>
+					<option v-for="stockOrder in stockOrders" :value="stockOrder.StockOrderId" :key="stockOrder.StockOrderId">{{ new Date(Date.parse(stockOrder.OrderDate)).toLocaleDateString() }} {{ stockOrder.Company }} ({{ stockOrder.StockOrderId }})</option>
 				</select>
 			</p>
 
@@ -47,7 +46,7 @@
 
 		</fieldset>
 
-		<h4>Garments 
+		<h4>Products 
 <span v-if="(chosenGarments.Adults.length + chosenGarments.Kids.length + chosenGarments.Womens.length) == 0" style="color:darkred">*</span></h4>
 		<table v-for="(arr, sizeCategory) in chosenGarments" :key="sizeCategory" class="chosen-garment">
 			<caption>{{ sizeCategory[0].toUpperCase() + sizeCategory.slice(1) }} </caption>
@@ -57,7 +56,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-if="arr.length==0"><td :colspan="sizes[sizeCategory].length+4">Select garments from the list</td></tr>
+				<tr v-if="arr.length==0"><td :colspan="sizes[sizeCategory].length+4">Select products from the list</td></tr>
 				<template v-for="(garment, i) in arr" :key="i">
 					<tr style="border-bottom:unset">
 						<td rowspan=2>{{ garment.Code }} <br>
@@ -95,7 +94,7 @@
 <hr>
 
 
-<h4>Add garments </h4>
+<h4>Add products </h4>
 	<table id="garmentTable" class="hover">
 		<thead>
 			<tr>
@@ -418,12 +417,25 @@ function addGarment(evt, id) {
 				}
 				return total
 			}
+				
+			
 		},
 		mounted() {
 			if (window.garment) {
 				this.chosenGarments[garment.SizeCategory].push(garment)
 			}
+
+			if (window.location.search) {
+				const search = window.location.search.slice(1)
+				const searchParts = search.split("&")
+				const searchId = searchParts.find(s => s.startsWith("id="))
+				if (searchId) {
+					const id = searchId.slice(3)
+					this.stockOrderId = id
+					this.onSelectOrder()
+				}
 		}
+			}
 	}).mount("#vueApp")
 
 

@@ -38,6 +38,35 @@ router.get("/:id", function (req, res) {
 })
 
 
+// Get a list of unprocessed stockorders in json
+router.get("/", (req, res) => {
+
+	let db = null
+	try {
+		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+
+		const statement = db.prepare(`SELECT StockOrderId, Supplier.Company AS Company, OrderDate, StockOrder.Notes 
+FROM StockOrder 
+INNER JOIN Supplier ON Supplier.SupplierId = StockOrder.SupplierId 
+WHERE StockOrder.Deleted = 0 AND StockOrder.ReceiveDate IS NULL`)
+		stockOrders = statement.all()
+
+		res.json(stockOrders)
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.status(400)
+	}
+	finally {
+		if (db != null)
+			db.close()
+	}
+
+})
+
+
 /*************************************************************************** */
 
 

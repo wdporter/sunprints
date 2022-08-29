@@ -96,6 +96,13 @@ table#stockWarningTable {
 				<input id=newDesign type=checkbox <%=order && order.New && 'checked' %> /><label for=newDesign>New</label>
 				<input id=buyIn type=checkbox <%=order && order.BuyIn && 'checked' %> /><label for=buyIn>Buy In</label>
 			</p>
+			<p id="purchaseSelectPara" style="display:none">
+				<label for="purchaseSelect">Buy In — choose an existing purchase order to set the products</label>
+				<select id="purchaseSelect">
+					<option value="0">— Select —</option>
+				</select> <a id="viewSelectedPurchaseOrder" href="#" title="open the selected purchase order in a new window">View</a>
+			</p>
+
 		</div>
 		<div>
 			<p>
@@ -446,8 +453,13 @@ table#stockWarningTable {
 				SalesRep: salesRepSelect.value,
 				Terms: document.getElementById("terms").value,
 				Notes: document.getElementById("orderNotes").value.trim() || null,
-				CustomerOrderNumber: document.getElementById("customerOrderNumber").value.trim() || null,
+				CustomerOrderNumber: document.getElementById("customerOrderNumber").value.trim() || null
 			}
+			if (window.sunprints.mode == "new") {
+				order.StockOrderId = document.getElementById("purchaseSelect").value
+			}
+
+			
 
 
 			let method = "POST"
@@ -502,15 +514,15 @@ table#stockWarningTable {
 		if (window.sunprints.mode == "edit") {
 
 
-		// 2. Choose Garment
-		// append a second row which is used for filtering columns
-		const tr = document.querySelector('#garmentTable thead tr')
-		const newTr = tr.cloneNode(true)
-		newTr.classList.add('filters')
-		tr.parentElement.appendChild(newTr);
+			// 2. Choose Garment
+			// append a second row which is used for filtering columns
+			const tr = document.querySelector('#garmentTable thead tr')
+			const newTr = tr.cloneNode(true)
+			newTr.classList.add('filters')
+			tr.parentElement.appendChild(newTr);
 
 
-		window.garmentDataTable = new DataTable("table#garmentTable", {
+			window.garmentDataTable = new DataTable("table#garmentTable", {
 			orderCellsTop: true,
 			fixedHeader: false,
 			processing: true,
@@ -567,7 +579,6 @@ table#stockWarningTable {
 		})
 
 
-		//$("table#garmentTable").on('click', 'button.select-garment', function (btn, event) {
 			function addGarment(id) {
 				const data = garmentDataTable.row(`#row-${id}`).data()
 				if (!app.garments.some(g => g.GarmentId == data.GarmentId)) {
@@ -629,355 +640,353 @@ table#stockWarningTable {
 					window.setTimeout(() => {Array.from(document.querySelectorAll("div.selected-garment")).pop().scrollIntoView({behavior: "smooth"})}, 10) // :last-child doesn't seem to work
 			}
 		}
-		//)
 
-		
 
-		window.app = Vue.createApp({
-			data() {
-				return {
-					garments: <%- JSON.stringify(garments) %>,
-					printDesignItems: [],
-					printDesignTypeAhead: "",
-					embroideryDesignItems: [],
-					embroideryDesignTypeAhead: "",
-					transferDesignItems: [],
-					transferDesignTypeAhead: "",
-					errorMessage: "",
-					buyin: document.getElementById("buyIn").checked
-				}
-			},
-			methods: {
-				addGarment(garment) {
-					this.garments.push(garment)
-				},
-				getPrintDesigns(sizeCategory) {
-					if (this.printDesignTypeAhead.trim().length >= 3) {
-						fetch(`/print/ordersearch?q=${this.printDesignTypeAhead.trim()}&sizes=${sizeCategory}`)
-							.then(response => {
-								if (response.ok)
-									return response.json()
-								else
-									throw new Error(response.statusText)
-							})
-							.then(json => {
-								this.printDesignItems = json
-							})
-							.catch(error => window.alert(`We encountered an error: ${error}`))
+			window.app = Vue.createApp({
+				data() {
+					return {
+						garments: <%- JSON.stringify(garments) %>,
+						printDesignItems: [],
+						printDesignTypeAhead: "",
+						embroideryDesignItems: [],
+						embroideryDesignTypeAhead: "",
+						transferDesignItems: [],
+						transferDesignTypeAhead: "",
+						errorMessage: "",
+						buyin: document.getElementById("buyIn").checked
 					}
 				},
-				getEmbroideryDesigns(sizeCategory) {
-					if (this.embroideryDesignTypeAhead.trim().length >= 3) {
-						fetch(`/embroidery/ordersearch?q=${this.embroideryDesignTypeAhead.trim()}&sizes=${sizeCategory}`)
-							.then(response => {
-								if (response.ok)
-									return response.json()
-								else
-									throw new Error(response.statusText)
-						})
-						.then(json => {
-							this.embroideryDesignItems = json
-						})
-						.catch(error => window.alert(`We encountered an error: ${error}`))
-					}
-				},
-				getTransferDesigns(sizeCategory) {
-					if (this.transferDesignTypeAhead.trim().length >= 3) {
-						try {
-						fetch(`/transfer/design/ordersearch?q=${this.transferDesignTypeAhead.trim()}&sizes=${sizeCategory}`)
-							.then(response => {
-								if (response.ok)
-									return response.json()
-								else
-									throw new Error (response.statusText)
-							})
-							.then(json => {
-								this.transferDesignItems = json
-							})
-							.catch(error => window.alert(`We encountered an error: ${error}`))
-						}
-						catch(ex) {
-							window.alert(`We encountered an error: ${ex.message}`)
-						}
-					}
-				},
-				selectPrintDesign(event, garment) {
-					// add to garment
-					garment.selectedPrintDesign = {
-						Code: event.currentTarget.children[1].textContent,
-						Notes: event.currentTarget.children[2].textContent,
-						Comments: event.currentTarget.children[3].textContent,
-						PrintDesignId: event.currentTarget.dataset.id
-					}
-					// reset ui
-					event.currentTarget.closest("details").removeAttribute("open")
-					this.printDesignItems = []
-					this.printDesignTypeAhead = ""
-
-					// populate screen and location
-					garment.printLocations = {} // locations will be for our checkboxes
-
-					const locationNames = <%- JSON.stringify(locations) %>;
-					garment.checkedScreens = {}
-					locationNames.forEach(loc => garment.checkedScreens[loc] = [])
-
-					fetch(`/screen/ordersearch?printdesignid=${garment.selectedPrintDesign.PrintDesignId}&sizes=${garment.SizeCategory}`).
-						then(response => {
-							if (response.ok)
-								return response.json()
-							else
-								throw new Error(response.statusText)
-							})
-						.then(json => {
-							json.forEach(j => {
-								locationNames.forEach(loc => {
-									if (j[loc] == 1)
-										// if we have this location, pus it, otherwise, create a new array for it
-										garment.printLocations[loc] ? garment.printLocations[loc].push(j) : garment.printLocations[loc] = [j]
+				methods: {
+					addGarment(garment) {
+						this.garments.push(garment)
+					},
+					getPrintDesigns(sizeCategory) {
+						if (this.printDesignTypeAhead.trim().length >= 3) {
+							fetch(`/print/ordersearch?q=${this.printDesignTypeAhead.trim()}&sizes=${sizeCategory}`)
+								.then(response => {
+									if (response.ok)
+										return response.json()
+									else
+										throw new Error(response.statusText)
 								})
+								.then(json => {
+									this.printDesignItems = json
+								})
+								.catch(error => window.alert(`We encountered an error: ${error}`))
+						}
+					},
+					getEmbroideryDesigns(sizeCategory) {
+						if (this.embroideryDesignTypeAhead.trim().length >= 3) {
+							fetch(`/embroidery/ordersearch?q=${this.embroideryDesignTypeAhead.trim()}&sizes=${sizeCategory}`)
+								.then(response => {
+									if (response.ok)
+										return response.json()
+									else
+										throw new Error(response.statusText)
 							})
-						})
-						.catch(error => window.alert(`We encountered an error: ${error}`))
-				},
-				selectEmbroideryDesign(event, garment) {
-					// add to garment
-					garment.selectedEmbroideryDesign = {
-						Code: event.currentTarget.children[0].textContent,
-						Notes: event.currentTarget.children[1].textContent,
-						Comments: event.currentTarget.children[2].textContent,
-						EmbroideryDesignId: event.currentTarget.dataset.id
-					}
-					// reset ui
-					event.currentTarget.closest("details").removeAttribute("open")
-					this.embroideryDesignItems = []
-					this.embroideryDesignTypeAhead = ""
-
-					// populate usb and location
-					garment.embroideryLocations = {} // locations will be for our checkboxes
-
-					const locationNames = <%- JSON.stringify(locations) %>;
-					garment.checkedUsbs = {}
-					locationNames.forEach(name => garment.checkedUsbs[name] = [])
-
-					fetch(`/embroidery/usb/ordersearch?embroiderydesignid=${garment.selectedEmbroideryDesign.EmbroideryDesignId}&sizes=${garment.SizeCategory}`)
-					.then(response => {
-							if (response.ok)
-								return response.json()
-							else {
-								console.log("error", response)
-								throw new Error(response.statusText)
+							.then(json => {
+								this.embroideryDesignItems = json
+							})
+							.catch(error => window.alert(`We encountered an error: ${error}`))
+						}
+					},
+					getTransferDesigns(sizeCategory) {
+						if (this.transferDesignTypeAhead.trim().length >= 3) {
+							try {
+							fetch(`/transfer/design/ordersearch?q=${this.transferDesignTypeAhead.trim()}&sizes=${sizeCategory}`)
+								.then(response => {
+									if (response.ok)
+										return response.json()
+									else
+										throw new Error (response.statusText)
+								})
+								.then(json => {
+									this.transferDesignItems = json
+								})
+								.catch(error => window.alert(`We encountered an error: ${error}`))
 							}
-							})
-					.then(json => {
-						json.forEach(j => {
-							locationNames.forEach(name => {
-								if (j[name] == 1)
-									garment.embroideryLocations[name]
-										? garment.embroideryLocations[name].push(j)
-										: garment.embroideryLocations[name] = [j]
-							})
-						})
-					})
-					.catch(error => window.alert(`We encountered an error: ${error}`))
-				},
-				selectTransferDesign(event, garment) {
-					// add to garment
-					garment.selectedTransferDesign = {
-						Code: event.currentTarget.children[0].textContent,
-						Notes: event.currentTarget.children[1].textContent,
-						TransferDesignId: event.currentTarget.dataset.id
-					}
-					// reset ui
-					event.currentTarget.closest("details").removeAttribute("open")
-					this.TransferDesignItems = []
-					this.TransferDesignTypeAhead = ""
+							catch(ex) {
+								window.alert(`We encountered an error: ${ex.message}`)
+							}
+						}
+					},
+					selectPrintDesign(event, garment) {
+						// add to garment
+						garment.selectedPrintDesign = {
+							Code: event.currentTarget.children[1].textContent,
+							Notes: event.currentTarget.children[2].textContent,
+							Comments: event.currentTarget.children[3].textContent,
+							PrintDesignId: event.currentTarget.dataset.id
+						}
+						// reset ui
+						event.currentTarget.closest("details").removeAttribute("open")
+						this.printDesignItems = []
+						this.printDesignTypeAhead = ""
 
-					// populate transfer name and location
-					garment.transferLocations = {} // locations will be for our checkboxes
+						// populate screen and location
+						garment.printLocations = {} // locations will be for our checkboxes
 
-					const locationNames = <%- JSON.stringify(locations) %>;
-					garment.checkedTransferNames = {}
-					locationNames.forEach(name => garment.checkedTransferNames[name] = [])
+						const locationNames = <%- JSON.stringify(locations) %>;
+						garment.checkedScreens = {}
+						locationNames.forEach(loc => garment.checkedScreens[loc] = [])
 
-					try {
-						fetch(`/transfer/name/ordersearch?transferdesignid=${garment.selectedTransferDesign.TransferDesignId}&sizes=${garment.SizeCategory}`).
+						fetch(`/screen/ordersearch?printdesignid=${garment.selectedPrintDesign.PrintDesignId}&sizes=${garment.SizeCategory}`).
 							then(response => {
 								if (response.ok)
 									return response.json()
 								else
 									throw new Error(response.statusText)
-							})
+								})
 							.then(json => {
-								console.log("transfer names", json)
 								json.forEach(j => {
-									locationNames.forEach(name => {
-										if (j[name] == 1)
-											garment.transferLocations[name]
-												? garment.transferLocations[name].push(j)
-												: garment.transferLocations[name] = [j]
+									locationNames.forEach(loc => {
+										if (j[loc] == 1)
+											// if we have this location, pus it, otherwise, create a new array for it
+											garment.printLocations[loc] ? garment.printLocations[loc].push(j) : garment.printLocations[loc] = [j]
 									})
 								})
 							})
 							.catch(error => window.alert(`We encountered an error: ${error}`))
-					}
-					catch(ex) {
-						window.alert(`We encountered an error: ${ex.message}`)
-					}
-				},
-				screenChange(garment, key) {
-					if (garment.checkedScreens[key].length > 2)
-						garment.checkedScreens[key].shift()
-				},
-				usbChange(garment, key) {
-					if (garment.checkedUsbs[key].length > 2)
-						garment.checkedUsbs[key].shift()
-				},
-				transferNameChange(garment, key) {
-					if (garment.checkedTransferNames[key].length > 2)
-						garment.checkedTransferNames[key].shift()
-				},
-				getGarmentQuantity(garment) {
-					let quantity = 0
-					for (var q in garment.Quantities.Adults) {
-						quantity += garment.Quantities.Adults[q]
-					}
-					for (var q in garment.Quantities.Womens) {
-						quantity += garment.Quantities.Womens[q]
-					}
-					for (var q in garment.Quantities.Kids) {
-						quantity += garment.Quantities.Kids[q]
-					}
-					return quantity
+					},
+					selectEmbroideryDesign(event, garment) {
+						// add to garment
+						garment.selectedEmbroideryDesign = {
+							Code: event.currentTarget.children[0].textContent,
+							Notes: event.currentTarget.children[1].textContent,
+							Comments: event.currentTarget.children[2].textContent,
+							EmbroideryDesignId: event.currentTarget.dataset.id
+						}
+						// reset ui
+						event.currentTarget.closest("details").removeAttribute("open")
+						this.embroideryDesignItems = []
+						this.embroideryDesignTypeAhead = ""
 
-				},
-				getTotalPrice(garment) {
-					if (Number(garment.Price)) {
-						return Number(garment.Price) * this.getGarmentQuantity(garment)
-					}
-					else
-						return 0
-				},
-				getAllGarmentsValue() {
-					let val = 0
-					this.garments.forEach(g => val += this.getTotalPrice(g))
-					if (val) {
-						let ret = val?.toFixed(2)
-						if (ret.includes("e")) // it's a pain when this happens, 
-							ret =  "0" 
-						return  ret
-					}
-					else 
-						return ""
-				},
-				saveGarment(garment) {
-						console.log(`saving garment id !${JSON.stringify(garment)}!`)
-						const requestBody = {
-							OrderGarmentId: garment.OrderGarmentId,
-							OrderId: document.getElementById("orderId").value,
-							GarmentId: garment.GarmentId,
-							Price: garment.Price,
-							quantities: {},
-							sizeCategory: garment.SizeCategory,
-							printDesignId: garment.selectedPrintDesign?.PrintDesignId || null,
-							embroideryDesignId: garment.selectedEmbroideryDesign?.EmbroideryDesignId || null,
-							transferDesignId: garment.selectedTransferDesign?.TransferDesignId || null,
-							checkedScreens: garment.checkedScreens || null,
-							checkedUsbs: garment.checkedUsbs || null,
-							checkedTransferNames: garment.checkedTransferNames || null
+						// populate usb and location
+						garment.embroideryLocations = {} // locations will be for our checkboxes
+
+						const locationNames = <%- JSON.stringify(locations) %>;
+						garment.checkedUsbs = {}
+						locationNames.forEach(name => garment.checkedUsbs[name] = [])
+
+						fetch(`/embroidery/usb/ordersearch?embroiderydesignid=${garment.selectedEmbroideryDesign.EmbroideryDesignId}&sizes=${garment.SizeCategory}`)
+						.then(response => {
+								if (response.ok)
+									return response.json()
+								else {
+									console.log("error", response)
+									throw new Error(response.statusText)
+								}
+								})
+						.then(json => {
+							json.forEach(j => {
+								locationNames.forEach(name => {
+									if (j[name] == 1)
+										garment.embroideryLocations[name]
+											? garment.embroideryLocations[name].push(j)
+											: garment.embroideryLocations[name] = [j]
+								})
+							})
+						})
+						.catch(error => window.alert(`We encountered an error: ${error}`))
+					},
+					selectTransferDesign(event, garment) {
+						// add to garment
+						garment.selectedTransferDesign = {
+							Code: event.currentTarget.children[0].textContent,
+							Notes: event.currentTarget.children[1].textContent,
+							TransferDesignId: event.currentTarget.dataset.id
 						}
-						let count = 0
-						for (size in garment.Quantities[garment.SizeCategory]) {
-							requestBody.quantities[size] = garment.Quantities[garment.SizeCategory][size]
-							count += requestBody.quantities[size]
+						// reset ui
+						event.currentTarget.closest("details").removeAttribute("open")
+						this.TransferDesignItems = []
+						this.TransferDesignTypeAhead = ""
+
+						// populate transfer name and location
+						garment.transferLocations = {} // locations will be for our checkboxes
+
+						const locationNames = <%- JSON.stringify(locations) %>;
+						garment.checkedTransferNames = {}
+						locationNames.forEach(name => garment.checkedTransferNames[name] = [])
+
+						try {
+							fetch(`/transfer/name/ordersearch?transferdesignid=${garment.selectedTransferDesign.TransferDesignId}&sizes=${garment.SizeCategory}`).
+								then(response => {
+									if (response.ok)
+										return response.json()
+									else
+										throw new Error(response.statusText)
+								})
+								.then(json => {
+									console.log("transfer names", json)
+									json.forEach(j => {
+										locationNames.forEach(name => {
+											if (j[name] == 1)
+												garment.transferLocations[name]
+													? garment.transferLocations[name].push(j)
+													: garment.transferLocations[name] = [j]
+										})
+									})
+								})
+								.catch(error => window.alert(`We encountered an error: ${error}`))
 						}
-						if (count == 0) {
-							this.errorMessage = "❌ We require some product sizes"
+						catch(ex) {
+							window.alert(`We encountered an error: ${ex.message}`)
+						}
+					},
+					screenChange(garment, key) {
+						if (garment.checkedScreens[key].length > 2)
+							garment.checkedScreens[key].shift()
+					},
+					usbChange(garment, key) {
+						if (garment.checkedUsbs[key].length > 2)
+							garment.checkedUsbs[key].shift()
+					},
+					transferNameChange(garment, key) {
+						if (garment.checkedTransferNames[key].length > 2)
+							garment.checkedTransferNames[key].shift()
+					},
+					getGarmentQuantity(garment) {
+						let quantity = 0
+						for (var q in garment.Quantities.Adults) {
+							quantity += garment.Quantities.Adults[q]
+						}
+						for (var q in garment.Quantities.Womens) {
+							quantity += garment.Quantities.Womens[q]
+						}
+						for (var q in garment.Quantities.Kids) {
+							quantity += garment.Quantities.Kids[q]
+						}
+						return quantity
+
+					},
+					getTotalPrice(garment) {
+						if (Number(garment.Price)) {
+							return Number(garment.Price) * this.getGarmentQuantity(garment)
+						}
+						else
+							return 0
+					},
+					getAllGarmentsValue() {
+						let val = 0
+						this.garments.forEach(g => val += this.getTotalPrice(g))
+						if (val) {
+							let ret = val?.toFixed(2)
+							if (ret.includes("e")) // it's a pain when this happens, 
+								ret =  "0" 
+							return  ret
+						}
+						else 
+							return ""
+					},
+					saveGarment(garment) {
+							console.log(`saving garment id !${JSON.stringify(garment)}!`)
+							const requestBody = {
+								OrderGarmentId: garment.OrderGarmentId,
+								OrderId: document.getElementById("orderId").value,
+								GarmentId: garment.GarmentId,
+								Price: garment.Price,
+								quantities: {},
+								sizeCategory: garment.SizeCategory,
+								printDesignId: garment.selectedPrintDesign?.PrintDesignId || null,
+								embroideryDesignId: garment.selectedEmbroideryDesign?.EmbroideryDesignId || null,
+								transferDesignId: garment.selectedTransferDesign?.TransferDesignId || null,
+								checkedScreens: garment.checkedScreens || null,
+								checkedUsbs: garment.checkedUsbs || null,
+								checkedTransferNames: garment.checkedTransferNames || null
+							}
+							let count = 0
+							for (size in garment.Quantities[garment.SizeCategory]) {
+								requestBody.quantities[size] = garment.Quantities[garment.SizeCategory][size]
+								count += requestBody.quantities[size]
+							}
+							if (count == 0) {
+								this.errorMessage = "❌ We require some product sizes"
+								return
+							}
+
+							console.log(requestBody)
+							fetch(`/order/${document.getElementById("orderId").value}/garment`, {
+								method: "POST",
+								headers: new Headers({ "Content-Type": "application/json" }),
+								body: JSON.stringify(requestBody)
+							})
+							.then(response => {
+								if (response.ok)
+									return response.json()
+								else
+									throw new Error(response.statusText)
+							})
+							.then(json => {
+								if (garment.OrderGarmentId == 0)
+									garment.OrderGarmentId = json.OrderGarmentId
+								const successDialog = document.getElementById("success")
+								successDialog.querySelector("p").textContent = "We have saved the product to this order"
+								successDialog.showModal()
+								garment.stockWarning = json.warnings ? json.warnings : ""
+								
+
+							})
+							.catch(error => window.alert(`We encountered an error: ${error}`))
+
+					},
+					deleteGarment(garment, event) {
+						event.preventDefault()
+						console.log(`deleting garment id !${JSON.stringify(garment)}!`)
+						const vue = this
+						if (garment.OrderGarmentId == 0) {
+							// this isn't perfect, if there are two garments the same not yet saved, it might not remove the right one
+							this.garments.splice( this.garments.findIndex(g => g.OrderGarmentId == 0 && g.GarmentId == garment.GarmentId)  , 1)
 							return
 						}
-
-						console.log(requestBody)
-						fetch(`/order/${document.getElementById("orderId").value}/garment`, {
-							method: "POST",
-							headers: new Headers({ "Content-Type": "application/json" }),
-							body: JSON.stringify(requestBody)
-						})
-						.then(response => {
-							if (response.ok)
-								return response.json()
-							else
-								throw new Error(response.statusText)
-						})
-						.then(json => {
-							if (garment.OrderGarmentId == 0)
-								garment.OrderGarmentId = json.OrderGarmentId
-							const successDialog = document.getElementById("success")
-							successDialog.querySelector("p").textContent = "We have saved the product to this order"
-							successDialog.showModal()
-							garment.stockWarning = json.warnings ? json.warnings : ""
-							
-
-						})
-						.catch(error => window.alert(`We encountered an error: ${error}`))
-
-				},
-				deleteGarment(garment, event) {
-					event.preventDefault()
-					console.log(`deleting garment id !${JSON.stringify(garment)}!`)
-					const vue = this
-					if (garment.OrderGarmentId == 0) {
-						// this isn't perfect, if there are two garments the same not yet saved, it might not remove the right one
-						this.garments.splice( this.garments.findIndex(g => g.OrderGarmentId == 0 && g.GarmentId == garment.GarmentId)  , 1)
-						return
-					}
-					fetch(`/order/garment/${garment.OrderGarmentId}`, { method: "DELETE" })
-						.then(response => {
-							if (response.ok)
-								return response.text()
-							else
-								throw new Error(response.statusText)
-						})
-						.then(text => {
-							vue.garments.splice( vue.garments.findIndex(g => g.GarmentId == garment.GarmentId)  , 1)
-						})
-						.catch(error => window.alert(`We encountered an error: ${error}`))
-				},
-				setBuyIn(val) {
-					this.buyin = val
-				},
-				sortByName(printLocation) {
-					// sort by name, if they're the same, sort by number, if they're the same, sort by colour
-					return printLocation.sort(function(a, b) {
-						if (a.Name?.toUpperCase() ?? "" < b.Name?.toUpperCase() ?? "")
-							return -1
-						else if (a.Name?.toUpperCase() ?? "" > b.Name?.toUpperCase() ?? "")
-							return 1
-						else {
-							if (a.Number.toUpperCase() ?? "" < b.Number.toUpperCase() ?? "")
+						fetch(`/order/garment/${garment.OrderGarmentId}`, { method: "DELETE" })
+							.then(response => {
+								if (response.ok)
+									return response.text()
+								else
+									throw new Error(response.statusText)
+							})
+							.then(text => {
+								vue.garments.splice( vue.garments.findIndex(g => g.GarmentId == garment.GarmentId)  , 1)
+							})
+							.catch(error => window.alert(`We encountered an error: ${error}`))
+					},
+					setBuyIn(val) {
+						this.buyin = val
+					},
+					sortByName(printLocation) {
+						// sort by name, if they're the same, sort by number, if they're the same, sort by colour
+						return printLocation.sort(function(a, b) {
+							if (a.Name?.toUpperCase() ?? "" < b.Name?.toUpperCase() ?? "")
 								return -1
-							else if (a.Number.toUpperCase() ?? "" > b.Number.toUpperCase() ?? "")
+							else if (a.Name?.toUpperCase() ?? "" > b.Name?.toUpperCase() ?? "")
 								return 1
 							else {
-								if (a.Colour.toUpperCase() ?? "" < b.Colour.toUpperCase() ?? "")
+								if (a.Number.toUpperCase() ?? "" < b.Number.toUpperCase() ?? "")
 									return -1
-								else if (a.Colour.toUpperCase() ?? "" > b.Colour.toUpperCase() ?? "")
+								else if (a.Number.toUpperCase() ?? "" > b.Number.toUpperCase() ?? "")
 									return 1
+								else {
+									if (a.Colour.toUpperCase() ?? "" < b.Colour.toUpperCase() ?? "")
+										return -1
+									else if (a.Colour.toUpperCase() ?? "" > b.Colour.toUpperCase() ?? "")
+										return 1
+								}
 							}
-						}
-					})
-					
+						})
+						
+					}
 				}
-			}
 
-		})
+			})
 			.mount("#garmentApp")
 
 
-		function printJobSheet(event) {
-			window.open(`/order/jobsheet/${document.getElementById("orderId").value}`)
-		}
+			function printJobSheet(event) {
+				window.open(`/order/jobsheet/${document.getElementById("orderId").value}`)
+			}
 
 
-		function shipOrder() {
+			function shipOrder() {
 			console.log("ship")
 			fetch(`/order/ship/${document.getElementById("orderId").value}`, { method: "PUT" })
 			.then(response => {
@@ -1001,7 +1010,7 @@ table#stockWarningTable {
 
 		}
 
-		function toggleGarments(button, event) {
+			function toggleGarments(button, event) {
 			event.preventDefault()
 			if (button.value.startsWith("Hide")) {
 				document.getElementById("garmentTable_wrapper").style.display = "none"
@@ -1013,7 +1022,46 @@ table#stockWarningTable {
 			}
 		}
 
-	}
+		}
+		else {
+			// mode could be anything, treat as if "new"
+			document.getElementById("buyIn").addEventListener("change", function() {
+				document.getElementById("purchaseSelectPara").style.display = this.checked ? "block" : "none"
+				
+				const select = document.getElementById("purchaseSelect")
+
+				if (this.checked && select.options.length == 1) {
+					fetch("/stockorder")
+					.then(response => {
+						if (response.ok)
+							return response.json()
+						else
+							throw new Error(response.text())
+					})
+					.then(json => {
+						json.forEach(po => {
+							const option = document.createElement("option")
+							option.text = `${new Date(Date.parse(po.OrderDate)).toLocaleDateString("en-au")} ${po.Company} (${po.StockOrderId})`
+							option.value = po.StockOrderId
+							select.add(option)
+						})
+					})
+					.catch(error => window.alert(`We encountered an error: ${error.message}`))
+				}
+			})
+		
+					
+			document.getElementById ("viewSelectedPurchaseOrder").addEventListener("click", function() {
+				this.preventDefault
+				const select = document.getElementById("purchaseSelect")
+				if (select.value != 0) {
+					window.open(`/purchasing?id=${select.value}`, "_blank")
+				}
+				
+			})
+
+		
+		}
 	</script>
 
 

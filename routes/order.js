@@ -1164,10 +1164,15 @@ router.post("/", function (req, res) {
 			return
 		}
 
-
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
 		req.body.Done= 0
+
+		let stockOrderId = null
+		if (typeof req.body.StockOrderId != "undefined") {
+			stockOrderId = req.body.StockOrderId
+			delete req.body.StockOrderId
+		}
 
 
 		db.prepare("BEGIN TRANSACTION").run()
@@ -1205,18 +1210,24 @@ router.post("/", function (req, res) {
 		info = db.prepare(query).run(req.body)
 
 
-		db.prepare("COMMIT").run()
+		// now also save the order's garments, if a purchase order was selected
+		if (stockOrderId) {
+			const products = db.prepare(`SELECT * FROM StockOrderGarment WHERE StockOrderId=?`).all(stockOrderId)
+			const insertStatement = db.prepare(`INSERT INTO OrderGarment 
+				(OrderId, GarmentId, ${sz.allSizes.join(", ")}, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime )
+			VALUES ( ?, ?, ${sz.allSizes.map(s => "?").join(", ")}, ?, ?, ?, ? )`)
+			products.forEach(p => {
+				const sizeValues = sz.allSizes.map(function(s)  {
+					return p[s]
+ 				})
+				insertStatement.run(req.body.OrderId, p.GarmentId, 
+					...sizeValues,
+					req.body.CreatedBy, req.body.CreatedDateTime, req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+			})
+		}
 
-		res.json({
-			message: "success",
-			id: req.body.OrderId
-		}).end()
-
-		// now add it to AuditLog
-		try {
-			db.prepare("BEGIN TRANSACTION").run()
 			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-			info = statement.run("Orders", info.lastInsertRowid, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
+			info = statement.run("Orders", req.body.OrderId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
 
 			// now add it to AuditLogEntry
 			for (col of columns) {
@@ -1225,15 +1236,27 @@ router.post("/", function (req, res) {
 				statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
 				statement.run(info.lastInsertRowid, col, req.body[col])
 			}
+
+			// if products were added from a selected stock order, add them to audit logs
+			const orderProducts = db.prepare("SELECT * FROM OrderGarment WHERE OrderId=?").all(req.body.OrderId)
+			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+			orderProducts.forEach(op => {
+				info = statement.run("OrderGarment", op.OrderGarmentId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
+				const s2 = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
+				s2.run(info.lastInsertRowid, "OrderId", req.body.OrderId)
+				s2.run(info.lastInsertRowid, "GarmentId", op.GarmentId)
+				sz.allSizes.forEach(size => {
+					if (op[size])
+					s2.run(info.lastInsertRowid, size, op[size])
+				})
+			})
+
 			db.prepare("COMMIT").run()
 
-
-		}
-		catch (ex) {
-			db.prepare("ROLLBACK").run()
-			// do nothing, because the response has already ended. 
-			// if we threw the error, then it would be caught and the .end() would have been called twice
-		}
+			res.json({
+				message: "success",
+				id: req.body.OrderId
+			}).end()
 
 	}
 	catch (ex) {
@@ -1671,7 +1694,7 @@ router.put("/:id", function (req, res) {
 
 	}
 	catch (err) {
-		res.statusMessage = ex.message
+		res.statusMessage = err.message
 		res.sendStatus(400).end()
 		db.prepare("ROLLBACK").run()
 	}
