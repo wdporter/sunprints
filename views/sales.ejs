@@ -322,7 +322,7 @@ div#dt_wrapper {
 							const items = []
 							for (key in item) {
 								if (item[key])
-									items.push(`${key == "ASm" ? "AS" : key}: ${item[key]}`)
+									items.push(`<b>${key == "ASm" ? "AS" : key}:</b> ${item[key]}`)
 							}
 							html += items.join("<br>")
 							html += "</div>"
