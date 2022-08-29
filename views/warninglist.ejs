@@ -87,7 +87,17 @@
 		<% sizes[g.SizeCategory].forEach(size => { %>
 			<td><%= g[`OnOrder${size}`] %>
 		<% }) %>
-	</table>
+	<tr>
+		<th>Stock + On order
+		<% sizes[g.SizeCategory].forEach(size => { %>
+			<td><%= g[size] + g[`OnOrder${size}`] %>
+		<% }) %>
+	<tr>
+		<th>&nbsp;
+		<% sizes[g.SizeCategory].forEach(size => { %>
+			<td><%# empty td %> 
+		<% }) %>
+		</table>
 
 
 <hr>
