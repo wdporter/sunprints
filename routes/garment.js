@@ -33,7 +33,7 @@ router.get("/warninglist", function (req, res, next) {
 		// save the ones that have a size value that is less that min value for every size
 		results.forEach(g => {
 			if (!garments[g]) {
-				for (let size of sz.allSizes) {
+				for (let size of sz.sizes[g.SizeCategory]) {
 					if (g[size] < g[`Min${size}`]) {
 						// initialise on order values
 						sz.allSizes.forEach(sz => g[`OnOrder${sz}`] = 0 + g[`sog${sz}`])
@@ -45,7 +45,7 @@ router.get("/warninglist", function (req, res, next) {
 			else {
 				// we already have it in our list, so we must be looking at a result from Stock Order Garment
 				// so find any values we have on order and add it to the garment
-				sz.allSizes.forEach(size => {
+				sz.sizes[g.SizeCategory].forEach(size => {
 					if (g[`sog${size}`] > 0)
 						g[`OnOrder${size}`] += g[`sog${size}`]
 				})
@@ -54,7 +54,7 @@ router.get("/warninglist", function (req, res, next) {
 
 		// we have retrieved balances for all sizes, remove sizes where the balance is ok
 		for (let g in garments) {
-			for (let size of sz.allSizes) {
+			for (let size of sz.sizes[garments[g].SizeCategory]) {
 					if (garments[g][size] >= garments[g][`Min${size}`]) {
 						delete garments[g][size]
 						delete garments[g][`Min${size}`]
