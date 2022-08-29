@@ -246,8 +246,8 @@ table#stockWarningTable {
 							<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
 								<p v-if="screen.Name != null">
 									<input type="checkbox" @change="screenChange(g, key)" :value="screen.ScreenId"
-										v-model="g.checkedScreens[key]" :id="'screen' + screen.ScreenId" />
-									<label :for="'screen' + screen.ScreenId">{{screen.Name}} — {{screen.Number}} — {{screen.Colour}} </label>
+										v-model="g.checkedScreens[key]" :id="`screen${key}${screen.ScreenId}`" />
+									<label :for="`screen${key}${screen.ScreenId}`">{{screen.Name}} — {{screen.Number}} — {{screen.Colour}} </label>
 								</p>
 						</div>
 						<hr>
@@ -284,12 +284,12 @@ table#stockWarningTable {
 				</dl>
 
 				<div style="display:flex;justify-content:space-around">
-					<fieldset v-for="(location, key) in g.transferLocations">
+					<fieldset v-for="(transferLocation, key) in g.transferLocations" :key="key[0]">
 						<legend>{{key}} (choose one or two)</legend>
-						<p v-for="locName in location" :key="locName.TransferNameTransferDesignId">
-							<input type="checkbox" @change="transferNameChange(g, key)" :value="locName.TransferNameId"
-								v-model="g.checkedTransferNames[key]" :id="'transferName' + locName.TransferNameId">
-							<label :for="'transferName' + locName.TransferNameId">{{locName.Name}}</label>
+						<p v-for="tname in transferLocation" :key="tname.TransferNameTransferDesignId">
+							<input type="checkbox" @change="transferNameChange(g, key, `${key}`, $event)" :data-key="key" :value="tname.TransferNameId"
+								v-model="g.checkedTransferNames[key]" :id="`transferName${key}${tname.TransferNameId}`">
+							<label :for="`transferName${key}${tname.TransferNameId}`">{{tname.Name}} {{ key }}</label>
 						</p>
 					</fieldset>
 				</div>
@@ -327,8 +327,8 @@ table#stockWarningTable {
 						<legend>{{key}} (choose one or two)</legend>
 						<p v-for="usb in embroideryLocation" :key="usb.UsbEmbroideryDesignId">
 							<input type="checkbox" @change="usbChange(g, key)" :value="usb.UsbId"
-								v-model="g.checkedUsbs[key]" :id="'usb' + usb.UsbId" />
-							<label :for="'usb' + usb.UsbId">{{usb.Number}} {{usb.Notes}}</label>
+								v-model="g.checkedUsbs[key]" :id="`usb${key}${usb.UsbId}`" />
+							<label :for="`usb${key}${usb.UsbId}`">{{usb.Number}} {{usb.Notes}}</label>
 						</p>
 					</fieldset>
 				</div>
@@ -841,27 +841,27 @@ table#stockWarningTable {
 						if (garment.checkedUsbs[key].length > 2)
 							garment.checkedUsbs[key].shift()
 					},
-					transferNameChange(garment, key) {
+					transferNameChange(garment, key, more, event) {
 						if (garment.checkedTransferNames[key].length > 2)
 							garment.checkedTransferNames[key].shift()
 					},
 					getGarmentQuantity(garment) {
 						let quantity = 0
 						for (var q in garment.Quantities.Adults) {
-							quantity += garment.Quantities.Adults[q]
+							quantity += Number(garment.Quantities.Adults[q])
 						}
 						for (var q in garment.Quantities.Womens) {
-							quantity += garment.Quantities.Womens[q]
+							quantity += Number(garment.Quantities.Womens[q])
 						}
 						for (var q in garment.Quantities.Kids) {
-							quantity += garment.Quantities.Kids[q]
+							quantity += Number(garment.Quantities.Kids[q])
 						}
 						return quantity
 
 					},
 					getTotalPrice(garment) {
 						if (Number(garment.Price)) {
-							return Number(garment.Price) * this.getGarmentQuantity(garment)
+							return Number(garment.Price) * Number(this.getGarmentQuantity(garment))
 						}
 						else
 							return 0
