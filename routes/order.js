@@ -1164,6 +1164,15 @@ router.post("/", function (req, res) {
 			return
 		}
 
+		// can't duplicate order numbers
+		if (db.prepare("SELECT COUNT(*) AS Count FROM Orders WHERE OrderNumber=?").get(req.body.OrderNumber).Count > 0) {
+			res.statusMessage = "We already have that order number"
+			res.status(400).end()
+			return
+		}
+
+		
+
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
 		req.body.Done= 0
@@ -1630,6 +1639,14 @@ router.put("/:id", function (req, res) {
 			return
 		}
 
+		// can't duplicate order numbers
+		if (db.prepare("SELECT COUNT(*) AS Count FROM Orders WHERE OrderNumber=? AND OrderId <> ?").get(req.body.OrderNumber, req.params.id).Count > 0) {
+			res.statusMessage = `We already have that order number (${req.body.OrderNumber})`
+			res.status(400).end()
+			return
+		}
+		
+
 		req.body.OrderId = req.params.id
 
 		req.body.LastModifiedBy = req.auth.user
@@ -1713,6 +1730,7 @@ router.put("/ship/:id", function (req, res) {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
+
 		db.prepare("BEGIN TRANSACTION").run()
 
 		let statement = db.prepare(`SELECT * FROM Orders WHERE OrderId=?`)
