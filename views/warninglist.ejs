@@ -25,12 +25,19 @@
 	padding-right: .5em;
 }
 
+span.warning {
+	color: darkred;
+}
+
 		@media print {
 			.no-print {
 				display: none
 			}
 			div * {
 				font-size: 12px;
+			}
+			span.warning {
+				color: black;
 			}
 		}
 
@@ -47,7 +54,10 @@
 
 
 <h1>Product Stock Warnings — <%= new Date().toLocaleDateString() %></h1>
-<p>The following products have one or more sizes below the minimum quantity.
+<ul>
+<li>These products have one or more sizes below the minimum quantity.
+<li>An asterisk * indicates sizes where Stock is below Min.</li>
+</ul>
 
 <% garments.forEach(g => { %>
 <div style="break-inside:avoid">
@@ -75,7 +85,7 @@
 	<tr>
 		<th>Stock
 		<% sizes[g.SizeCategory].forEach(size => { %>
-			<td><%= g[size] %>
+			<td><% if (g[size] < g[`Min${size}`]) { %><span class="warning"><% } %><%= g[size] %><% if (g[size] < g[`Min${size}`]) { %>*</span><% } %>
 		<% }) %>
 	<tr>
 		<th>Min.
