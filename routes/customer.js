@@ -58,7 +58,7 @@ router.get("/dt", function (req, res, next) {
 
 
 
-		const columns = ["CustomerId", "Code", "Company", "Surname", "FirstName", "PhoneOffice", "PhoneHome", "PhoneMobile", "Fax", "Email", "AddressLine1", "AddressLine2", "Locality", "Postcode", "State", "Notes", "CreatedBy", "CreatedDateTime", "LastModifiedBy", "LastModifiedDateTime", "maxdate"]
+		const columns = ["CustomerId", "Code", "Company", "Surname", "FirstName", "PhoneOffice", "PhoneHome", "PhoneMobile", "Fax", "Email", "AddressLine1", "AddressLine2", "Locality", "Postcode", "State", "Notes", "CreatedBy", "CreatedDateTime", "LastModifiedBy", "LastModifiedDateTime", "CustNotes", "maxdate"]
 		const orderByClause = req.query.order.map(o => ` ${columns[o.column]} COLLATE NOCASE ${o.dir} `)
 		query += ` ORDER BY ${orderByClause.join(",")}`
 

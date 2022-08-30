@@ -1,6 +1,15 @@
 <%- include("partials/head.ejs") %>
 
 <style>
+
+main {
+	padding-bottom: 1em;
+}
+main.wider {
+	padding-top:1em;
+}
+
+
 .breakall {
 	word-break: break-all;
 }
@@ -15,9 +24,10 @@ input:invalid {
 }
 </style>
 
-<p>
-Deleting a customer will retain it for sales history, but you won’t be able to create new orders. 
-<a href=/customer/deleted>Deleted customers</a>
+<ul>
+<li>Separate email addresses with a comma (,) or semi-colon (;)
+<li>Deleting a customer will retain it for sales history, but you won’t be able to create new orders. 
+<li><a href=/customer/deleted>Deleted customers</a>
 </p>
 
 <input type="button" onclick="window.vueApp.createNewCustomer()" value="Create New"  id="createNewButton" />
@@ -33,6 +43,7 @@ Deleting a customer will retain it for sales history, but you won’t be able to
 			<th>Id</th><!-- will be hidden -->
 			<th>Code</th>
 			<th>Company</th>
+			<th>Notes</th>
 			<th>Name</th>
 			<th>Surname</th>
 			<th>Contact</th>
@@ -45,7 +56,7 @@ Deleting a customer will retain it for sales history, but you won’t be able to
 			<th>Locality</th>
 			<th>Postcode</th>
 			<th>State</th>
-			<th>Notes</th>
+			<th>Delivery Notes</th>
 			<th>Created By</th>
 			<th>Created Date Time</th>
 			<th>Last Modified By</th>
@@ -75,6 +86,10 @@ Deleting a customer will retain it for sales history, but you won’t be able to
 			<p>
 				<label for=companyInput>Company</label>
 				<input id=companyInput v-model="customer.Company" placeholder=required required />
+			</p>
+			<p>
+				<label for=custNotes>Notes</label>
+				<textarea id=custNotes v-model="customer.CustNotes" rows=5 cols=35 placeholder="These notes are for our reference. Use delivery notes for instructions to be printed on the order"></textarea>
 			</p>
 			<p>
 				<label for=firstNameInput>First Name</label>
@@ -127,8 +142,8 @@ Deleting a customer will retain it for sales history, but you won’t be able to
 				</select>
 			</p>
 			<p>
-				<label for=notesInput>Notes</label>
-				<textarea id=Input v-model="customer.Notes" placeholder="type notes about this customer" rows=5 cols=35></textarea>
+				<label for=notesInput>Delivery notes</label>
+				<textarea id=Input v-model="customer.Notes" rows=5 cols=35></textarea>
 			</p>
 		</form>
 		<div style="display:flex; gap:5%">
@@ -162,6 +177,7 @@ Deleting a customer will retain it for sales history, but you won’t be able to
 					}
 				},
 				{ data: "Company" },
+				{ data: "CustNotes" },
 				{ 
 					data: "FirstName", 
 					orderable: false, 
@@ -262,6 +278,7 @@ Deleting a customer will retain it for sales history, but you won’t be able to
 						CustomerId: null,
 						Code: "",
 						Company: "",
+						CustNotes: "",
 						FirstName: null,
 						Surname: null,
 						PhoneMobile: null,
@@ -290,6 +307,7 @@ Deleting a customer will retain it for sales history, but you won’t be able to
 						CustomerId: null,
 						Code: "",
 						Company: "",
+						CustNotes: "",
 						FirstName: null,
 						Surname: null,
 						PhoneMobile: null,
@@ -472,6 +490,7 @@ Deleting a customer will retain it for sales history, but you won’t be able to
 				CustomerId:   data.CustomerId,
 				Code:         data.Code,
 				Company:      data.Company,
+				CustNotes:    data.CustNotes,
 				FirstName:    data.FirstName,
 				Surname:      data.Surname,
 				PhoneMobile:  data.PhoneMobile,
