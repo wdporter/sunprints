@@ -21,6 +21,11 @@ logged in as: <%= user %>
 
 
 <script>
+	// show h2 heading on local host
+	if (window.location.hostname == "localhost")
+		document.getElementById("localh2").style.display="block"
+
+	// scroll to top
 	const showOnPx = 100;
 	const backToTopButton = document.querySelector(".back-to-top");
 
