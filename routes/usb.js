@@ -78,6 +78,8 @@ router.get("/dt", function(req, res) {
 		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
 		const data = db.prepare(query).all()
 
+		data.forEach(d => d.DT_RowId=d.UsbId)
+
 
 		res.send({
 			draw: Number(req.query.draw),
@@ -135,6 +137,25 @@ router.get("/:id", (req, res) => {
 		db.close()
 	}
 })
+
+
+// get list of embroidery designs, used by fetch on the usbs page
+router.get("/embroideries/:id", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+	const embroideryDesigns = db.prepare(`SELECT Code, Notes, Comments, SizeCategory, Front, Back, Pocket, Sleeve 
+	FROM EmbroideryDesign 
+	INNER JOIN UsbEmbroideryDesign ON EmbroideryDesign.EmbroideryDesignId = UsbEmbroideryDesign.EmbroideryDesignId
+	WHERE UsbId=?`).all(req.params.id)
+
+	res.json(embroideryDesigns).end()
+	}
+	finally {
+		db.close()
+	}
+})
+
 
 
 /*************************************************************************** */

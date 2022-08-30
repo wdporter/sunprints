@@ -204,23 +204,21 @@ router.get("/:id", (req, res) => {
 })
 
 
+// get list of print designs, used by fetch on the screens page
 router.get("/prints/:id", (req, res) => {
 
-const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-try {
-const printDesigns = db.prepare(`SELECT Code, Notes, Comments, SizeCategory, Front, Back, Pocket, Sleeve 
-FROM PrintDesign 
-INNER JOIN ScreenPrintDesign ON PrintDesign.PrintDesignId = ScreenPrintDesign.PrintDesignId
-WHERE ScreenId=?`).all(req.params.id)
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+	const printDesigns = db.prepare(`SELECT Code, Notes, Comments, SizeCategory, Front, Back, Pocket, Sleeve 
+	FROM PrintDesign 
+	INNER JOIN ScreenPrintDesign ON PrintDesign.PrintDesignId = ScreenPrintDesign.PrintDesignId
+	WHERE ScreenId=?`).all(req.params.id)
 
-
-
-res.json(printDesigns).end()
-}
-finally {
-	db.close()
-}
-
+	res.json(printDesigns).end()
+	}
+	finally {
+		db.close()
+	}
 })
 
 

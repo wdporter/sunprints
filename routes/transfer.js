@@ -208,6 +208,7 @@ router.get("/name/dt", function (req, res, next) {
 		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
 		const data = db.prepare(query).all()
 
+		data.forEach(d => d.DT_RowId=d.TransferNameId)
 
 		res.send({
 			draw: Number(req.query.draw),
@@ -244,6 +245,24 @@ router.get("/name/deleted", function(req, res) {
 		title: "Deleted Transfer Names",
 		user: req.auth.user
 	})
+})
+
+
+// get list of transfer designs, used by fetch on the transfer name page
+router.get("/designs/:id", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+	const transferDesigns = db.prepare(`SELECT Code, Notes, SizeCategory, Front, Back, Pocket, Sleeve 
+	FROM TransferDesign 
+	INNER JOIN TransferNameTransferDesign ON TransferDesign.TransferDesignId = TransferNameTransferDesign.TransferDesignId
+	WHERE TransferNameId=?`).all(req.params.id)
+
+	res.json(transferDesigns).end()
+	}
+	finally {
+		db.close()
+	}
 })
 
 

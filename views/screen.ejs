@@ -73,7 +73,7 @@
 				width: "3em",
 				render(data) {
 					return `<a href=# class=editLink><span class="fa fa-edit fa-lg" title=Edit></span></a>&emsp;
-					<a href=# class=deleteLink><span class="fa fa-trash fa-lg" title=Delete>`
+					<a href=# class=deleteLink><span class="fa fa-trash fa-lg" title=Delete></span></a>`
 				}
 			},
 			{ data: "Name" },
@@ -93,7 +93,6 @@
 	})
 
 	function format(d) {
-		
 		return fetch(`screen/prints/${d.ScreenId}`)
 		.then(response => response.json())
 		.then(json => {
@@ -108,7 +107,6 @@
 			}
 		})
 	}
-	
 
 	var detailRows = [];
 	$("#datatable tbody").on("click", "tr td.dt-control", function () {
@@ -122,9 +120,7 @@
 				detailRows.splice(idx, 1)
 		} else {
 				tr.classList.add("details");
-
 				format(row.data()).then(d => row.child(d).show())
-
 				// // Add to the 'open' array
 				if (idx === -1) {
 					detailRows.push(tr.getAttribute("id"))

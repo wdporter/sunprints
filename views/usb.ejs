@@ -1,6 +1,21 @@
 <%- include("partials/head.ejs") %>
 
- <ul>
+
+<style>
+	table.designTable {
+		max-width: 500px !important;
+		border-left: 1px black solid;
+	}
+	table.designTable th:nth-child(2), table.designTable th:nth-child(3), table.designTable th:nth-child(4), table.designTable th:nth-child(5), table.designTable th:nth-child(6) {
+		width: 3em;
+	}
+	table.designTable td:nth-child(3), table.designTable td:nth-child(4), table.designTable td:nth-child(5), table.designTable td:nth-child(6) {
+		text-align: center;
+	}
+</style>
+
+
+<ul>
 	<li><a href=/usb/deleted>View (and restore)</a> deleted USBs</li>
 </ul>
 
@@ -10,158 +25,209 @@
 
 
 
-	<dialog id="editDialog">
-		<h3>Edit USB</h3>
-		<form method=dialog>
-			<div id="app">
-				<input type=hidden v-model="UsbId">
-				<label for=number>Number</label> <input id=number v-model="number"><br>
-				<label for=colour>Notes</label> <input id=colour v-model="Notes"><br>
-				<p>
-					<button id="saveButton" value="default" @click="save">Save</button>&emsp;
-					<input type="reset" value="Cancel" onclick="document.getElementById('editDialog').close()" />
-					
-				</p>
-			</div>
-		</form>
-	</dialog>
+<dialog id="editDialog">
+	<h3>Edit USB</h3>
+	<form method=dialog>
+		<div id="app">
+			<input type=hidden v-model="UsbId">
+			<label for=number>Number</label> <input id=number v-model="number"><br>
+			<label for=colour>Notes</label> <input id=colour v-model="Notes"><br>
+			<p>
+				<button id="saveButton" value="default" @click="save">Save</button>&emsp;
+				<input type="reset" value="Cancel" onclick="document.getElementById('editDialog').close()" />
+				
+			</p>
+		</div>
+	</form>
+</dialog>
 
-	<table id="datatable" class=stripe>
-		<thead>
-			<tr>
-				<th></th>
-				<th>Number</th>
-				<th>Notes</th>
-			</tr>
-		</thead>
-
-	</table>
-
-
-		<script>
+<table id="datatable" class=stripe>
+	<thead>
+		<tr>
+			<th></th>
+			<th>Actions</th>
+			<th>Number</th>
+			<th>Notes</th>
+		</tr>
+	</thead>
+</table>
 
 
-			window.datatable = new DataTable("#datatable", {
-				processing: true,
-				serverSide: true,
-				ajax: "/usb/dt",
-				language: {
-					searchPlaceholder: "Search number or notes"
-				},
-				order: [[0, 'desc']],
-				columns: [
-					{
-						orderable: false,
-						data: "UsbId",
-						render(data) {
-							return `<a href=# class=editLink>Edit</a><br><a href=# data-id=${data} class=deleteLink>Delete</a>`
-						}
-					},
-					{ data: "Number" },
-					{ data: "Notes", width: "300px" },
+<script>
 
-				]
-			})
 
-			$("#datatable tbody").on("click", "a.editLink", function () {
-				event.preventDefault()
-				var tr = this.closest("tr")
-				var row = window.datatable.row(tr)
-				console.log(row.data())
-				const data = row.data()
-				window.vueApp.setData(data)
-				document.getElementById("editDialog").showModal()
-			})
+window.datatable = new DataTable("#datatable", {
+	processing: true,
+	serverSide: true,
+	ajax: "/usb/dt",
+	language: {
+		searchPlaceholder: "Search number or notes"
+	},
+	order: [[2, 'desc']],
+	columns: [
+		{
+			class: "dt-control",
+			orderable: false,
+			data: null,
+			defaultContent: "",
+			width: "2em"
+		},
+		{
+			orderable: false,
+			data: "UsbId",
+			render(data) {
+				return `<a href=# class=editLink><span class="fa fa-edit fa-lg" title=Edit></span></a>&emsp;
+				<a href=# data-id=${data} class=deleteLink><span class="fa fa-trash fa-lg" title=Delete></span></a>`
+			}
+		},
+		{ data: "Number" },
+		{ data: "Notes", width: "300px" },
 
-			$("#datatable tbody").on("click", "a.deleteLink", function () {
-				event.preventDefault()
-				try {
-					fetch(`/usb/${this.dataset.id}`, {
-						method: "DELETE"
-					})
-						.then(response => {
-							if (response.ok)
-								return response.json()
-							else {
-								console.log("error", response)
-								throw new Error(response.statusText)
-							}
-						})
-						.then(json => {
-							window.datatable.ajax.reload(null, false)
-						})
-						.catch(error => window.alert(`We encountered an error: ${error} `))
+	]
+})
+
+function format(d) {
+	return fetch(`usb/embroideries/${d.UsbId}`)
+		.then(response => response.json())
+		.then(json => {
+			if (json.length == 0)
+				return "not used"
+			else {
+				let ret = "<table class=designTable><tr><th>Embroidery Design<th>Size<th>Front<th>Back<th>Pocket<th>Sleeve"
+				json.forEach(x => {
+					ret += `<tr><td>${x.Code} ${x.Notes} ${x.Comments}<td>${x.SizeCategory}<td>${x.Front ? "✅" : ""}<td>${x.Back ? "✅" : ""}<td>${x.Pocket ? "✅" : ""}<td>${x.Sleeve ? "✅" : ""}`
+				})
+				return ret 
+			}
+		})
+}
+
+var detailRows = [];
+$("#datatable tbody").on("click", "tr td.dt-control", function () {
+	var tr = this.closest("tr")
+	var row = window.datatable.row(tr)
+	var idx = detailRows.indexOf(tr.getAttribute("id"))
+	if (row.child.isShown()) {
+			tr.classList.remove("details")
+			row.child.hide()
+			// Remove from the 'open' array
+			detailRows.splice(idx, 1)
+	} else {
+			tr.classList.add("details");
+			format(row.data()).then(d => row.child(d).show())
+			// // Add to the 'open' array
+			if (idx === -1) {
+				detailRows.push(tr.getAttribute("id"))
+			}
+	}
+})
+// On each draw, loop over the `detailRows` array and show any child rows
+window.datatable.on("draw", function () {
+		detailRows.forEach(function(id, i) {
+				$(`#${id} td.dt-control`).trigger("click")
+		})
+})
+
+
+$("#datatable tbody").on("click", "a.editLink", function () {
+	event.preventDefault()
+	var tr = this.closest("tr")
+	var row = window.datatable.row(tr)
+	console.log(row.data())
+	const data = row.data()
+	window.vueApp.setData(data)
+	document.getElementById("editDialog").showModal()
+})
+
+$("#datatable tbody").on("click", "a.deleteLink", function () {
+	event.preventDefault()
+	try {
+		fetch(`/usb/${this.dataset.id}`, {
+			method: "DELETE"
+		})
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
 				}
-				catch (err) {
-					console.log("error", err)
-					window.alert("We encountered an error: " + err.message)
-				}
 			})
+			.then(json => {
+				window.datatable.ajax.reload(null, false)
+			})
+			.catch(error => window.alert(`We encountered an error: ${error} `))
+	}
+	catch (err) {
+		console.log("error", err)
+		window.alert("We encountered an error: " + err.message)
+	}
+})
 
 
 
-			window.vueApp = Vue.createApp({
-				data() {
-					return {
-						UsbId: 0,
-						number: "",
-						Notes: ""
+window.vueApp = Vue.createApp({
+	data() {
+		return {
+			UsbId: 0,
+			number: "",
+			Notes: ""
+		}
+	},
+	methods: {
+		setData(data) {
+			this.UsbId = data.UsbId
+			this.number = data["Number"]
+			this.Notes = data.Notes
+		},
+		save() {
+			let body = JSON.parse(JSON.stringify(this.$data))
+			body.Number = body.number
+			delete body.number
+			try {
+				let method = "POST" 
+				let url = "/usb"
+				if (this.UsbId > 0) {
+					method = "PUT"
+					url += `/${this.UsbId}`
+				}
+				fetch(url, {
+					method,
+					headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+					body: JSON.stringify(body)
+				})
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else {
+						console.log("error", response)
+						throw new Error(response.statusText)
 					}
-				},
-				methods: {
-					setData(data) {
-						this.UsbId = data.UsbId
-						this.number = data["Number"]
-						this.Notes = data.Notes
-					},
-					save() {
-						let body = JSON.parse(JSON.stringify(this.$data))
-						body.Number = body.number
-						delete body.number
-						try {
-							let method = "POST" 
-							let url = "/usb"
-							if (this.UsbId > 0) {
-								method = "PUT"
-								url += `/${this.UsbId}`
-							}
-							fetch(url, {
-								method,
-								headers: new Headers({
-									"Content-Type": "application/json"
-								}),
-								body: JSON.stringify(body)
-							})
-							.then(response => {
-								if (response.ok)
-									return response.json()
-								else {
-									console.log("error", response)
-									throw new Error(response.statusText)
-								}
-							})
-							.then(json => {
-								window.datatable.ajax.reload(null, window.vueApp.UsbId == 0)// reset paging if it's a new item
-								//dialog.close()
-							})
-							.catch(error => window.alert("We encountered an error: " + error)) 
-						}
-						catch (err) {
-							window.alert("We encountered an error: " + err.message)
-						}
+				})
+				.then(json => {
+					window.datatable.ajax.reload(null, window.vueApp.UsbId == 0)// reset paging if it's a new item
+					//dialog.close()
+				})
+				.catch(error => window.alert("We encountered an error: " + error)) 
+			}
+			catch (err) {
+				window.alert("We encountered an error: " + err.message)
+			}
 
-					},
-					new() {
-						this.UsbId = 0
-						this.number = ""
-						this.Notes = ""
-						document.getElementById("editDialog").showModal()
-					}
-				}
-			}).mount("#app")
+		},
+		new() {
+			this.UsbId = 0
+			this.number = ""
+			this.Notes = ""
+			document.getElementById("editDialog").showModal()
+		}
+	}
+}).mount("#app")
 
 
-		</script>
+</script>
 
 
-		<%- include("partials/foot.ejs") %>
+<%- include("partials/foot.ejs") %>
