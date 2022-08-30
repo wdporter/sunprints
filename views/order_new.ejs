@@ -254,7 +254,7 @@ table#stockWarningTable {
 						<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
 							<p v-if="screen.Name == null">
 								<input type="checkbox" :value="screen.ScreenId" :checked="g.checkedScreens[key].length>0" :id="'screen' + screen.ScreenId" disabled>
-								<label :for="'screen' + screen.ScreenId">{{screen.Number}} — {{screen.Colour}} (Standard)"}} </label>
+								<label :for="'screen' + screen.ScreenId">(Standard) — {{screen.Number}} — {{screen.Colour}}  </label>
 							</p>
 						</div>
 					</fieldset>
