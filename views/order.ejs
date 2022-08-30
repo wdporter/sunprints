@@ -71,7 +71,6 @@
 		window.location.href = "/order/new?clone=" + id
 	}
 
-
 		function format(d) {
 			const ret = fetch(`/order/dt/garments/${d.OrderId}`)
 				.then(response => {
@@ -89,7 +88,7 @@
 						for (var item of data) {
 							ret += "<div class=garmentDiv>"
 							for (var d in item)
-								ret += `${d == 'ASm' ? "AS" : d}: ${item[d]}</br>`
+								ret += `<b>${d == 'ASm' ? "AS" : d}:</b> ${item[d]}</br>`
 							ret += "</div>"
 						}
 					}
