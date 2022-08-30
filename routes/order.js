@@ -2262,9 +2262,9 @@ function getDesigns(db, orderid) {
 				transfers[loc].push(r[`TransferName${loc}1Name`])
 
 			if (r[`Usb${loc}1Number`].length > 0)
-				usbs[loc].push({ Number: r[`Usb${loc}1Number`], Colour: r[`Usb${loc}1Notes`] })
+				usbs[loc].push({ Number: r[`Usb${loc}1Number`], Notes: r[`Usb${loc}1Notes`] })
 			if (r[`Usb${loc}2Number`].length > 0)
-				usbs[loc].push({ Number: r[`Usb${loc}2Number`], Colour: r[`Usb${loc}2Notes`] })
+				usbs[loc].push({ Number: r[`Usb${loc}2Number`], Notes: r[`Usb${loc}2Notes`] })
 
 
 
