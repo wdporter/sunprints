@@ -241,6 +241,10 @@ router.post("/", function(req, res) {
 		// 	return
 		// }
 
+		// name must be saved as a null, so we know it is standard screen
+		if (req.body.Name == "")
+			req.body.Name = null
+
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
 
@@ -446,6 +450,9 @@ router.put("/:id", function(req, res) {
 
 	req.body.ScreenId = req.params.id
 	delete req.body.LastUsed
+
+	if (req.body.Name == "")
+		req.body.Name = null
 
 	try {
 		req.body.LastModifiedDateTime = new Date().toLocaleString()
