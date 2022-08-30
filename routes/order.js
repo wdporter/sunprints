@@ -27,7 +27,7 @@ WHERE Deleted=0 AND Done=0  `).get().count
 		let query = `SELECT Orders.*, Customer.Company AS CustomerName 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId   
-WHERE Orders.Deleted=0 AND Done=0  `
+WHERE Orders.Deleted=0   `
 		if (req.query.search.value)
 			req.query.search.value = req.query.search.value.trim()
 
@@ -38,7 +38,7 @@ WHERE Orders.Deleted=0 AND Done=0  `
 			recordsFiltered = db.prepare(`SELECT Count(*) AS count 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
-WHERE Orders.Deleted=0 AND Done=0
+WHERE Orders.Deleted=0 
 ${whereClause}`).get().count
 			query += whereClause
 		}
@@ -86,10 +86,10 @@ ${whereClause}`).get().count
 			const printDesignResults = query.all(o.OrderId)
 			printDesignResults.forEach(pdr => {
 				Object.keys(pdr).forEach(key => {
-					if (pdr[key] ) {
+					if (pdr[key]) {
 						o.Designs.add(pdr[key])
 					}
-						
+
 				})
 			})
 			o.Designs = [...o.Designs]
@@ -590,13 +590,13 @@ router.get("/jobsheet/:id", function (req, res) {
 
 		const designResults = getDesigns(db, req.params.id)
 
-		const screensCount = sz.locations.reduce(function(acc, curr){
+		const screensCount = sz.locations.reduce(function (acc, curr) {
 			return acc + designResults.screens[curr].length
 		}, 0)
-		const usbsCount = sz.locations.reduce(function(acc, curr){
+		const usbsCount = sz.locations.reduce(function (acc, curr) {
 			return acc + designResults.usbs[curr].length
 		}, 0)
-		const transfersCount = sz.locations.reduce(function(acc, curr){
+		const transfersCount = sz.locations.reduce(function (acc, curr) {
 			return acc + designResults.transfers[curr].length
 		}, 0)
 
@@ -672,7 +672,7 @@ router.get("/printdesigns/:id", function (req, res) {
 
 /* GET the garments on an order, used when you click a datatables row on the Order list page. */
 router.get("/dt/garments/:orderId", function (req, res) {
-	
+
 	let db = null
 	try {
 		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
@@ -764,12 +764,12 @@ router.get("/dt/garments/:orderId", function (req, res) {
 
 		// delete any sizes or other values that return 0 or null
 		records.forEach(record => {
-      try {
-        record.Price = Number(record.Price).toFixed(2)
-        }
-      catch(ex) { /* do nothing */ }
+			try {
+				record.Price = Number(record.Price).toFixed(2)
+			}
+			catch (ex) { /* do nothing */ }
 
-      const keys = Object.keys(record)
+			const keys = Object.keys(record)
 			keys.forEach(k => {
 				if (!record[k]) {
 					delete record[k]
@@ -784,7 +784,7 @@ router.get("/dt/garments/:orderId", function (req, res) {
 		res.status(400)
 	}
 	finally {
-		if (db != null) 
+		if (db != null)
 			db.close()
 	}
 
@@ -843,14 +843,14 @@ router.get("/outstanding/print", (req, res) => {
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
-				if (r.FrontDesign) 
-					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>") ) +  r.FrontDesign
+				if (r.FrontDesign)
+					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>")) + r.FrontDesign
 				if (r.BackDesign)
-					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>") ) +  r.BackDesign
+					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>")) + r.BackDesign
 				if (r.PocketDesign)
-					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>") ) +  r.PocketDesign
+					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>")) + r.PocketDesign
 				if (r.SleeveDesign)
-					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>") ) +  r.SleeveDesign
+					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>")) + r.SleeveDesign
 
 				r2[r.OrderNumber].Qty += r.Qty
 			}
@@ -860,10 +860,10 @@ router.get("/outstanding/print", (req, res) => {
 		for (r in r2)
 			r2set.push(r2[r])
 
-		const salesReps =   db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
+		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
 
-		res.render("outstanding/print.ejs", { 
+		res.render("outstanding/print.ejs", {
 			name: "Print Designs",
 			results: r2set,
 			salesReps,
@@ -877,7 +877,7 @@ router.get("/outstanding/print", (req, res) => {
 		res.status(400)
 	}
 	finally {
-		if (db != null) 
+		if (db != null)
 			db.close()
 	}
 
@@ -933,14 +933,14 @@ router.get("/outstanding/embroidery", (req, res) => {
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
-				if (r.FrontDesign) 
-					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>") ) +  r.FrontDesign
+				if (r.FrontDesign)
+					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>")) + r.FrontDesign
 				if (r.BackDesign)
-					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>") ) +  r.BackDesign
+					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>")) + r.BackDesign
 				if (r.PocketDesign)
-					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>") ) +  r.PocketDesign
+					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>")) + r.PocketDesign
 				if (r.SleeveDesign)
-					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>") ) +  r.SleeveDesign
+					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>")) + r.SleeveDesign
 
 				r2[r.OrderNumber].Qty += r.Qty
 			}
@@ -950,10 +950,10 @@ router.get("/outstanding/embroidery", (req, res) => {
 		for (r in r2)
 			r2set.push(r2[r])
 
-		const salesReps =   db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
+		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
 
-		res.render("outstanding/print.ejs", { 
+		res.render("outstanding/print.ejs", {
 			name: "Embroidery Designs",
 			results: r2set,
 			salesReps,
@@ -966,7 +966,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 		res.status(400)
 	}
 	finally {
-		if (db != null) 
+		if (db != null)
 			db.close()
 	}
 
@@ -1023,14 +1023,14 @@ router.get("/outstanding/transfer", (req, res) => {
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
-				if (r.FrontDesign) 
-					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>") ) +  r.FrontDesign
+				if (r.FrontDesign)
+					r2[r.OrderNumber].FrontDesign = (r2[r.OrderNumber].FrontDesign == null ? "" : (r2[r.OrderNumber].FrontDesign + "<br>")) + r.FrontDesign
 				if (r.BackDesign)
-					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>") ) +  r.BackDesign
+					r2[r.OrderNumber].BackDesign = (r2[r.OrderNumber].BackDesign == null ? "" : (r2[r.OrderNumber].BackDesign + "<br>")) + r.BackDesign
 				if (r.PocketDesign)
-					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>") ) +  r.PocketDesign
+					r2[r.OrderNumber].PocketDesign = (r2[r.OrderNumber].PocketDesign == null ? "" : (r2[r.OrderNumber].PocketDesign + "<br>")) + r.PocketDesign
 				if (r.SleeveDesign)
-					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>") ) +  r.SleeveDesign
+					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>")) + r.SleeveDesign
 
 				r2[r.OrderNumber].Qty += r.Qty
 			}
@@ -1040,10 +1040,10 @@ router.get("/outstanding/transfer", (req, res) => {
 		for (r in r2)
 			r2set.push(r2[r])
 
-		const salesReps =   db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
+		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
 
-		res.render("outstanding/print.ejs", { 
+		res.render("outstanding/print.ejs", {
 			name: "Transfer Designs",
 			results: r2set,
 			salesReps,
@@ -1056,7 +1056,7 @@ router.get("/outstanding/transfer", (req, res) => {
 		res.status(400)
 	}
 	finally {
-		if (db != null) 
+		if (db != null)
 			db.close()
 	}
 
@@ -1106,11 +1106,11 @@ router.get("/outstanding/promo", (req, res) => {
 			const orderNumberStem = r.OrderNumber.match(/([A-Z]|[a-z])$/) ? r.OrderNumber.slice(0, -1) : r.OrderNumber
 			if (!rejected.has(orderNumberStem)) {
 				// if we don't already have it in r2, it's the first time we found it
-				if (!r2[r.OrderNumber] ) {
+				if (!r2[r.OrderNumber]) {
 					// we only keep it if it has no designs on it
-					if (r.FrontPrintDesignId == null && r.BackPrintDesignId == null && r.PocketPrintDesignId == null && r.SleevePrintDesignId == null 
-							&& r.FrontEmbroideryDesignId == null && r.BackEmbroideryDesignId == null && r.PocketEmbroideryDesignId == null && r.SleeveEmbroideryDesignId == null 
-							&& r.FrontTransferDesignId == null && r.BackTransferDesignId == null && r.PocketTransferDesignId == null && r.SleeveTransferDesignId == null) {
+					if (r.FrontPrintDesignId == null && r.BackPrintDesignId == null && r.PocketPrintDesignId == null && r.SleevePrintDesignId == null
+						&& r.FrontEmbroideryDesignId == null && r.BackEmbroideryDesignId == null && r.PocketEmbroideryDesignId == null && r.SleeveEmbroideryDesignId == null
+						&& r.FrontTransferDesignId == null && r.BackTransferDesignId == null && r.PocketTransferDesignId == null && r.SleeveTransferDesignId == null) {
 						r2[r.OrderNumber] = r
 					}
 					else {
@@ -1127,10 +1127,10 @@ router.get("/outstanding/promo", (req, res) => {
 		for (r in r2)
 			r2set.push(r2[r])
 
-		const salesReps =   db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
+		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
 
-		res.render("outstanding/print.ejs", { 
+		res.render("outstanding/print.ejs", {
 			name: "Promo / Sub",
 			results: r2set,
 			salesReps,
@@ -1144,7 +1144,7 @@ router.get("/outstanding/promo", (req, res) => {
 		res.status(400)
 	}
 	finally {
-		if (db != null) 
+		if (db != null)
 			db.close()
 	}
 })
@@ -1171,11 +1171,11 @@ router.post("/", function (req, res) {
 			return
 		}
 
-		
+
 
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
-		req.body.Done= 0
+		req.body.Done = 0
 
 		let stockOrderId = null
 		if (typeof req.body.StockOrderId != "undefined") {
@@ -1198,7 +1198,7 @@ router.post("/", function (req, res) {
 		const values = []
 		for (let column of columns)
 			values.push(`@${column}`)
-		
+
 		query += values.join(", ")
 		query += " ) "
 		let statement = db.prepare(query)
@@ -1226,46 +1226,46 @@ router.post("/", function (req, res) {
 				(OrderId, GarmentId, ${sz.allSizes.join(", ")}, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime )
 			VALUES ( ?, ?, ${sz.allSizes.map(s => "?").join(", ")}, ?, ?, ?, ? )`)
 			products.forEach(p => {
-				const sizeValues = sz.allSizes.map(function(s)  {
+				const sizeValues = sz.allSizes.map(function (s) {
 					return p[s]
- 				})
-				insertStatement.run(req.body.OrderId, p.GarmentId, 
+				})
+				insertStatement.run(req.body.OrderId, p.GarmentId,
 					...sizeValues,
 					req.body.CreatedBy, req.body.CreatedDateTime, req.body.LastModifiedBy, req.body.LastModifiedDateTime)
 			})
 		}
 
-			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-			info = statement.run("Orders", req.body.OrderId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
+		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+		info = statement.run("Orders", req.body.OrderId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
 
-			// now add it to AuditLogEntry
-			for (col of columns) {
-				if (col.startsWith("Created") || col.startsWith("LastM"))
-					continue
-				statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
-				statement.run(info.lastInsertRowid, col, req.body[col])
-			}
+		// now add it to AuditLogEntry
+		for (col of columns) {
+			if (col.startsWith("Created") || col.startsWith("LastM"))
+				continue
+			statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
+			statement.run(info.lastInsertRowid, col, req.body[col])
+		}
 
-			// if products were added from a selected stock order, add them to audit logs
-			const orderProducts = db.prepare("SELECT * FROM OrderGarment WHERE OrderId=?").all(req.body.OrderId)
-			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-			orderProducts.forEach(op => {
-				info = statement.run("OrderGarment", op.OrderGarmentId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
-				const s2 = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
-				s2.run(info.lastInsertRowid, "OrderId", req.body.OrderId)
-				s2.run(info.lastInsertRowid, "GarmentId", op.GarmentId)
-				sz.allSizes.forEach(size => {
-					if (op[size])
+		// if products were added from a selected stock order, add them to audit logs
+		const orderProducts = db.prepare("SELECT * FROM OrderGarment WHERE OrderId=?").all(req.body.OrderId)
+		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+		orderProducts.forEach(op => {
+			info = statement.run("OrderGarment", op.OrderGarmentId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
+			const s2 = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
+			s2.run(info.lastInsertRowid, "OrderId", req.body.OrderId)
+			s2.run(info.lastInsertRowid, "GarmentId", op.GarmentId)
+			sz.allSizes.forEach(size => {
+				if (op[size])
 					s2.run(info.lastInsertRowid, size, op[size])
-				})
 			})
+		})
 
-			db.prepare("COMMIT").run()
+		db.prepare("COMMIT").run()
 
-			res.json({
-				message: "success",
-				id: req.body.OrderId
-			}).end()
+		res.json({
+			message: "success",
+			id: req.body.OrderId
+		}).end()
 
 	}
 	catch (ex) {
@@ -1380,15 +1380,15 @@ router.post("/:id/garment", function (req, res) {
 
 			// update the Sales table, no auditing or logging
 			mySale = db.prepare("SELECT 1 FROM Sales WHERE OrderGarmentId=?").get(req.body.OrderGarmentId)
-			salesCols = columns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime" )
+			salesCols = columns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime")
 			if (mySale) {
-				query = ` UPDATE Sales SET ${ salesCols.map(c => ` ${c}=@${c} `).join(", ") }  WHERE OrderGarmentId=@OrderGarmentId `
+				query = ` UPDATE Sales SET ${salesCols.map(c => ` ${c}=@${c} `).join(", ")}  WHERE OrderGarmentId=@OrderGarmentId `
 				info = db.prepare(query).run(req.body)
 			}
 			else {
 				// in case it's not in the sales table, we'll update it by OrderId and GarmentId
 				// this is not great because an order might have the same garment multiple times, but it should only be a potential problem during the transition period
-				query = ` UPDATE Sales SET ${ salesCols.map(c => ` ${c}=@${c} `).join(", ") }  WHERE OrderId=@OrderId & GarmentId=@GarmentId `
+				query = ` UPDATE Sales SET ${salesCols.map(c => ` ${c}=@${c} `).join(", ")}  WHERE OrderId=@OrderId & GarmentId=@GarmentId `
 				info = db.prepare(query).run(req.body)
 			}
 			console.log(info)
@@ -1548,7 +1548,7 @@ WHERE GarmentId = @GarmentId `
 
 
 			// add it to the Sales table
-			const salesCols = columns.filter(c => c != "CreatedBy" && c!= "CreatedDateTime" && c != "LastModifiedBy" && c != "LastModifiedDateTime" )
+			const salesCols = columns.filter(c => c != "CreatedBy" && c != "CreatedDateTime" && c != "LastModifiedBy" && c != "LastModifiedDateTime")
 			salesCols.push("OrderGarmentId")
 			query = `INSERT INTO Sales (${salesCols.join(", ")}) VALUES (${salesCols.map(c => ` @${c} `).join(", ")}) `
 			info = db.prepare(query).run(req.body)
@@ -1645,7 +1645,7 @@ router.put("/:id", function (req, res) {
 			res.status(400).end()
 			return
 		}
-		
+
 
 		req.body.OrderId = req.params.id
 
@@ -1657,7 +1657,7 @@ router.put("/:id", function (req, res) {
 		const myOrder = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(req.params.id)
 
 		let query = "UPDATE Orders SET "
-		const changedColumns = []
+		let changedColumns = []
 		for (const col in req.body)
 			if (req.body[col] != myOrder[col])
 				changedColumns.push(col)
@@ -1670,10 +1670,32 @@ router.put("/:id", function (req, res) {
 		console.log(info)
 
 
+		// now add it to audit logs
+
+		// insert into AuditLog
+		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+		info = statement.run("Orders", req.params.id, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+
+		// insert into AuditLogEntry
+		for (var col of changedColumns) {
+			if (col.startsWith("LastM")) {
+				continue
+			}
+			statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
+			statement.run(info.lastInsertRowid, col, myOrder[col], req.body[col])
+		}
+
 		// we now must also update the SalesTotal table -- no audit columns or logs
+		if (changedColumns.includes("InvoiceDate")) {
+			req.body.DateInvoiced = req.body.InvoiceDate
+			changedColumns.push("DateInvoiced")
+			changedColumns = changedColumns.filter(c => c != "InvoiceDate")
+
+		}
 		query = `UPDATE SalesTotal SET ${changedColumns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime").map(c => ` ${c}=@${c} `).join(", ")} WHERE OrderId=@OrderId `
 		info = db.prepare(query).run(req.body)
 		console.log(info)
+
 
 		db.prepare("COMMIT").run()
 
@@ -1681,32 +1703,6 @@ router.put("/:id", function (req, res) {
 		res.json({
 			message: "success",
 		}).end()
-
-		// now add it to audit logs
-		try {
-			db.prepare("BEGIN TRANSACTION").run()
-
-			// insert into AuditLog
-			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-			const info = statement.run("Orders", req.params.id, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
-
-			// insert into AuditLogEntry
-			for (var col of changedColumns) {
-				if (col.startsWith("LastM")) {
-					continue
-				}
-				statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
-				statement.run(info.lastInsertRowid, col, myOrder[col], req.body[col])
-			}
-
-			db.prepare("COMMIT").run()
-		}
-		catch (ex) {
-			db.prepare("ROLLBACK").run()
-			// do nothing, because the response has already ended. 
-			// if we threw the error, then it would be caught and the .end() would have been called twice
-		}
-
 
 
 	}
@@ -1740,9 +1736,12 @@ router.put("/ship/:id", function (req, res) {
 		let params = {
 			LastModifiedBy: req.auth.user,
 			LastModifiedDateTime: date,
-			InvoiceDate: new Date().toISOString().slice(0, 10),
 			ProcessedDate: new Date().toISOString().slice(0, 10),
 			Done: 1
+		}
+
+		if (order.InvoiceDate == null) {
+			params.InvoiceDate = new Date().toISOString().slice(0, 10)
 		}
 
 
@@ -1773,7 +1772,7 @@ router.put("/ship/:id", function (req, res) {
 
 		//update fields in the SalesTotal table
 		// TODO sometimes salesTotalParams is null
-		const salesTotalParams = { 
+		const salesTotalParams = {
 			DateInvoiced: params.InvoiceDate,
 			DateProcessed: params.ProcessedDate,
 			Done: params.Done
@@ -1806,8 +1805,6 @@ router.put("/ship/:id", function (req, res) {
 
 // PUT  mark an order as done
 // set Done to "1" (that is, true)
-// set set invoice date and processed date if not already
-
 router.put("/done/:id", function (req, res) {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
@@ -1899,7 +1896,7 @@ OrderId, OrderNumber, CustomerId, SalesRep, OrderDate, Repeat, New, BuyIn, Terms
 Company, DateProcessed, DateInvoiced, InvoiceNumber, Done
 ) VALUES ( 
 @OrderId, @OrderNumber, @CustomerId, @SalesRep, @OrderDate, @Repeat, @New, @BuyIn, @Terms, @DeliveryDate, @Notes, @CustomerOrderNumber,
-@Company, @ProcessedDate, @InvoiceDate, @InvoiceNumber, @Done)`)		
+@Company, @ProcessedDate, @InvoiceDate, @InvoiceNumber, @Done)`)
 		info = statement.run(myOrder)
 
 
@@ -1908,7 +1905,7 @@ Company, DateProcessed, DateInvoiced, InvoiceNumber, Done
 		res.send("ok")
 
 	}
-	catch(err) {
+	catch (err) {
 		console.log(err)
 		db.prepare("ROLLBACK").run()
 		res.statusMessage = err.message
@@ -2249,27 +2246,27 @@ function getDesigns(db, orderid) {
 				AND ${loc}=1
 				`)
 				const standardScreens = statement.all(r.SizeCategory, r[loc + "PrintDesignId"])
-				
+
 				standardScreens.forEach(screen => {
 					screens[loc].push(screen)
 				})
 
 			}
 
-			if (r[`Screen${loc}1Number`].length > 0 )
+			if (r[`Screen${loc}1Number`].length > 0)
 				screens[loc].push({ Number: r[`Screen${loc}1Number`], Colour: r[`Screen${loc}1Colour`], Name: r[`Screen${loc}1Name`] })
-			if (r[`Screen${loc}2Number`].length > 0 )
+			if (r[`Screen${loc}2Number`].length > 0)
 				screens[loc].push({ Number: r[`Screen${loc}2Number`], Colour: r[`Screen${loc}2Colour`], Name: r[`Screen${loc}2Name`] })
 
-				if (r[`TransferName${loc}1Name`].length > 0 )
+			if (r[`TransferName${loc}1Name`].length > 0)
 				transfers[loc].push(r[`TransferName${loc}1Name`])
 
-				if (r[`Usb${loc}1Number`].length > 0 )
+			if (r[`Usb${loc}1Number`].length > 0)
 				usbs[loc].push({ Number: r[`Usb${loc}1Number`], Colour: r[`Usb${loc}1Notes`] })
-			if (r[`Usb${loc}2Number`].length > 0 )
+			if (r[`Usb${loc}2Number`].length > 0)
 				usbs[loc].push({ Number: r[`Usb${loc}2Number`], Colour: r[`Usb${loc}2Notes`] })
 
-			
+
 
 		})
 	})
