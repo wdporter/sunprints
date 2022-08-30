@@ -1,5 +1,18 @@
 <%- include("partials/head.ejs") %>
 
+<style>
+	table.printTable {
+		max-width: 500px !important;
+		border-left: 1px black solid;
+	}
+	table.printTable th:nth-child(2), table.printTable th:nth-child(3), table.printTable th:nth-child(4), table.printTable th:nth-child(5), table.printTable th:nth-child(6) {
+		width: 3em;
+	}
+	table.printTable td:nth-child(3), table.printTable td:nth-child(4), table.printTable td:nth-child(5), table.printTable td:nth-child(6) {
+		text-align: center;
+	}
+</style>
+
 <p><a href="/screen/deleted">View (and restore) deleted screens</a></p>
 
 
@@ -87,7 +100,7 @@
 			if (json.length == 0)
 				return "not used"
 			else {
-				let ret = "<table><tr><th>Print Design<th>Size<th>Front<th>Back<th>Pocket<th>Sleeve"
+				let ret = "<table class=printTable><tr><th>Print Design<th>Size<th>Front<th>Back<th>Pocket<th>Sleeve"
 				json.forEach(x => {
 					ret += `<tr><td>${x.Code} ${x.Notes} ${x.Comments}<td>${x.SizeCategory}<td>${x.Front ? "✅" : ""}<td>${x.Back ? "✅" : ""}<td>${x.Pocket ? "✅" : ""}<td>${x.Sleeve ? "✅" : ""}`
 				})
