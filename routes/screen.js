@@ -84,7 +84,7 @@ router.get("/dt", function(req, res) {
 		const recordsTotal = statement.get().Count
 		let recordsFiltered = recordsTotal
 
-		let query = `SELECT Screen.ScreenId, Number, Colour, Name, s.maxdate AS LastUsed FROM Screen
+		let query = `SELECT Screen.ScreenId, Name, Number, Colour,  s.maxdate AS LastUsed FROM Screen
 		LEFT OUTER JOIN 
 		(SELECT Sales.FrontScreenId AS ScreenId, MAX(SalesTotal.OrderDate, 0) AS maxdate
 		FROM Sales
@@ -141,11 +141,12 @@ router.get("/dt", function(req, res) {
 
 		query += whereClause
 
-		query += ` ORDER BY ${parseInt(req.query.order[0].column) + 1} COLLATE NOCASE ${req.query.order[0].dir} `
+		query += ` ORDER BY ${parseInt(req.query.order[0].column) } COLLATE NOCASE ${req.query.order[0].dir} `
 
 		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start} `
 		const data = db.prepare(query).all()
 
+		data.forEach(d => d.DT_RowId=d.ScreenId)
 
 		res.send({
 			draw: Number(req.query.draw),
@@ -200,7 +201,25 @@ router.get("/:id", (req, res) => {
 	finally {
 		db.close()
 	}
+})
 
+
+router.get("/prints/:id", (req, res) => {
+
+const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+try {
+const printDesigns = db.prepare(`SELECT Code, Notes, Comments, SizeCategory, Front, Back, Pocket, Sleeve 
+FROM PrintDesign 
+INNER JOIN ScreenPrintDesign ON PrintDesign.PrintDesignId = ScreenPrintDesign.PrintDesignId
+WHERE ScreenId=?`).all(req.params.id)
+
+
+
+res.json(printDesigns).end()
+}
+finally {
+	db.close()
+}
 
 })
 

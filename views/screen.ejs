@@ -7,177 +7,229 @@
 
 
 
-	<dialog id="editDialog">
-		<h3>Edit Screen</h3>
-		<form method=dialog>
-			<div id="app">
-				<input type=hidden v-model="ScreenId">
-				<label for=number>Number</label> <input id=number v-model="number"><br>
-				<label for=colour>Colour</label> <input id=colour v-model="Colour"><br>
-				<label for=name>Name</label> <input id=name v-model="Name"><br>
-				<p>
-					<button id="saveButton" value="default" @click="save">Save</button>&emsp;
-					<input type=button value="Cancel" onclick="this.closest('dialog').close()" />
-				</p>
-			</div>
-		</form>
-	</dialog>
+<dialog id="editDialog">
+	<h3>Edit Screen</h3>
+	<form method=dialog>
+		<div id="app">
+			<input type=hidden v-model="ScreenId">
+			<label for=number>Number</label> <input id=number v-model="number"><br>
+			<label for=colour>Colour</label> <input id=colour v-model="Colour"><br>
+			<label for=name>Name</label> <input id=name v-model="Name"><br>
+			<p>
+				<button id="saveButton" value="default" @click="save">Save</button>&emsp;
+				<input type=button value="Cancel" onclick="this.closest('dialog').close()" />
+			</p>
+		</div>
+	</form>
+</dialog>
 
-	<table id="datatable" class="stripe hover">
-		<thead>
-			<tr>
-				<th></th>
-				<th>Number</th>
-				<th>Colour</th>
-				<th>Name</th>
-				<th>Last Used</th>
-			</tr>
-		</thead>
+<table id="datatable" class="stripe hover">
+	<thead>
+		<tr>
+			<th></th>
+			<th>Actions</th>
+			<th>Name</th>
+			<th>Number</th>
+			<th>Colour</th>
+			<th>Last Used</th>
+		</tr>
+	</thead>
 
-	</table>
+</table>
 
+<script>
+	window.datatable = new DataTable("#datatable", {
+		processing: true,
+		serverSide: true,
+		ajax: "/screen/dt",
+		language: {
+			searchPlaceholder: "Search number, colour or name"
+		},
+		order: [[2, 'asc']],
+		columns: [
+			{
+				class: "dt-control",
+				orderable: false,
+				data: null,
+				defaultContent: "",
+				width: "2em"
+			},
+			{
+				orderable: false,
+				data: "ScreenId",
+				width: "3em",
+				render(data) {
+					return `<a href=# class=editLink><span class="fa fa-edit fa-lg" title=Edit></span></a>&emsp;
+					<a href=# class=deleteLink><span class="fa fa-trash fa-lg" title=Delete>`
+				}
+			},
+			{ data: "Name" },
+			{ data: "Number" },
+			{ data: "Colour" },
+			{ 
+				data: "LastUsed",
+				width: "4em",
+				render: function(data) {
+					const ts = Date.parse(data)
+					if (isNaN(ts))
+						return ""
+					return new Date(ts).toLocaleDateString()
+				}  
+			}
+		]
+	})
 
-		<script>
+	function format(d) {
+		
+		return fetch(`screen/prints/${d.ScreenId}`)
+		.then(response => response.json())
+		.then(json => {
+			if (json.length == 0)
+				return "not used"
+			else {
+				let ret = "<table><tr><th>Print Design<th>Size<th>Front<th>Back<th>Pocket<th>Sleeve"
+				json.forEach(x => {
+					ret += `<tr><td>${x.Code} ${x.Notes} ${x.Comments}<td>${x.SizeCategory}<td>${x.Front ? "✅" : ""}<td>${x.Back ? "✅" : ""}<td>${x.Pocket ? "✅" : ""}<td>${x.Sleeve ? "✅" : ""}`
+				})
+				return ret 
+			}
+		})
+	}
+	
 
+	var detailRows = [];
+	$("#datatable tbody").on("click", "tr td.dt-control", function () {
+		var tr = this.closest("tr")
+		var row = window.datatable.row(tr)
+		var idx = detailRows.indexOf(tr.getAttribute("id"))
+		if (row.child.isShown()) {
+				tr.classList.remove("details")
+				row.child.hide()
+				// Remove from the 'open' array
+				detailRows.splice(idx, 1)
+		} else {
+				tr.classList.add("details");
 
-			window.datatable = new DataTable("#datatable", {
-				processing: true,
-				serverSide: true,
-				ajax: "/screen/dt",
-				language: {
-					searchPlaceholder: "Search number, colour or name"
-				},
-				order: [[3, 'asc']],
-				columns: [
-					{
-						orderable: false,
-						data: "ScreenId",
-						render(data) {
-							return `<a href=# class=editLink><span class="fa fa-edit fa-lg" title=Edit></span></a>&emsp;
-							<a href=# class=deleteLink><span class="fa fa-trash fa-lg" title=Delete>`
-						}
-					},
-					{ data: "Number" },
-					{ data: "Colour" },
-					{ data: "Name" },
-					{ 
-						data: "LastUsed",
-						render: function(data) {
-							const ts = Date.parse(data)
-							if (isNaN(ts))
-								return ""
-							return new Date(ts).toLocaleDateString()
+				format(row.data()).then(d => row.child(d).show())
 
-						}  
-					}
-				]
+				// // Add to the 'open' array
+				if (idx === -1) {
+					detailRows.push(tr.getAttribute("id"))
+				}
+		}
+	})
+	// On each draw, loop over the `detailRows` array and show any child rows
+	window.datatable.on("draw", function () {
+			detailRows.forEach(function(id, i) {
+					$(`#${id} td.dt-control`).trigger("click")
 			})
+	})
 
-			$("#datatable tbody").on("click", "a.editLink", function () {
-				event.preventDefault()
-				var tr = this.closest("tr")
-				var row = window.datatable.row(tr)
-				console.log(row.data())
-				const data = row.data()
-				window.vueApp.setData(data)
-				const editDialog = document.getElementById("editDialog")
-				editDialog.querySelector("h3").textContent = "Edit screen"
-				editDialog.showModal()
+	$("#datatable tbody").on("click", "a.editLink", function () {
+		event.preventDefault()
+		var tr = this.closest("tr")
+		var row = window.datatable.row(tr)
+		console.log(row.data())
+		const data = row.data()
+		window.vueApp.setData(data)
+		const editDialog = document.getElementById("editDialog")
+		editDialog.querySelector("h3").textContent = "Edit screen"
+		editDialog.showModal()
+	})
+
+	$("#datatable tbody").on("click", "a.deleteLink", function () {
+		event.preventDefault()
+		var tr = this.closest("tr")
+		var row = window.datatable.row(tr)
+		console.log(row.data())
+		const data = row.data()
+
+		try {
+			fetch(`/screen/${data.ScreenId}`, {
+				method: "DELETE"
 			})
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else
+						throw new Error(response.statusText)
+				})
+				.then(json => window.datatable.ajax.reload(null, false) )
+				.catch(error => window.alert(`We encountered an error: ${json.error}`))
+		}
+		catch (err) {
+			window.alert("We encountered an error: " + err.message)
+		}
+	})
 
-			$("#datatable tbody").on("click", "a.deleteLink", function () {
-				event.preventDefault()
-				var tr = this.closest("tr")
-				var row = window.datatable.row(tr)
-				console.log(row.data())
-				const data = row.data()
 
+
+	window.vueApp = Vue.createApp({
+		data() {
+			return {
+				ScreenId: 0,
+				number: "",
+				Colour: "",
+				Name: ""
+			}
+		},
+		methods: {
+			setData(data) {
+				this.ScreenId = data.ScreenId
+				this.number = data.Number
+				this.Colour = data.Colour
+				this.Name = data.Name
+			},
+			save() {
+				let body = JSON.parse(JSON.stringify(this.$data))
+				body.Number = body.number
+				delete body.number
 				try {
-					fetch(`/screen/${data.ScreenId}`, {
-						method: "DELETE"
+					let method = "POST" 
+					let url = "/screen"
+					if (this.ScreenId > 0) {
+						method = "PUT"
+						url += `/${this.ScreenId}`
+					}
+					fetch(url, {
+						method,
+						headers: new Headers({
+							"Content-Type": "application/json"
+						}),
+						body: JSON.stringify(body)
 					})
-						.then(response => {
-							if (response.ok)
-								return response.json()
-							else
-								throw new Error(response.statusText)
-						})
-						.then(json => window.datatable.ajax.reload(null, false) )
-						.catch(error => window.alert(`We encountered an error: ${json.error}`))
+					.then(response => {
+						if (response.ok)
+							return response.json()
+						else
+							throw new Error(response.statusText)
+					})
+					.then(json => {
+						window.datatable.ajax.reload(null, window.vueApp.ScreenId == 0)// reset paging if it's a new item
+						//document.getElementById("editDialog").close()
+					})
+					.catch(error => window.alert(`We encountered an error: ${error}`))
 				}
 				catch (err) {
 					window.alert("We encountered an error: " + err.message)
 				}
-			})
+
+			},
+			new() {
+				this.ScreenId = 0
+				this.number = ""
+				this.Colour = ""
+				this.Name = ""
+				const editDialog = document.getElementById("editDialog")
+				editDialog.querySelector("h3").textContent = "New screen"
+				editDialog.showModal()
+			}
+		}
+	}).mount("#app")
+
+
+</script>
 
 
 
-			window.vueApp = Vue.createApp({
-				data() {
-					return {
-						ScreenId: 0,
-						number: "",
-						Colour: "",
-						Name: ""
-					}
-				},
-				methods: {
-					setData(data) {
-						this.ScreenId = data.ScreenId
-						this.number = data.Number
-						this.Colour = data.Colour
-						this.Name = data.Name
-					},
-					save() {
-						let body = JSON.parse(JSON.stringify(this.$data))
-						body.Number = body.number
-						delete body.number
-						try {
-							let method = "POST" 
-							let url = "/screen"
-							if (this.ScreenId > 0) {
-								method = "PUT"
-								url += `/${this.ScreenId}`
-							}
-							fetch(url, {
-								method,
-								headers: new Headers({
-									"Content-Type": "application/json"
-								}),
-								body: JSON.stringify(body)
-							})
-							.then(response => {
-								if (response.ok)
-									return response.json()
-								else
-									throw new Error(response.statusText)
-							})
-							.then(json => {
-								window.datatable.ajax.reload(null, window.vueApp.ScreenId == 0)// reset paging if it's a new item
-								//document.getElementById("editDialog").close()
-							})
-							.catch(error => window.alert(`We encountered an error: ${error}`))
-						}
-						catch (err) {
-							window.alert("We encountered an error: " + err.message)
-						}
-
-					},
-					new() {
-						this.ScreenId = 0
-						this.number = ""
-						this.Colour = ""
-						this.Name = ""
-						const editDialog = document.getElementById("editDialog")
-						editDialog.querySelector("h3").textContent = "New screen"
-						editDialog.showModal()
-					}
-				}
-			}).mount("#app")
-
-
-		</script>
-
-
-
-		<%- include("partials/foot.ejs") %>
+<%- include("partials/foot.ejs") %>
