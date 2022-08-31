@@ -45,7 +45,7 @@
 
 			<p>
 				<label for="notes">Notes</label>
-				<textarea id="notes" v-model="notes"></textarea>
+				<textarea id="notes" v-model="notes" @keydown.tab.exact="onNotesKeyDown($event)"></textarea>
 			</p>
 
 
@@ -115,8 +115,7 @@
 
 <p style="height:2em"></p>
 
-	<script>
-
+<script>
 
 function addGarment(evt, id) {
 	evt.preventDefault()
@@ -129,325 +128,329 @@ function addGarment(evt, id) {
 		GarmentId: data.GarmentId
 	})
 
-	
 }
 
-		window.datatable = new DataTable("#garmentTable", {
-			orderCellsTop: true,
-			fixedHeader: true,
-			processing: true,
-			serverSide: true,
-			ajax: "/garment/purchase/dt",
-			dom: "lrtip",
-			columns: [
-			{
-					data: "GarmentId",
-					render(data, type, row) {
-						// return `<input type=button onclick="addGarment(event, ${data})" value=Add class=add-garment-buttonink />`
-						return `<a href=# onclick="addGarment(event, ${data})" title="Add garment to purchase order"><span class="fa fa-plus fa-lg"></span></a> `
-					},
-					width: "50px",
-					orderable: false
-				},
-				{ data: "SizeCategory", width: "80px" },
-				{ data: "Code", },
-				{ data: "Type" },
-				{ data: "Colour" },
-				{ data: "Label" },
-				{ 
-					data: "Notes", 
-					orderable: false 
+window.datatable = new DataTable("#garmentTable", {
+	orderCellsTop: true,
+	fixedHeader: true,
+	processing: true,
+	serverSide: true,
+	ajax: "/garment/purchase/dt",
+	dom: "lrtip",
+	columns: [
+	{
+			data: "GarmentId",
+			render(data, type, row) {
+				// return `<input type=button onclick="addGarment(event, ${data})" value=Add class=add-garment-buttonink />`
+				return `<a href=# onclick="addGarment(event, ${data})" title="Add garment to purchase order"><span class="fa fa-plus fa-lg"></span></a> `
+			},
+			width: "50px",
+			orderable: false
+		},
+		{ data: "SizeCategory", width: "80px" },
+		{ data: "Code", },
+		{ data: "Type" },
+		{ data: "Colour" },
+		{ data: "Label" },
+		{ 
+			data: "Notes", 
+			orderable: false 
+		}
+	],
+	"order": [[1, "asc"]],
+	initComplete() {
+		// support for filtering by column
+		var api = this.api();
+		// For each column
+		api.columns()[0].forEach(function (i) {
+
+			const th = Array.from(document.querySelectorAll(".filters th"))[i]
+			if (i > 0 && i < 6) {
+				if (i == 0) {
+					th.innerHTML = "<select><option><option>Adults<option>Womens<option>Kids</select>"
+						th.querySelector("select").addEventListener("change", function () {
+						api.column(i).search(this.value).draw()
+						window.setTimeout(function() {
+							this.focus({preventScroll:true})
+						}, 20)
+					})
 				}
-			],
-			"order": [[1, "asc"]],
-			initComplete() {
-				// support for filtering by column
-				var api = this.api();
-				// For each column
-				api.columns()[0].forEach(function (i) {
-
-					const th = Array.from(document.querySelectorAll(".filters th"))[i]
-					if (i > 0 && i < 6) {
-						if (i == 0) {
-							th.innerHTML = "<select><option><option>Adults<option>Womens<option>Kids</select>"
-								th.querySelector("select").addEventListener("change", function () {
-								api.column(i).search(this.value).draw()
-								window.setTimeout(function() {
-									this.focus({preventScroll:true})
-								}, 20)
-							})
-						}
-						else {
-							th.innerHTML = "<input placeholder=search />"
-							th.querySelector("input").addEventListener("input", function () {
-								api.column(i).search(this.value).draw()
-								window.setTimeout(function() {
-									this.focus({preventScroll:true})
-								}, 20)
-							})
-						}
-					}
-					else
-						th.innerHTML = ""
-				})
+				else {
+					th.innerHTML = "<input placeholder=search />"
+					th.querySelector("input").addEventListener("input", function () {
+						api.column(i).search(this.value).draw()
+						window.setTimeout(function() {
+							this.focus({preventScroll:true})
+						}, 20)
+					})
+				}
 			}
-
+			else
+				th.innerHTML = ""
 		})
+	}
+
+})
 </script>
 
 <script>
-	window.garment = <%- garment %>;
+window.garment = <%- garment %>;
 
-		window.vueApp = Vue.createApp({
-			data() {
-				return {
-					orderDate: new Date().toISOString().slice(0, 10),
-					supplierId: "<%= supplierId %>",
-					suppliers: <%- JSON.stringify(suppliers) %>,
-					notes: "<%= orderNumber %>",
-					stockOrderId: "<%= stockOrderId %>",
-					stockOrders: <%- JSON.stringify(stockOrders) %>,
-					received: false,
-					chosenGarments: {
-						Adults: [],
-						Womens: [],
-						Kids: [],
-					},
-					sizes: <%- sizes %>,
-					dirty: false
-				}
-		},
-		methods: {
-			onSelectOrder() {
-				if (this.stockOrderId == "") {
-					// no stock order id
-					this.notes = ""
-					this.supplierId = ""
-					this.orderDate = new Date().toISOString().slice(0, 10)
-					this.chosenGarments.Adults = []
-					this.chosenGarments.Womens = []
-					this.chosenGarments.Kids = []
-					return
-				}				
-				const vue = this
-				// get details of the stock order, and populate the chosen garments
-				fetch(`/stockorder/${this.stockOrderId}`)
-				.then(response => {
-					if (response.ok)
-						return response.json()
-					else {
-						console.log("error", response)
-						throw new Error(response.statusText)
-					}
-				})
-				.then(json => {
-						vue.dirty = false
-						vue.stockOrderId = json.StockOrderId
-						vue.notes = json.Notes
-						vue.orderDate = json.OrderDate
-						vue.supplierId = json.SupplierId
-						vue.chosenGarments.Adults = []
-						vue.chosenGarments.Womens = []
-						vue.chosenGarments.Kids = []
-						json.garments.forEach(g => {
-							const garment = {
-								Code: g.Code,
-								Type: g.Type,
-								Colour: g.Colour,
-								Label: g.Label,
-								GarmentId: g.GarmentId
-							}
-							vue.sizes.Kids.forEach(k => garment[k] = g[k])
-							vue.sizes.Womens.forEach(w => garment[w] = g[w])
-							vue.sizes.Adults.forEach(a => garment[a] = g[a])
-							vue.chosenGarments[g.SizeCategory].push(garment)
-						})
-				})
-				.catch(error => window.alert(`We encountered an error: ${error}`))
+window.vueApp = Vue.createApp({
+	data() {
+		return {
+			orderDate: new Date().toISOString().slice(0, 10),
+			supplierId: "<%= supplierId %>",
+			suppliers: <%- JSON.stringify(suppliers) %>,
+			notes: "<%= orderNumber %>",
+			stockOrderId: "<%= stockOrderId %>",
+			stockOrders: <%- JSON.stringify(stockOrders) %>,
+			received: false,
+			chosenGarments: {
+				Adults: [],
+				Womens: [],
+				Kids: [],
 			},
-			addChosenGarment(sizeCategory, data) {
-				if (!this.chosenGarments[sizeCategory].find(g => g.GarmentId == data.GarmentId )) {
-					this.chosenGarments[sizeCategory].push(data)
-
-					const caption = Array.from(document.querySelectorAll("caption")).find(c => c.textContent == sizeCategory)
-					const table = caption.closest("table")
-					const tr = table.querySelector("tr:last-child")
-					tr.scrollIntoView({behavior:"smooth"})
+			sizes: <%- sizes %>,
+			dirty: false
+		}
+	},
+	methods: {
+		onSelectOrder() {
+			if (this.stockOrderId == "") {
+				// no stock order id
+				this.notes = ""
+				this.supplierId = ""
+				this.orderDate = new Date().toISOString().slice(0, 10)
+				this.chosenGarments.Adults = []
+				this.chosenGarments.Womens = []
+				this.chosenGarments.Kids = []
+				return
+			}				
+			const vue = this
+			// get details of the stock order, and populate the chosen garments
+			fetch(`/stockorder/${this.stockOrderId}`)
+			.then(response => {
+				if (response.ok)
+					return response.json()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
 				}
-
-			},
-			saveItem(evt) {
-				evt.preventDefault()
-				let method = "POST" // POST to insert, when no stock order id
-				let url = "/stockorder"
-				if (this.stockOrderId != "" ) { // PUT to edit
-					url += `/${this.stockOrderId}`
-					method = "PUT"
-				}
-				const data = {
-					orderDate: this.orderDate,
-					supplierId: this.supplierId,
-					notes: this.notes,
-					chosenGarments: this.chosenGarments
-				}
-				let vue = this
-				fetch(url, {
-					method,
-					headers: new Headers({
-						"Content-Type": "application/json"
-					}),
-					body: JSON.stringify(data)
-				})
-				.then(response => {
-					if (response.ok)
-						return response.text()
-					else {
-						console.log("error", response)
-						throw new Error(response.statusText)
-					}
-				})
-				.then(text => {
+			})
+			.then(json => {
 					vue.dirty = false
-					vue.stockOrderId = text
-					document.getElementById("successDialog").showModal()
-					vue.stockOrders.push({
-						StockOrderId: vue.stockOrderId,
-						Company: vue.suppliers.find(s => s.SupplierId == vue.supplierId).Company,
-						OrderDate: vue.orderDate,
-						Notes: vue.notes
+					vue.stockOrderId = json.StockOrderId
+					vue.notes = json.Notes
+					vue.orderDate = json.OrderDate
+					vue.supplierId = json.SupplierId
+					vue.chosenGarments.Adults = []
+					vue.chosenGarments.Womens = []
+					vue.chosenGarments.Kids = []
+					json.garments.forEach(g => {
+						const garment = {
+							Code: g.Code,
+							Type: g.Type,
+							Colour: g.Colour,
+							Label: g.Label,
+							GarmentId: g.GarmentId
+						}
+						vue.sizes.Kids.forEach(k => garment[k] = g[k])
+						vue.sizes.Womens.forEach(w => garment[w] = g[w])
+						vue.sizes.Adults.forEach(a => garment[a] = g[a])
+						vue.chosenGarments[g.SizeCategory].push(garment)
 					})
-				})
-				.catch(error => window.alert(`We encountered an error: ${error}`))
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+		},
+		addChosenGarment(sizeCategory, data) {
+			if (!this.chosenGarments[sizeCategory].find(g => g.GarmentId == data.GarmentId )) {
+				this.chosenGarments[sizeCategory].push(data)
 
-			},
-			printItem() {
-				window.open("/purchasing/purchaseorder/" + this.stockOrderId)
-			},
-			receiveOrder() {
-				if (this.dirty) {
-					return
+				const caption = Array.from(document.querySelectorAll("caption")).find(c => c.textContent == sizeCategory)
+				const table = caption.closest("table")
+				const tr = table.querySelector("tr:last-child")
+				tr.scrollIntoView({behavior:"smooth"})
+			}
+
+		},
+		saveItem(evt) {
+			evt.preventDefault()
+			let method = "POST" // POST to insert, when no stock order id
+			let url = "/stockorder"
+			if (this.stockOrderId != "" ) { // PUT to edit
+				url += `/${this.stockOrderId}`
+				method = "PUT"
+			}
+			const data = {
+				orderDate: this.orderDate,
+				supplierId: this.supplierId,
+				notes: this.notes,
+				chosenGarments: this.chosenGarments
+			}
+			let vue = this
+			fetch(url, {
+				method,
+				headers: new Headers({
+					"Content-Type": "application/json"
+				}),
+				body: JSON.stringify(data)
+			})
+			.then(response => {
+				if (response.ok)
+					return response.text()
+				else {
+					console.log("error", response)
+					throw new Error(response.statusText)
 				}
-				const vue = this
-				fetch(`/stockorder/receiveorder/${this.stockOrderId}`, { 
-					method: "PUT",
+			})
+			.then(text => {
+				vue.dirty = false
+				vue.stockOrderId = text
+				document.getElementById("successDialog").showModal()
+				vue.stockOrders.push({
+					StockOrderId: vue.stockOrderId,
+					Company: vue.suppliers.find(s => s.SupplierId == vue.supplierId).Company,
+					OrderDate: vue.orderDate,
+					Notes: vue.notes
 				})
-				.then(response => {
-					if (response.ok) {
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+
+		},
+		printItem() {
+			window.open("/purchasing/purchaseorder/" + this.stockOrderId)
+		},
+		receiveOrder() {
+			if (this.dirty) {
+				return
+			}
+			const vue = this
+			fetch(`/stockorder/receiveorder/${this.stockOrderId}`, { 
+				method: "PUT",
+			})
+			.then(response => {
+				if (response.ok) {
+					// all garments have been received, the database deleted the stock order, so reset our UI
+					vue.chosenGarments.Adults = []
+					vue.chosenGarments.Womens = []
+					vue.chosenGarments.Kids = []
+					vue.stockOrders = vue.stockOrders.filter(s => s.StockOrderId != vue.stockOrderId)
+					vue.orderDate = new Date().toISOString().slice(0, 10)
+					vue.supplierId = ""
+					vue.notes = ""
+					vue.stockOrderId = ""
+				}
+				else {
+					throw new Error(response.statusText)
+				}
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+		},
+		receiveGarment(garment, sizeCategory) {
+			if (this.dirty) {
+				return
+			}
+
+			const vue = this
+			fetch(`/stockorder/receivegarment/${this.stockOrderId}`, {
+				method: "POST", 
+				body: JSON.stringify(garment),
+				headers: new Headers({"Content-Type": "application/json"})
+			})
+			.then(response => {
+				if (response.ok) {
+					// remove it from the garment list
+					vue.chosenGarments[sizeCategory] = vue.chosenGarments[sizeCategory].filter(g => g.GarmentId != garment.GarmentId)
+					if ((vue.chosenGarments.Adults.length + vue.chosenGarments.Kids.length + vue.chosenGarments.Womens.length) == 0) {
 						// all garments have been received, the database deleted the stock order, so reset our UI
-						vue.chosenGarments.Adults = []
-						vue.chosenGarments.Womens = []
-						vue.chosenGarments.Kids = []
 						vue.stockOrders = vue.stockOrders.filter(s => s.StockOrderId != vue.stockOrderId)
 						vue.orderDate = new Date().toISOString().slice(0, 10)
 						vue.supplierId = ""
 						vue.notes = ""
 						vue.stockOrderId = ""
 					}
-					else {
-						throw new Error(response.statusText)
-					}
-				})
-				.catch(error => window.alert(`We encountered an error: ${error}`))
-			},
-			receiveGarment(garment, sizeCategory) {
-				if (this.dirty) {
-					return
 				}
-
-				const vue = this
-				fetch(`/stockorder/receivegarment/${this.stockOrderId}`, {
-					method: "POST", 
-					body: JSON.stringify(garment),
-					headers: new Headers({"Content-Type": "application/json"})
-				})
-				.then(response => {
-					if (response.ok) {
-						// remove it from the garment list
-						vue.chosenGarments[sizeCategory] = vue.chosenGarments[sizeCategory].filter(g => g.GarmentId != garment.GarmentId)
-						if ((vue.chosenGarments.Adults.length + vue.chosenGarments.Kids.length + vue.chosenGarments.Womens.length) == 0) {
-							// all garments have been received, the database deleted the stock order, so reset our UI
-							vue.stockOrders = vue.stockOrders.filter(s => s.StockOrderId != vue.stockOrderId)
-							vue.orderDate = new Date().toISOString().slice(0, 10)
-							vue.supplierId = ""
-							vue.notes = ""
-							vue.stockOrderId = ""
-						}
-					}
-					else {
-						throw new Error(response.statusText)
-					}
-				})
-				.catch(error => window.alert(`We encountered an error: ${error}`))
-			},
-			removeGarment(id, sizeCategory) {
-
-				if (this.stockOrderId == "") {
-					// the order hasn't been saved yet, so just remove the garment from the UI
-					this.chosenGarments[sizeCategory] = this.chosenGarments[sizeCategory].filter(g => g.GarmentId != id)
-					return
+				else {
+					throw new Error(response.statusText)
 				}
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+		},
+		removeGarment(id, sizeCategory) {
 
-				const vue = this
-				fetch(`/stockorder/removegarment/${this.stockOrderId}/${id}`, {method: "PUT"})
-				.then(response => {
-					if (response.ok) return response.text()
-					else  {
-						console.log("error", response)
-						throw new Error(response.statusText)
-					}
-				})
-				.then(text => {
-					vue.chosenGarments[sizeCategory] = vue.chosenGarments[sizeCategory].filter(g => g.GarmentId != id)
-				})
-				.catch(error => window.alert(`We encountered an error: ${error}`))
+			if (this.stockOrderId == "") {
+				// the order hasn't been saved yet, so just remove the garment from the UI
+				this.chosenGarments[sizeCategory] = this.chosenGarments[sizeCategory].filter(g => g.GarmentId != id)
+				return
+			}
 
-			},
-			isInvalid() {
-				return this.supplierId == "" || 
-					(this.chosenGarments.Adults.length==0 && this.chosenGarments.Womens.length==0 && this.chosenGarments.Kids.length==0)
-			},
-			getCount(sizeCategory, garment) {
-				return this.sizes[sizeCategory].reduce((acc, curr) => {
-					return acc += garment[curr] ?? 0
-				}, 0)
-			},
-			getTotalProducts() {
-				let total = 0
-				for (sizeCategory in this.chosenGarments) {
-					for (garment of this.chosenGarments[sizeCategory]) {
-						for (size of this.sizes[sizeCategory]) {
-							if (garment[size]) {
-								total += garment[size]
-							}
+			const vue = this
+			fetch(`/stockorder/removegarment/${this.stockOrderId}/${id}`, {method: "PUT"})
+			.then(response => {
+				if (response.ok) return response.text()
+				else  {
+					console.log("error", response)
+					throw new Error(response.statusText)
+				}
+			})
+			.then(text => {
+				vue.chosenGarments[sizeCategory] = vue.chosenGarments[sizeCategory].filter(g => g.GarmentId != id)
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`))
+
+		},
+		isInvalid() {
+			return this.supplierId == "" || 
+				(this.chosenGarments.Adults.length==0 && this.chosenGarments.Womens.length==0 && this.chosenGarments.Kids.length==0)
+		},
+		getCount(sizeCategory, garment) {
+			return this.sizes[sizeCategory].reduce((acc, curr) => {
+				return acc += garment[curr] ?? 0
+			}, 0)
+		},
+		getTotalProducts() {
+			let total = 0
+			for (sizeCategory in this.chosenGarments) {
+				for (garment of this.chosenGarments[sizeCategory]) {
+					for (size of this.sizes[sizeCategory]) {
+						if (garment[size]) {
+							total += garment[size]
 						}
 					}
 				}
-				return total
-			},
-			reset() {
-				this.stockOrderId=''
+			}
+			return total
+		},
+		reset() {
+			this.stockOrderId=''
+			this.onSelectOrder()
+		},
+		onNotesKeyDown(event) {
+			//when finished with notes, jump directly to the products grid
+			console.log(event, event.code)
+			event.preventDefault()
+			document.querySelector("#garmentTable input:first-child").focus()
+			document.querySelector("#garmentTable").scrollIntoView({behavior:"smooth"})
+		}
+	},
+	mounted() {
+		if (window.garment) {
+			this.chosenGarments[garment.SizeCategory].push(garment)
+		}
+
+		if (window.location.search) {
+			const search = window.location.search.slice(1)
+			const searchParts = search.split("&")
+			const searchId = searchParts.find(s => s.startsWith("id="))
+			if (searchId) {
+				const id = searchId.slice(3)
+				this.stockOrderId = id
 				this.onSelectOrder()
 			}
-				
-			
-		},
-		mounted() {
-			if (window.garment) {
-				this.chosenGarments[garment.SizeCategory].push(garment)
-			}
-
-			if (window.location.search) {
-				const search = window.location.search.slice(1)
-				const searchParts = search.split("&")
-				const searchId = searchParts.find(s => s.startsWith("id="))
-				if (searchId) {
-					const id = searchId.slice(3)
-					this.stockOrderId = id
-					this.onSelectOrder()
-				}
 		}
-			}
-	}).mount("#vueApp")
+	}
+}).mount("#vueApp")
 
 
 	</script>
