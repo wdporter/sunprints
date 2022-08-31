@@ -45,15 +45,15 @@
 
 
 
-	<h1 class="no-print">
+	<p class="no-print">
 		<ul>
 		<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
 		<li>Use the Destination/Printer option to save a PDF 
 		<li>Under <i>More settings</i> you can remove the header/footer
-		<% if (supplier.Email != null && supplier.Email.length > 0) { %> <li><a href="mailto:<%= supplier.Email %>?subject=SunPrints%20Order">Email the supplier</a><% } %>
+		<% if (supplier.Email != null && supplier.Email.length > 0) { %> <li><a href="mailto:<%= supplier.Email %>?subject=SunPrints%20Order">Email the supplier</a><% } %> (multiple email addresses should be separated with a comma)
 	</ul>
 		<hr>
-	</h1>
+</p>
 <!-- <%- JSON.stringify(supplier) %><br>
 <%- JSON.stringify(garments) %> -->
 
@@ -131,7 +131,7 @@ for (var sizeCategory in garments) {
 			<table class="sizes-table">
 				<tr>
 					<% for (var size of sizes[sizeCategory]) { %>
-							<th><%= size.slice(1) %>
+							<th><%= size.slice(1) == "Sm" ? "S" : size.slice(1) %>
 						<% } %>
 				<tr>
 					<% for (var size of sizes[sizeCategory]) { %>
