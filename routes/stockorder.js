@@ -127,11 +127,12 @@ router.post("/", function (req, res) {
 					}
 				})
 
-				if (count == 0) {
-					db.prepare("COMMIT")
-					res.send(String(req.body.stockOrderId))
-					return // we don't save it if the values add up to 0
-				}
+				// if (count == 0) {
+				// 	db.prepare("COMMIT")
+				// 	res.send(String(req.body.stockOrderId))
+				// 	return // we don't save it if the values add up to 0  
+				// HA! yes we do…
+				// }
 
 				const mySizes = []
 				insert += `, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime ) VALUES ( 
@@ -357,8 +358,9 @@ router.put("/:id", function (req, res) {
 					}
 				})
 
-				if (count == 0)
-					return // we don't save it if the values add up to 0
+				// if (count == 0)
+				// 	return // we don't save it if the values add up to 0
+				// commented out because it turns out, yes we do!
 
 
 				insert += `, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime ) VALUES ( 
