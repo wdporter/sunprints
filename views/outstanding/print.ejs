@@ -20,9 +20,9 @@ td {
 		text-align: center;
 	}
 	
-	/* customer */
+	/* customer, don't forget this is in print also */
 	td:nth-child(6) {
-		max-width: 150px;
+		max-width: 250px;
 		white-space: nowrap;
 		overflow: hidden;
 	}
@@ -36,6 +36,12 @@ td {
   .no-print {
     display: none
   }
+	/* customer, same as above but width is smaller */
+	td:nth-child(6) {
+		max-width: 150px;
+		white-space: nowrap;
+		overflow: hidden;
+	}
 }
 
 </style>
