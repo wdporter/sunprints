@@ -805,7 +805,7 @@ router.get("/outstanding/print", (req, res) => {
 		bpd.Code AS BackDesign, 
 		ppd.Code AS PocketDesign, 
 		spd.Code AS SleeveDesign,
-		K0 + K1 + K2 + K4 + K6 + K8 + K10 + K12 + K14 + K16 + W6 + W8 + W10 + W12 + W14 + W16 + W18 + W20 + W22 + W24 + W26 + W28 + AXS + ASm + AM + AL + AXL + A2XL + A3XL + A4XL + A6XL + A7XL + A8XL AS Qty
+		${sz.allSizes.join(" + ")} AS Qty
 		FROM Orders
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
@@ -823,8 +823,7 @@ router.get("/outstanding/print", (req, res) => {
 		}
 
 
-		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
-		ORDER BY 2 ASC`
+		query += ` ORDER BY 2 ASC `
 
 		const statement = db.prepare(query)
 
