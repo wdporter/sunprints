@@ -1638,6 +1638,13 @@ router.put("/:id", function (req, res) {
 			res.status(400).end()
 			return
 		}
+		if (!req.body.SalesRep) {
+			res.statusMessage = "We require a sales rep"
+			res.status(400).end()
+			return
+		}
+		if (req.body.Terms == "")
+			req.body.Terms = null
 
 		// can't duplicate order numbers
 		if (db.prepare("SELECT COUNT(*) AS Count FROM Orders WHERE OrderNumber=? AND OrderId <> ?").get(req.body.OrderNumber, req.params.id).Count > 0) {
@@ -1686,14 +1693,22 @@ router.put("/:id", function (req, res) {
 		}
 
 		// we now must also update the SalesTotal table -- no audit columns or logs
+		// rename InvoiceDate
 		if (changedColumns.includes("InvoiceDate")) {
 			req.body.DateInvoiced = req.body.InvoiceDate
 			changedColumns.push("DateInvoiced")
 			changedColumns = changedColumns.filter(c => c != "InvoiceDate")
-
 		}
-		query = `UPDATE SalesTotal SET ${changedColumns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime").map(c => ` ${c}=@${c} `).join(", ")} WHERE OrderId=@OrderId `
-		info = db.prepare(query).run(req.body)
+		// delete DeliveryDAte
+		if (changedColumns.includes("DeliveryDate")) {
+			changedColumns = changedColumns.filter(c => c != "DeliveryDate")
+		}
+
+		changedColumns = changedColumns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime")
+		if (changedColumns.length > 0) { // which could happen if DeliveryDate is the only thing that changed
+			query = `UPDATE SalesTotal SET ${changedColumns.map(c => ` ${c}=@${c} `).join(", ")} WHERE OrderId=@OrderId `
+			info = db.prepare(query).run(req.body)
+		}
 		console.log(info)
 
 
