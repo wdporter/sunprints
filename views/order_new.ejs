@@ -369,6 +369,10 @@ table#stockWarningTable {
 			mode: "<%= mode %>"
 		}
 
+		if (window.sunprints.mode == "new") {
+			document.getElementById("deliveryDate").value = window.localStorage.getItem("deliveryDate")
+		}
+
 		document.getElementById("garmentSection").style.display = window.sunprints.mode == "edit" ? "block" : "none"
 		document.getElementById("invoiceDatePara").style.display = window.sunprints.mode == "edit" ? "block" : "none"
 		document.getElementById("printJobButton").style.display = window.sunprints.mode == "edit" ? "inline" : "none"
@@ -496,6 +500,9 @@ table#stockWarningTable {
 						document.getElementById("printJobButton").style.display = "inline"
 						document.getElementById("shipOrderButton").style.display = "inline"
 					}
+
+					// save the delivery date because they want to prepopulate the next order
+					window.localStorage.setItem("deliveryDate", order.DeliveryDate)
 					
 				})
 				.catch(error => {
