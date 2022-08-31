@@ -84,7 +84,7 @@
 <p>
 	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save Purchase Order</button>&emsp;
 	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == '' || dirty==true" value="Print Purchase Order" />&emsp;
-	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true" style="float:right">Receive Order</button>
+	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true" id=receiveOrder>Receive Order</button>
 </p>
 
 <dialog id="successDialog">

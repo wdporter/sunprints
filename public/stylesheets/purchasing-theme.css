@@ -18,3 +18,9 @@ button+button {
 select:invalid {
 	border-color: red
 }
+
+button#receiveOrder {
+	border: 5px red solid;
+	box-sizing: content-box;
+	float:right;
+}
