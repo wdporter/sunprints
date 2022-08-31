@@ -114,6 +114,7 @@
 
 
 <% 
+let sum = 0
 for (var sizeCategory in garments) { 
 	const myGarments = garments[sizeCategory]
 	%>
@@ -136,6 +137,10 @@ for (var sizeCategory in garments) {
 					<% for (var size of sizes[sizeCategory]) { %>
 						<td><%= garment[size]  %>
 					<% } %>
+					<tr>
+						<% const thisGarmentSum =  sizes[sizeCategory].reduce((acc, curr)=> {return acc +  garment[curr] }, 0);
+						sum += thisGarmentSum %>
+					<td colspan=<%= sizes[sizeCategory].length %>>Total: <%= thisGarmentSum  %>
 				<tr>
 					<td colspan=<%= sizes[sizeCategory].length %>><%= garment.Notes %>
 			</table>
@@ -145,7 +150,7 @@ for (var sizeCategory in garments) {
 	<% } %>
 	<% } %>
 
-
+<b>Total Garments:</b> <%= sum %>
 	<script>
 		window.print()
 	</script>
