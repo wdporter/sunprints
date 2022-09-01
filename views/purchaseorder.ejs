@@ -45,15 +45,15 @@
 
 
 
-	<h1 class="no-print">
+	<p class="no-print">
 		<ul>
 		<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
 		<li>Use the Destination/Printer option to save a PDF 
 		<li>Under <i>More settings</i> you can remove the header/footer
-		<% if (supplier.Email != null && supplier.Email.length > 0) { %> <li><a href="mailto:<%= supplier.Email %>?subject=SunPrints%20Order">Email the supplier</a><% } %>
+		<% if (supplier.Email != null && supplier.Email.length > 0) { %> <li><a href="mailto:<%= supplier.Email %>?subject=SunPrints%20Order">Email the supplier</a><% } %> (multiple email addresses should be separated with a comma)
 	</ul>
 		<hr>
-	</h1>
+</p>
 <!-- <%- JSON.stringify(supplier) %><br>
 <%- JSON.stringify(garments) %> -->
 
@@ -114,6 +114,7 @@
 
 
 <% 
+let sum = 0
 for (var sizeCategory in garments) { 
 	const myGarments = garments[sizeCategory]
 	%>
@@ -130,12 +131,16 @@ for (var sizeCategory in garments) {
 			<table class="sizes-table">
 				<tr>
 					<% for (var size of sizes[sizeCategory]) { %>
-							<th><%= size.slice(1) %>
+							<th><%= size.slice(1) == "Sm" ? "S" : size.slice(1) %>
 						<% } %>
 				<tr>
 					<% for (var size of sizes[sizeCategory]) { %>
 						<td><%= garment[size]  %>
 					<% } %>
+					<tr>
+						<% const thisGarmentSum =  sizes[sizeCategory].reduce((acc, curr)=> {return acc +  garment[curr] }, 0);
+						sum += thisGarmentSum %>
+					<td colspan=<%= sizes[sizeCategory].length %>>Total: <%= thisGarmentSum  %>
 				<tr>
 					<td colspan=<%= sizes[sizeCategory].length %>><%= garment.Notes %>
 			</table>
@@ -145,7 +150,7 @@ for (var sizeCategory in garments) {
 	<% } %>
 	<% } %>
 
-
+<b>Total Garments:</b> <%= sum %>
 	<script>
 		window.print()
 	</script>

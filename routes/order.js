@@ -21,13 +21,13 @@ router.get("/dt", function (req, res, next) {
 
 		const recordsTotal = db.prepare(`SELECT Count(*) as count 
 FROM Orders  
-WHERE Deleted=0 AND Done=0  `).get().count
+WHERE Deleted=0 AND ProcessedDate IS NULL `).get().count
 		let recordsFiltered = recordsTotal
 
 		let query = `SELECT Orders.*, Customer.Company AS CustomerName 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId   
-WHERE Orders.Deleted=0   `
+WHERE Orders.Deleted=0 AND ProcessedDate IS NULL  `
 		if (req.query.search.value)
 			req.query.search.value = req.query.search.value.trim()
 
@@ -38,7 +38,7 @@ WHERE Orders.Deleted=0   `
 			recordsFiltered = db.prepare(`SELECT Count(*) AS count 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
-WHERE Orders.Deleted=0 
+WHERE Orders.Deleted=0 AND ProcessedDate IS NULL 
 ${whereClause}`).get().count
 			query += whereClause
 		}
@@ -805,7 +805,7 @@ router.get("/outstanding/print", (req, res) => {
 		bpd.Code AS BackDesign, 
 		ppd.Code AS PocketDesign, 
 		spd.Code AS SleeveDesign,
-		K0 + K1 + K2 + K4 + K6 + K8 + K10 + K12 + K14 + K16 + W6 + W8 + W10 + W12 + W14 + W16 + W18 + W20 + W22 + W24 + W26 + W28 + AXS + ASm + AM + AL + AXL + A2XL + A3XL + A4XL + A6XL + A7XL + A8XL AS Qty
+		${sz.allSizes.join(" + ")} AS Qty
 		FROM Orders
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
@@ -823,8 +823,7 @@ router.get("/outstanding/print", (req, res) => {
 		}
 
 
-		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
-		ORDER BY 2 ASC`
+		query += ` ORDER BY 2 ASC `
 
 		const statement = db.prepare(query)
 
@@ -1638,6 +1637,13 @@ router.put("/:id", function (req, res) {
 			res.status(400).end()
 			return
 		}
+		if (!req.body.SalesRep) {
+			res.statusMessage = "We require a sales rep"
+			res.status(400).end()
+			return
+		}
+		if (req.body.Terms == "")
+			req.body.Terms = null
 
 		// can't duplicate order numbers
 		if (db.prepare("SELECT COUNT(*) AS Count FROM Orders WHERE OrderNumber=? AND OrderId <> ?").get(req.body.OrderNumber, req.params.id).Count > 0) {
@@ -1686,14 +1692,22 @@ router.put("/:id", function (req, res) {
 		}
 
 		// we now must also update the SalesTotal table -- no audit columns or logs
+		// rename InvoiceDate
 		if (changedColumns.includes("InvoiceDate")) {
 			req.body.DateInvoiced = req.body.InvoiceDate
 			changedColumns.push("DateInvoiced")
 			changedColumns = changedColumns.filter(c => c != "InvoiceDate")
-
 		}
-		query = `UPDATE SalesTotal SET ${changedColumns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime").map(c => ` ${c}=@${c} `).join(", ")} WHERE OrderId=@OrderId `
-		info = db.prepare(query).run(req.body)
+		// delete DeliveryDAte
+		if (changedColumns.includes("DeliveryDate")) {
+			changedColumns = changedColumns.filter(c => c != "DeliveryDate")
+		}
+
+		changedColumns = changedColumns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime")
+		if (changedColumns.length > 0) { // which could happen if DeliveryDate is the only thing that changed
+			query = `UPDATE SalesTotal SET ${changedColumns.map(c => ` ${c}=@${c} `).join(", ")} WHERE OrderId=@OrderId `
+			info = db.prepare(query).run(req.body)
+		}
 		console.log(info)
 
 

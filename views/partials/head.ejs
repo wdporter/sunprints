@@ -61,16 +61,71 @@
 	<header>
 		<nav>
 			<h1><a href=/><img src="/images/banner.webp" /></a></h1>
-			<ul>
-				<li><a href=/>Home</a></li>
-				<li><a href=/order/new >New Order</a></li>
-				<li><a href=/order >Orders</a></li>
-				<li><a href=/garment >Products</a></li>
-				<li><a href=/purchasing >Purchasing</a></li>
-				<li><a href=/sales >History</a></li>
-			</ul>
+		</nav>
+		<nav class="navbar">
+			<div class="dropdown">
+				<button class="dropbtn">Orders<i class="fa fa-caret-down"></i></button>
+				<div class="dropdown-content">
+					<a href=/order/new>New Order</a>
+					<a href=/order>Oustanding Orders</a>
+					<a href=/sales>Sales History</a>
+					<a href=/customer>Customers</a>
+				</div>
+			</div> 
+			<div class="dropdown">
+				<button class="dropbtn">Products 
+					<i class="fa fa-caret-down"></i>
+				</button>
+				<div class="dropdown-content">
+					<a href=/purchasing>Purchase Orders</a>
+					<a href=/garment>Products</a>
+					<a href=/supplier>Suppliers</a>
+					<a href=/garment/warninglist target="_blank">Print Warning List</a>
+				</div>
+			</div> 
+			<div class="dropdown">
+				<button class="dropbtn">Designs 
+					<i class="fa fa-caret-down"></i>
+				</button>
+				<div class="dropdown-content">
+					<a href=/print>Prints</a>
+					<a href=/screen>Screens</a>
+					<a href=/embroidery>Embroidery</a>
+					<a href=/usb>Usbs</a>
+					<a href=/transfer>Transfers</a>
+					<a href=/transfer/name>Transfer names</a>
+				</div>
+			</div>
+			<div class="dropdown">
+				<button class="dropbtn">Deleted  
+					<i class="fa fa-caret-down"></i>
+				</button>
+				<div class="dropdown-content">
+					<a href="/customer/deleted">Customers</a>
+					<a href="/order/deleted">Orders</a>
+					<a href="/supplier/deleted">Suppliers</a>
+					<a href="/garment/deleted">Garments</a>
+					<a href="/print/deleted">Print designs</a>
+					<a href=/screen/deleted>Screens</a>
+					<a href=/embroidery/deleted>Embroidery designs</a>
+					<a href=/usb/deleted>Usbs</a>
+					<a href=/transfer/deleted>Transfer designs</a>
+					<a href=/transfer/name/deleted>Transfer names</a>
+				</div>
+			</div>
+			<div class="dropdown">
+				<button class="dropbtn">Admin 
+					<i class="fa fa-caret-down"></i>
+				</button>
+				<div class="dropdown-content">
+					<a href=/rep>Sales Reps</a>
+					<a href=/user>Users</a>
+					<a href=/auditlog>Audit Log</a>
+				</div>
+			</div> 
 		</nav>
 	</header>
+
 
 	<main>
 		<h1>SunPrints — <%- title %></h1>

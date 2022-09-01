@@ -16,6 +16,84 @@ body>header a {
 	color: darkblue;
 }
 
+
+/* navbar */
+
+header nav :last-child {
+	text-align: unset; /* set by gd css */
+}
+
+.navbar {
+	overflow: hidden;
+	background-color: orange;
+	display: block;
+	margin-top: 1em;
+	margin-bottom: -1em;
+}
+
+.navbar a {
+  float: left;
+  font-size: 20px;
+  color: darkblue;
+	font-weight: bold;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+.dropdown {
+  float: left;
+  overflow: hidden;
+}
+
+.dropdown .dropbtn {
+  font-size: 20px;  
+  border: none;
+  outline: none;
+  color: darkblue;
+	font-weight: bold;
+  padding: 14px 16px;
+  background-color: inherit;
+  font-family: inherit;
+  margin: 0;
+}
+
+.navbar a:hover, .dropdown:hover .dropbtn {
+  background-color: rgba(255, 165, 0, .75);
+	color: darkblue;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  float: none;
+  color: darkblue;
+	background-color: rgba(255, 165, 0, .75);
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.dropdown-content a:hover {
+  background-color: #ddd;
+	background-color: orange;
+	color: darkblue;
+	text-decoration: none;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+/* end navbar */
+
 main {
 	background-color: white;
 }
