@@ -822,9 +822,6 @@ router.get("/outstanding/print", (req, res) => {
 				query += " AND SalesRep = ? "
 		}
 
-		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
-		ORDER BY 2 ASC`
-
 		const statement = db.prepare(query)
 
 		if (req.query.rep == "All" || req.query.rep == "none")
@@ -856,8 +853,11 @@ router.get("/outstanding/print", (req, res) => {
 		})
 
 		const r2set = []
-		for (r in r2)
-			r2set.push(r2[r])
+		for (r in r2) {
+			// see if any of them have print designs, if so keep it
+			if (r2[r].FrontDesign || r2[r].BackDesign || r2[r].PocketDesign || r2[r].SleeveDesign)
+				r2set.push(r2[r])
+		}
 
 		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
@@ -946,8 +946,11 @@ router.get("/outstanding/embroidery", (req, res) => {
 		})
 
 		const r2set = []
-		for (r in r2)
-			r2set.push(r2[r])
+		for (r in r2) {
+			// see if any of them have print designs, if so keep it
+			if (r2[r].FrontDesign || r2[r].BackDesign || r2[r].PocketDesign || r2[r].SleeveDesign)
+				r2set.push(r2[r])
+		}
 
 		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
@@ -1036,8 +1039,11 @@ router.get("/outstanding/transfer", (req, res) => {
 		})
 
 		const r2set = []
-		for (r in r2)
-			r2set.push(r2[r])
+		for (r in r2) {
+			// see if any of them have print designs, if so keep it
+			if (r2[r].FrontDesign || r2[r].BackDesign || r2[r].PocketDesign || r2[r].SleeveDesign)
+				r2set.push(r2[r])
+		}
 
 		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
