@@ -822,8 +822,8 @@ router.get("/outstanding/print", (req, res) => {
 				query += " AND SalesRep = ? "
 		}
 
-
-		query += ` ORDER BY 2 ASC `
+		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
+		ORDER BY 2 ASC`
 
 		const statement = db.prepare(query)
 
