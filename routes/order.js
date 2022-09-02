@@ -1130,7 +1130,7 @@ router.get("/outstanding/promo", (req, res) => {
 		salesReps.push("none")
 
 		res.render("outstanding/print.ejs", {
-			name: "Promo / Sub",
+			name: "Promo / Sub / Plain Stock",
 			results: r2set,
 			salesReps,
 			chosenRep: req.query?.rep ?? "All"
