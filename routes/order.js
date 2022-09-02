@@ -813,7 +813,7 @@ router.get("/outstanding/print", (req, res) => {
 		LEFT JOIN PrintDesign bpd ON bpd.PrintDesignId=OrderGarment.BackPrintDesignId
 		LEFT JOIN PrintDesign ppd ON ppd.PrintDesignId=OrderGarment.PocketPrintDesignId
 		LEFT JOIN PrintDesign spd ON spd.PrintDesignId=OrderGarment.SleevePrintDesignId
-		WHERE 1=1 `
+		WHERE ProcessedDate IS NULL `
 
 		if (req.query.rep !== "All") {
 			if (req.query.rep == "none")
@@ -905,7 +905,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 		LEFT JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=OrderGarment.BackEmbroideryDesignId
 		LEFT JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=OrderGarment.PocketEmbroideryDesignId
 		LEFT JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=OrderGarment.SleeveEmbroideryDesignId
-		WHERE 1=1 `
+		WHERE ProcessedDate IS NULL `
 
 		if (req.query.rep !== "All") {
 			if (req.query.rep == "none")
@@ -994,7 +994,7 @@ router.get("/outstanding/transfer", (req, res) => {
 		LEFT JOIN TransferDesign btd ON btd.TransferDesignId=OrderGarment.BackTransferDesignId
 		LEFT JOIN TransferDesign ptd ON ptd.TransferDesignId=OrderGarment.PocketTransferDesignId
 		LEFT JOIN TransferDesign std ON std.TransferDesignId=OrderGarment.SleeveTransferDesignId
-		WHERE 1=1 `
+		WHERE ProcessedDate IS NULL `
 
 		if (req.query.rep !== "All") {
 			if (req.query.rep == "none")
@@ -1079,7 +1079,7 @@ router.get("/outstanding/promo", (req, res) => {
 		FROM Orders
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
-		WHERE 1=1 `
+		WHERE ProcessedDate IS NULL `
 
 		if (req.query.rep !== "All") {
 			if (req.query.rep == "none")
