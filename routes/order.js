@@ -678,7 +678,7 @@ router.get("/dt/garments/:orderId", function (req, res) {
 		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		// || is the concatenation operator in sqlite
-		let statement = db.prepare(`SELECT Garment.Code || ' ' || Label || ' ' || ' ' || Type || ' ' || Garment.Colour AS Garment, Price, 	
+		let statement = db.prepare(`SELECT Garment.Code || ' ' || Label || ' ' || ' ' || Type || ' ' || Garment.Colour AS Product, Price, 	
   OrderGarment.K0, OrderGarment.K1, OrderGarment.K2, OrderGarment.K4, OrderGarment.K6, OrderGarment.K8, OrderGarment.K10,	OrderGarment.K12, OrderGarment.K14, OrderGarment.K16,
   OrderGarment.W6, OrderGarment.W8, OrderGarment.W10, OrderGarment.W12, OrderGarment.W14, OrderGarment.W16, OrderGarment.W18, OrderGarment.W20, OrderGarment.W22, OrderGarment.W24, OrderGarment.W26, OrderGarment.W28, 
   OrderGarment.AXS, OrderGarment.ASm, OrderGarment.AM, OrderGarment.AL, OrderGarment.AXL, OrderGarment.A2XL, OrderGarment.A3XL, OrderGarment.A4XL, OrderGarment.A5XL, OrderGarment.A6XL, OrderGarment.A7XL, OrderGarment.A8XL
@@ -1286,6 +1286,7 @@ router.post("/:id/garment", function (req, res) {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
+		db.prepare("BEGIN TRANSACTION").run()
 
 		const date = new Date().toLocaleString()
 
@@ -1369,9 +1370,6 @@ router.post("/:id/garment", function (req, res) {
 				return
 			}
 
-			db.prepare("BEGIN TRANSACTION").run()
-
-
 			let query = `UPDATE OrderGarment SET ${columns.map(c => ` ${c}=@${c} `).join(", ")} WHERE OrderGarmentId=@OrderGarmentId`
 			let statement = db.prepare(query)
 			let info = statement.run(req.body)
@@ -1406,7 +1404,6 @@ router.post("/:id/garment", function (req, res) {
 				info = statement.run(req.body)
 				console.log(info)
 			}
-			db.prepare("COMMIT").run()
 
 			if (myOrderGarment.BuyIn) {
 				const warnings = getWarnings(db, myOrderGarment.GarmentId)
@@ -1422,8 +1419,6 @@ router.post("/:id/garment", function (req, res) {
 				res.send({ message: "ok" }).end()
 			}
 
-			try {
-				db.prepare("BEGIN TRANSACTION").run()
 				// add the update to AuditLog
 				statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
 				info = statement.run("OrderGarment", req.body.OrderGarmentId, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
@@ -1447,14 +1442,6 @@ router.post("/:id/garment", function (req, res) {
 						statement.run(info.lastInsertRowid, size, myGarment[size], myGarment[size] - (req.body[size] - myOrderGarment[size]))
 					}
 				}
-
-				db.prepare("COMMIT").run()
-			}
-			catch (ex) {
-				console.log(ex)
-				db.prepare("ROLLBACK").run()
-			}
-
 
 		} // end mode = update
 
@@ -1523,7 +1510,6 @@ router.post("/:id/garment", function (req, res) {
 				}
 
 			}
-			db.prepare("BEGIN TRANSACTION").run()
 
 			let query = `INSERT INTO OrderGarment (
 ${columns.join(", ")}
@@ -1554,9 +1540,6 @@ WHERE GarmentId = @GarmentId `
 			console.log(info)
 
 
-
-			db.prepare("COMMIT").run()
-
 			const myOrder = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(req.body.OrderId)
 			if (myOrder.BuyIn) {
 				const warnings = getWarnings(db, req.body.GarmentId)
@@ -1574,46 +1557,38 @@ WHERE GarmentId = @GarmentId `
 				res.send({ OrderGarmentId: orderGarmentId }).end()
 			}
 
-			try {
-				db.prepare("BEGIN TRANSACTION").run()
-				// add the insert to AuditLog
-				statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-				info = statement.run("OrderGarment", orderGarmentId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
+			// add the insert to AuditLog
+			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+			info = statement.run("OrderGarment", orderGarmentId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
 
-				// add the insert to AuditLogEntry
-				for (col of columns) {
-					if (col.startsWith("Created") || col.startsWith("LastM"))
-						continue
-					statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
-					statement.run(info.lastInsertRowid, col, req.body[col])
-				}
-				// add the update to AuditLog
-				statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-				info = statement.run("Garment", req.body.GarmentId, "UPD", req.body.CreatedBy, req.body.CreatedDateTime)
-
-				// add the insert to AuditLogEntry
-				for (q of quantities) {
-					statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
-					statement.run(info.lastInsertRowid, q, myGarment[q], myGarment[q] - req.body[q])
-				}
-
-				db.prepare("COMMIT").run()
+			// add the insert to AuditLogEntry
+			for (col of columns) {
+				if (col.startsWith("Created") || col.startsWith("LastM"))
+					continue
+				statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
+				statement.run(info.lastInsertRowid, col, req.body[col])
 			}
-			catch (ex) {
-				console.log(ex)
-				db.prepare("ROLLBACK").run()
-			}
+			// add the update to AuditLog
+			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+			info = statement.run("Garment", req.body.GarmentId, "UPD", req.body.CreatedBy, req.body.CreatedDateTime)
 
+			// add the insert to AuditLogEntry
+			for (q of quantities) {
+				statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
+				statement.run(info.lastInsertRowid, q, myGarment[q], myGarment[q] - req.body[q])
+			}
 
 		} // end mode = insert
+
+		db.prepare("COMMIT").run()
 
 
 	}
 	catch (ex) {
+		db.prepare("ROLLBACK").run()
 		res.statusMessage = ex.message
 		res.sendStatus(400).end()
 		console.log(ex.message)
-		db.prepare("ROLLBACK").run()
 	}
 	finally {
 		db.close()
