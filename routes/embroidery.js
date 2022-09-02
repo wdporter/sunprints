@@ -25,10 +25,16 @@ FROM EmbroideryDesign
 INNER JOIN UsbEmbroideryDesign ON EmbroideryDesign.EmbroideryDesignId=UsbEmbroideryDesign.EmbroideryDesignId  
 INNER JOIN Usb ON Usb.UsbId = UsbEmbroideryDesign.UsbId
 WHERE (Code LIKE '%${req.query.q}%' OR EmbroideryDesign.Notes LIKE '%${req.query.q}%') 
-AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'  
+
 AND EmbroideryDesign.Deleted=0 
 AND Usb.Deleted=0 
 ORDER BY EmbroideryDesign.Notes `)
+// AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'  
+// we have taken this out because they decided that any usb could go on any size product, ignoring size categories
+// that means that the query string parameter "sizes" is ignored
+// but they might decide to change their minds
+
+
 		const records = statement.all()
 		res.send(records).end()
 
@@ -56,7 +62,13 @@ FROM UsbEmbroideryDesign
 INNER JOIN Usb on Usb.UsbId = UsbEmbroideryDesign.UsbId 
 AND EmbroideryDesignId = ${req.query.embroiderydesignid} 
 AND Usb.Notes IS NOT NULL 
-AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'  `)
+
+ `)
+// AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}' 
+// we have taken this out because they decided that any usb could go on any size product, ignoring size categories
+// that means that the query string parameter "sizes" is ignored
+// but they might decide to change their minds
+
 
 		const records = statement.all()
 		res.send(records)

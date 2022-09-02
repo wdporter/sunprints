@@ -119,10 +119,16 @@ FROM PrintDesign
 INNER JOIN ScreenPrintDesign ON PrintDesign.PrintDesignId=ScreenPrintDesign.PrintDesignId  
 INNER JOIN Screen ON Screen.ScreenId = ScreenPrintDesign.ScreenId
 WHERE (Code LIKE '%${req.query.q}%' OR Notes LIKE '%${req.query.q}%') 
-AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}' 
+
 AND PrintDesign.Deleted=0 
 AND Screen.Deleted=0
 ORDER BY Notes `)
+// --AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}' 
+// we have taken this out because they decided that any screen could go on any size product, ignoring size categories
+// that means that the query string parameter "sizes" is ignored
+// but they might decide to change their minds, so I'm not deleting it
+
+
 		const records = statement.all()
 		res.send(records)
 

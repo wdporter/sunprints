@@ -102,8 +102,14 @@ FROM TransferDesign
 INNER JOIN TransferNameTransferDesign ON TransferDesign.TransferDesignId=TransferNameTransferDesign.TransferDesignId  
 WHERE TransferDesign.Deleted=0
 AND (Code LIKE '%${req.query.q}%' OR Notes LIKE '%${req.query.q}%') 
-AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'  
+
 ORDER BY Code, Notes `)
+// AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'  
+// we have taken this out because they decided that any transfer could go on any size product, ignoring size categories
+// that means that the query string parameter "sizes" is ignored
+// but they might decide to change their minds
+
+
 		const records = statement.all()
 		res.send(records)
 
@@ -129,8 +135,12 @@ router.get("/name/ordersearch", function (req, res, next) {
 FROM TransferNameTransferDesign 
 INNER JOIN TransferName on TransferName.TransferNameId = TransferNameTransferDesign.TransferNameId 
 WHERE TransferDesignId = ${req.query.transferdesignid} 
-AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}' 
+
 AND TransferName.Deleted=0 `)
+// AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}' 
+// we have taken this out because they decided that any transfer could go on any size product, ignoring size categories
+// that means that the query string parameter "sizes" is ignored
+// but they might decide to change their minds
 
 		const records = statement.all()
 		res.json(records).end()
