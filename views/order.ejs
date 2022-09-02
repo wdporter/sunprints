@@ -283,6 +283,9 @@
 			order: [[0, "desc"]] // order date
 		})
 
+		window.datatable.on("draw", function() {
+			window.datatable.buttons(0).text("Expand all")
+		})
 
 		// Add event listener for opening and closing details
 		$('#orderTable tbody').on('click', 'td.dt-control', function () {

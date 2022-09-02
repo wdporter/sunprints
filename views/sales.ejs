@@ -302,6 +302,10 @@ div#dt_wrapper {
 		]
 	})
 
+	window.datatable.on("draw", function() {
+		window.datatable.buttons(0).text("Expand all")
+	})
+
 	function format(data) {
 		if (!data) return // happens when you click the clone button
 
