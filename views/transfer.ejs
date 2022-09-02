@@ -28,12 +28,13 @@
 <dialog id="addNameDialog" >
 	<form method="dialog" id="nameDialogForm">
 		<h3>Add Location/Size for Name</h3>
+		<!-- no longer relevant but may need to be restored
 		<p>
 			<input type="radio" id="Adults" value="Adults" name="sizeCategory" v-model="item.SizeCategory" />
 			<label for=Adults>Adults</label>
 			<input type="radio" id="Kids" value="Kids" name="sizeCategory" v-model="item.SizeCategory" />
 			<label for="Kids">Kids</label>
-		</p>
+		</p> -->
 		<p>
 			<input type=checkbox id="frontCheckBox" true-value="1" false-value="0" v-model="item.Front" /> <label for="frontCheckBox">Front</label>
 			<input type=checkbox id="backCheckBox" true-value="1" false-value="0" v-model="item.Back" /> <label for="backCheckBox">Back</label>
@@ -52,7 +53,7 @@
 			<input type="button" v-model="hideList" @click="onHideList()" style="float:right" />
 			<span >{{ info }}</span>
 			<table id="nameListTable" class="stripe" v-show="hideList == 'Hide List'">
-				<tr v-for="name in nameList" key="name.TransferNameId" @click="onNameSelect(name)"><td>{{name.Name}}</td></tr>
+				<tr v-for="name in nameList" key="name.TransferNameId" @click="onNameSelect(name)"><td style="cursor:pointer">{{name.Name}}</td></tr>
 			</table>
 		</p>
 		<input type="hidden" v-model="item.TransferNameId" />
@@ -164,7 +165,7 @@
 					else {
 						for (var item of data) {
 							itemString += "<div class=nameDiv>"
-							itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>`
+							// itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>` -- hide these, no longer relevant but may need to restored
 
 							const locations = <%- locations %>;
 							let myLocations = []
@@ -225,7 +226,7 @@
 		$("#datatable tbody").on("click", "a.addNameLink", function () {
 			event.preventDefault()
 			// initialise the vue data used in the dialog
-			window.addNameApp.item.SizeCategory = "Adults"
+			window.addNameApp.item.SizeCategory = "Adults,Kids"
 			window.addNameApp.item.Front = 0
 			window.addNameApp.item.Back = 0
 			window.addNameApp.item.Pocket = 0
@@ -274,7 +275,7 @@
 					throw new Error(response.statusText)
 			})
 			.then(json => {
-				window.addNameApp.item.SizeCategory = "Adults"
+				window.addNameApp.item.SizeCategory = "Adults,Kids"
 				window.addNameApp.item.Front = 0
 				window.addNameApp.item.Back = 0
 				window.addNameApp.item.Pocket = 0
@@ -389,7 +390,7 @@
 		data() {
 			return {
 				item: {
-					SizeCategory: "Adults",
+					SizeCategory: "Adults|Kids",
 					Front: 0,
 					Back: 0,
 					Pocket: 0,
@@ -464,12 +465,14 @@
 				.then((text) => {
 					// draw the new location in place
 					let itemString = `<div class=nameDiv>
-Sizes: ${vue.item.SizeCategory}<br>
 Location: ${vue.formatLocations()}<br>
 Name: ${vue.name}<br>
 <a href=# data-id=${text} class=removeNameLink>Remove</a>
 </div>`
-				const add = document.querySelector(`a.addNameLink[data-id='${vue.item.TransferDesignId}']`)
+					// Sizes: ${vue.item.SizeCategory}<br> -- hide these, no longer relevant but may need to restored
+
+
+const add = document.querySelector(`a.addNameLink[data-id='${vue.item.TransferDesignId}']`)
 				const nameDiv = add.closest("div")
 				const noname = nameDiv.querySelector(".nonames")
 				if (noname)

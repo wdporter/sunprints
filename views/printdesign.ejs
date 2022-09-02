@@ -48,12 +48,13 @@
 	<dialog id=addScreenDialog >
 		<form id="addScreenForm" method="dialog">
 			<h3>Add screen</h3>
+			<!-- no longer relevant but might be needed again one day
 			<p>
 				<input id=adultsRadio type=radio value=Adults name=sizeCategory checked>
 				<label for=adultsRadio>Adults</label>
 				<input id=kidsRadio type=radio value=Kids  name=sizeCategory>
 				<label for=kidsRadio>Kids</label>
-			</p>
+			</p> -->
 			<p>
 				<input type=checkbox id="frontCheckBox" /> <label for="frontCheckBox">Front</label>
 				<input type=checkbox id="backCheckBox" /> <label for="backCheckBox">Back</label>
@@ -170,12 +171,14 @@
 			const data = {
 				PrintDesignId: document.getElementById("currentPrintDesignId").value,
 				ScreenId: document.getElementById("chosenScreenId").value,
-				SizeCategory: document.getElementById("addScreenForm").sizeCategory.value,
 				Front: document.getElementById("frontCheckBox").checked ? 1 : 0,
 				Back: document.getElementById("backCheckBox").checked ? 1 : 0,
 				Pocket: document.getElementById("pocketCheckBox").checked ? 1 : 0,
 				Sleeve: document.getElementById("sleeveCheckBox").checked ? 1 : 0
 			}
+			//SizeCategory: document.getElementById("addScreenForm").sizeCategory.value, -- no longer relevant but might be needed again one day
+
+
 			fetch("/print/screen/add", {
 				method: "POST",
 				headers: new Headers({
@@ -198,7 +201,7 @@
 					span.parentElement.remove(a.parentElement.querySelector(".noscreens"))
 				}
 				let insertDiv = "<div class=screenDiv>"
-				insertDiv += `<b>Sizes:</b> ${data.SizeCategory}<br>`
+				//  insertDiv += `<b>Sizes:</b> ${data.SizeCategory}<br>` -- hide these, no longer relevant but may need to restored
 				const locations = <%- locations %>;
 				let myLocations = []
 				locations.forEach(loc => {
@@ -356,7 +359,7 @@
 					else {
 						for (var item of data) {
 							itemString += "<div class=screenDiv>"
-							itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>`
+							// itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>` -- hide these, no longer relevant but may need to restored
 
 							const locations = <%- locations %>;
 							let myLocations = []

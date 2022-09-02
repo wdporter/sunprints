@@ -262,7 +262,8 @@ router.post("/usb", function (req, res) {
 		FROM UsbEmbroideryDesign 
 		WHERE
 		UsbId = ? 
-		AND SizeCategory =? `
+		 `
+		 // AND SizeCategory =? --no longer relevant but may need to be restored
 		if (req.body.Front == 1)
 			query += " AND Front=1 "
 		if (req.body.Back == 1)
@@ -273,7 +274,7 @@ router.post("/usb", function (req, res) {
 			query += "AND Sleeve=1 "
 
 		let statement = db.prepare(query)
-		const count = statement.get(req.body.UsbId, req.body.SizeCategory)
+		const count = statement.get(req.body.UsbId) // , req.body.SizeCategory --no longer relevant but may need to be restored
 
 		if (count > 0) {
 			res.statusMessage = "We already have that location and size"

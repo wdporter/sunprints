@@ -408,7 +408,7 @@ router.post("/namedesign", function (req, res) {
 		res.statusMessage = ex.message
 		res.sendStatus(400).end()
 		console.log(ex)
-		db.prepare("ROLLBACK")
+		db.prepare("ROLLBACK").run()
 	}
 	finally {
 		db.close()
@@ -620,7 +620,7 @@ router.put("/name/:id", function(req, res) {
 
 	}
 	catch (ex) {
-		db.prepare("ROLLBACK")
+		db.prepare("ROLLBACK").run()
 		res.statusMessage = ex.message
 		res.sendStatus(400).end()
 		console.log(ex)

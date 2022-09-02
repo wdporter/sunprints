@@ -284,7 +284,9 @@ router.post("/screen/add", (request, response) => {
 		FROM ScreenPrintDesign 
 		WHERE
 		ScreenId=?
-		AND SizeCategory=? `
+		 `
+		//AND SizeCategory=? --removed because no longer relevant
+
 		if (request.body.Front == 1)
 			query += " AND Front=1 "
 		if (request.body.Back == 1)
@@ -295,10 +297,10 @@ router.post("/screen/add", (request, response) => {
 			query += "AND Sleeve=1 "
 
 		let statement = db.prepare(query)
-		const count = statement.get(request.body.ScreenId, request.body.SizeCategory)
+		const count = statement.get(request.body.ScreenId) // , request.body.SizeCategory -- removed because no longer relevant
 
 		if (count > 0) {
-			response.statusMessage = "We already have that location and size"
+			response.statusMessage = "We already have that location"
 			response.status(400).end()
 			return
 		}
@@ -306,7 +308,6 @@ router.post("/screen/add", (request, response) => {
 		request.body.CreatedBy = request.body.LastModifiedBy = request.auth.user
 		request.body.CreatedDateTime = request.body.LastModifiedDateTime = new Date().toLocaleString()
 
-		query = "INSERT INTO ScreenPrintDesign ( "
 		const columns = []
 		for (column in request.body) {
 			if (request.body[column]) {
@@ -314,9 +315,11 @@ router.post("/screen/add", (request, response) => {
 			}
 		}
 		query = `INSERT INTO ScreenPrintDesign ( 
+			SizeCategory,
 			${columns.join(", ")}
 			) VALUES ( 
-			${columns.map(col => `@${col}`).join(", ")}
+				'Adults,Kids',
+				${columns.map(col => `@${col}`).join(", ")}
 			)`
 		statement = db.prepare(query)
 

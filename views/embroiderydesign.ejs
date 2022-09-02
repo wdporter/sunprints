@@ -57,12 +57,13 @@
 	<dialog id="addUsbDialog">
 		<form id="addUsbForm" method="dialog">
 			<h3>Add Usb</h3>
+			<!-- no longer relevant, but may need to be restored 
 			<p>
 				<input id=adultsRadio type=radio value=Adults name=sizeCategory checked>
 				<label for=adultsRadio>Adults</label>
 				<input id=kidsRadio type=radio value=Kids  name=sizeCategory>
 				<label for=kidsRadio>Kids</label>
-			</p>
+			</p> -->
 			<p>
 				<input type=checkbox id="frontCheckBox" /> <label for="frontCheckBox">Front</label>
 				<input type=checkbox id="backCheckBox" /> <label for="backCheckBox">Back</label>
@@ -151,7 +152,7 @@
 			const data = {
 				EmbroideryDesignId: document.getElementById("currentEmbroideryDesignId").value,
 				UsbId: document.getElementById("chosenUsbId").value,
-				SizeCategory: document.getElementById("addUsbForm").sizeCategory.value,
+				SizeCategory: "Adults,Kids", //document.getElementById("addUsbForm").sizeCategory.value,
 				Front: document.getElementById("frontCheckBox").checked ? 1 : 0,
 				Back: document.getElementById("backCheckBox").checked ? 1 : 0,
 				Pocket: document.getElementById("pocketCheckBox").checked ? 1 : 0,
@@ -180,7 +181,7 @@
 					a.parentElement.remove(a.parentElement.querySelector(".nousbs"))
 				}
 				let insertDiv = "<div class=usbDiv>"
-				insertDiv += `<b>Sizes:</b> ${data.SizeCategory}<br>`
+				// insertDiv += `<b>Sizes:</b> ${data.SizeCategory}<br>` -- hide these, no longer relevant but may need to restored
 				const locations = <%- JSON.stringify(locations) %>;
 				let myLocations = []
 				locations.forEach(loc => {
@@ -330,7 +331,7 @@
 					else {
 						for (var item of data) {
 							itemString += "<div class=usbDiv>"
-							itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>`
+							// itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>` -- hide these, no longer relevant but may need to restored
 
 							const locations = <%- JSON.stringify(locations) %>;
 							let myLocations = []
