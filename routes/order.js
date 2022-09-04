@@ -822,6 +822,8 @@ router.get("/outstanding/print", (req, res) => {
 				query += " AND SalesRep = ? "
 		}
 
+		query += "ORDER BY OrderDate "
+
 		const statement = db.prepare(query)
 
 		if (req.query.rep == "All" || req.query.rep == "none")
@@ -914,8 +916,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 				query += " AND SalesRep = ? "
 		}
 
-		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
-		ORDER BY 2 ASC`
+		query += " ORDER BY 2 ASC "
 
 		const statement = db.prepare(query)
 		if (req.query.rep == "All" || req.query.rep == "none")
@@ -1006,8 +1007,7 @@ router.get("/outstanding/transfer", (req, res) => {
 				query += " AND SalesRep = ? "
 		}
 
-		query += `AND (NOT FrontDesign IS NULL OR NOT BackDesign IS NULL OR NOT PocketDesign IS NULL OR NOT SleeveDesign IS NULL)
-		ORDER BY 2 ASC`
+		query += " ORDER BY 2 ASC "
 
 		const statement = db.prepare(query)
 
