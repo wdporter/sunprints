@@ -137,6 +137,10 @@ button:disabled, input[type=button]:disabled, input[type=reset]:disabled, input[
 	opacity: 0.5;
 }
 
+th,td {
+	font-size: calc(var(--unit)*0.875);
+}
+
 
 .back-to-top {
   position: fixed;
