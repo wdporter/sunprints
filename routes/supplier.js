@@ -26,7 +26,7 @@ router.get("/dt", function(req, res) {
 		const recordsTotal = statement.get().Count
 		let recordsFiltered = recordsTotal
 
-		let query = `SELECT Supplier.*, s.maxdate  FROM Supplier 
+		let query = `SELECT Supplier.*, s.maxdate FROM Supplier 
 		LEFT OUTER JOIN 
 		(SELECT SupplierId, MAX(OrderDate) AS maxdate
 		FROM StockOrder 
@@ -56,6 +56,7 @@ router.get("/dt", function(req, res) {
 		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
 		const data = db.prepare(query).all()
 
+		data.forEach(d => d.DT_RowAttr = { "data-id": d.SupplierId })
 
 		res.send({
 			draw: Number(req.query.draw),
@@ -136,6 +137,7 @@ router.post("/", function(req, res) {
 		)`
 		statement = db.prepare(query)
 		let info = statement.run(req.body)
+		const newId = info.lastInsertRowid
 
 		statement = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, ?, ?, ?)")
 		info = statement.run("Supplier", info.lastInsertRowid, "INS", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
@@ -151,7 +153,7 @@ router.post("/", function(req, res) {
 
 		res.json({
 			message: "success",
-			id: info.lastInsertRowid
+			id: newId
 		}).end()
 
 
@@ -214,7 +216,7 @@ router.put("/:id", function(req, res) {
 
 		// look for updated values
 		const columns = []
-		for (var key in req.body) {
+		for (var key in mySupplier) {
 			if (mySupplier[key] != req.body[key]) {
 				columns.push(key)
 			}
@@ -243,7 +245,8 @@ router.put("/:id", function(req, res) {
 			db.prepare("COMMIT").run()
 
 			res.json({
-				message: "success"
+				message: "success",
+				id: req.params.id 
 			}).end()
 	
 	}

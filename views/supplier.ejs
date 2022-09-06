@@ -30,11 +30,15 @@ main.wider {
 	dialog {
 		width: 800px;
 	}
+
+	input:invalid {
+		border: 2px dashed red;
+	}
 </style>
 
 <ul>
 	<li>Separate multiple email addresses with a semi-colon ( ; )
-	<li>Deleting a suppliers will retain it for sales history, but you won’t be able to create new garments.
+	<li>Deleting a supplier will retain it for sales history, but you won’t be able to create new garments.
 	<li><a href=/supplier/deleted>Deleted suppliers</a>
 </ul>
 
@@ -46,25 +50,25 @@ main.wider {
 	<form method=dialog>
 		<fieldset id="app">
 			<legend>{{ legend }}</legend>
-			<input type=hidden v-model="SupplierId">
+			<input type=hidden v-model="supplier.SupplierId">
 			<section>
 				<div>
-					<p><label for=code>Code</label> <input id=code v-model="Code" inputmode="numeric" pattern="\d*"></p>
-					<p><label for=company>Company</label> <input id=company v-model="Company"></p>
-					<p><label for=firstname>First Name</label> <input id=firstname v-model="FirstName"></p>
-					<p><label for=surname>Surname</label> <input id=surname v-model="Surname"></p>
-					<p><label for=phoneoffice>Phone Office</label> <input id=phoneoffice type="tel" v-model="PhoneOffice"></p>
-					<p><label for=phonehome>Phone Home</label> <input id=phonehome type="tel" v-model="PhoneHome"></p>
-					<p><label for=phonemobile>Phone Mobile</label> <input id=phonemmobile type="tel" v-model="PhoneMobile"></p>
-					<p><label for=fax>Fax</label> <input id=fax type="tel" v-model="Fax"></p>
-					<p><label for=email>Email</label> <input id=email type=email v-model="Email"></p>
+					<p><label for=code>Code</label> <input id=code v-model="supplier.Code" inputmode="numeric" pattern="\d*" required placeholder="numbers"></p>
+					<p><label for=company>Company</label> <input id=company v-model="supplier.Company" required placeholder=required></p>
+					<p><label for=firstname>First Name</label> <input id=firstname v-model="supplier.FirstName"></p>
+					<p><label for=surname>Surname</label> <input id=surname v-model="supplier.Surname"></p>
+					<p><label for=phoneoffice>Phone Office</label> <input id=phoneoffice type="tel" v-model="supplier.PhoneOffice"></p>
+					<p><label for=phonehome>Phone Home</label> <input id=phonehome type="tel" v-model="supplier.PhoneHome"></p>
+					<p><label for=phonemobile>Phone Mobile</label> <input id=phonemmobile type="tel" v-model="supplier.PhoneMobile"></p>
+					<p><label for=fax>Fax</label> <input id=fax type="tel" v-model="supplier.Fax"></p>
+					<p><label for=email>Email</label> <input id=email type=email v-model="supplier.Email" placeholder="separate email addresses with ',' or ';'"></p>
 				</div>
 				<div>
-					<p><label for=addressline1>Address Line 1</label> <input id=addressline1 v-model="AddressLine1"></p>
-					<p><label for=addressline2>Address Line 2</label> <input id=addressline2 v-model="AddressLine2"></p>
-					<p><label for=locality>Locality</label> <input id=locality v-model="Locality"></p>
-					<p><label for=postcode>Post Code</label> <input id=postcode v-model="Postcode"></p>
-					<p><label for=state>State</label> <select id=state v-model="State">
+					<p><label for=addressline1>Address Line 1</label> <input id=addressline1 v-model="supplier.AddressLine1"></p>
+					<p><label for=addressline2>Address Line 2</label> <input id=addressline2 v-model="supplier.AddressLine2"></p>
+					<p><label for=locality>Locality</label> <input id=locality v-model="supplier.Locality"></p>
+					<p><label for=postcode>Post Code</label> <input id=postcode v-model="supplier.Postcode"></p>
+					<p><label for=state>State</label> <select id=state v-model="supplier.State">
 							<option></option>
 							<option>QLD</option>
 							<option>NSW</option>
@@ -75,11 +79,17 @@ main.wider {
 							<option>NT</option>
 							<option>ACT</option>
 						</select></p>
-					<p><label for=notes>Notes</label> <textarea id=notes v-model="Notes"></textarea></p>
+					<p><label for=notes>Notes</label> <textarea id=notes v-model="supplier.Notes"></textarea></p>
 					<p>
 						<button id="saveButton" value="default" @click="save">Save</button>&emsp;
 						<input type="button" value="Cancel" onclick="this.closest('dialog').close()" />
 					</p>
+					<dl style="margin-top:2em">
+						<dt>Created by: <dd>{{ supplier.CreatedBy }}
+						<dt>Created date: <dd>{{ supplier.CreatedDateTime }}
+						<dt>Last modified by: <dd>{{ supplier.LastModifiedBy }}
+						<dt>Last modified date: <dd>{{ supplier.LastModifiedDateTime }}
+					</dl>
 				</div>
 			</section>
 		</fieldset>
@@ -253,48 +263,32 @@ main.wider {
 	window.vueApp = Vue.createApp({
 		data() {
 			return {
-				SupplierId: 0,
-				Code: "",
-				Company: "",
-				Surname: "",
-				FirstName: "",
-				PhoneOffice: "",
-				PhoneHome: "",
-				PhoneMobile: "",
-				Fax: "",
-				Email: "",
-				AddressLine1: "",
-				AddressLine2: "",
-				Locality: "",
-				Postcode: "",
-				State: "",
-				Notes: "",
+				supplier: {},
 				legend: ""
 			}
 		},
 		methods: {
 			setData(data) {
-				for (let d in data) {
-					this[d] = data[d]
-				}
+				this.supplier = data
 				this.legend = "Edit Supplier Details"
 			},
 			save() {
+				if (! document.querySelector("#editDialog form").reportValidity())
+					return
+
 				try {
 					let url = "/supplier"
 					let method = "POST"
-					if (this.SupplierId != 0) {
+					if (this.supplier.SupplierId != 0) {
 						method = "PUT"
-						url += `/${this.SupplierId}`
+						url += `/${this.supplier.SupplierId}`
 					}
-					let body = JSON.parse(JSON.stringify(this.$data))
-					delete body.legend
 					fetch(url, {
 						method,
 						headers: new Headers({
 							"Content-Type": "application/json"
 						}),
-						body: JSON.stringify(body)
+						body: JSON.stringify(this.supplier)
 					})
 						.then(response => {
 							if (response.ok)
@@ -303,7 +297,13 @@ main.wider {
 								throw new Error(response.statusText)
 						})
 						.then(json => {
-							window.datatable.ajax.reload(null, window.vueApp.SupplierId == 0)// reset paging if it's a new item
+							window.datatable.order(0, "desc")
+							window.datatable.ajax.reload(function () {
+								// after reload, select the item
+								const tr = document.querySelector(`tr[data-id='${json.id}']`)
+								tr.classList.add("selected")
+								tr.scrollIntoView({behavior:"smooth"})
+							}, window.vueApp.supplier.SupplierId == 0)
 							document.getElementById("editDialog").close()
 						})
 						.catch(err => window.alert("We encountered an error: " + err.message))
@@ -314,22 +314,9 @@ main.wider {
 
 			},
 			new() {
-				this.SupplierId = 0
-				this.Code = ""
-				this.Company = ""
-				this.Surname = ""
-				this.FirstName = ""
-				this.PhoneOffice = ""
-				this.PhoneHome = ""
-				this.PhoneMobile = ""
-				this.Fax = ""
-				this.Email = ""
-				this.AddressLine1 = ""
-				this.AddressLine2 = ""
-				this.Locality = ""
-				this.Postcode = ""
-				this.State = ""
-				this.Notes = ""
+				this.supplier = {
+					SupplierId: 0
+				}
 				this.legend = "New Supplier Details"
 				document.getElementById("editDialog").showModal()
 			}
