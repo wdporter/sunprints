@@ -198,15 +198,15 @@ input:invalid {
 					render: (data, type, row) => {
 						const items = []
 						if (row.PhoneMobile)
-							items.push(`M: <a href="tel:${row.PhoneMobile}>${row.PhoneMobile}</a>`)
+							items.push(`M: <a href="tel:${row.PhoneMobile}">${row.PhoneMobile}</a>`)
 						if (row.PhoneOffice)
-						items.push(`O: <a href="tel:${row.PhoneOffice}>${row.PhoneOffice}</a>`)
+						items.push(`O: <a href="tel:${row.PhoneOffice}">${row.PhoneOffice}</a>`)
 						if (row.PhoneHome)
-							items.push(`H: <a href="tel:${row.PhoneHome}>${row.PhoneHome}</a>`)
+							items.push(`H: <a href="tel:${row.PhoneHome}">${row.PhoneHome}</a>`)
 						if (row.Fax)
 							items.push(`F: <a href="tel:${row.Fax}">${row.Fax}</a>`)
 						if (row.Email)
-							items.push(`E: <a href='mailto:${row.Email}'>${row.Email}</a>`)
+							items.push(`E: <a href="mailto:${row.Email}">${row.Email}</a>`)
 						return items.join("<br>")
 					}
 					},
