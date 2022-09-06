@@ -62,7 +62,7 @@
 		<h2>SunPrints Purchase Order</h2>
 		<h3>
 			Order Number: <%= supplier.StockOrderId %><br>
-			Date of Order: <%= new Date(Date.parse(supplier.OrderDate)).toLocaleDateString() %>
+			Date of Order: <%= new Date(Date.parse(supplier.OrderDate)).toLocaleDateString("en-AU") %>
 		</h3>
 		<p>
 			<b>Please forward the listed items to:<br>

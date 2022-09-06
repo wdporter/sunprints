@@ -247,7 +247,7 @@ input:invalid {
 					if (isNaN(date))
 						return data || "no orders"
 					else 
-						return new Date(date).toLocaleDateString()
+						return new Date(date).toLocaleDateString("en-AU")
 				}
 			},
 		],

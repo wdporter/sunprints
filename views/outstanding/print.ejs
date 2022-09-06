@@ -1,5 +1,5 @@
 <html>
-	<title>Outstanding Orders — <%= name %> <% new Date().toLocaleDateString() %></title>
+	<title>Outstanding Orders — <%= name %> <% new Date().toLocaleDateString("en-AU") %></title>
 <style>
 
 /* * {
@@ -62,7 +62,7 @@ td {
 	<hr>
 </div>
 
-<h1>Outstanding Orders — <%= name %> <% new Date().toLocaleDateString() %></h1>
+<h1>Outstanding Orders — <%= name %> <% new Date().toLocaleDateString("en-AU") %></h1>
 
 
 <table>
@@ -86,7 +86,7 @@ td {
 
 	<tr>
 		<td><%= results[i].OrderNumber %>
-		<td><%= new Date(Date.parse(results[i].OrderDate)).toLocaleDateString().replace(/\/0/g, "/").replace(/^0/, "") %>
+		<td><%= new Date(Date.parse(results[i].OrderDate)).toLocaleDateString("en-AU").replace(/\/0/g, "/").replace(/^0/, "") %>
 		<td><%= results[i].DeliveryDate.replace(/\/0/g, "/").replace(/^0/, "") %>
 		<td><%= results[i].BuyIn == 1 ? "✓" : "☓" %>
 		<td><%= results[i].Done == 1 ? "✓" : "☓" %>

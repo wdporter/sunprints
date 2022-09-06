@@ -252,7 +252,7 @@ input:invalid {
 					width: "4em",
 					render(data, type, row) {
 						const ts = Date.parse(data)
-						let retVal = isNaN(ts) ? "" : `${new Date(ts).toLocaleDateString()}<br>`
+						let retVal = isNaN(ts) ? "" : `${new Date(ts).toLocaleDateString("en-AU")}<br>`
 					retVal += `<a class=action-link href=/order/new?customerid=${row.CustomerId} title="start a new order with this customer preselected">New Order</a>`
 					return retVal
 

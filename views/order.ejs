@@ -221,7 +221,7 @@
 					data: "OrderDate",
 					width: "5em",
 					render(od) {
-						return od ? new Date(Date.parse(od)).toLocaleDateString() : ""
+						return od ? new Date(Date.parse(od)).toLocaleDateString("en-AU") : ""
 					}
 				},
 				{
@@ -266,13 +266,6 @@
 					data: "Notes",
 				},
 				{ data: "DeliveryDate", width: "5em"},
-				// no longer used {
-				// 	data: "ProcessedDate",
-				// 	width: "5em",
-				// 	render(id) {
-				// 		return id ? new Date(Date.parse(id)).toLocaleDateString() : ""
-				// 	}
-				// },
 				{
 					data: "Designs",
 					render(d) {

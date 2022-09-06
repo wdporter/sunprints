@@ -136,7 +136,7 @@
 
 		<tr>
 		<td>
-			<b>Order Date:</b> <%=  new Date(Date.parse(order.OrderDate)).toLocaleDateString()  %><br>
+			<b>Order Date:</b> <%=  new Date(Date.parse(order.OrderDate)).toLocaleDateString("en-AU")  %><br>
 			<b>Delivery:</b>&emsp;&ensp;<%= order.DeliveryDate || "n/a" %><br>
 			<div style="display:flex">
 				<div><b>Notes:</b></div>
@@ -263,7 +263,7 @@
 	<div style="display:flex;  ">
 			<h1>Screens, Transfers and USBs</h1>
 			<h1 style="margin-left:auto">
-				<%= new Date().toLocaleDateString() %>
+				<%= new Date().toLocaleDateString("en-AU") %>
 			</h1>
 	</div>
 
