@@ -229,8 +229,9 @@ input:invalid {
 							items.push(row.AddressLine1)
 						if (row.AddressLine2)
 							items.push(row.AddressLine2)
-						if (row.Locality || row.State || row.Postcode)
-							items.push(`${row.Locality ?? ""} ${row.State ?? ""} ${row.Postcode ?? ""}`)
+						const locality = [row.Locality, row.State, row.Postcode].join(" ").trim()
+						if (locality.length > 0)
+							items.push(locality)
 						return items.join("<br>")
 					}
 				},
