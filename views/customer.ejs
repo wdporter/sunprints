@@ -89,7 +89,7 @@ input:invalid {
 			</p>
 			<p>
 				<label for=custNotes>Notes</label>
-				<textarea id=custNotes v-model="customer.CustNotes" rows=5 cols=35 placeholder="These notes are for our reference. Use delivery notes for instructions to be printed on the order"></textarea>
+				<textarea id=custNotes v-model="customer.CustNotes" rows=5 cols=35 placeholder="These notes are for our reference. Use delivery notes (further down) for instructions to be printed on an order"></textarea>
 			</p>
 			<p>
 				<label for=firstNameInput>First Name</label>
@@ -105,7 +105,7 @@ input:invalid {
 			</p>
 			<p>
 				<label for=PhoneOfficeInput>Phone Office</label>
-				<input type="tel" id=phoneOfficeInput v-model="customer.PhoneOffice"  />
+				<input type=tel id=phoneOfficeInput v-model="customer.PhoneOffice"  />
 			</p>
 			<p>
 				<label for=phoneHomeInput>Phone Home</label>
@@ -117,7 +117,7 @@ input:invalid {
 			</p>
 			<p>
 			<label for=emailInput>Email</label>
-			<input type="email" id=emailInput v-model="customer.Email"  />
+			<input type=email id=emailInput v-model="customer.Email" placeholder="separate addresses with ',' or ';' " />
 			</p>
 			<p>
 				<label for=addressLine1Input>Address Line 1</label>
@@ -150,6 +150,12 @@ input:invalid {
 			<button id=saveCustomerButton @click="saveCustomer">&emsp;Save&emsp;</button>
 			<input type=reset n id=cancelButton @click="cancelEdit($event)" value="&ensp;Cancel&ensp;" />
 		</div>
+		<dl style="margin-top:2em">
+			<dt>Created by: <dd>{{ customer.CreatedBy }}
+			<dt>Created date: <dd>{{ customer.CreatedDateTime }}
+			<dt>Last modified by: <dd>{{ customer.LastModifiedBy }}
+			<dt>Last modified date: <dd>{{ customer.LastModifiedDateTime }}
+		</dl>
 	</fieldset>
 	<div class="message" v-html="message" v-if="message.length > 0"></div>
 </article>
@@ -224,7 +230,7 @@ input:invalid {
 						if (row.AddressLine2)
 							items.push(row.AddressLine2)
 						if (row.Locality || row.State || row.Postcode)
-							items.push(`${row.Locality} ${row.State} ${row.Postcode}`)
+							items.push(`${row.Locality ?? ""} ${row.State ?? ""} ${row.Postcode ?? ""}`)
 						return items.join("<br>")
 					}
 				},
@@ -274,25 +280,7 @@ input:invalid {
 					states: ["", "QLD", "NSW", "VIC", "SA", "WA", "TAS", "NT", "ACT"],
 					message: "",
 					loading: false,
-					customer: {
-						CustomerId: null,
-						Code: "",
-						Company: "",
-						CustNotes: "",
-						FirstName: null,
-						Surname: null,
-						PhoneMobile: null,
-						PhoneOffice: null,
-						PhoneHome: null,
-						Fax: null,
-						Email: null,
-						AddressLine1: null,
-						AddressLine2: null,
-						Locality: null,
-						Postcode: null,
-						State: null,
-						Notes: null,
-					}
+					customer: {}
 				}
 			},
 			methods: {
@@ -303,25 +291,7 @@ input:invalid {
 					Array.from(document.querySelectorAll("tr")).forEach(tr => tr.classList.remove("selected"))
 					this.message = ""
 					this.mode = "New"
-					this.customer = {
-						CustomerId: null,
-						Code: "",
-						Company: "",
-						CustNotes: "",
-						FirstName: null,
-						Surname: null,
-						PhoneMobile: null,
-						PhoneOffice: null,
-						PhoneHome: null,
-						Fax: null,
-						Email: null,
-						AddressLine1: null,
-						AddressLine2: null,
-						Locality: null,
-						Postcode: null,
-						State: null,
-						Notes: null,
-					}
+					Object.keys(this.customer).forEach(k => this.customer[k] = null)
 					this.$nextTick(() => { 
 						document.getElementById("app").scrollIntoView({behavior:"smooth"})
 						document.getElementById("codeInput").focus()
@@ -486,25 +456,7 @@ input:invalid {
 			vueApp.setMode("Edit")
 			vueApp.clearMessage()
 			document.querySelector("#app").scrollIntoView({behavior: "smooth"})
-			vueApp.setCustomer( {
-				CustomerId:   data.CustomerId,
-				Code:         data.Code,
-				Company:      data.Company,
-				CustNotes:    data.CustNotes,
-				FirstName:    data.FirstName,
-				Surname:      data.Surname,
-				PhoneMobile:  data.PhoneMobile,
-				PhoneOffice:  data.PhoneOffice,
-				PhoneHome:    data.PhoneHome,
-				Fax:          data.Fax,
-				Email:        data.Email,
-				AddressLine1: data.AddressLine1,
-				AddressLine2: data.AddressLine2,
-				Locality:     data.Locality,
-				Postcode:     data.Postcode,
-				State:        data.State,
-				Notes:        data.Notes
-			})
+			vueApp.setCustomer( data )
 
 		}
 
