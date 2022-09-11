@@ -46,7 +46,7 @@ button+button, button+input[type=reset], input[type=submit]+button {
 	margin-left: 2em;
 }
 
-table#stockWarningTable {
+table.stockWarningTable {
 	min-width: unset;
 	width: unset;
 }
@@ -339,13 +339,14 @@ table#stockWarningTable {
 				<button @click="saveGarment(g)">Save product</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
 				<span v-text="errorMessage"></span>
 			</p>
-			<details><summary>Stock Warnings</summary>
-				<table v-if="buyin && g.stockWarning" id="stockWarningTable">
+			<details v-if="buyin && g.stockWarning.length > 0"><summary>Stock Warnings</summary>
+				<table class="stockWarningTable">
 					<caption></caption>
 					<tr><th>Size</th><th>Quantity</th><th>Minimum</th></tr>
 					<tr v-for="sw in g.stockWarning"><td>{{sw.size}}</td><td>{{sw.current}}</td><td>{{sw.min}}</td></tr>
 				</table>
 			</details>
+			<p v-else>No stock warnings</p>
 		</div>
 		<h4>Order total value: ${{ getAllGarmentsValue() }}</h4>
 
