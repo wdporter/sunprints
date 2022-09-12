@@ -31,12 +31,12 @@
 
 			<p>
 				<label for="orderDate">Order Date</label>
-				<input id="orderDate" type="date"d v-model="orderDate" ref="orderDate" />
+				<input id="orderDate" type="date"d v-model="orderDate" />
 			</p>
 
 			<p>
 				<label for="supplierSelect">Supplier</label>
-				<select id="supplierSelect" v-model="supplierId" required>
+				<select id="supplierSelect" v-model="supplierId" required ref="supplierId">
 					<option value="">—Choose a supplier—</option>
 					<option v-for="supplier in suppliers" :value="supplier.SupplierId">{{ supplier.Company }}</option>
 				</select>&emsp;
@@ -219,7 +219,7 @@ window.vueApp = Vue.createApp({
 		onSelectOrder() {
 			if (this.stockOrderId == "") {
 				// no stock order id
-				this.$refs.orderDate.focus()
+				this.$refs.supplierId.focus()
 				this.notes = ""
 				this.supplierId = ""
 				this.orderDate = new Date().toISOString().slice(0, 10)
