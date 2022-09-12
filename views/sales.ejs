@@ -158,16 +158,16 @@ div#dt_wrapper {
 				<th></th>
 				<th>Order Id</th>
 				<th>Order Number</th>
-				<th>Date</th>
+				<th>Order Date</th>
 				<th>Rep.</th>
-				<th>Processed</th>
-				<th>Delivery</th>
+				<th>Processed Date</th>
+				<th>Delivery Date</th>
+				<th>Designs</th>
 				<th>Customer name</th>
 				<th>Terms</th>
 				<th>Buy In</th>
 				<th>Notes</th>
 				<th>Done</th>
-				<th>Designs</th>
 			</tr>
 		</thead>
 	</table>
@@ -213,15 +213,15 @@ div#dt_wrapper {
 				}
 			}
 		},
-		order: [[3, 'desc']],
+		order: [[3, "asc"]],
 		columns: [
 			{
 				className: 'dt-control',
 				orderable: false,
 				data: null,
-				defaultContent: `<a href=# onclick="cloneOrder(this, event)" title="Clone this order"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span>`,
+				defaultContent: `&nbsp;<a href=# onclick="cloneOrder(this, event)" title="Clone this order"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span>`,
 				title: "click to view sales details",
-				width: "1em"
+				width: "2em"
 			},
 			{ data: "OrderId",
 				visible: false
@@ -239,17 +239,17 @@ div#dt_wrapper {
 			},
 			{ data: "SalesRep", width: "3em" }, 
 			{ data: "DateProcessed", 
-				width: "3em",
+				width: "4em",
 				render: function(data) {
 					const ts = Date.parse(data)
 					if (isNaN(ts))
 						return data
 					else
-						return new Date(ts).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
+						return `<strong>${new Date(ts).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")}</strong>`
 					}
 			}, 
 			{ data: "Delivery",
-				width: "3em",
+				width: "4em",
 				render: function (data) {
 					const num = Date.parse(data)
 					if (isNaN(num))
@@ -257,6 +257,11 @@ div#dt_wrapper {
 					else
 						return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
 				}
+			},
+			{
+				data: "designItems",
+				render(data) { return data.join("<br>")},
+				orderable: false
 			}, 
 			{ data: "Company"}, 
 			{ data: "Terms", width: "2em" }, 
@@ -272,11 +277,6 @@ div#dt_wrapper {
 				render: function(data) {
 					return data ? "✔️" : "❌"
 				}
-			} ,
-			{
-				data: "designItems",
-				render(data) { return data.join("<br>")},
-				orderable: false
 			}
 		],
 		buttons: [
