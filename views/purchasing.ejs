@@ -13,7 +13,7 @@
 
 	<div id=vueApp>
 		<p>
-			<input type=button @click="reset()" value="Create new purchase order" />
+			<input type=button @click="reset()" value="Create new purchase order"  />
 		</p>
 
 		<fieldset><legend>{{ stockOrderId == "<%= stockOrderId %>" ? "Create New" : "Edit existing"  }}</legend>
@@ -31,7 +31,7 @@
 
 			<p>
 				<label for="orderDate">Order Date</label>
-				<input id="orderDate" type="date"d v-model="orderDate" />
+				<input id="orderDate" type="date"d v-model="orderDate" ref="orderDate" />
 			</p>
 
 			<p>
@@ -219,6 +219,7 @@ window.vueApp = Vue.createApp({
 		onSelectOrder() {
 			if (this.stockOrderId == "") {
 				// no stock order id
+				this.$refs.orderDate.focus()
 				this.notes = ""
 				this.supplierId = ""
 				this.orderDate = new Date().toISOString().slice(0, 10)
@@ -262,6 +263,7 @@ window.vueApp = Vue.createApp({
 					})
 			})
 			.catch(error => window.alert(`We encountered an error: ${error}`))
+
 		},
 		addChosenGarment(sizeCategory, data) {
 			if (!this.chosenGarments[sizeCategory].find(g => g.GarmentId == data.GarmentId )) {
