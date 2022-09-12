@@ -1078,7 +1078,7 @@ table.stockWarningTable {
 					.then(json => {
 						json.forEach(po => {
 							const option = document.createElement("option")
-							option.text = `${new Date(Date.parse(po.OrderDate)).toLocaleDateString("en-AU")} ${po.Company} (${po.StockOrderId})`
+							option.text = `${po.StockOrderId} ${new Date(Date.parse(po.OrderDate)).toLocaleDateString("en-AU")} ${po.Company}`
 							option.value = po.StockOrderId
 							select.add(option)
 						})
