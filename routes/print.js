@@ -88,6 +88,7 @@ router.get("/screens/:id", function (req, res) {
 		FROM ScreenPrintDesign 
 		LEFT JOIN Screen ON Screen.ScreenId = ScreenPrintDesign.ScreenId 
 		WHERE PrintDesignId=?
+		AND Screen.Deleted=0
 		ORDER BY Name, Number, Colour`)
 		const screens = statement.all(req.params.id)
 
