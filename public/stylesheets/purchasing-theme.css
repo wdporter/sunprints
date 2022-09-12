@@ -20,7 +20,7 @@ select:invalid {
 }
 
 button#receiveOrder {
-	border: 5px red solid;
-	box-sizing: content-box;
+	background-color: black;
+	color: yellow;
 	float:right;
 }
