@@ -73,7 +73,7 @@
 						<td rowspan=2>{{ garment.Type }}</td>
 						<td rowspan=2>{{ garment.Colour }}</td>
 						<td rowspan=2>{{ garment.Label }}</td>
-						<td v-for="size in sizes[sizeCategory]" style="padding-bottom:0"><input type=number min=0 v-model="garment[size]" @change="dirty=true" /></td>
+						<td v-for="(size, i) in sizes[sizeCategory]" style="padding-bottom:0"><input type=number min=0 v-model="garment[size]" @change="dirty=true" :ref="size" /></td>
 					</tr>
 					<tr><td :colspan="sizes[sizeCategory].length" style="text-align:center;padding-top:0">Total: {{getCount(sizeCategory, garment)}}</tr>
 				</template>
@@ -271,6 +271,11 @@ window.vueApp = Vue.createApp({
 				const table = caption.closest("table")
 				const tr = table.querySelector("tr:last-child")
 				tr.scrollIntoView({behavior:"smooth"})
+
+				this.$nextTick(function() {
+					// find the input that is the last item for the first size
+					this.$refs[this.sizes[sizeCategory][0]][this.$refs[this.sizes[sizeCategory][0]].length-1].focus()
+				})
 			}
 
 		},
