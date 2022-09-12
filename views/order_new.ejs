@@ -57,6 +57,16 @@ table.stockWarningTable {
 
 </style>
 
+<dialog id=deleteDialog>
+	<form method="dialog">
+	<h3>Order Deleted</h3>
+	<p>We have deleted the order.</p>
+	<p><a href=/order/deleted>Undo</a> (but does not restore garment details)</p>
+	<button>OK</button>
+</form>
+
+</dialog>
+
 
 <fieldset>
 	<legend>1. Order details</legend>
@@ -145,7 +155,10 @@ table.stockWarningTable {
 	</p>
 
 
-	<button value="Save Order" id="saveButton">Save Order Details</button> <span id="detailsMessage"></span>
+	<button value="Save Order" id="saveButton">Save Order Details</button>
+	<input type=reset id=deleteButton value="Delete Order" />
+	
+	<span id="detailsMessage"></span>
 
 </fieldset>
 
@@ -518,6 +531,22 @@ table.stockWarningTable {
 
 		})
 
+		document.getElementById("deleteButton").addEventListener("click", function() {
+			if (window.confirm ("We will delete this order. Continue?")) {
+				fetch(`/order/${new URLSearchParams(document.location.search).get("id")}`, { method: "DELETE" })
+					.then(response => {
+						if (response.ok) {
+							const deleteDialog = document.getElementById("deleteDialog")
+							deleteDialog.addEventListener("close", () => window.location="/order")
+							deleteDialog.showModal()
+						}
+							
+						else
+							throw new Error(response.statusText)
+					})
+					.catch(error => alert("We encountered an error: " + error))
+			}
+		})
 
 		if (window.sunprints.mode == "edit") {
 
