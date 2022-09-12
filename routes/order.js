@@ -885,6 +885,7 @@ router.get("/outstanding/print", (req, res) => {
 
 })
 
+
 router.get("/outstanding/embroidery", (req, res) => {
 
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
@@ -975,6 +976,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 
 
 })
+
 
 router.get("/outstanding/transfer", (req, res) => {
 
@@ -1068,6 +1070,7 @@ router.get("/outstanding/transfer", (req, res) => {
 
 })
 
+
 router.get("/outstanding/promo", (req, res) => {
 
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
@@ -1152,6 +1155,88 @@ router.get("/outstanding/promo", (req, res) => {
 		if (db != null)
 			db.close()
 	}
+})
+
+
+router.get("/xero/", (req, res) => {
+
+	res.render("xero.ejs", {
+		title: "Xero",
+		user: req.auth.user
+	})
+
+})
+
+router.get("/xero/invoices", (req, res) => {
+	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+
+		const data = db.prepare("SELECT OrderNumber, Orders.Notes, Customer.Company FROM Orders INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId WHERE Orders.Deleted=0 AND OrderDate=? ").all(req.query.d)
+
+		res.json({
+			message: "success",
+			data
+		}).end()
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.sendStatus(400).end();
+	}
+	finally {
+		db.close()
+	}
+
+})
+
+router.get("/xero/csv", (req, res)=> {
+
+	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+
+		const orders = db.prepare(`SELECT 
+		Orders.OrderNumber, 
+		Customer.Company, Customer.Email, Customer.AddressLine1, Customer.AddressLine2, Customer.Locality, Customer.Postcode,
+		OrderGarment.OrderGarmentId, OrderGarment.Price,
+		${sz.allSizes.map(s => `OrderGarment.${s}`).join(",")},
+		Garment.Code,
+		Garment.Type,
+		Garment.Colour
+		FROM Orders 
+		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
+		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
+		INNER JOIN Garment ON OrderGarment.GarmentId=Garment.GarmentId
+		WHERE Orders.Deleted=0 AND OrderDate=? `).all(req.query.d)
+
+		const csv = ["*ContactName,EmailAddress,POAddressLine1,POAddressLine2,POAddressLine3,POAddressLine4,POCity,PORegion,POPostalCode,POCountry,*InvoiceNumber,Reference,*InvoiceDate,*DueDate,InventoryItemCode,*Description,*Quantity,*UnitAmount,Discount,*AccountCode,*TaxType,TrackingName1,TrackingOption1,TrackingName2,TrackingOption2,Currency,BrandingTheme"]
+
+		orders.forEach(order => {
+			const qty = sz.allSizes.reduce((acc, curr)=> { return acc + order[curr]}, 0)
+			let description = '"' + order.Type
+			const mySizes = []
+			sz.allSizes.forEach(size => {
+				if (order[size] > 0)
+					description += `\n${order.Colour} - ${size} / ${order[size]}`
+			})
+			description += '"'
+			csv.push(`${order.Company},${order.Email},${order.AddressLine1 ?? ""},${order.AddressLine2 ?? ""},,,${order.Locality ?? ""},,${order.Postcode ?? ""},,${order.OrderNumber},,,,${order.Code},${description},${qty},${order.Price},,,,,,,,,`)
+		})
+
+
+		//res.contentType('csv')
+		res.header("Content-Type", "text/csv")
+		res.attachment(`xero_import_${req.query.d}.csv`);
+		res.status(200).send(csv.join("\n"))
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.sendStatus(400).end();
+	}
+	finally {
+		db.close()
+	}
+
 })
 
 

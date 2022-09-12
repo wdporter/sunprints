@@ -1,0 +1,38 @@
+<%- include("partials/head.ejs") %>
+
+
+	<p>
+		<label for=orderdate>Order Date:</label>
+		<input type=date id="orderdate" autofocus %> />
+	</p>
+	<p>
+		<a id="downloadLink">Download CSV</a>
+	</p>
+</form>
+
+<table id=orderTable>
+	<thead>
+		<tr><th>Order Number<th>Customer<th>Notes
+		<tbody>
+
+</table>
+
+<script>
+
+document.getElementById("orderdate").addEventListener("input", function () {
+	const orderTable = document.querySelector("#orderTable tbody")
+	orderTable.innerHTML = ""
+
+	fetch(`xero/invoices?d=${document.getElementById("orderdate").value}`)
+	.then(response => response.json())
+	.then(json => {
+		json.data.forEach(order => orderTable.insertAdjacentHTML("beforeend", `<td>${order.OrderNumber}<td>${order.Company}<td>${order.Notes}`))
+
+		document.getElementById("downloadLink").setAttribute("href", `/order/xero/csv?d=${document.getElementById("orderdate").value}`)
+	})
+})
+
+</script>
+
+
+<%- include("partials/foot.ejs") %>
