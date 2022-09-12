@@ -59,11 +59,11 @@
 
 <div style="display:flex; justify-content: space-between">
 	<div>
-		<h2>SunPrints Purchase Order</h2>
-		<h3>
-			Order Number: <%= supplier.StockOrderId %><br>
-			Date of Order: <%= new Date(Date.parse(supplier.OrderDate)).toLocaleDateString("en-AU") %>
-		</h3>
+		<h2>
+			SunPrints Purchase Order <br />
+			Order Number: <%= supplier.StockOrderId %>
+		</h2>
+		<h3>Date of Order: <%= new Date(Date.parse(supplier.OrderDate)).toLocaleDateString("en-AU") %></h3>
 		<p>
 			<b>Please forward the listed items to:<br>
 			<i>SunPrints<br>
