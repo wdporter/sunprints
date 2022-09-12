@@ -148,7 +148,8 @@ router.get("/usbs/:id", function (req, res) {
 		const statement = db.prepare(`SELECT UsbEmbroideryDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Usb.UsbId AS UsbId ,Number as UsbNumber, Notes as UsbNotes 
 		FROM UsbEmbroideryDesign 
 		LEFT JOIN Usb ON Usb.UsbId=UsbEmbroideryDesign.UsbId 
-		WHERE EmbroideryDesignId=?`)
+		WHERE EmbroideryDesignId=?
+		AND Usb.Deleted=0`)
 		const usbs = statement.all(req.params.id)
 		res.send(usbs).end()
 	}

@@ -71,7 +71,8 @@ router.get("/names/:id", function (req, res, next) {
 		const statement = db.prepare(`SELECT TransferNameTransferDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Name 
 		FROM TransferNameTransferDesign 
 		LEFT JOIN TransferName ON TransferName.TransferNameId=TransferNameTransferDesign.TransferNameId 
-		WHERE TransferDesignId=? `)
+		WHERE TransferDesignId=? 
+		AND TransferName.Deleted=0`)
 
 		const names = statement.all(req.params.id)
 
