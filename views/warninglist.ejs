@@ -14,32 +14,43 @@
 		text-align: left;
 	}
 
-	#qtyTable {
+	.qtyTable, .garmentTable {
 		border-collapse: collapse;
 	}
 
-#qtyTable th, #qtyTable td {
-	border: 1px black solid;
-	text-align:right;
+.qtyTable th, .qtyTable td,
+.garmentTable th, .garmentTable td
+{
 	padding-left: .5em;
 	padding-right: .5em;
 }
+
+.qtyTable th, .qtyTable td {
+	text-align:right;
+	border: 1px black solid;
+}
+
 
 span.warning {
 	color: darkred;
 }
 
-		@media print {
-			.no-print {
-				display: none
-			}
-			div * {
-				font-size: 12px;
-			}
-			span.warning {
-				color: black;
-			}
-		}
+td.bold {
+	font-weight: bold;
+}
+
+
+@media print {
+	.no-print {
+		display: none
+	}
+	div * {
+		font-size: 12px;
+	}
+	span.warning {
+		color: black;
+	}
+}
 
 	</style>
 
@@ -61,7 +72,7 @@ span.warning {
 
 <% garments.forEach(g => { %>
 <div style="break-inside:avoid">
-<table>
+<table class="garmentTable">
 	<tr>
 		<th>Type
 		<th>Code
@@ -69,14 +80,14 @@ span.warning {
 		<th>Label
 		<th>Notes
 	<tr>
-		<td><%= g.Type %>
+		<td class="bold"><%= g.Type %>
 		<td><%= g.Code %>
-		<td><%= g.Colour %>
+		<td class="bold"><%= g.Colour %>
 		<td><%= g.Label %>
 		<td><%= g.Notes %>
 </table>
 
-<table id="qtyTable">
+<table class="qtyTable">
 	<tr>
 		<th></th>
 		<% sizes[g.SizeCategory].forEach(size => { %>
