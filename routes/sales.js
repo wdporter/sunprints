@@ -518,6 +518,7 @@ router.get("/:orderid/history", (req, res) => {
 		,sn2.Name AS SleeveTransferName2
 		,Price
 		,${sz.allSizes.map(s => `Sales.${s}`).join(", ")}
+		,${sz.allSizes.map(s=> `Sales.${s}`).join("+")} AS Total
 		,'$' || printf('%.2f', (${sz.allSizes.map(s => `Sales.${s}`).join(" + ")}) * Price) AS Value
 		FROM Sales 
 			INNER JOIN Garment ON Garment.GarmentId=Sales.GarmentId
