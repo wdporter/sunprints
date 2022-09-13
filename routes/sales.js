@@ -219,7 +219,7 @@ console.log(req.query.customSearch)
 router.get("/customernames", (req, res) => {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
-		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN Sales ON Sales.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
+		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
 		res.send(
 			customers.map(c => {
 				return {
@@ -238,7 +238,7 @@ router.get("/customernames", (req, res) => {
 router.get("/customercodes", (req, res) => {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
-		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN Sales ON Sales.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
+		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
 
 		customers.sort(function(a, b) {
 			if (!isNaN(a.Code) && !isNaN(b.Code) ) {
