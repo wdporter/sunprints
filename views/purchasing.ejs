@@ -26,7 +26,7 @@
 			</p>
 
 			 <p v-show="stockOrderId != ''">
-			<label for="stockOrderId">Stock Order Number: {{ stockOrderId }} </label>
+				<label for="stockOrderId">Stock Order Number: {{ stockOrderId }} </label>
 			</p>
 
 			<p>
@@ -48,7 +48,9 @@
 				<textarea id="notes" v-model="notes" @keydown.tab.exact="onNotesKeyDown($event)"></textarea>
 			</p>
 
-
+			<p v-show="stockOrderId != ''">
+				<button type="reset" @click="deletePurchaseOrder">Delete this purchase order</button>
+			</p>
 		</fieldset>
 
 		<h4>Products 
@@ -313,14 +315,18 @@ window.vueApp = Vue.createApp({
 			})
 			.then(text => {
 				vue.dirty = false
-				vue.stockOrderId = text
 				document.getElementById("successDialog").showModal()
-				vue.stockOrders.push({
-					StockOrderId: vue.stockOrderId,
-					Company: vue.suppliers.find(s => s.SupplierId == vue.supplierId).Company,
-					OrderDate: vue.orderDate,
-					Notes: vue.notes
-				})
+
+				if (vue.stockOrderId == "") {
+					vue.stockOrderId = text // the new stock order id
+					vue.stockOrders.push({
+						StockOrderId: vue.stockOrderId,
+						Company: vue.suppliers.find(s => s.SupplierId == vue.supplierId).Company,
+						OrderDate: vue.orderDate,
+						Notes: vue.notes
+					})
+				}
+				
 			})
 			.catch(error => window.alert(`We encountered an error: ${error}`))
 
@@ -439,6 +445,19 @@ window.vueApp = Vue.createApp({
 			event.preventDefault()
 			document.querySelector("#garmentTable input:first-child").focus()
 			document.querySelector("#garmentTable").scrollIntoView({behavior:"smooth"})
+		},
+		deletePurchaseOrder() {
+			if (window.confirm("We will delete this purchase order. Continue?")) {
+				fetch(`/purchasing/${this.stockOrderId}`, { method: "DELETE"} )
+				.then(response => {
+					if (response.ok) {
+						//update ui
+					}
+					else 
+						throw new Error(response.statusText)
+				})
+				.catch(error => window.alert(`We encountered an error: ${error}`))
+			}
 		}
 	},
 	mounted() {

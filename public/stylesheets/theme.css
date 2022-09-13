@@ -137,6 +137,14 @@ button:disabled, input[type=button]:disabled, input[type=reset]:disabled, input[
 	opacity: 0.5;
 }
 
+button[type="reset"] {
+  background-color: var(--color-tertiary)
+}
+
+button[type="reset"]:hover {
+  background-color: var(--color-tertiary-hover)
+}
+
 th,td {
 	font-size: calc(var(--unit)*0.875);
 }

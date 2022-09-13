@@ -192,20 +192,11 @@ table.stockWarningTable {
 	<div id="garmentApp">
 		<p v-if="garments.length == 0">Select products from the table above…</p>
 		<div v-for="g in garments" class="selected-garment" :key="g.GarmentId" style="border: 1px black solid; padding: 1em; margin-bottom: 1em">
-			<dl>
-				<dt>Code</dt>
-				<dd> {{ g.Code }}</dd>
-				<dt>Type</dt>
-				<dd>{{ g.Type }} </dd>
-				<dt>Colour</dt>
-				<dd>{{ g.Colour }} </dd>
-				<dt>Label</dt>
-				<dd>{{ g.Label }} </dd>
-				<template v-if="g.Notes">
-					<dt>Notes</dt>
-					<dd>{{ g.Notes }} </dd>
-				</template>
-			</dl>
+			<table style=margin-bottom:1em>
+				<tr><th>Code<th>Type<th>Colour<th>Label
+				<tr><td>{{ g.Code }}<td>{{ g.Type }}<td>{{ g.Colour }}<td>{{ g.Label }}
+				<tr v-if="g.Notes" colspan="4">{{ g.Notes }}</tr>
+			</table>
 			<fieldset>
 				<legend>Quantities ({{g.SizeCategory}})</legend>
 				<div style="display:flex">
@@ -352,7 +343,7 @@ table.stockWarningTable {
 				<button @click="saveGarment(g)">Save product</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
 				<span v-text="errorMessage"></span>
 			</p>
-			<details v-if="buyin && g.stockWarning.length > 0"><summary>Stock Warnings</summary>
+			<details v-if="buyin && (g.stockWarning?.length ?? 0) > 0"><summary>Stock Warnings</summary>
 				<table class="stockWarningTable">
 					<caption></caption>
 					<tr><th>Size</th><th>Quantity</th><th>Minimum</th></tr>
