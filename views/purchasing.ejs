@@ -448,10 +448,13 @@ window.vueApp = Vue.createApp({
 		},
 		deletePurchaseOrder() {
 			if (window.confirm("We will delete this purchase order. Continue?")) {
-				fetch(`/purchasing/${this.stockOrderId}`, { method: "DELETE"} )
+				const vue = this
+				fetch(`/stockorder/${this.stockOrderId}`, { method: "DELETE"} )
 				.then(response => {
 					if (response.ok) {
 						//update ui
+						vue.stockOrders = vue.stockOrders.filter(so => so.StockOrderId != vue.stockOrderId)
+						this.reset()
 					}
 					else 
 						throw new Error(response.statusText)

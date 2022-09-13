@@ -537,5 +537,62 @@ router.put("/receiveorder/:stockorderid", function (req, res) {
 
 
 
+// DELETE delete a purchase order
+router.delete("/:id", (req, res) => {
+	const date = new Date().toLocaleString()
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {	
+		
+		let statement = db.prepare(`SELECT StockOrderGarmentId, StockOrderId, GarmentId, 
+		${sz.allSizes.join(",")}
+		FROM StockOrderGarment WHERE StockOrderId=?`)
+		const deletedProducts = statement.all(req.params.id)
+
+		db.prepare("BEGIN TRANSACTION").run()
+
+		if (deletedProducts.length > 0) {
+
+			statement = db.prepare ("DELETE FROM StockOrderGarment WHERE StockOrderId=?")
+			let info = statement.run(req.params.id)
+
+			deletedProducts.forEach(function(p) {
+				statement = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, ?, ?, ?) ")
+				info = statement.run("StockOrderGarment", p.StockOrderGarmentId, "DEL", req.auth.user, date)
+				const auditLogId = info.lastInsertRowid
+				delete p.StockOrderGarmentId
+				for(column in p) {
+					if (!p[column])
+						continue
+					statement = db.prepare("INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, null)")
+					statement.run(auditLogId, column, p[column])
+				}
+			})
+		}
+
+		statement = db.prepare("UPDATE StockOrder SET Deleted=1 WHERE StockOrderId=?")
+		statement.run(req.params.id)
+
+		statement = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, ?, ?, ?) ")
+		info = statement.run("StockOrder", req.params.id, "DEL", req.auth.user, date)
+		statement = db.prepare("INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)")
+		statement.run(info.lastInsertRowid, "Deleted", 0, 1 )
+
+		db.prepare("COMMIT").run()
+
+		res.send("ok").end()
+
+
+	}
+	catch (ex) {
+		db.prepare("ROLLBACK").run()
+		res.statusMessage = ex.message
+		res.status(400).end()
+		console.log(`error: put("/removegarment/:stockorderid/:garmentid") ${ex.message}`)
+	}
+	finally {
+			db.close()
+	}
+})
+
 
 module.exports = router
