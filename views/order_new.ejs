@@ -193,9 +193,9 @@ table.stockWarningTable {
 		<p v-if="garments.length == 0">Select products from the table above…</p>
 		<div v-for="g in garments" class="selected-garment" :key="g.GarmentId" style="border: 1px black solid; padding: 1em; margin-bottom: 1em">
 			<table style=margin-bottom:1em>
-				<tr><th>Code<th>Type<th>Colour<th>Label
-				<tr><td>{{ g.Code }}<td>{{ g.Type }}<td>{{ g.Colour }}<td>{{ g.Label }}
-				<tr v-if="g.Notes" colspan="4">{{ g.Notes }}</tr>
+				<tr>                           <th>Code        <th>Type        <th>Colour        <th>Label
+				<tr>                           <td>{{ g.Code }}<td>{{ g.Type }}<td>{{ g.Colour }}<td>{{ g.Label }}
+				<tr v-if="g.Notes" colspan="4"><td>{{ g.Notes }}
 			</table>
 			<fieldset>
 				<legend>Quantities ({{g.SizeCategory}})</legend>
