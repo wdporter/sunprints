@@ -1,0 +1,245 @@
+<%- include("partials/head.ejs") %>
+
+<style>
+input:invalid, select:invalid {
+  border: 2px dashed red;
+}
+</style>
+
+<script id="orderDetails" type="application/json"><%- JSON.stringify(order) %></script>
+<script id="customers" type="application/json"><%- JSON.stringify(customers) %></script>
+<script id="salesReps" type="application/json"><%- JSON.stringify(salesReps) %></script>
+<script id="sizes" type="application/json"><%- JSON.stringify(sizes) %></script>
+<script id="allSizes" type="application/json"><%- JSON.stringify(allSizes) %></script>
+
+
+<div id="app">
+
+
+<fieldset><legend>Order Id: {{ order.OrderId }}</legend>
+
+<p>
+<label for=OrderNumber>Order Number:</label>
+<input id=OrderNumber v-model="order.OrderNumber" required />
+</p>
+
+<p><label for=CustomerId>Customer:</label>
+<select id=CustomerId v-model="order.CustomerId">
+<option v-for="c in customers" :value="c.CustomerId">{{ c.Company }}</option>
+</select>
+</p>
+
+<p><label for=CustomerOrderNumber>Customer Order Number:</label><input id=CustomerOrderNumber v-model="order.CustomerOrderNumber" />
+</p>
+
+<p>
+<label for=SalesRep>Sales Rep:</label>
+<select id=SalesRep v-model=order.SalesRep >
+<option v-for="sr in salesReps">{{ sr }}</option>
+</select>
+</p>
+
+<p>
+<label for=OrderDate>Order Date:</label>
+<input id=OrderDate type=date v-model="order.OrderDate" required />
+</p>
+
+<p><input type=checkbox id=Repeat v-model="order.Repeat" true-value="1" false-value="0" /><label for=Repeat>Repeat</label>
+</p>
+
+<p><input type=checkbox id=New name=New v-model="order.New" true-value="1" false-value="0" /><label for=New>New</label>
+</p>
+
+<p><input type=checkbox id=BuyIn v-model="order.BuyIn" true-value="1" false-value="0" /><label for=BuyIn>Buy In</label></p>
+
+<p>
+<label for=Terms>Terms:</label>
+<select id=Terms v-model="order.Terms">
+<optgroup v-if="order.Terms != 'C.O.D.' && order.Terms != 'Net 7 days' && order.Terms != 'Net 30 days'" label="Standard">
+<option>C.O.D.</option>
+<option>Net 7 days</option>
+<option>Net 30 days</option>
+</optgroup>
+<template v-else>
+	<option>C.O.D.</option>
+	<option>Net 7 days</option>
+	<option>Net 30 days</option>
+</template>
+<optgroup v-if="order.Terms != 'C.O.D.' && order.Terms != 'Net 7 days' && order.Terms != 'Net 30 days'" label="Non-standard">
+<option>{{ order.Terms }} </option>
+</optgroup>
+</select>
+</p>
+
+<p>
+<label for=Delivery>Delivery:</label>
+<input id=Delivery v-model="order.Delivery" />
+</p>
+
+<p>
+<label for=Notes>Notes:</label>
+<textarea rows=5 id=Notes v-model="order.Notes"></textarea>
+</p>
+
+<p>
+<label for=DateProcessed>Processed Date:</label>
+<input id=DateProcessed type=date v-model="order.DateProcessed" required />
+</p>
+
+<p>
+<label for=DateInvoiced>Invoiced Date:</label>
+<input id=DateInvoiced type=date v-model="order.DateInvoiced" />
+</p>
+
+</fieldset>
+
+<fieldset v-for="product in order.Products">
+<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
+<table style="margin-top:1em">
+	<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
+	<tr>
+		<td>{{ product.Code }}</td>
+		<td>{{ product.Label }}</td>
+		<td>{{ product.Type }}</td>
+		<td>{{ product.Colour }}</td>
+		<td>{{ product.Notes}} </td>
+		<td>{{ product.SizeCategory }}</td>
+	</tr>
+</table>
+<p>
+<input type="button" value="Change product" @click="onChangeProduct(product)" />
+</p>
+
+<table style="margin-top:3em">
+	<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz }}</th></tr>
+	<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]"></td></tr>
+</table>
+
+<table style="margin-top:3em">
+	<tr><th></th><th v-for="loc in locations">{{ loc }}</th></tr>
+	<tbody v-for="(dec, i) in decorations">
+		<tr style="border-top:2px black solid">
+			<th>{{ dec }} design</th><td v-for="loc in locations">{{ product[`${loc}${dec}DesignName`] }} <a href=#><span class="fa fa-edit"></span></a> <a href=# v-if="product[`${loc}${dec}DesignId`]"><span class="fa fa-trash"></span></a></td>
+		</tr>
+		<tr><th>{{ media[i] }} 1</th><td v-for="loc in locations">{{ product[`${loc}${media[i]}1Name`] }} <a href=#><span class="fa fa-edit"></span></a> <a href=# v-if="product[`${loc}${media[i]}1Id`]"><span class="fa fa-trash"></span></a></td>
+		<tr><th>{{ media[i] }} 2</th><td v-for="loc in locations">{{ product[`${loc}${media[i]}2Name`] }} <a href=#><span class="fa fa-edit"></span></a></td>
+		
+	</tbody>
+</table>
+
+<!-- took a long time, don't want to let go of it <ul>
+	<template v-for="loc in locations">
+		<template v-for="(dec,i) in decorations">
+				<li><b>{{ loc }} {{ dec.toLowerCase() }} design:</b> {{ product[`${loc}${dec}DesignName`] }}</li>
+				<ul  style="margin-top:0;margin-bottom:0"> 
+						<li><b>{{ `${loc} ${media[i]} 1` }}:</b> {{ product[`${loc}${media[i]}1Name`] }}</li>
+						<li><b>{{ `${loc} ${media[i]} 2` }}:</b> {{ product[`${loc}${media[i]}2Name`] }}</li>
+				</ul>
+			</template>
+	</template>
+</ul> -->
+<p>
+<input type="reset" value="Remove product" />
+</p>
+
+</fieldset>
+
+<input type="button" value="Add new product" />&emsp;
+<input type="submit" value="Save changes" />
+
+
+<dialog id="selectProductDialog" style="max-width: var(--measure);">
+	<h3>Select Product</h3>
+	<table>
+		<thead>
+			<tr><th style="width:2em"><th>Code<th>Label<th>Type<th>Colour<th>Notes<th>Sizes</tr>
+			<tr>
+				<td>
+				<td><input pattern="^.{3,}" type=search placeholder="search" @keyup="onSearchProducts($event)" v-model="productSearch.terms.Code" />
+				<td><input pattern="^.{3,}" type=search placeholder="search" @keyup="onSearchProducts($event)" v-model="productSearch.terms.Label" />
+				<td><input pattern="^.{3,}" type=search placeholder="search" @keyup="onSearchProducts($event)" v-model="productSearch.terms.Type" />
+				<td><input pattern="^.{3,}" type=search placeholder="search" @keyup="onSearchProducts($event)" v-model="productSearch.terms.Colour" />
+				<td><input pattern="^.{3,}" type=search placeholder="search" @keyup="onSearchProducts($event)" v-model="productSearch.terms.Notes" />
+				<td><select style="width:5em;min-width:unset;" @change="onSearchProducts($event)" v-model="productSearch.terms.SizeCategory"><option v-for="(sizecat, key) in sizes">{{key}}</option></select>
+			</tr>
+			<tr v-for="p in productSearch.results">
+				<td>{{ p.Code }}<td>{{ p.Label }}<td>{{ p.Type }}<td>{{ p.Colour }}<td>{{ p.Notes }}<td>{{ p.Sizes }}
+			</tr>
+		</thead>
+		<tbody>
+			<td><a href=#>select</a></td><td colspan="5"></td>
+		</tbody>
+	</table>
+	<p>
+		<input type="button" value="Cancel" onclick="this.closest('dialog').close()" />
+	</p>
+</dialog>
+
+</div>
+
+
+<script>
+
+const order = JSON.parse(document.querySelector("script#orderDetails").textContent)
+const customers = JSON.parse(document.querySelector("script#customers").textContent)
+const salesReps = JSON.parse(document.querySelector("script#salesReps").textContent)
+const sizes = JSON.parse(document.querySelector("script#sizes").textContent)
+const allSizes = JSON.parse(document.querySelector("script#allSizes").textContent)
+
+
+window.vueApp = Vue.createApp({
+	data() {
+		return {
+			order,
+			customers,
+			salesReps,
+			sizes,
+			allSizes,
+			locations: ["Front", "Back", "Pocket", "Sleeve"],
+			decorations: ["Print", "Embroidery", "Transfer"],
+			media: ["Screen", "Usb", "TransferName"],
+			productSearch: {
+				terms: {
+					Code: "",
+					Label: "",
+					Type: "",
+					Colour: "",
+					Notes: "",
+					SizeCategory: ""
+				},
+				results: []
+			}
+		}
+	},
+	methods: {
+		onChangeProduct(product) {
+			console.log(product)
+			this.productSearch.terms.SizeCategory = product.SizeCategory 
+			document.getElementById("selectProductDialog").showModal()
+		},
+		onSearchProducts(event) {
+			console.log(event.target.value)
+			if (event.target.checkValidity()) {
+				if (this.productSearch.terms.Code == "" && this.productSearch.terms.Label == "" && this.productSearch.terms.Type == "" && this.productSearch.terms.Colour == "" && this.productSearch.terms.Notes == "") {
+					return // don't bother searching if all are blank
+				}
+				// get our search terms
+				const terms = Object.keys(this.productSearch.terms).filter(t => t == "SizeCategory" || this.productSearch.terms[t].length >= 3).map(t => `${t}=${this.productSearch.terms[t]}`).join("&")
+				const url = `/sales/productsearch?SizeCategory=${this.productSearch.Sizes}&${encodeUri(terms)}`
+				console.log(url)
+				fetch(url)
+				.then(response => response.json())
+				.then(json => this.productSearch.results = json)
+				.catch(err => window.alert(`We encountered an error: ${err}`))
+			}
+		},
+	}
+}).mount("#app")
+
+
+</script>
+
+
+<%- JSON.stringify(order).replace(/,"/g, ",<br />\"") %>
+
+<%- include("partials/foot.ejs") %>
