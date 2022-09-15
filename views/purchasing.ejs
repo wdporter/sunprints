@@ -48,9 +48,6 @@
 				<textarea id="notes" v-model="notes" @keydown.tab.exact="onNotesKeyDown($event)"></textarea>
 			</p>
 
-			<p v-show="stockOrderId != ''">
-				<button type="reset" @click="deletePurchaseOrder">Delete this purchase order</button>
-			</p>
 		</fieldset>
 
 		<h4>Products 
@@ -84,9 +81,10 @@
 		<p>Total Products: {{ getTotalProducts() }}</p>
 <hr>
 <p>
-	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save Purchase Order</button>&emsp;
+	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save purchase order</button>&emsp;
 	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == '' || dirty==true" value="Print Purchase Order" />&emsp;
-	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true" id=receiveOrder>Receive Order</button>
+	<button v-show="stockOrderId != ''" type="reset" @click="deletePurchaseOrder">Delete purchase order</button>
+	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true" id=receiveOrder>Receive order</button>
 </p>
 
 <dialog id="successDialog">
