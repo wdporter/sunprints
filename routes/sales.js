@@ -7,24 +7,11 @@ const sz = require("../sizes.js")
 /* GET Sales page. */
 router.get("/", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-
-	try {
 		res.render("sales.ejs", {
 			title: "Sales History",
 			user: req.auth.user,
 		})
 
-	}
-	catch (ex) {
-		res.statusMessage = ex.message
-		res.status(400)
-		res.render("error.ejs", { message: ex.message, error: { status: ex.name, stack: null } })
-
-	}
-	finally {
-		db.close()
-	}
 })
 
 
@@ -574,6 +561,222 @@ router.get("/:orderid/history", (req, res) => {
 		console.log(ex)
 		res.statusMessage = ex.message
 		res.sendStatus(400)
+	}
+	finally {
+		db.close()
+	}
+
+
+})
+
+
+router.get("/edit/:id", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+
+		let query = `SELECT 
+		SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.CustomerId, SalesTotal.SalesRep, SalesTotal.OrderDate, SalesTotal.Repeat, SalesTotal.New, SalesTotal.BuyIn, SalesTotal.Terms, SalesTotal.Delivery,SalesTotal.Notes, SalesTotal.CustomerOrderNumber, SalesTotal.DateProcessed, SalesTotal.DateInvoiced, 	
+		Sales.GarmentId,
+		Garment.Code, Label, Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, Garment.Deleted,
+		${sz.allSizes.map(s => `Sales.${s}`).join(",")},
+		fpd.PrintDesignId AS FrontPrintDesignId,
+		IFNULL(fpd.Code, '') || ' ' || IFNULL(fpd.Notes, '') || ' ' || IFNULL(fpd.Comments, '') AS FrontPrintDesignName,
+		bpd.PrintDesignId AS BackPrintDesignId,
+		IFNULL(bpd.Code, '') || ' ' || IFNULL(bpd.Notes, '') || ' ' || IFNULL(bpd.Comments, '') AS BackPrintDesignName,
+		ppd.PrintDesignId AS PocketPrintDesignId,
+		IFNULL(ppd.Code, '') || ' ' || IFNULL(ppd.Notes, '') || ' ' || IFNULL(ppd.Comments, '') AS PocketPrintDesignName,
+		spd.PrintDesignId AS SleevePrintDesignId,
+		IFNULL(spd.Code, '') || ' ' || IFNULL(spd.Notes, '') || ' ' || IFNULL(spd.Comments, '') AS SleevePrintDesignName,
+		fed.EmbroideryDesignId AS FrontEmbroideryDesignId,
+		IFNULL(fed.Code, '') || ' ' || IFNULL(fed.Notes, '') || ' ' || IFNULL(fed.Comments, '') AS FrontEmbroideryDesignName,
+		bed.EmbroideryDesignId AS BackEmbroideryDesignId,
+		IFNULL(bed.Code, '') || ' ' || IFNULL(bed.Notes, '') || ' ' || IFNULL(bed.Comments, '') AS BackEmbroideryDesignName,
+		ped.EmbroideryDesignId AS PocketEmbroideryDesignId,
+		IFNULL(ped.Code, '') || ' ' || IFNULL(ped.Notes, '') || ' ' || IFNULL(ped.Comments, '') AS PocketEmbroideryDesignName,
+		sed.EmbroideryDesignId AS SleeveEmbroideryDesignId,
+		IFNULL(sed.Code, '') || ' ' || IFNULL(sed.Notes, '') || ' ' || IFNULL(sed.Comments, '') AS SleeveEmbroideryDesignName,
+		ftd.TransferDesignId AS FrontTransferDesignId,
+		IFNULL(ftd.Code, '') || ' ' || IFNULL(ftd.Notes, '') AS FrontTransferDesignName,
+		btd.TransferDesignId AS BackTransferDesignId,
+		IFNULL(btd.Code, '') || ' ' || IFNULL(btd.Notes, '') AS BackTransferDesignName,
+		ptd.TransferDesignId AS PocketTransferDesignId,
+		IFNULL(ptd.Code, '') || ' ' || IFNULL(btd.Notes, '') AS PocketTransferDesignName,
+		std.TransferDesignId AS SleeveTransferDesignId,
+		IFNULL(std.Code, '') || ' ' || IFNULL(std.Notes, '') AS SleeveTransferDesignName,
+		fs1.ScreenId AS FrontScreen1Id,
+		IFNULL(fs1.Name, '(standard)') || ' ' || IFNULL(fs1.Number, '') || ' ' || IFNULL(fs1.Colour, '') AS FrontScreen1Name,
+		fs2.ScreenId AS FrontScreen2Id,
+		IFNULL(fs2.Name, '(standard)') || ' ' || IFNULL(fs2.Number, '') || ' ' || IFNULL(fs2.Colour, '') AS FrontScreen2Name,
+		bs1.ScreenId AS BackScreen1Id,
+		IFNULL(bs1.Name, '(standard)') || ' ' || IFNULL(bs1.Number, '') || ' ' || IFNULL(bs1.Colour, '') AS BackScreen1Name,
+		bs2.ScreenId AS BackScreen2Id,
+		IFNULL(bs2.Name, '(standard)') || ' ' || IFNULL(bs2.Number, '') || ' ' || IFNULL(bs2.Colour, '') AS BackScreen2Name,
+		ps1.ScreenId AS PocketScreen1Id,
+		IFNULL(ps1.Name, '(standard)') || ' ' || IFNULL(ps1.Number, '') || ' ' || IFNULL(ps1.Colour, '') AS PocketScreen1Name,
+		ps2.ScreenId AS PocketScreen2Id,
+		IFNULL(ps2.Name, '(standard)') || ' ' || IFNULL(ps2.Number, '') || ' ' || IFNULL(ps2.Colour, '') AS PocketScreen2Name,
+		ss1.ScreenId AS SleeveScreen1Id,
+		IFNULL(ss1.Name, '(standard)') || ' ' || IFNULL(ss1.Number, '') || ' ' || IFNULL(ss1.Colour, '') AS SleeveScreen1Name,
+		ss2.ScreenId AS SleeveScreen2Id,
+		IFNULL(ss2.Name, '(standard)') || ' ' || IFNULL(ss2.Number, '') || ' ' || IFNULL(ss2.Colour, '') AS PocketScreen2Name,
+		fu1.UsbId AS FrontUsb1Id,
+		IFNULL(fu1.Number, '') || ' ' || IFNULL(fu1.Notes, '') AS FrontUsb1Name,
+		fu2.UsbId AS FrontUsb2Id,
+		IFNULL(fu2.Number, '') || ' ' || IFNULL(fu2.Notes, '') AS FrontUsb2Name,
+		bu1.UsbId AS BackUsb1Id,
+		IFNULL(bu1.Number, '') || ' ' || IFNULL(bu1.Notes, '') AS BackUsb1Name,
+		bu2.UsbId AS BackUsb2Id,
+		IFNULL(bu2.Number, '') || ' ' || IFNULL(bu2.Notes, '') AS BackUsb2Name,
+		pu1.UsbId AS PocketUsb1Id,
+		IFNULL(pu1.Number, '') || ' ' || IFNULL(pu1.Notes, '') AS PocketUsb1Name,
+		pu2.UsbId AS PocketUsb2Id,
+		IFNULL(pu2.Number, '') || ' ' || IFNULL(pu2.Notes, '') AS PocketUsb2Name,
+		su1.UsbId AS SleeveUsb1Id,
+		IFNULL(su1.Number, '') || ' ' || IFNULL(su1.Notes, '') AS SleeveUsb1Name,
+		su2.UsbId AS SleeveUsb2Id,
+		IFNULL(su2.Number, '') || ' ' || IFNULL(su2.Notes, '') AS SleeveUsb2Name,
+		ftn1.TransferNameId AS FrontTransferName1Id,
+		ftn1.Name AS FrontTransferName1Name,
+		ftn2.TransferNameId AS FrontTransferName2Id,
+		ftn2.Name AS FrontTransferName2Name,
+		btn1.TransferNameId AS BackTransferName1Id,
+		btn1.Name AS BackTransferName1Name,
+		btn2.TransferNameId AS BackTransferName2Id,
+		btn2.Name AS BackTransferName2Name,
+		ptn1.TransferNameId AS PocketTransferName1Id,
+		ptn1.Name AS PocketTransferName1Name,
+		ptn2.TransferNameId AS PocketTransferName2Id,
+		ptn2.Name AS PocketTransferName2Name,
+		stn1.TransferNameId AS SleeveTransferName1Id,
+		stn1.Name AS SleeveTransferName1Name,
+		stn2.TransferNameId AS SleeveTransferName2Id,
+		stn2.Name AS SleeveTransferName2Name
+		FROM SalesTotal 
+		INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId 
+		INNER JOIN Garment ON Sales.GarmentId=Garment.GarmentId
+		LEFT JOIN PrintDesign fpd ON fpd.PrintDesignId=Sales.FrontPrintDesignId
+		LEFT JOIN PrintDesign bpd ON bpd.PrintDesignId=Sales.BackPrintDesignId
+		LEFT JOIN PrintDesign ppd ON ppd.PrintDesignId=Sales.PocketPrintDesignId
+		LEFT JOIN PrintDesign spd ON spd.PrintDesignId=Sales.SleevePrintDesignId
+		LEFT JOIN EmbroideryDesign fed ON fed.EmbroideryDesignId=Sales.FrontEmbroideryDesignId
+		LEFT JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=Sales.BackEmbroideryDesignId
+		LEFT JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=Sales.PocketEmbroideryDesignId
+		LEFT JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=Sales.SleeveEmbroideryDesignId
+		LEFT JOIN TransferDesign ftd ON ftd.TransferDesignId=Sales.FrontTransferDesignId
+		LEFT JOIN TransferDesign btd ON btd.TransferDesignId=Sales.BackTransferDesignId
+		LEFT JOIN TransferDesign ptd ON ptd.TransferDesignId=Sales.PocketTransferDesignId
+		LEFT JOIN TransferDesign std ON std.TransferDesignId=Sales.SleeveTransferDesignId
+		LEFT JOIN Screen fs1 ON fs1.ScreenId=Sales.FrontScreenId
+		LEFT JOIN Screen fs2 ON fs2.ScreenId=Sales.FrontScreen2Id
+		LEFT JOIN Screen bs1 ON bs1.ScreenId=Sales.BackScreenId
+		LEFT JOIN Screen bs2 ON bs2.ScreenId=Sales.BackScreen2Id
+		LEFT JOIN Screen ps1 ON ps1.ScreenId=Sales.PocketScreenId
+		LEFT JOIN Screen ps2 ON ps2.ScreenId=Sales.PocketScreen2Id
+		LEFT JOIN Screen ss1 ON ss1.ScreenId=Sales.SleeveScreenId
+		LEFT JOIN Screen ss2 ON ss2.ScreenId=Sales.SleeveScreen2Id
+		LEFT JOIN Usb fu1 ON fu1.UsbId=Sales.FrontUsbId
+		LEFT JOIN Usb fu2 ON fu2.UsbId=Sales.FrontUsb2Id
+		LEFT JOIN Usb bu1 ON bu1.UsbId=Sales.BackUsbId
+		LEFT JOIN Usb bu2 ON bu2.UsbId=Sales.BackUsb2Id
+		LEFT JOIN Usb pu1 ON pu1.UsbId=Sales.PocketUsbId
+		LEFT JOIN Usb pu2 ON pu2.UsbId=Sales.PocketUsb2Id
+		LEFT JOIN Usb su1 ON su1.UsbId=Sales.SleeveUsbId
+		LEFT JOIN Usb su2 ON su2.UsbId=Sales.SleeveUsb2Id
+		LEFT JOIN TransferName ftn1 ON ftn1.TransferNameId=Sales.FrontTransferName2Id
+		LEFT JOIN TransferName ftn2 ON ftn2.TransferNameId=Sales.FrontTransferName2Id
+		LEFT JOIN TransferName btn1 ON btn1.TransferNameId=Sales.BackTransferNameId
+		LEFT JOIN TransferName btn2 ON btn2.TransferNameId=Sales.BackTransferName2Id
+		LEFT JOIN TransferName ptn1 ON ptn1.TransferNameId=Sales.PocketTransferNameId
+		LEFT JOIN TransferName ptn2 ON ptn2.TransferNameId=Sales.PocketTransferName2Id
+		LEFT JOIN TransferName stn1 ON stn1.TransferNameId=Sales.SleeveTransferNameId
+		LEFT JOIN TransferName stn2 ON stn2.TransferNameId=Sales.SleeveTransferName2Id
+		WHERE SalesTotal.OrderId=?`
+		
+		const orderDetails = db.prepare(query).all(req.params.id)
+
+		const order = {
+			OrderId: orderDetails[0].OrderId,
+			OrderNumber: orderDetails[0].OrderNumber, 
+			CustomerId: orderDetails[0].CustomerId, 
+			SalesRep: orderDetails[0].SalesRep, 
+			OrderDate: orderDetails[0].OrderDate, 
+			Repeat: orderDetails[0].Repeat, 
+			New: orderDetails[0].New, 
+			BuyIn: orderDetails[0].BuyIn, 
+			Terms: orderDetails[0].Terms, 
+			Delivery: orderDetails[0].Delivery, 
+			Notes: orderDetails[0].Notes, 
+			CustomerOrderNumber: orderDetails[0].CustomerOrderNumber, 
+			DateProcessed: orderDetails[0].DateProcessed, 
+			DateInvoiced: orderDetails[0].DateInvoiced,
+			Products: []
+		}
+		orderDetails.forEach(od => {
+			const product = 
+			{
+				GarmentId: od.GarmentId,
+				Deleted: od.Deleted,
+				Code: od.Code,
+				Label: od.Label,
+				Type: od.Type,
+				Colour: od.Colour,
+				Notes: od.GarmentNotes,
+				SizeCategory: od.SizeCategory
+			}
+
+			sz.sizes[od.SizeCategory].forEach(sz => product[sz] = od[sz] )
+
+			const locations = ["Front", "Back", "Pocket", "Sleeve"]
+			const decorations = ["Print", "Embroidery", "Transfer"]
+			const media = ["Screen", "Usb", "TransferName"]
+
+			locations.forEach(loc => {
+				decorations.forEach(dec => {
+					product[`${loc}${dec}DesignId`] = od[`${loc}${dec}DesignId`]
+					product[`${loc}${dec}DesignName`] = od[`${loc}${dec}DesignName`]
+				})
+
+				media.forEach(m => {
+					product[`${loc}${m}1Id`] = od[`${loc}${m}1Id`]
+					product[`${loc}${m}1Name`] = od[`${loc}${m}1Name`]
+					product[`${loc}${m}2Id`] = od[`${loc}${m}2Id`]
+					product[`${loc}${m}2Name`] = od[`${loc}${m}2Name`]
+				})
+			})
+
+			locations.forEach(loc => {
+				if (product[`${loc}Screen1Name`] == "(standard)  ")
+					product[`${loc}Screen1Name`] = null
+				if (product[`${loc}Screen2Name`] == "(standard)  ")
+					product[`${loc}Screen2Name`] = null
+			})
+
+			order.Products.push(product)
+		})
+
+		const customers = db.prepare("SELECT CustomerId, Company || CASE WHEN Deleted=1 THEN ' (deleted)' ELSE '' END AS Company  FROM Customer ORDER BY Company").all()
+		const salesReps = db.prepare("SELECT Name || CASE WHEN Deleted=1 THEN ' (deleted)' ELSE '' END AS Name FROM SalesRep ORDER BY Deleted, Name").all().map(sr => sr.Name)
+		const sizes = sz.allSizes
+
+	res.render("sales_edit.ejs", {
+		title: "Edit Sales History",
+		user: req.auth.user,
+		order,
+		customers,
+		salesReps,
+		allSizes: sz.allSizes,
+		sizes: sz.sizes	
+
+	})
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.status(400)
+		res.render("error.ejs", { message: ex.message, error: { status: ex.name, stack: null } })
+
 	}
 	finally {
 		db.close()
