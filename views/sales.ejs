@@ -219,10 +219,20 @@ div#dt_wrapper {
 				className: 'dt-control',
 				orderable: false,
 				data: null,
-				defaultContent: `&nbsp;<a href=# onclick="cloneOrder(this, event)" title="Clone this order"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span>`,
-				title: "click to view sales details",
-				width: "2em"
-			},
+				title: "Actions",
+				width: "4em",
+				render(data) {
+					let retVal = `&ensp;<a href=# onclick="cloneOrder(this, event)" title="Clone this order"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span></a>`
+
+					let href = ""
+					if (data.DateProcessed)
+						href = `/sales/edit/${data.OrderId}`
+					else
+						href = `/order/edit?id=${data.OrderId}`
+					
+						retVal += `&ensp;<a href="${href}" title="Edit this order"><span class="fa fa-edit fa-lg" style="margin-top:.5em"></span></a>`
+					return retVal
+				}			},
 			{ data: "OrderId",
 				visible: false
 			},
