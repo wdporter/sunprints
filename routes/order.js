@@ -1219,7 +1219,7 @@ router.get("/xero/csv", (req, res)=> {
 					description += `\n${order.Colour} - ${size} / ${order[size]}`
 			})
 			description += '"'
-			csv.push(`${order.Company},${order.Email},${order.AddressLine1 ?? ""},${order.AddressLine2 ?? ""},,,${order.Locality ?? ""},,${order.Postcode ?? ""},,${order.OrderNumber},,,,${order.Code},${description},${qty},${order.Price},,,,,,,,,`)
+			csv.push(`"${order.Company}","${order.Email}","${order.AddressLine1 ?? ""}","${order.AddressLine2 ?? ""}",,,"${order.Locality ?? ""}",,"${order.Postcode ?? ""}",,"${order.OrderNumber}",,,,"${order.Code}",${description},${qty},"${order.Price}",,,,,,,,,`)
 		})
 
 
