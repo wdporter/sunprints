@@ -569,6 +569,57 @@ router.get("/:orderid/history", (req, res) => {
 
 })
 
+router.get("/csv/", (req, res) => {
+
+	if (!req.query.datefrom || !req.query.dateto) {
+		res.statusMessage("missing date parameters")
+		res.sendStatus(400)
+	}
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+		let query = `SELECT SalesTotal.OrderNumber, Customer.Company, SalesRep, SalesTotal.OrderDate,
+		Garment.Code || ' ' || Type || ' ' || Colour AS Product,
+		${sz.allSizes.map(sz => `Sales.${sz}`).join("+")} AS Qty,
+		Price,
+		(${sz.allSizes.map(sz => `Sales.${sz}`).join("+")}) * Price AS Value
+		FROM SalesTotal
+		INNER JOIN Customer ON SalesTotal.CustomerId=Customer.CustomerId
+		LEFT JOIN Sales ON SalesTotal.OrderId=Sales.OrderId
+		LEFT JOIN Garment ON Sales.GarmentId=Garment.GarmentId
+		WHERE SalesTotal.OrderDate >= ? AND SalesTotal.OrderDate <= ?
+		`
+	
+		let statement = db.prepare(query)
+		let results = statement.all(req.query.datefrom, req.query.dateto)
+
+		const lines = [Object.keys(results[0]).join(",")]
+		const data = results.map(r => {
+			const values = Object.keys(r).map(k => `"${r[k]}"` )
+			lines.push(values.join(","))
+		})
+		
+		let csv = lines.join("\n")
+		csv = csv.replace(/\"null\"/g, "")
+	
+		res.header("Content-Type", "text/csv")
+		res.attachment(`sales_${req.query.datefrom}_to_${req.query.dateto}.csv`);
+		res.send(csv)
+
+	}
+	catch(err) {
+		res.statusMessage = err.message
+		res.sendStatus(400)
+
+	}
+	finally {
+		db.close()
+	}
+
+
+})
+
 
 router.get("/edit/:id", (req, res) => {
 

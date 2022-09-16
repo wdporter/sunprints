@@ -88,6 +88,7 @@ div#dt_wrapper {
 				<label for="dateTo">Date To</label><!-- one year ago -->
 				<input type=date id="dateTo" />
 			</p>
+			<p><a href=# id="dateRangeCsv">Download CSV</a></p>
 		</fieldset>
 		<fieldset>
 			<legend>Order Number</legend>
@@ -402,9 +403,26 @@ div#dt_wrapper {
 
 
 
+document.getElementById("dateRangeCsv").addEventListener("click", function(event) {
 
+	const dateFrom = document.getElementById("dateFrom").value
+	const dateTo = document.getElementById("dateTo").value
+	if (dateFrom != "" && dateTo != "" && dateFrom <= dateTo) {
 
+			event.target.setAttribute("href", `/sales/csv?datefrom=${dateFrom}&dateto=${dateTo}` )
 
+	}
+	else 
+		event.preventDefault()
+})
+
+document.getElementById("dateFrom").addEventListener("input", function() {
+	document.getElementById("dateTo").setAttribute("min", this.value)
+})
+
+document.getElementById("dateTo").addEventListener("input", function() {
+	document.getElementById("dateFrom").setAttribute("max", this.value)
+})
 
 
 </script>
