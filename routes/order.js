@@ -1206,7 +1206,7 @@ router.get("/xero/csv", (req, res)=> {
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
 		INNER JOIN Garment ON OrderGarment.GarmentId=Garment.GarmentId
-		WHERE Orders.Deleted=0 AND OrderDate=? `).all(req.query.d)
+		WHERE Orders.Deleted=0 AND OrderNumber IN (${req.query.ordernumbers.split(",").map(on => "?").join(",")}) `).all(req.query.ordernumbers.split(","))
 
 		const csv = ["*ContactName,EmailAddress,POAddressLine1,POAddressLine2,POAddressLine3,POAddressLine4,POCity,PORegion,POPostalCode,POCountry,*InvoiceNumber,Reference,*InvoiceDate,*DueDate,InventoryItemCode,*Description,*Quantity,*UnitAmount,Discount,*AccountCode,*TaxType,TrackingName1,TrackingOption1,TrackingName2,TrackingOption2,Currency,BrandingTheme"]
 
@@ -1219,7 +1219,7 @@ router.get("/xero/csv", (req, res)=> {
 					description += `\n${order.Colour} - ${size} / ${order[size]}`
 			})
 			description += '"'
-			csv.push(`"${order.Company}","${order.Email}","${order.AddressLine1 ?? ""}","${order.AddressLine2 ?? ""}",,,"${order.Locality ?? ""}",,"${order.Postcode ?? ""}",,"${order.OrderNumber}",,,,"${order.Code}",${description},${qty},"${order.Price}",,,,,,,,,`)
+			csv.push(`"${order.Company}","${order.Email ?? ""}","${order.AddressLine1 ?? ""}","${order.AddressLine2 ?? ""}",,,"${order.Locality ?? ""}",,"${order.Postcode ?? ""}",,"${order.OrderNumber}",,,,"${order.Code}",${description},${qty},"${order.Price}",,,,,,,,,`)
 		})
 
 

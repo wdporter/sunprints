@@ -1,18 +1,27 @@
 <%- include("partials/head.ejs") %>
 
+<style>
+	input[type=checkbox] {
+		all: revert;
+	}
+	input[type=checkbox] {
+		height: 2em;
+		width: 2em;
+	}
+</style>
 
 	<p>
 		<label for=orderdate>Order Date:</label>
 		<input type=date id="orderdate" autofocus %> />
 	</p>
 	<p>
-		<a id="downloadLink">Download CSV</a>
+		<a href="#" id="downloadLink">Download CSV</a>
 	</p>
 </form>
 
 <table id=orderTable>
 	<thead>
-		<tr><th>Order Number<th>Customer<th>Notes
+		<tr><th style="width:2em">Select<th>Order Number<th>Customer<th>Notes
 		<tbody>
 
 </table>
@@ -26,10 +35,17 @@ document.getElementById("orderdate").addEventListener("input", function () {
 	fetch(`xero/invoices?d=${document.getElementById("orderdate").value}`)
 	.then(response => response.json())
 	.then(json => {
-		json.data.forEach(order => orderTable.insertAdjacentHTML("beforeend", `<td>${order.OrderNumber}<td>${order.Company}<td>${order.Notes}`))
-
-		document.getElementById("downloadLink").setAttribute("href", `/order/xero/csv?d=${document.getElementById("orderdate").value}`)
+		json.data.forEach(order => orderTable.insertAdjacentHTML("beforeend", `<td><input type=checkbox checked id="cb_${order.OrderNumber}" data-ordernumber="${order.OrderNumber}" /><td>${order.OrderNumber}<td>${order.Company}<td>${order.Notes}`))
 	})
+})
+
+
+document.getElementById("downloadLink").addEventListener("click", function(event) {
+	//event.preventDefault()
+
+	const checkboxen = Array.from(document.querySelectorAll("table#orderTable input:checked")).map(cb => cb.dataset.ordernumber)
+	event.target.setAttribute("href", `/order/xero/csv?d=${document.getElementById("orderdate").value}&ordernumbers=${checkboxen.join(",")}`)
+	
 })
 
 </script>
