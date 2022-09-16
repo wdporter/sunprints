@@ -1174,6 +1174,65 @@ router.get("/outstanding/promo", (req, res) => {
 })
 
 
+router.get("/csv/", (req, res) => {
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const records = db.prepare(`SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Done, 
+	Customer.Company, 
+	fpd.Code || ' ' || IFNULL(fpd.Notes, '') AS FrontPrintDesign, 
+	bpd.Code || ' ' || IFNULL(bpd.Notes, '') AS BackPrintDesign, 
+	ppd.Code || ' ' || IFNULL(ppd.Notes, '') AS PocketPrintDesign, 
+	spd.Code || ' ' || IFNULL(spd.Notes, '') AS SleevePrintDesign,
+	fed.Code || ' ' || IFNULL(fed.Notes, '') AS FrontEmbroideryDesign, 
+	bed.Code || ' ' || IFNULL(bed.Notes, '') AS BackEmbroideryDesign, 
+	ped.Code || ' ' || IFNULL(ped.Notes, '') AS PocketEmbroideryDesign, 
+	sed.Code || ' ' || IFNULL(sed.Notes, '') AS SleeveEmbroideryDesign,
+	ftd.Code AS FrontTransferDesign, 
+	btd.Code AS BackTransferDesign, 
+	ptd.Code AS PocketTransferDesign, 
+	std.Code AS SleeveTransferDesign,
+	OrderGarment.K0 + OrderGarment.K1 + OrderGarment.K2 + OrderGarment.K4 + OrderGarment.K6 + OrderGarment.K8 + OrderGarment.K10 + OrderGarment.K12 + OrderGarment.K14 + OrderGarment.K16 + 
+	OrderGarment.W6 + OrderGarment.W8 + OrderGarment.W10 + OrderGarment.W12 + OrderGarment.W14 + OrderGarment.W16 + OrderGarment.W18 + OrderGarment.W20 + OrderGarment.W22 + OrderGarment.W24 + OrderGarment.W26 + OrderGarment.W28 + 
+	OrderGarment.AXS + OrderGarment.ASm + OrderGarment.AM + OrderGarment.AL + OrderGarment.AXL + OrderGarment.A2XL + OrderGarment.A3XL + OrderGarment.A4XL + OrderGarment.A5XL + OrderGarment.A6XL + OrderGarment.A7XL + OrderGarment.A8XL AS Qty,
+	Price,
+	(OrderGarment.K0 + OrderGarment.K1 + OrderGarment.K2 + OrderGarment.K4 + OrderGarment.K6 + OrderGarment.K8 + OrderGarment.K10 + OrderGarment.K12 + OrderGarment.K14 + OrderGarment.K16 + 
+	OrderGarment.W6 + OrderGarment.W8 + OrderGarment.W10 + OrderGarment.W12 + OrderGarment.W14 + OrderGarment.W16 + OrderGarment.W18 + OrderGarment.W20 + OrderGarment.W22 + OrderGarment.W24 + OrderGarment.W26 + OrderGarment.W28 + 
+	OrderGarment.AXS + OrderGarment.ASm + OrderGarment.AM + OrderGarment.AL + OrderGarment.AXL + OrderGarment.A2XL + OrderGarment.A3XL + OrderGarment.A4XL + OrderGarment.A5XL + OrderGarment.A6XL + OrderGarment.A7XL + OrderGarment.A8XL) * Price AS Value,
+	Garment.Code || ' ' || Type || ' ' || Colour AS Product
+	FROM Orders
+	INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
+	INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
+	INNER JOIN Garment ON Garment.GarmentId=OrderGarment.GarmentId
+	LEFT JOIN PrintDesign fpd ON fpd.PrintDesignId=OrderGarment.FrontPrintDesignId
+	LEFT JOIN PrintDesign bpd ON bpd.PrintDesignId=OrderGarment.BackPrintDesignId
+	LEFT JOIN PrintDesign ppd ON ppd.PrintDesignId=OrderGarment.PocketPrintDesignId
+	LEFT JOIN PrintDesign spd ON spd.PrintDesignId=OrderGarment.SleevePrintDesignId
+	LEFT JOIN EmbroideryDesign fed ON fed.EmbroideryDesignId=OrderGarment.FrontEmbroideryDesignId
+	LEFT JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=OrderGarment.BackEmbroideryDesignId
+	LEFT JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=OrderGarment.PocketEmbroideryDesignId
+	LEFT JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=OrderGarment.SleeveEmbroideryDesignId
+	LEFT JOIN TransferDesign ftd ON ftd.TransferDesignId=OrderGarment.FrontTransferDesignId
+	LEFT JOIN TransferDesign btd ON btd.TransferDesignId=OrderGarment.BackTransferDesignId
+	LEFT JOIN TransferDesign ptd ON ptd.TransferDesignId=OrderGarment.PocketTransferDesignId
+	LEFT JOIN TransferDesign std ON std.TransferDesignId=OrderGarment.SleeveTransferDesignId
+	WHERE ProcessedDate IS NULL  ORDER BY 2 ASC `).all()
+	
+	const lines = ["OrderNumber,OrderDate,DeliveryDate,BuyIn,Done,Company,FrontPrintDesign,BackPrintDesign,PocketPrintDesign,SleevePrintDesign,FrontEmbroideryDesign,BackEmbroideryDesign,PocketEmbroideryDesign,SleeveEmbroideryDesign,FrontTransferDesign,BackTransferDesign,PocketTransferDesign,SleeveTransferDesign,Qty,Price,Value,Product"]
+	const data = records.map(r => {
+		const values = Object.keys(r).map(k => `"${r[k]}"` )
+		lines.push(values.join(","))
+	})
+	
+	let csv = lines.join("\n")
+	csv = csv.replace(/\"null\"/g, "")
+
+	res.header("Content-Type", "text/csv")
+	res.attachment(`outstanding_orders_${new Date().toISOString().substring(0,10)}.csv`);
+	res.status(200).send(csv)
+
+
+})
+
+
 router.get("/xero/", (req, res) => {
 
 	res.render("xero.ejs", {
