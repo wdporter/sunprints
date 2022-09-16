@@ -14,7 +14,9 @@
 		.table-container {
 			display:flex; 
 			justify-content:space-between; 
-			margin-bottom: 3em;
+			margin-bottom: 1em;
+			border-bottom: 1px lightgray solid;
+			break-inside: avoid;
 		}
 
 		.type-table tr td:first-child {
@@ -105,7 +107,7 @@
 		<%- contacts.join("<br>") %>
 		</p>
 		<p>&emsp;</p>
-		<p>Notes:<br />
+		<p style="margin-bottom:0">Notes:<br />
 			<%- supplier.StockOrderNotes?.replace(/\n/g, "<br>") ?? "" %>
 		</p>
 	</div>
@@ -119,7 +121,7 @@ for (var sizeCategory in garments) {
 	const myGarments = garments[sizeCategory]
 	%>
 	<% if (myGarments.length > 0) { %>
-		<h4 style="width:100%;text-align: center">— <%= sizeCategory %> Sizes —</h4>
+		<h4 style="width:100%;text-align:center;margin-top:1em">— <%= sizeCategory %> Sizes —</h4>
 		<% for (var garment of myGarments) { %>
 
 		<div class=table-container>
