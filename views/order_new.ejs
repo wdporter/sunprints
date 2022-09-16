@@ -368,13 +368,15 @@ table.stockWarningTable {
 	<input type=button id=printJobButton style="display:none" onclick="printJobSheet()" value="Print Job Sheet" />
 	<input type=submit id=shipOrderButton style="display:none" onclick="shipOrder()" value="Ship Order" title="Sets done to true, will no longer display on orders page." />
 
-	<dl style=margin-bottom:2em>
-		<dt>Created by</dt>
-		<dd><%= order.CreatedBy %> on <%= order.CreatedDateTime %></dd>
-		<dt>Last modified by</dt>
-		<dd><%= order.LastModifiedBy %> on <%= order.LastModifiedDateTime %></dd>
-	</dl>
-	<a href="/auditlog?table=Orders&id=<%= order.OrderId %>" target=_blank>Audit log</a>
+	<% if (order) { %>
+		<dl style=margin-bottom:2em>
+			<dt>Created by</dt>
+			<dd><%= order.CreatedBy %> on <%= order.CreatedDateTime %></dd>
+			<dt>Last modified by</dt>
+			<dd><%= order.LastModifiedBy %> on <%= order.LastModifiedDateTime %></dd>
+		</dl>
+		<a href="/auditlog?table=Orders&id=<%= order.OrderId %>" target=_blank>Audit log</a>
+		<% } %>
 	
 
 	<script>
