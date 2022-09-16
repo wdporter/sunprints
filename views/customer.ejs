@@ -308,13 +308,17 @@ input:invalid {
 						vue.message = ""
 
 						for (var key in vue.customer) {
-							if (key == "CustomerId")
+							if (key == "CustomerId" || key == "DT_RowAttr")  
 								continue
 							if (vue.customer[key] != null)
 								vue.customer[key] = vue.customer[key].trim()
 						}
 						vue.customer.Code = vue.customer.Code.toUpperCase()
 						vue.customer.Company = vue.customer.Company.toUpperCase()
+
+						delete vue.customer.DT_RowId
+						delete vue.customer.DT_RowAttr
+						delete vue.customer.maxdate
 
 						if (vue.mode == "New") {
 							vue.customer.CustomerId = null
