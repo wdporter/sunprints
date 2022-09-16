@@ -290,7 +290,7 @@ table.stockWarningTable {
 				<div style="display:flex;justify-content:space-around">
 					<fieldset v-for="(transferLocation, key) in g.transferLocations" :key="key[0]">
 						<legend>{{key}} (choose one or two)</legend>
-						<p v-for="tname in transferLocation" :key="tname.TransferNameTransferDesignId">
+						<p v-for="tname in transferLocation" :key="tname.TransferNameId">
 							<input type="checkbox" @change="transferNameChange(g, key, `${key}`, $event)" :data-key="key" :value="tname.TransferNameId"
 								v-model="g.checkedTransferNames[key]" :id="`transferName${key}${tname.TransferNameId}`">
 							<label :for="`transferName${key}${tname.TransferNameId}`">{{tname.Name}} {{ key }}</label>

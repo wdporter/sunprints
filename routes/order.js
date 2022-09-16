@@ -443,7 +443,7 @@ router.get("/edit", function (req, res, next) {
 
 					for (var t of transferNameTransferDesigns) {
 						if (t[loc] == 1)
-							g.checkedTransferNames[loc].push(t.TransferNameTransferDesignId)
+							g.checkedTransferNames[loc].push(t.TransferNameId)
 					}
 
 					delete g[loc + "TransferNameId"]
