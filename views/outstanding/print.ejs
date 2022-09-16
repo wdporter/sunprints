@@ -27,8 +27,8 @@ td {
 		overflow: hidden;
 	}
 
-	/* qty */
-	td:nth-child(7) { 
+	/* qty and value */
+	td:nth-child(7), td:nth-child(8) { 
 		text-align: right;
 	}
 
@@ -75,6 +75,7 @@ td {
 			<th>Done
 			<th>Customer
 			<th>Qty
+			<th class=no-print>Val
 			<th>Front
 			<th>Back
 			<th>Pocket
@@ -92,6 +93,7 @@ td {
 		<td><%= results[i].Done == 1 ? "✓" : "☓" %>
 		<td><%= results[i].Company %>
 		<td><%= results[i].Qty %>
+		<td class=no-print><%= results[i].Value.toLocaleString("en-AU", {style: "currency", currency: "AUD"}) %></td>
 		<td><%- results[i].FrontDesign %></td>
 		<td><%- results[i].BackDesign  %></td>
 		<td><%- results[i].PocketDesign %></td>
@@ -104,7 +106,7 @@ td {
 
 <p>Total Orders: <%= results.length %></p>
 <p>Total Quantity: <%= results.reduce((acc, curr) => { return acc + curr.Qty}, 0 ) %></p>
-
+<p>Total Value: <%= results.reduce((acc, curr) => { return acc + curr.Value}, 0 ).toLocaleString("en-AU", {style: "currency", currency: "AUD"}) %></p>
 <script>
 window.print()
 </script>

@@ -805,7 +805,8 @@ router.get("/outstanding/print", (req, res) => {
 		bpd.Code AS BackDesign, 
 		ppd.Code AS PocketDesign, 
 		spd.Code AS SleeveDesign,
-		${sz.allSizes.join(" + ")} AS Qty
+		${sz.allSizes.join(" + ")} AS Qty,
+		Price
 		FROM Orders
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
@@ -838,6 +839,7 @@ router.get("/outstanding/print", (req, res) => {
 			// if we don't already have it in r2, it's the first time we found it
 			if (!r2[r.OrderNumber]) {
 				r2[r.OrderNumber] = r
+				r2[r.OrderNumber].Value = r.Qty * r.Price
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
@@ -851,6 +853,8 @@ router.get("/outstanding/print", (req, res) => {
 					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>")) + r.SleeveDesign
 
 				r2[r.OrderNumber].Qty += r.Qty
+				r2[r.OrderNumber].Value += r.Qty * r.Price
+		
 			}
 		})
 
@@ -900,7 +904,8 @@ router.get("/outstanding/embroidery", (req, res) => {
 		bed.Code AS BackDesign, 
 		ped.Code AS PocketDesign, 
 		sed.Code AS SleeveDesign,
-		K0 + K1 + K2 + K4 + K6 + K8 + K10 + K12 + K14 + K16 + W6 + W8 + W10 + W12 + W14 + W16 + W18 + W20 + W22 + W24 + W26 + W28 + AXS + ASm + AM + AL + AXL + A2XL + A3XL + A4XL + A6XL + A7XL + A8XL AS Qty
+		${sz.allSizes.join(" + ")} AS Qty,
+		Price
 		FROM Orders
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
@@ -931,6 +936,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 			// if we don't already have it in r2, it's the first time we found it
 			if (!r2[r.OrderNumber]) {
 				r2[r.OrderNumber] = r
+				r2[r.OrderNumber].Value = r.Qty * r.Price
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
@@ -944,6 +950,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>")) + r.SleeveDesign
 
 				r2[r.OrderNumber].Qty += r.Qty
+				r2[r.OrderNumber].Value += r.Qty * r.Price
 			}
 		})
 
@@ -992,7 +999,8 @@ router.get("/outstanding/transfer", (req, res) => {
 		btd.Code AS BackDesign, 
 		ptd.Code AS PocketDesign, 
 		std.Code AS SleeveDesign,
-		K0 + K1 + K2 + K4 + K6 + K8 + K10 + K12 + K14 + K16 + W6 + W8 + W10 + W12 + W14 + W16 + W18 + W20 + W22 + W24 + W26 + W28 + AXS + ASm + AM + AL + AXL + A2XL + A3XL + A4XL + A6XL + A7XL + A8XL AS Qty
+		${sz.allSizes.join(" + ")} AS Qty,
+		Price
 		FROM Orders
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
@@ -1024,6 +1032,7 @@ router.get("/outstanding/transfer", (req, res) => {
 			// if we don't already have it in r2, it's the first time we found it
 			if (!r2[r.OrderNumber]) {
 				r2[r.OrderNumber] = r
+				r2[r.OrderNumber].Value = r.Qty * r.Price
 			}
 			else {
 				// already exists, so we need to consolidate this item into it
@@ -1037,6 +1046,7 @@ router.get("/outstanding/transfer", (req, res) => {
 					r2[r.OrderNumber].SleeveDesign = (r2[r.OrderNumber].SleeveDesign == null ? "" : (r2[r.OrderNumber].SleeveDesign + "<br>")) + r.SleeveDesign
 
 				r2[r.OrderNumber].Qty += r.Qty
+				r2[r.OrderNumber].Value += r.Qty * r.Price
 			}
 		})
 
@@ -1082,6 +1092,7 @@ router.get("/outstanding/promo", (req, res) => {
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, 
 		Customer.Company, 
 		${sz.allSizes.join(" + ")} AS Qty,
+		Price,
 		FrontPrintDesignId, BackPrintDesignId, PocketPrintDesignId, SleevePrintDesignId,
 		FrontEmbroideryDesignId, BackEmbroideryDesignId, PocketEmbroideryDesignId, SleeveEmbroideryDesignId,
 		FrontTransferDesignId, BackTransferDesignId, PocketTransferDesignId, SleeveTransferDesignId
@@ -1117,16 +1128,21 @@ router.get("/outstanding/promo", (req, res) => {
 				if (!r2[r.OrderNumber]) {
 					// we only keep it if it has no designs on it
 					if (r.FrontPrintDesignId == null && r.BackPrintDesignId == null && r.PocketPrintDesignId == null && r.SleevePrintDesignId == null
-						&& r.FrontEmbroideryDesignId == null && r.BackEmbroideryDesignId == null && r.PocketEmbroideryDesignId == null && r.SleeveEmbroideryDesignId == null
-						&& r.FrontTransferDesignId == null && r.BackTransferDesignId == null && r.PocketTransferDesignId == null && r.SleeveTransferDesignId == null) {
+							&& r.FrontEmbroideryDesignId == null && r.BackEmbroideryDesignId == null && r.PocketEmbroideryDesignId == null && r.SleeveEmbroideryDesignId == null
+							&& r.FrontTransferDesignId == null && r.BackTransferDesignId == null && r.PocketTransferDesignId == null && r.SleeveTransferDesignId == null) {
+
 						r2[r.OrderNumber] = r
+						r2[r.OrderNumber].Value = r.Qty * r.Price
+
 					}
 					else {
 						rejected.add(orderNumberStem)
 					}
 				} else {
-					// already exists, so add the quantity
+					// already exists, so add the quantity and value
 					r2[r.OrderNumber].Qty += r.Qty
+					r2[r.OrderNumber].Value += r.Qty * r.Price
+
 				}
 			}
 		})
