@@ -836,4 +836,153 @@ router.get("/edit/:id", (req, res) => {
 
 })
 
+
+router.get("/productsearch", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+
+		db.prepare("PRAGMA case_sensitive_like = false;").run()
+		
+		let query = `SELECT Count(*) AS Count  
+		FROM Garment 
+		WHERE ${Object.keys(req.query).map(k => ` ${k} LIKE ? `).join(" AND ")}`
+		const params = Object.keys(req.query).map(k => `%${req.query[k]}%`)
+		const count = db.prepare(query).get(params).Count
+
+		query = query.replace("Count(*) AS Count", " GarmentId, Code, Label, Type, Colour, Notes, SizeCategory ")
+		query += " LIMIT 50"
+
+		const results = db.prepare(query).all(params)
+
+		res.send({
+			count: count,
+			limit: 50,
+			data: results
+		})
+
+
+
+	}
+	catch(err) {
+		console.log(`Error: ${err}`)
+		res.statusMessage = err.message
+		res.sendStatus(400)
+	}
+	finally {
+		db.close()
+	}
+})
+
+// GET all candidate media types for the given Decoration 
+//  example /sales/mediasearch?media=Usb&location=Front&decoration=Embroidery&design=4885&Number=wsert&Notes=abc
+router.get("/mediasearch", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+
+		db.prepare("PRAGMA case_sensitive_like = false;").run()
+
+		const mediaColumns = {
+			Screen: ["Screen.ScreenId AS Id", "Name", "Number", "Colour" ],
+			Usb: ["Usb.UsbId  AS Id", "Number", "Notes"],
+			TransferName: ["TransferName.TransferNameId  AS Id", "Name"]
+		}
+
+		let query = `SELECT Count(*) AS Count  
+	FROM ${req.query.media}
+	INNER JOIN 
+		${req.query.media}${req.query.decoration}Design 
+			ON ${req.query.media}${req.query.decoration}Design.${req.query.media}Id = ${req.query.media}.${req.query.media}Id
+	WHERE ${req.query.decoration}DesignId=?
+		AND ${req.query.media}${req.query.decoration}Design.${req.query.location}=1
+		AND  ${Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => ` ${k} LIKE ? `).join(" AND ")}`
+		const params = Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => `%${req.query[k]}%`)
+		params.unshift(req.query.design)
+		const count = db.prepare(query).get(params).Count
+
+
+
+		query = query.replace("Count(*) AS Count", mediaColumns[req.query.media].join(", "))
+		query += " LIMIT 50"
+
+		const results = db.prepare(query).all(params)
+
+
+
+		res.send({
+			count: count,
+			limit: 50,
+			data: results
+		})
+
+
+
+	}
+	catch(err) {
+		console.log(`Error: ${err}`)
+		res.statusMessage = err.message
+		res.sendStatus(400)
+	}
+	finally {
+		db.close()
+	}})
+
+// GET all candidate designs for the given location
+//  example /sales/designsearch?location=Front&decoration=Embroidery&Code=asdf&Notes=abc&Comments=asdf
+router.get("/mediasearch", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+
+		db.prepare("PRAGMA case_sensitive_like = false;").run()
+
+		const mediaColumns = {
+			Screen: ["Screen.ScreenId AS Id", "Name", "Number", "Colour" ],
+			Usb: ["Usb.UsbId  AS Id", "Number", "Notes"],
+			TransferName: ["TransferName.TransferNameId  AS Id", "Name"]
+		}
+
+		let query = `SELECT Count(*) AS Count  
+	FROM ${req.query.media}
+	INNER JOIN 
+		${req.query.media}${req.query.decoration}Design 
+			ON ${req.query.media}${req.query.decoration}Design.${req.query.media}Id = ${req.query.media}.${req.query.media}Id
+	WHERE ${req.query.decoration}DesignId=?
+		AND ${req.query.media}${req.query.decoration}Design.${req.query.location}=1
+		AND  ${Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => ` ${k} LIKE ? `).join(" AND ")}`
+		const params = Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => `%${req.query[k]}%`)
+		params.unshift(req.query.design)
+		const count = db.prepare(query).get(params).Count
+
+
+
+		query = query.replace("Count(*) AS Count", mediaColumns[req.query.media].join(", "))
+		query += " LIMIT 50"
+
+		const results = db.prepare(query).all(params)
+
+
+
+		res.send({
+			count: count,
+			limit: 50,
+			data: results
+		})
+
+
+
+	}
+	catch(err) {
+		console.log(`Error: ${err}`)
+		res.statusMessage = err.message
+		res.sendStatus(400)
+	}
+	finally {
+		db.close()
+	}})	
+
 module.exports = router
