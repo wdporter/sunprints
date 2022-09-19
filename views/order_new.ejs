@@ -166,7 +166,11 @@ table.stockWarningTable {
 
 	<div id="garmentSection">
 
-	<h5 style="display:inline-block" >2. Choose Products</h5> <input type=button style="margin-left:5em" onclick="toggleGarments(this, event)" value="Hide Product List" />
+	<h5 style="display:inline-block" >2. Choose Products</h5> 
+
+	
+	<input type=button style="margin-left:5em" onclick="toggleGarments(this, event)" value="Hide Product List" />
+
 
 	<table id=garmentTable class=hover style="width:100%">
 		<thead>
@@ -579,8 +583,15 @@ table.stockWarningTable {
 					data: "GarmentId",
 					width: "1em",
 					render: (data) => {
-						return `<a href=# class=add-garment-link ><span class="fa fa-plus   fa-lg" data-id=${data} title="Add product to order" onclick="addGarment(${data}, event)" ></span></a>`
-					},
+<% if (poweruser) { %> 
+						return `
+							<a href=# class=add-garment-link >
+								<span class="fa fa-plus   fa-lg" data-id=${data} title="Add product to order" onclick="addGarment(${data}, event)" ></span>
+							</a>`
+<% } else { %> 
+						return ""
+<% } %>
+						},
 					orderable: false
 				},
 				{ data: "Code", },
