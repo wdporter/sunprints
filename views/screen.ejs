@@ -15,9 +15,9 @@
 
 <p><a href="/screen/deleted">View (and restore) deleted screens</a></p>
 
-
+<% if (poweruser) { %>
 <p><input type="button" value="Create New Screen" onclick="window.vueApp.new()" /></p>
-
+<% } %>
 
 
 <dialog id="editDialog">
@@ -72,8 +72,12 @@
 				data: "ScreenId",
 				width: "3em",
 				render(data) {
+<% if (poweruser) { %> 
 					return `<a href=# class=editLink><span class="fa fa-edit fa-lg" title=Edit></span></a>&emsp;
 					<a href=# class=deleteLink><span class="fa fa-trash fa-lg" title=Delete></span></a>`
+<% } else { %>
+					return ""
+<% } %>
 				}
 			},
 			{ data: "Name" },

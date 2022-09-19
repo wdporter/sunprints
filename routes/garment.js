@@ -9,7 +9,8 @@ router.get("/", function (req, res, next) {
 	res.render("garment.ejs", {
 		title: "Products",
 		user: req.auth.user,
-		sizes: JSON.stringify(sz.sizes)
+		sizes: JSON.stringify(sz.sizes),
+		poweruser: res.locals.poweruser
 	})
 })
 
@@ -316,7 +317,8 @@ router.get("/deleted", function (req, res, next) {
 
 	res.render("deleted/garments.ejs", {
 		title: "Deleted Garments",
-		user: req.auth.user
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	})
 })
 

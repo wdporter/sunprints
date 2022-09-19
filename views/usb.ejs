@@ -19,9 +19,9 @@
 	<li><a href=/usb/deleted>View (and restore)</a> deleted USBs</li>
 </ul>
 
-
+<% if (poweruser) { %> 
 <p><input type="button" value="Create New USB" onclick="window.vueApp.new()" /></p>
-
+<% } %>
 
 
 
@@ -76,8 +76,17 @@ window.datatable = new DataTable("#datatable", {
 			orderable: false,
 			data: "UsbId",
 			render(data) {
-				return `<a href=# class=editLink><span class="fa fa-edit fa-lg" title=Edit></span></a>&emsp;
-				<a href=# data-id=${data} class=deleteLink><span class="fa fa-trash fa-lg" title=Delete></span></a>`
+<% if (poweruser) { %> 
+				return `<a href=# class=editLink>
+									<span class="fa fa-edit fa-lg" title=Edit></span>
+								</a>
+								&emsp;
+								<a href=# data-id=${data} class=deleteLink>
+									<span class="fa fa-trash fa-lg" title=Delete></span>
+								</a>`
+<% } else { %>
+				return ""
+<% } %>	
 			}
 		},
 		{ data: "Number" },

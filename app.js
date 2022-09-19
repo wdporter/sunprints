@@ -53,6 +53,11 @@ function myAuthorizer(username, password) {
 	return require('crypto').createHash('md5').update(password).digest("hex") == user.Password
 }
 
+app.use((req, res, next) => {
+	res.locals.poweruser = ["porterd", "cameron", "kristy", "reception", "screen room", "despatch"].includes(req.auth.user)
+	next()
+})
+
 
 app.use("/", homeRouter)
 app.use("/auditlog", auditLogRouter)
@@ -91,26 +96,6 @@ app.use(function(err, req, res, next) {
 })
 
 app.use(logger("dev"))
-
-
-
-
-
-// const userFileContents = require('fs').readFileSync("users.txt", {encoding: "utf-8"})
-// let lines = userFileContents.split("\n")
-// lines = lines.map(line => line.trim())
-// lines = lines.filter(line => line.includes(","))
-// const users = {}
-
-// lines.forEach(line => {
-// 	const parts = line.split(",")
-// 	users[parts[0]] = parts[1]
-//  })
-//  app.set("users", users)
-
-
-
-
 
 
 

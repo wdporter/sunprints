@@ -7,15 +7,17 @@
 
 </style>
 
+<!-- todo: put link to audit log  -->
 
 	<h3>Raise or View Purchase Orders</h3>
 
 
 	<div id=vueApp>
+<% if (poweruser) { %> 
 		<p>
 			<input type=button @click="reset()" value="Create new purchase order"  />
 		</p>
-
+<% } %>
 		<fieldset><legend>{{ stockOrderId == "<%= stockOrderId %>" ? "Create New" : "Edit existing"  }}</legend>
 			<p>
 				<label for="stockOrderSelect">Select existing to edit</label>
@@ -64,10 +66,12 @@
 				<template v-for="(garment, i) in arr" :key="i">
 					<tr style="border-bottom:unset">
 						<td rowspan=2>{{ garment.Code }} <br>
+<% if (poweruser) { %>
 							<a href=# @click.prevent="receiveGarment(garment, sizeCategory)" :data-id="garment.GarmentId" 
 							title="Receive this garment into stock"><span class="fa fa-download fa-lg"></span></a><br>
 							<a href=# @click.prevent="removeGarment(garment.GarmentId, sizeCategory)" :data-id="garment.GarmentId" 
 							title="Remove this garment from this order"><span class="fa fa-trash fa-lg"></span></a>
+<% } %>
 						</td>
 						<td rowspan=2>{{ garment.Type }}</td>
 						<td rowspan=2>{{ garment.Colour }}</td>
@@ -81,10 +85,14 @@
 		<p>Total Products: {{ getTotalProducts() }}</p>
 <hr>
 <p>
+<% if (poweruser) { %>
 	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save purchase order</button>&emsp;
+<% } %>	
 	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == '' || dirty==true" value="Print Purchase Order" />&emsp;
+<% if (poweruser) { %>
 	<button v-show="stockOrderId != ''" type="reset" @click="deletePurchaseOrder">Delete purchase order</button>
 	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true" id=receiveOrder>Receive order</button>
+<% } %>
 </p>
 
 <dialog id="successDialog">
@@ -98,7 +106,7 @@
 </div>
 <hr>
 
-
+<% if (poweruser) { %> 
 <h4>Add products </h4>
 <table id="garmentTable" class="hover">
 	<thead>
@@ -112,7 +120,7 @@
 	<tbody>
 	</tbody>
 </table>
-
+<% } %>
 <p style="height:2em"></p>
 
 <script>

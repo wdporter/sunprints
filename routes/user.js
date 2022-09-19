@@ -31,7 +31,8 @@ router.get('/', function (req, res, next) {
 		res.render("user.ejs", {
 			title: "Users",
 			user: req.auth.user,
-			users
+			users,
+			poweruser: res.locals.poweruser
 		})
 	}
 	else {

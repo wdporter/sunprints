@@ -9,7 +9,8 @@ router.get("/", function (req, res, next) {
 	res.render("printdesign.ejs", {
 		title: "Print Designs",
 		user: req.auth.user,
-		locations: JSON.stringify(sz.locations)
+		locations: JSON.stringify(sz.locations),
+		poweruser: res.locals.poweruser
 	})
 })
 
@@ -150,7 +151,8 @@ ORDER BY Notes `)
 router.get("/deleted", (req, res) => {
 	res.render("deleted/prints.ejs", {
 		title: "Deleted Print Designs",
-		user: req.auth.user
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	})
 
 })

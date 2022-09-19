@@ -8,7 +8,8 @@ const Database = require("better-sqlite3");
 router.get("/", function (req, res, next) {
 	res.render("supplier.ejs", { 
 		title: "Suppliers",
-		user: req.auth.user
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	 })
 })
 
@@ -88,7 +89,8 @@ router.get("/deleted", function (req, res, next) {
 	res.render("deleted/suppliers.ejs", {
 		title: "Deleted Suppliers",
 		user: req.auth.user,
-		deleted
+		deleted,
+		poweruser: res.locals.poweruser
 	})
 })
 

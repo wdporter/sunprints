@@ -6,6 +6,7 @@ router.get("/", function(req, res, next) {
   res.render("home.ejs", { 
 		title: "Home", 
 		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	})
 })
 

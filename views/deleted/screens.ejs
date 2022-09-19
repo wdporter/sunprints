@@ -32,7 +32,7 @@
 			{
 				data: "ScreenId",
 				render(data) {
-					return `<button onclick="restore(${data})">Restore</button>`
+					return <% if (poweruser) { %> `<button onclick="restore(${data})">Restore</a>`  <% } else { %> "" <% } %>
 				}
 			},
 			{ data: "Number"},

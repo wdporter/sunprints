@@ -65,7 +65,9 @@
 			<div class="dropdown">
 				<button class="dropbtn">Orders<i class="fa fa-caret-down"></i></button>
 				<div class="dropdown-content">
+<% if (poweruser) { %>
 					<a href=/order/new>New Order</a>
+<% } %>
 					<a href=/order>Oustanding Orders</a>
 					<a href=/sales>Sales History</a>
 					<a href=/customer>Customers</a>
@@ -113,6 +115,7 @@
 					<a href=/transfer/name/deleted>Transfer names</a>
 				</div>
 			</div>
+<% if (poweruser) { %> 
 			<div class="dropdown">
 				<button class="dropbtn">Admin 
 					<i class="fa fa-caret-down"></i>
@@ -123,6 +126,7 @@
 					<a href=/auditlog>Audit Log</a>
 				</div>
 			</div> 
+<% } %>
 		</nav>
 	</header>
 

@@ -96,7 +96,9 @@
 		</form>
 	</dialog>
 
+<% if (poweruser) { %> 	
 	<input type=button id="newEmbroideryButton" onclick="newEmbroideryDesign()" value="New Embroidery Design" style="margin-bottom:2em" />
+<% } %>
 
 	<table id="datatable" class="stripe">
 		<thead>
@@ -191,8 +193,10 @@
 				insertDiv += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>`
 				insertDiv += `<b>Usb Number:</b> <span class="usbNumberSpan" data-id=${data.UsbId}>${document.getElementById("chosenUsbNumber").textContent}</span><br>`
 				insertDiv += `<b>Usb Notes:</b> <span class="usbNotesSpan" data-id=${data.UsbId}>${document.getElementById("chosenUsbNotes").textContent}</span><br>`
+<% if (poweruser) { %> 
 				insertDiv += `<a href=# data-id=${data.UsbId} class=editUsbLink><span class="fa fa-lg fa-edit" title="change usb details"></span></a>&emsp;`
 				insertDiv += `<a href=# data-id=${json.id} class=removeUsbLink><span class="fa fa-lg fa-trash" title="remove usb from this design"></span></a>`
+<% } %>
 				insertDiv += "</div>"
 				a.insertAdjacentHTML("beforebegin", insertDiv)
 				
@@ -307,8 +311,18 @@
 					sortable: false,
 					data: "EmbroideryDesignId",
 					render(data) {
-						return `<a href=# class=editEmbroideryLink title=Edit><span class="fa fa-lg fa-edit"</span></a>&emsp;<a href=# class=deleteEmbroideryLink title=Delete><span class="fa fa-lg fa-trash"></span></a>`
-					}
+<% if (poweruser) { %> 
+						return `<a href=# class=editEmbroideryLink title=Edit>
+											<span class="fa fa-lg fa-edit"></span>
+										</a>
+										&emsp;
+										<a href=# class=deleteEmbroideryLink title=Delete>
+											<span class="fa fa-lg fa-trash"></span>
+										</a>`
+<% } else { %>
+						return ""
+<% } %>
+									}
 				},
 				{ data: "Code" },
 				{ data: "Notes", width: "250px" },
@@ -342,13 +356,17 @@
 							itemString += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>`
 							itemString += `<b>Usb Number:</b> <span class=usbNumberSpan data-id=${item.UsbId}>${item.UsbNumber}</span><br>`
 							itemString += `<b>Usb Notes:</b> <span class=usbNotesSpan data-id=${item.UsbId}>${item.UsbNotes}</span><br>`
+<% if (poweruser) { %> 
 							itemString += `<a href=# data-id=${item.UsbId} class=editUsbLink><span class="fa fa-lg fa-edit" title="change usb details"></span></a>&emsp;`
 							itemString += `<a href=# data-id=${item.UsbEmbroideryDesignId} class=removeUsbLink><span class="fa fa-lg fa-trash" title="remove usb from this design"></span></a>`
+<% } %>
 							itemString += "</div>"
 						}
 					}
+<% if (poweruser) { %> 
 					itemString += `&emsp;<a href=# class=addUsbLink data-id=${rowData.EmbroideryDesignId} style=align-self:center title="Add existing usb"><span class="fa fa-lg fa-plus"></span></a>`
 					itemString += `&emsp;<a href=# class=createUsbLink data-id=${rowData.EmbroideryDesignId} style=align-self:center title="Create new usb"><span class="fa fa-lg fa-file-o"></span></a>`
+<% } %>
 					itemString += "</div>"
 					return itemString
 				})

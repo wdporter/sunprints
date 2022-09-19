@@ -10,6 +10,7 @@ router.get("/", (req, res) => {
 		res.render("sales.ejs", {
 			title: "Sales History",
 			user: req.auth.user,
+			poweruser: res.locals.poweruser
 		})
 
 })

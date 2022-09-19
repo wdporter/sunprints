@@ -154,10 +154,10 @@ table.stockWarningTable {
 	<textarea id=orderNotes rows=5><%= order && order.Notes %></textarea>
 	</p>
 
-
+<p style="display:<%= poweruser ? "block" : "none" %>">
 	<button value="Save Order" id="saveButton">Save Order Details</button>
 	<input type=reset id=deleteButton value="Delete Order" />
-	
+</p>
 	<span id="detailsMessage"></span>
 
 </fieldset>
@@ -340,7 +340,9 @@ table.stockWarningTable {
 			</div>
 
 			<p>
-				<button @click="saveGarment(g)">Save product</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
+<% if (poweruser) { %>
+				<button @click="saveGarment(g)" >Save product</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
+<% } %>
 				<span v-text="errorMessage"></span>
 			</p>
 			<details v-if="buyin && (g.stockWarning?.length ?? 0) > 0"><summary>Stock Warnings</summary>
@@ -366,7 +368,10 @@ table.stockWarningTable {
 	</dialog>
 
 	<input type=button id=printJobButton style="display:none" onclick="printJobSheet()" value="Print Job Sheet" />
+<% if (poweruser) { %>
 	<input type=submit id=shipOrderButton style="display:none" onclick="shipOrder()" value="Ship Order" title="Sets done to true, will no longer display on orders page." />
+<% } %>
+
 
 	<% if (order) { %>
 		<dl style=margin-bottom:2em>
@@ -392,7 +397,9 @@ table.stockWarningTable {
 		document.getElementById("garmentSection").style.display = window.sunprints.mode == "edit" ? "block" : "none"
 		document.getElementById("invoiceDatePara").style.display = window.sunprints.mode == "edit" ? "block" : "none"
 		document.getElementById("printJobButton").style.display = window.sunprints.mode == "edit" ? "inline" : "none"
-		document.getElementById("shipOrderButton").style.display = window.sunprints.mode == "edit" ? "inline" : "none"
+		const shipOrderButton = document.getElementById("shipOrderButton")
+		if (shipOrderButton)
+			shipOrderButton.style.display = window.sunprints.mode == "edit" ? "inline" : "none"
 
 		// 1. Choose Customer
 

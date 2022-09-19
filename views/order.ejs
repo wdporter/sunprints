@@ -138,8 +138,10 @@
 						}
 					}
 				},
+<% if (poweruser) { %>
 				{
 					text: "Done",
+					enabled: <%= poweruser ? "true" : "false" %>,
 					action: (e, dt) =>  {
 						var tr = dt.row("tr.selected")
 						if (tr.length)
@@ -154,6 +156,7 @@
 							ship(tr.data().OrderId)
 					}
 				},
+<% } %>
 				{
 					text: "Print job sheet",
 					action: (e, dt) => {
@@ -170,6 +173,7 @@
 							window.open(`/order/printdesigns/${tr.data().OrderId}`)
 					}
 				},
+<% if (poweruser) { %>
 				{
 					text: "Delete",
 					action: (e, dt) =>  {
@@ -186,6 +190,7 @@
 							cloneOrder(tr.data().OrderId)
 					}
 				},
+<% } %>
 			],
 			columns: [
 				{

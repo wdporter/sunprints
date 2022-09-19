@@ -16,7 +16,8 @@ router.get("/", (req, res)=> {
 		res.render("rep.ejs", { 
 			title: "Sales Representatives",
 			user: req.auth.user,
-			reps
+			reps,
+			poweruser: res.locals.poweruser
 		 })
 	}
 

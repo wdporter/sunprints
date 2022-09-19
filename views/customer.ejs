@@ -29,9 +29,9 @@ input:invalid {
 <li>Deleting a customer will retain it for sales history, but you won’t be able to create new orders. 
 <li><a href=/customer/deleted>Deleted customers</a>
 </p>
-
+<% if (poweruser) { %> 
 <input type="button" onclick="window.vueApp.createNewCustomer()" value="Create New"  id="createNewButton" />
-
+<% } %>
 </main>
 
 <main class="wider">
@@ -75,8 +75,10 @@ input:invalid {
 
 
 <article id=app>
+<% if (poweruser) { %>	
 	<input type="button" v-if="mode != 'Edit' && mode != 'New'" @click="createNewCustomer" value="Create New" />
-	<fieldset v-if="mode != ''">
+ <% } %>
+ 	<fieldset v-if="mode != ''">
 		<legend>{{ mode }} customer details</legend>
 		<form id="customerDetailsForm">
 			<p>
@@ -147,7 +149,9 @@ input:invalid {
 			</p>
 		</form>
 		<div style="display:flex; gap:5%">
+			<% if (poweruser) { %>
 			<button id=saveCustomerButton @click="saveCustomer">&emsp;Save&emsp;</button>
+			<% } %>
 			<input type=reset n id=cancelButton @click="cancelEdit($event)" value="&ensp;Cancel&ensp;" />
 		</div>
 		<dl style="margin-top:2em">
@@ -177,9 +181,14 @@ input:invalid {
 					data: "Code",
 					width: "6em",
 					render: (data, type, row) => {
-						return `<a href=# class=edit-link   ><span class="fa fa-edit  fa-lg" data-id=${row.CustomerId} title=Edit   ></span></a>&ensp;
-										<a href=# class=delete-link ><span class="fa fa-trash fa-lg" data-id=${row.CustomerId} title=Delete ></span></a>&emsp;
-										${data}`
+<% if (poweruser) { %> 
+						const retVal = `<a href=# class=edit-link   ><span class="fa fa-edit  fa-lg" data-id=${row.CustomerId} title=Edit   ></span></a>&ensp;
+						<a href=# class=delete-link ><span class="fa fa-trash fa-lg" data-id=${row.CustomerId} title=Delete ></span></a>&emsp;${data}`
+<% } else { %>
+						const retVal = data
+<% } %>	
+						return retVal
+
 					}
 				},
 				{ data: "Company" },
@@ -253,9 +262,10 @@ input:invalid {
 					render(data, type, row) {
 						const ts = Date.parse(data)
 						let retVal = isNaN(ts) ? "" : `${new Date(ts).toLocaleDateString("en-AU")}<br>`
+<% if (poweruser) { %> 
 					retVal += `<a class=action-link href=/order/new?customerid=${row.CustomerId} title="start a new order with this customer preselected">New Order</a>`
-					return retVal
-
+<% } %>
+						return retVal
 					}
 				}
 			]

@@ -8,7 +8,9 @@
 		<div>
 			<h5>Orders</h5>
 			<ul>
+<% if (poweruser) { %> 
 				<li><a href=/order/new>New order</a></li>
+<% } %>
 				<li><a href=/order>Orders</a></li>
 				<li><a href=/sales>Sales History</a></li>
 				<li><a href=/customer>Customers</a></li>
@@ -40,15 +42,16 @@
 		<!-- empty space --><br>
 </p>
 	<section>
-	<div>
-		<h5>Administration</h5>
+		<div>
+				<h5>Administration</h5>
 		<ul>
+<% if (poweruser) { %> 
 			<li><a href=/rep>Sales Reps</a></li>
 			<li><a href=/user>Users</a></li>
 			<li><a href=/auditlog>Audit Log</a></li>
+<% } %>
 		</ul>
 	</div>
-
 </section>
 
 <section>

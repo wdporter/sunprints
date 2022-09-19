@@ -8,7 +8,8 @@ const sz = require("../sizes.js");
 router.get("/", function (req, res, next) {
 	res.render("order.ejs", {
 		title: "Orders",
-		user: req.auth.user
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	})
 })
 
@@ -148,7 +149,8 @@ router.get("/new", function (req, res, next) {
 			garments,
 			user: req.auth.user,
 			salesReps,
-			locations: sz.locations
+			locations: sz.locations,
+			poweruser: res.locals.poweruser
 		})
 
 	}
@@ -466,7 +468,8 @@ router.get("/edit", function (req, res, next) {
 			garments,
 			user: req.auth.user,
 			salesReps,
-			locations: sz.locations
+			locations: sz.locations,
+			poweruser: res.locals.poweruser
 		})
 
 	}
@@ -636,7 +639,8 @@ router.get("/deleted", function (req, res, next) {
 	res.render("deleted/orders.ejs", {
 		title: "Deleted Orders",
 		user: req.auth.user,
-		deleted
+		deleted,
+		poweruser: res.locals.poweruser
 	})
 })
 
@@ -1237,7 +1241,7 @@ router.get("/xero/", (req, res) => {
 
 	res.render("xero.ejs", {
 		title: "Xero",
-		user: req.auth.user
+		user: req.auth.user,
 	})
 
 })

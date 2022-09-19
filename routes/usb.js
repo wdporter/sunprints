@@ -9,7 +9,8 @@ const Database = require("better-sqlite3")
 router.get("/", function (req, res, next) {
 	res.render("usb.ejs", { 
 		title: "Usb",
-		user: req.auth.user
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	 })
 })
 
@@ -111,7 +112,8 @@ router.get("/deleted", (req, res) => {
 	res.render("deleted/usbs.ejs", {
 		title: "Deleted USBs",
 		user: req.auth.user,
-		deleted
+		deleted,
+		poweruser: res.locals.poweruser
 	})
 
 	db.close()

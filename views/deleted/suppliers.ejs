@@ -31,7 +31,7 @@
 			{
 				orderable: false,
 				render: function (data, type, row) {
-					return `<button onclick="restore(${data})">Restore</button>`
+					return <% if (poweruser) { %> `<button onclick="restore(${data})">Restore</a>`  <% } else { %> "" <% } %>
 				},
 				title: "",
 				targets: 0,

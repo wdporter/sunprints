@@ -38,7 +38,9 @@
 				<label for="commentsInput">Comments</label><textarea id="commentsInput"></textarea>
 			</p>
 			<div>
+<% if (poweruser) { %>
 				<button id="saveButton" value="default" onclick="savePrint()">&emsp;Save&emsp;</button>&emsp;
+<% } %>
 				<input type="button" onclick="this.closest('dialog').close()" value="Cancel" />
 			</div>
 		</form>
@@ -81,9 +83,11 @@
 			</div>
 			<input type="hidden" id="chosenScreenId" value="0" />
 			<input type="hidden" id="currentPrintDesignId" value="0" />
-			<div>
-				<button value="default" onclick="saveScreen(event)">&emsp;Save&emsp;</button>
-				<input type="button" value="Cancel" onclick="this.closest('dialog').close()" />
+				<div>
+<% if (poweruser) { %>
+					<button value="default" onclick="saveScreen(event)">&emsp;Save&emsp;</button>
+<% } %>
+					<input type="button" value="Cancel" onclick="this.closest('dialog').close()" />
 			</div>
 		</form>
 
@@ -108,12 +112,16 @@
 		</form>
 		<p id=newScreenSuccessMessage style=display:none>✅ We have saved the screen. <br />You can now select size/location</p>
 		<p>
+<% if (poweruser) { %>
 			<input type=submit value=Save onclick="saveNewScreen()" />&emsp;
+<% } %>
 			<input type=button value=Cancel onclick="this.closest('dialog').close()" />
 		</p>
 	</dialog>
 
+<% if (poweruser) { %>
 	<input type=button id="newPrintButton" onclick="newPrintDesign()" value="New Print Design" style="margin-bottom:2em" />
+<% } %>
 
 	<table id="datatable" class="stripe">
 		<thead>
@@ -212,8 +220,10 @@
 				<b>Screen Name:</b> <span class=screenNameSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenName").textContent}</span><br>
 				<b>Screen Number:</b> <span class=screenNumberSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenNumber").textContent}</span><br>
 				<b>Screen Colour:</b> <span class=screenColourSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenColour").textContent}</span><br>
+<% if (poweruser) { %>
 				<a href=# data-id=${data.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
 				<a href=# data-id=${json.id} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>
+<% } %>
 				</div>`
 				span.insertAdjacentHTML("beforebegin", insertDiv)
 				
@@ -334,7 +344,12 @@
 					data: "PrintDesignId",
 					width: "140px",
 					render(data) {
-						return `<span class="fa fa-lg fa-edit" onclick="editPrintDesign(this)" style=cursor:pointer title=edit></span>&emsp;<span class="fa fa-lg fa-trash" onclick="deletePrint(this)" style=cursor:pointer title=delete></span>` 
+						return `
+<% if (poweruser) { %>
+						<span class="fa fa-lg fa-edit" onclick="editPrintDesign(this)" style=cursor:pointer title=edit></span>&emsp;
+						<span class="fa fa-lg fa-trash" onclick="deletePrint(this)" style=cursor:pointer title=delete></span>
+<% } %>
+						` 
 					}
 				},
 				{ data: "Code" },
@@ -371,14 +386,17 @@
 							<b>Screen Name:</b> <span class=screenNameSpan data-id=${item.ScreenId}>${item.ScreenName}</span><br>
 							<b>Screen Number:</b> <span class=screenNumberSpan data-id=${item.ScreenId}>${item.ScreenNumber}</span><br>
 							<b>Screen Colour:</b> <span class=screenColourSpan data-id=${item.ScreenId}>${item.ScreenColour}</span><br>
+<% if (poweruser) { %> 
 							<a href=# data-id=${item.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
 							<a href=# data-id=${item.ScreenPrintDesignId} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>
+<% } %>
 							</div>`
 						}
 					}
+<% if (poweruser) { %> 
 					itemString += `<span tabindex=0 class="fa fa-lg fa-plus addScreenLink" data-id=${rowData.PrintDesignId} title="add exsiting screen"></span>&emsp;`
 					itemString += `<span tabindex=0 class="fa fa-lg fa-file-o newScreenLink" data-id=${rowData.PrintDesignId} title="add new screen"></span>`
-
+<% } %>
 					itemString += "</div>"
 					return itemString
 				})

@@ -95,7 +95,9 @@ input:invalid {
 			<textarea id="newNotes"> </textarea>
 		</p>
 		<div>
+<% if (poweruser) { %>			
 			<button value="default" onclick="saveNewGarment()">Save</button>&emsp;
+<% } %>			
 			<input type=reset value="Cancel" novalidate onclick="document.getElementById('newGarmentDialog').close()" />
 		</div>
 	</form>
@@ -192,7 +194,9 @@ input:invalid {
 					<textarea v-model="garment.Notes"> </textarea>
 				</p>
 				<p>
+<% if (poweruser) { %>
 					<button @click.prevent="saveItem">&emsp;Save&emsp;</button>&emsp;<input type="reset" value="Delete" @click.prevent="deleteItem" />
+<% } %>
 				</p>
 			</div>
 		</section>

@@ -10,7 +10,9 @@
 	<li>View <a href="/transfer/deleted">deleted transfer designs</a>
 </ul>
 
+<% if (poweruser) { %> 
 <input type=button onclick="newTransfer()" value="Add New Transfer" style="margin-bottom:2em" />
+<% } %>
 
 <dialog id="createNameDialog">
 	<h3>Create new Name</h3>
@@ -120,8 +122,18 @@
 					sortable: false,
 					data: "TransferDesignId",
 					render(data) {
-						return `<a href=# class=editTransferLink data-id=${data} title=Edit><span class="fa fa-lg fa-edit"></span></a>&emsp;<a href=# class=deleteTransferLink data-id=${data} title=Delete><span class="fa fa-lg fa-trash"></span></a>`
-					}
+<% if (poweruser) { %> 
+						return `<a href=# class=editTransferLink data-id=${data} title=Edit>
+											<span class="fa fa-lg fa-edit"></span>
+										</a>
+										&emsp;
+										<a href=# class=deleteTransferLink data-id=${data} title=Delete>
+											<span class="fa fa-lg fa-trash"></span>
+										</a>`
+<% } else { %> 
+						return ""
+<% } %>
+}
 				},
 				{ data: "Code", width: "150px" },
 				{ data: "Notes", width: "350px" },
@@ -175,11 +187,15 @@
 							})
 							itemString += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>`
 							itemString += `<b>Name:</b> ${item.Name}<br>`
+<% if (poweruser) { %> 
 							itemString += `<a href=# data-id=${item.TransferNameTransferDesignId} class=removeNameLink>Remove</a>`
+<% } %>
 							itemString += "</div>"
 						}
 					}
+<% if (poweruser) { %> 
 					itemString += `&emsp;<a href=# class=addNameLink data-id=${rowData.TransferDesignId} style=align-self:center title="Add existing"><span class="fa fa-lg fa-plus"></span></a>&emsp;<a href=# class=createNameLink data-id=${rowData.TransferDesignId} style=align-self:center title="Create new"><span class="fa fa-lg fa-file-o"></span></a>`
+<% } %>
 					itemString += "</div>"
 					return itemString
 				})

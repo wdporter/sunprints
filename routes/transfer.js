@@ -8,7 +8,8 @@ router.get("/", function (req, res, next) {
 	res.render("transfer.ejs", { 
 		title: "Transfer Designs",
 		user: req.auth.user,
-		locations: JSON.stringify(sz.locations)
+		locations: JSON.stringify(sz.locations),
+		poweruser: res.locals.poweruser
 	 })
 })
 
@@ -161,7 +162,8 @@ AND TransferName.Deleted=0 `)
 router.get("/name", function (req, res, next) {
 	res.render("transfername.ejs", { 
 		title: "Transfer Names",
-		user: req.auth.user
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	 })
 })
 
@@ -245,7 +247,8 @@ router.get("/name/dt", function (req, res, next) {
 router.get("/deleted", function(req, res) {
 	res.render("deleted/transfers.ejs", {
 		title: "Deleted Transfer Designs",
-		user: req.auth.user
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	})
 })
 
@@ -254,7 +257,8 @@ router.get("/deleted", function(req, res) {
 router.get("/name/deleted", function(req, res) {
 	res.render("deleted/transfernames.ejs", {
 		title: "Deleted Transfer Names",
-		user: req.auth.user
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
 	})
 })
 

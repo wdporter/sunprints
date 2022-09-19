@@ -58,7 +58,8 @@ router.get("/", function (req, res) {
 			stockOrderId,
 			sizes: JSON.stringify(sz.sizes),
 			supplierId: req.query?.supplier ?? "",
-			garment: JSON.stringify(garment || "") 
+			garment: JSON.stringify(garment || ""),
+			poweruser: res.locals.poweruser 
 		})
 
 

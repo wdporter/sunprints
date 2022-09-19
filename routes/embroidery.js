@@ -9,7 +9,8 @@ router.get("/", function (req, res, next) {
 	res.render("embroiderydesign.ejs", {
 		title: "Embroidery Designs",
 		user: req.auth.user,
-		locations: sz.locations
+		locations: sz.locations,
+		poweruser: res.locals.poweruser
 	})
 })
 
@@ -174,7 +175,8 @@ router.get("/deleted", (req, res) => {
 	res.render("deleted/embroideries.ejs", {
 		title: "Deleted Embroidery Designs",
 		user: req.auth.user,
-		deleted
+		deleted,
+		poweruser: res.locals.poweruser
 	})
 
 })

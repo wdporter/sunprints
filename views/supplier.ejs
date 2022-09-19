@@ -42,9 +42,9 @@ main.wider {
 	<li><a href=/supplier/deleted>Deleted suppliers</a>
 </ul>
 
-
+<% if (poweruser) { %> 
 <p><input type="button" value="Create New Supplier" onclick="window.vueApp.new()" /></p>
-
+<% } %>
 
 <dialog id="editDialog">
 	<form method=dialog>
@@ -81,7 +81,9 @@ main.wider {
 						</select></p>
 					<p><label for=notes>Notes</label> <textarea id=notes v-model="supplier.Notes"></textarea></p>
 					<p>
+<% if (poweruser) { %>
 						<button id="saveButton" value="default" @click="save">Save</button>&emsp;
+<% } %>
 						<input type="button" value="Cancel" onclick="this.closest('dialog').close()" />
 					</p>
 					<dl style="margin-top:2em">
@@ -153,8 +155,18 @@ main.wider {
 				data: "SupplierId",
 				width: "3em",
 				render(data) {
-					return `<a href=# class=edit-link   ><span class="fa fa-edit  fa-lg" data-id=${data} title=Edit   ></span></a>&ensp;
-									<a href=# class=delete-link ><span class="fa fa-trash fa-lg" data-id=${data} title=Delete ></span> `
+<% if (poweruser) { %>
+					return `<a href=# class=edit-link>
+										<span class="fa fa-edit  fa-lg" data-id=${data} title=Edit   ></span>
+									</a>
+									&ensp;
+									<a href=# class=delete-link >
+										<span class="fa fa-trash fa-lg" data-id=${data} title=Delete ></span>
+									</a> `
+<% } else { %>
+					return ""
+<% } %>								
+
 				}
 			},
 			{ data: "Code", width: "3em" },
@@ -220,7 +232,9 @@ main.wider {
 				render(data, type, row) {
 					const ts = Date.parse(data)
 					let retVal = isNaN(ts) ? "" : `${new Date(ts).toLocaleDateString("en-AU")}<br>`
+<% if (poweruser) { %> 
 					retVal += `<a href=/purchasing?supplier=${row.SupplierId} title="Create a new purchase order for this supplier">New</a>`
+<% } %>
 					return retVal
 				}
 			}
