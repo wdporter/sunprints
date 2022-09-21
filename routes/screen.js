@@ -12,7 +12,13 @@ router.get("/", function (req, res, next) {
 		poweruser: res.locals.poweruser
 	 })
 })
-
+router.get("/2", function (req, res, next) {
+	res.render("screen2.ejs", { 
+		title: "Screens",
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
+	 })
+})
 
 // GET screens for the New Order page
 router.get("/ordersearch", function (req, res, next) {
