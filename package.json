@@ -17,5 +17,8 @@
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
     "nodemon": "^2.0.16"
+  },
+  "devDependencies": {
+    "vue3-easy-data-table": "^1.4.19"
   }
 }
