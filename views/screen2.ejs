@@ -1,228 +1,270 @@
 <%- include("partials/head2.ejs") %>
 
-	<p><a href="/screen/deleted">View (and restore) deleted screens</a></p>
+<style>
+	table.details-table {
+		min-width: unset;
+		width: unset;
+	}
+	table.details-table th:nth-child(n+1), table.details-table td:nth-child(n+1) {
+		text-align: center
+	}
+
+.vue3-easy-data-table__header th:nth-child(1),	td.can-expand.direction-left {
+width: 3em;
+	}
+</style>
+
+
+<p><a href="/screen/deleted">View (and restore) deleted screens</a></p>
 
 
 
-	<div id=app>
+<div id=app>
 
-	<dialog id=errorDialog style="max-width: 300px">
-		<h4>❌ We encountered an error</h4>
-		<p v-text="errorMessage"></p>
-		<form method="dialog">
-			<button>OK</button>
-		</form>
-	</dialog>
-		
-
-	<dialog id=editDialog >
-		<h3>{{ editItem.ScreenId == "0" ? "New" : "Edit" }} Screen</h3>
-		<form method=dialog id=editForm>
-			<div id=app>
-				<input type=hidden v-model="editItem.ScreenId">
-				<p>
-					<label for=number>Number:</label> 
-					<input id=number v-model="editItem.Number" placeholder=required required autofocus>
-				</p>
-				<p>
-					<label for=colour>Colour:</label> 
-					<input id=colour v-model="editItem.Colour">
-				</p>
-				<p>
-					<label for=name>Name:</label> 
-					<textarea id=name rows=4 v-model="editItem.Name"></textarea>
-				</p>
-				<p>
-					<input type=submit value=Save @click="save" />&emsp;
-					<input type=button value=Cancel @click="$event.target.closest('dialog').close()" />
-				</p>
-			</div>
-		</form>
-	</dialog>
-
-		<p><input type="button" value="Create New Screen" @click="newScreen" /></p>
-		<p>
-			<label for=searchValue>Search:</label><input type=search id=searchValue v-model=searchValue @input="onSearchValueInput" />
-		</p>
-		<p><br></p>
-		<easy-data-table 
-			v-model:server-options="serverOptions" 
-			:server-items-length="serverItemsLength" 
-			:loading="loading"
-			:headers="headers" 
-			:items="items" 
-			buttons-pagination 
-			alternating
-			:rows-items="[10, 25, 50, 100]"
-			> 
-			<template #item-screenid="{ScreenId}">
-				<span role=button tabindex=0 aria-label=edit   @click="edit  (ScreenId)" @keydown.enter.space.prevent="edit  (ScreenId)" title="edit this item"  ><span class="fa fa-lg fa-edit" ></span></span>&ensp;
-				<span role=button tabindex=0 aria-label=delete @click="remove(ScreenId)" @keydown.enter.space.prevent="remove(ScreenId)" title="delete this item"><span class="fa fa-lg fa-trash"></span></span>
-			</template>
-			<template #item-lastused="{LastUsed}">
-				{{ formatDate(LastUsed) }}
-			</template>
-	</div>
+<dialog id=errorDialog style="max-width: 300px">
+	<h4>❌ We encountered an error</h4>
+	<p v-text="errorMessage"></p>
+	<form method="dialog">
+		<button>OK</button>
+	</form>
+</dialog>
 
 
-	<script>
+<dialog id=editDialog >
+	<h3>{{ editItem.ScreenId == "0" ? "New" : "Edit" }} Screen</h3>
+	<form method=dialog id=editForm>
+		<div id=app>
+			<input type=hidden v-model="editItem.ScreenId">
+			<p>
+				<label for=name>Name:</label> 
+				<textarea id=name rows=4 v-model="editItem.Name"></textarea>
+			</p>
+			<p>
+				<label for=number>Number:</label> 
+				<input id=number v-model="editItem.Number" placeholder=required required autofocus>
+			</p>
+			<p>
+				<label for=colour>Colour:</label> 
+				<input id=colour v-model="editItem.Colour">
+			</p>
+			<p>
+				<input type=submit value=Save @click="save" />&emsp;
+				<input type=button value=Cancel @click="$event.target.closest('dialog').close()" />
+			</p>
+		</div>
+	</form>
+</dialog>
+
+	<p><input type="button" value="Create New Screen" @click="newScreen" /></p>
+	<p>
+		<label for=searchValue>Search:</label><input type=search id=searchValue v-model=searchValue @input="onSearchValueInput" />
+	</p>
+	<p><br></p>
+	<easy-data-table 
+		v-model:server-options="serverOptions" 
+		:server-items-length="serverItemsLength" 
+		:loading="loading"
+		:headers="headers" 
+		:items="items" 
+		buttons-pagination 
+		alternating
+		must-sort
+		:rows-items="[10, 25, 50, 100]"
+		@expand-row="loadDesigns"
+	> 
+		<template #item-screenid="{ScreenId}">
+			<span role=button tabindex=0 aria-label=edit   @click="edit  (ScreenId)" @keydown.enter.space.prevent="edit  (ScreenId)" title="edit this item"  ><span class="fa fa-lg fa-edit" ></span></span>&ensp;
+			<span role=button tabindex=0 aria-label=delete @click="remove(ScreenId)" @keydown.enter.space.prevent="remove(ScreenId)" title="delete this item"><span class="fa fa-lg fa-trash"></span></span>
+		</template>
+
+		<template #expand="item" >
+			<table class="details-table">
+				<colgroup><col><col style="width:4em"></col><col style="width:4em"></col><col style="width:4em"></col><col style="width:4em"></col><col style="width:8em"></col></colgroup>
+				<thead v-if="item.designDetails && item.designDetails.length > 0"><tr><th>Design</th><th>Front</th><th>Back</th><th>Pocket</th><th>Sleeve</th><th>Size</th></tr></thead>
+				<tbody>
+					<tr v-for="d in item.designDetails">
+						<td>{{ d.Code }} {{ d.Notes }} {{ d.Comments }}</td>
+						<td><span :class="d.Front == 1 ? 'fa fa-large fa-check' : ''"></span></td>
+						<td><span :class="d.Back == 1 ? 'fa fa-large fa-check' : ''"></span></td>
+						<td><span :class="d.Pocket == 1 ? 'fa fa-large fa-check' : ''"></span></td>
+						<td><span :class="d.Sleeve == 1 ? 'fa fa-large fa-check' : ''"></span></td>
+						<td>{{ d.SizeCategory }}</td>
+					</tr>
+					<tr v-if="item.designDetails == null || item.designDetails.length == 0">
+						<td colspan="6"><i>not associated with any print designs</i></td>
+					</tr>
+				</tbody>
+			</table>
+		</template>
+	</easy-data-table>
+	
+</div>
+
+
+<script>
 
 
 
-		const App = {
-			components: {
-				EasyDataTable: window["vue3-easy-data-table"],
-			},
-			data() {
-				return {
-					headers: [
-						{ text: "Actions", value: "screenid", sortable: false },
-						{ text: "Number", value: "Number", sortable: true },
-						{ text: "Colour", value: "Colour", sortable: true },
-						{ text: "Name", value: "Name", sortable: true },
-						{ text: "Last Used", value: "lastused", sortable: true }
-					],
-					items: [],
-					serverOptions: {
-						page: 1,
-						rowsPerPage: 10,
-						sortBy: "Number",
-						sortType: "asc",
-						
-					},
-					searchValue: "",
-					serverItemsLength: 0,
-					loading: false,
-					errorMessage: "",
-					editItem: { 
-						ScreenId:0,
-						Number: "",
-						Colour: "",
-						Name: ""
-					}
-				}
-			},
-			methods: {
-
-				loadFromServer() {
-					this.loading = true
-					const data = Object.assign({searchValue: this.searchValue}, this.serverOptions)
-					//data.sortBy = data.sortBy[0].toUpperCase() + data.sortBy.slice(1)
-					fetch(`/screen/vt`, {
-						method: "POST",
-						headers: new Headers({"Content-Type": "application/json"}),
-						body: JSON.stringify(data)
-					})
-						.then(response => response.json())
-						.then(json => {
-							console.log(json)
-							json.data.forEach(d => d.colour = d.Colour)
-							this.items = json.data
-							this.serverItemsLength = json.count
-							this.loading = false
-						}
-						)
-				},
-				formatDate(d) {
-					const ts = Date.parse(d)
-					if (isNaN(ts))
-						return "never"
-					else 
-						return new Date(ts).toLocaleDateString("en-AU", {year: "numeric", day: "numeric", month:
-				"numeric"}) 
-				},
-				newScreen() {
-					this.editItem.ScreenId = 0
-					this.editItem.Number = ""
-					this.editItem.Colour = ""
-					this.editItem.Name = ""
-					document.getElementById("editDialog").showModal()
-				},
-				save() {
-					if (document.getElementById("editForm").reportValidity()) {
-						let method = "POST" 
-						let url = "/screen"
-						if (this.editItem.ScreenId > 0) {
-							method = "PUT"
-							url += `/${this.editItem.ScreenId}`
-						}
-						const body = Object.assign({}, this.editItem)
-						delete body.LastUsed
-						fetch(url, {
-							method,
-							headers: new Headers({
-								"Content-Type": "application/json"
-							}),
-							body: JSON.stringify(body)
-						})
-						.then(response => {
-							if (response.ok)
-								return response.json()
-							else
-								throw new Error(response.statusText)
-						})
-						.then(json => {
-							if (this.editItem.ScreenId == 0) {
-								this.serverOptions.sortBy = "1"
-								this.serverOptions.sortType = "desc",
-								this.loadFromServer()
-							}
-							else {
-								const currentItem = this.items.find(i => i.ScreenId == this.editItem.ScreenId)
-								currentItem.Name = this.editItem.Name
-								currentItem.Colour = this.editItem.Colour
-								currentItem.Number = this.editItem.Number
-							}
-						})
-						.catch(error => {
-							this.errorMessage = error
-							document.getElementById("errorDialog").showModal()
-						})
-					}
-				},
-				edit(screenid) {
-					console.log("edit", screenid)
-					const currentItem = this.items.find(i => i.ScreenId==screenid)
-					this.editItem = Object.assign({}, currentItem)
-					document.getElementById("editDialog").showModal()
-				},
-				remove(screenid) {
-					console.log("remove", screenid)
-					fetch(`/screen/${screenid}`, {
-						method: "DELETE"
-					})
-						.then(response => {
-							if (response.ok)
-								return response.json()
-							else
-								throw new Error(response.statusText)
-						})
-						.then(json => this.loadFromServer() )
-						.catch(error => {
-							this.errorMessage = error
-							document.getElementById("errorDialog").showModal()
-						})
-				},
-				create() {
-
-				},
-				onSearchValueInput: debounce(() => window.app.loadFromServer())
-			},
-			watch: {
+	const App = {
+		components: {
+			EasyDataTable: window["vue3-easy-data-table"],
+		},
+		data() {
+			return {
+				headers: [
+					{ text: "Actions", value: "screenid", sortable: false },
+					{ text: "Name", value: "Name", sortable: true },
+					{ text: "Number", value: "Number", sortable: true },
+					{ text: "Colour", value: "Colour", sortable: true },
+				],
+				items: [],
 				serverOptions: {
-					handler(value) {
-						console.log(value)
-						this.loadFromServer()
-					},
-					deep: true
+					page: 1,
+					rowsPerPage: 10,
+					sortBy: "Name",
+					sortType: "asc",
+					
+				},
+				searchValue: "",
+				serverItemsLength: 0,
+				loading: false,
+				errorMessage: "",
+				editItem: { 
+					ScreenId:0,
+					Number: "",
+					Colour: "",
+					Name: ""
+				}
+			}
+		},
+		methods: {
+
+			loadDesigns(index) {
+				const expandedItem = this.items[index % this.serverOptions.rowsPerPage]
+				if (!expandedItem.designDetails) {
+					expandedItem.expandLoading = true
+					fetch(`/screen/prints/${expandedItem.ScreenId}`)
+					.then(response => response.json())
+					.then(json => {
+						expandedItem.designDetails = json
+						expandedItem.expandLoading = false
+					})
 				}
 			},
-			mounted() {
-				this.loadFromServer()
+
+			loadFromServer() {
+				this.loading = true
+
+				const data = Object.assign({searchValue: this.searchValue}, this.serverOptions)
+				//data.sortBy = data.sortBy[0].toUpperCase() + data.sortBy.slice(1)
+				fetch(`/screen/vt`, {
+					method: "POST",
+					headers: new Headers({"Content-Type": "application/json"}),
+					body: JSON.stringify(data)
+				})
+					.then(response => response.json())
+					.then(json => {
+						this.items = json.data
+						this.serverItemsLength = json.count
+						this.loading = false
+					}
+					)
+			},
+			newScreen() {
+				this.editItem.ScreenId = 0
+				this.editItem.Number = ""
+				this.editItem.Colour = ""
+				this.editItem.Name = ""
+				document.getElementById("editDialog").showModal()
+			},
+			save() {
+				if (document.getElementById("editForm").reportValidity()) {
+					let method = "POST" 
+					let url = "/screen"
+					if (this.editItem.ScreenId > 0) {
+						method = "PUT"
+						url += `/${this.editItem.ScreenId}`
+					}
+					const body = Object.assign({}, this.editItem)
+					delete body.LastUsed
+					fetch(url, {
+						method,
+						headers: new Headers({
+							"Content-Type": "application/json"
+						}),
+						body: JSON.stringify(body)
+					})
+					.then(response => {
+						if (response.ok)
+							return response.json()
+						else
+							throw new Error(response.statusText)
+					})
+					.then(json => {
+						if (this.editItem.ScreenId == 0) {
+							this.serverOptions.sortBy = "1"
+							this.serverOptions.sortType = "desc",
+							this.loadFromServer()
+						}
+						else {
+							const currentItem = this.items.find(i => i.ScreenId == this.editItem.ScreenId)
+							currentItem.Name = this.editItem.Name
+							currentItem.Colour = this.editItem.Colour
+							currentItem.Number = this.editItem.Number
+						}
+					})
+					.catch(error => {
+						this.errorMessage = error
+						document.getElementById("errorDialog").showModal()
+					})
+				}
+			},
+			edit(screenid) {
+				const currentItem = this.items.find(i => i.ScreenId==screenid)
+				this.editItem = Object.assign({}, currentItem)
+				document.getElementById("editDialog").showModal()
+			},
+			remove(screenid) {
+				fetch(`/screen/${screenid}`, {
+					method: "DELETE"
+				})
+					.then(response => {
+						if (response.ok)
+							return response.json()
+						else
+							throw new Error(response.statusText)
+					})
+					.then(json => this.loadFromServer() )
+					.catch(error => {
+						this.errorMessage = error
+						document.getElementById("errorDialog").showModal()
+					})
+			},
+			create() {
+
+			},
+			resetPage() {
+				this.serverOptions.page = 1
+			},
+			onSearchValueInput: debounce(() => {
+				window.app.resetPage()
+				window.app.loadFromServer()
+			})
+		},
+		watch: {
+			serverOptions: {
+				handler(value) {
+					this.loadFromServer()
+				},
+				deep: true
 			}
+		},
+		mounted() {
+			this.loadFromServer()
 		}
-		window.app = Vue.createApp(App).mount("#app")
-	</script>
+	}
+	window.app = Vue.createApp(App).mount("#app")
+</script>
 
 
 
@@ -230,4 +272,4 @@
 
 
 
-	<%- include("partials/foot.ejs") %>
+<%- include("partials/foot.ejs") %>

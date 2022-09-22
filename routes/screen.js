@@ -375,50 +375,52 @@ router.post("/vt", (req, res) => {
 		const count = db.prepare(query).get({search}).Count
 	
 
-	query = `SELECT Screen.ScreenId, Number, Colour, Name, s.maxdate AS LastUsed FROM Screen
-	LEFT OUTER JOIN 
-	(SELECT Sales.FrontScreenId AS ScreenId, MAX(SalesTotal.OrderDate, 0) AS maxdate
-	FROM Sales
-	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-	GROUP BY Sales.FrontScreenId
-	UNION ALL 
-	SELECT Sales.FrontScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-	FROM Sales
-	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-	GROUP BY Sales.FrontScreenId
-	UNION ALL 
-	SELECT Sales.BackScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-	FROM Sales
-	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-	GROUP BY Sales.BackScreenId
-	UNION ALL 
-	SELECT Sales.BackScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-	FROM Sales
-	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-	GROUP BY Sales.BackScreen2Id
-	UNION ALL 
-	SELECT Sales.PocketScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-	FROM Sales
-	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-	GROUP BY Sales.PocketScreenId
-	UNION ALL 
-	SELECT Sales.PocketScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-	FROM Sales
-	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-	GROUP BY Sales.PocketScreen2Id
-	UNION ALL 
-	SELECT Sales.SleeveScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-	FROM Sales
-	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-	GROUP BY Sales.SleeveScreenId
-	UNION ALL 
-	SELECT Sales.SleeveScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-	FROM Sales
-	INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-	GROUP BY Sales.SleeveScreen2Id
-	) s
-	ON  s.ScreenId=Screen.ScreenId 
-	WHERE Deleted=0  `
+	query = `SELECT Screen.ScreenId, Number, Colour, Name `
+//	s.maxdate AS LastUsed 
+	query += '	FROM Screen '
+	// LEFT OUTER JOIN 
+	// (SELECT Sales.FrontScreenId AS ScreenId, MAX(SalesTotal.OrderDate, 0) AS maxdate
+	// FROM Sales
+	// INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	// GROUP BY Sales.FrontScreenId
+	// UNION ALL 
+	// SELECT Sales.FrontScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	// FROM Sales
+	// INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	// GROUP BY Sales.FrontScreenId
+	// UNION ALL 
+	// SELECT Sales.BackScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	// FROM Sales
+	// INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	// GROUP BY Sales.BackScreenId
+	// UNION ALL 
+	// SELECT Sales.BackScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	// FROM Sales
+	// INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	// GROUP BY Sales.BackScreen2Id
+	// UNION ALL 
+	// SELECT Sales.PocketScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	// FROM Sales
+	// INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	// GROUP BY Sales.PocketScreenId
+	// UNION ALL 
+	// SELECT Sales.PocketScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	// FROM Sales
+	// INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	// GROUP BY Sales.PocketScreen2Id
+	// UNION ALL 
+	// SELECT Sales.SleeveScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	// FROM Sales
+	// INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	// GROUP BY Sales.SleeveScreenId
+	// UNION ALL 
+	// SELECT Sales.SleeveScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
+	// FROM Sales
+	// INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
+	// GROUP BY Sales.SleeveScreen2Id
+	// ) s
+	// ON  s.ScreenId=Screen.ScreenId 
+	query += " WHERE Deleted=0  "
 
 	if (search) {
 		query += ` AND ( Number LIKE @search OR Colour LIKE @search OR Name LIKE @search ) `
