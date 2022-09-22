@@ -7,7 +7,8 @@ router.get("/", function (req, res, next) {
 	res.render("customer.ejs", {
 		title: "Customers",
 		user: req.auth.user,
-		poweruser: res.locals.poweruser
+		poweruser: res.locals.poweruser,
+		salesrep: res.locals.salesrep
 	})
 })
 
@@ -24,7 +25,8 @@ router.get("/deleted", function (req, res) {
 		title: "Deleted Customers",
 		user: req.auth.user,
 		deleted,
-		poweruser: res.locals.poweruser
+		poweruser: res.locals.poweruser,
+		salesrep: res.locals.salesrep
 	})
 })
 

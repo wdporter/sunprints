@@ -138,10 +138,10 @@
 						}
 					}
 				},
-<% if (poweruser) { %>
+<% if (poweruser || salesrep) { %>
 				{
 					text: "Done",
-					enabled: <%= poweruser ? "true" : "false" %>,
+					enabled: <%= poweruser || salesrep ? "true" : "false" %>,
 					action: (e, dt) =>  {
 						var tr = dt.row("tr.selected")
 						if (tr.length)
@@ -173,7 +173,7 @@
 							window.open(`/order/printdesigns/${tr.data().OrderId}`)
 					}
 				},
-<% if (poweruser) { %>
+<% if (poweruser || salesrep) { %>
 				{
 					text: "Delete",
 					action: (e, dt) =>  {

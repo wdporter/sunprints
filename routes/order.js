@@ -9,7 +9,8 @@ router.get("/", function (req, res, next) {
 	res.render("order.ejs", {
 		title: "Orders",
 		user: req.auth.user,
-		poweruser: res.locals.poweruser
+		poweruser: res.locals.poweruser,
+		salesrep: res.locals.salesrep
 	})
 })
 
@@ -150,7 +151,8 @@ router.get("/new", function (req, res, next) {
 			user: req.auth.user,
 			salesReps,
 			locations: sz.locations,
-			poweruser: res.locals.poweruser
+			poweruser: res.locals.poweruser,
+			salesrep: res.locals.salesrep
 		})
 
 	}
@@ -469,7 +471,8 @@ router.get("/edit", function (req, res, next) {
 			user: req.auth.user,
 			salesReps,
 			locations: sz.locations,
-			poweruser: res.locals.poweruser
+			poweruser: res.locals.poweruser,
+			salesrep: res.locals.salesrep
 		})
 
 	}
@@ -640,7 +643,8 @@ router.get("/deleted", function (req, res, next) {
 		title: "Deleted Orders",
 		user: req.auth.user,
 		deleted,
-		poweruser: res.locals.poweruser
+		poweruser: res.locals.poweruser,
+		salesrep: res.locals.salesrep
 	})
 })
 

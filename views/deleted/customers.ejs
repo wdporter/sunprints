@@ -32,7 +32,7 @@
 			{
 				orderable: false,
 				render: function (data, type, row) {
-					return <% if (poweruser) { %> `<button onclick="restore(${data})">Restore</a>`  <% } else { %> "" <% } %>
+					return <% if (poweruser || salesrep) { %> `<button onclick="restore(${data})">Restore</a>`  <% } else { %> "" <% } %>
 				},
 				title: "",
 				targets: 0,

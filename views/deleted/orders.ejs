@@ -42,7 +42,7 @@
 			{
 				targets: [0],
 				render(data) {
-					return <% if (poweruser) { %> `<button onclick="restore(${data})">Restore</a>`  <% } else { %> "" <% } %>
+					return <% if (poweruser || salesrep) { %> `<button onclick="restore(${data})">Restore</a>`  <% } else { %> "" <% } %>
 				}
 			},
 		]

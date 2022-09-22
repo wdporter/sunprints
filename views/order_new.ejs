@@ -154,7 +154,7 @@ table.stockWarningTable {
 	<textarea id=orderNotes rows=5><%= order && order.Notes %></textarea>
 	</p>
 
-<p style="display:<%= poweruser ? "block" : "none" %>">
+<p style="display:<%= poweruser || salesrep ? "block" : "none" %>">
 	<button value="Save Order" id="saveButton">Save Order Details</button>
 	<input type=reset id=deleteButton value="Delete Order" />
 </p>
@@ -344,7 +344,7 @@ table.stockWarningTable {
 			</div>
 
 			<p>
-<% if (poweruser) { %>
+<% if (poweruser || salesrep) { %>
 				<button @click="saveGarment(g)" >Save product</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
 <% } %>
 				<span v-text="errorMessage"></span>
@@ -372,7 +372,7 @@ table.stockWarningTable {
 	</dialog>
 
 	<input type=button id=printJobButton style="display:none" onclick="printJobSheet()" value="Print Job Sheet" />
-<% if (poweruser) { %>
+<% if (poweruser || salesrep) { %>
 	<input type=submit id=shipOrderButton style="display:none" onclick="shipOrder()" value="Ship Order" title="Sets done to true, will no longer display on orders page." />
 <% } %>
 
@@ -583,7 +583,7 @@ table.stockWarningTable {
 					data: "GarmentId",
 					width: "1em",
 					render: (data) => {
-<% if (poweruser) { %> 
+<% if (poweruser || salesrep) { %> 
 						return `
 							<a href=# class=add-garment-link >
 								<span class="fa fa-plus   fa-lg" data-id=${data} title="Add product to order" onclick="addGarment(${data}, event)" ></span>
