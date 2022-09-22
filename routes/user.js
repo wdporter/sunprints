@@ -5,34 +5,19 @@ var fs = require("fs")
 const Database = require("better-sqlite3")
 
 
-function isAdmin(db, username) {
-	try {
-		return db.prepare("SELECT * FROM User WHERE Admin=1 AND Name=?").get(username).Admin == 1
-	}
-	catch (ex) {
-		console.log(ex)
-		return false
-	}
-}
-
 /* GET users listing. */
 router.get('/', function (req, res, next) {
 
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
-	if (isAdmin(db, req.auth.user)) {
+	if (res.locals.admin) {
 
 		const users = db.prepare("SELECT * FROM User").all()
-
-		for (user in users) {
-			user.newPassword = ""
-		}
 
 		res.render("user.ejs", {
 			title: "Users",
 			user: req.auth.user,
-			users,
-			poweruser: res.locals.poweruser
+			users
 		})
 	}
 	else {
@@ -44,71 +29,28 @@ router.get('/', function (req, res, next) {
 })
 
 
-// PUT update user details, name and admin
-router.put("/", (req, res) => {
+
+/* GET users edit  page. */
+router.get('/edit/:name', function (req, res, next) {
 
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
+		if (res.locals.admin) {
+			const user = db.prepare("SELECT * FROM User WHERE Name=?").get(req.params.name)
 
-		if (isAdmin(db, req.auth.user)) {
-
-			req.body.Name = req.body.Name.trim()
-
-
-			const q = `UPDATE User SET `
-			let query = q
-			if (req.body.Name != req.body.originalName)
-				query += " Name=@Name,"
-			if (req.body.Admin != req.body.originalAdmin)
-				query += " Admin=@Admin,"
-			if (query.endsWith(","))
-				query = query.slice(0, -1)
-
-			if (query == q) {
-				res.statusMessage = "nothing has changed"
-				res.sendStatus(400)
-				return
-			}
-
-			query += " WHERE Name = @originalName"
-
-			db.prepare("BEGIN TRANSACTION").run()
-
-			let info = db.prepare(query).run(req.body)
-			console.log(info)
-
-			let statement = db.prepare("INSERT INTO AuditLog VALUES ( null, ?, 0, ?, ?, ?)")
-			info = statement.run("User", "UPD", req.auth.user, new Date().toLocaleString())
-			let auditLogId = info.lastInsertRowid
-			console.log(info)
-			statement = db.prepare("INSERT INTO AuditLogEntry VALUES ( null, ?, ?, ?, ?)")
-			if (req.body.Name != req.body.originalName) {
-				info = statement.run(auditLogId, "Name", req.body.originalName, req.body.Name)
-				console.log(info)
-			}
-			if (req.body.Admin != req.body.originalAdmin) {
-				info = statement.run(auditLogId, "Admin", req.body.originalAdmin, req.body.Admin)
-				console.log(info)
-			}
-
-
-			db.prepare("COMMIT").run()
-
-
-			res.send("ok")
-
-
+			res.render("user_edit.ejs", {
+				title: "Edit user",
+				user: req.auth.user,
+				userObj: user
+			})
 		}
-
 		else {
 			res.statusMessage = "not authorised to view the users page."
 			res.status(500).end()
 		}
-
 	}
-	catch (ex) {
-		db.prepare("ROLLBACK").run()
+	catch(err) {
 		console.log(ex)
 		res.statusMessage = ex.message
 		res.sendStatus(400)
@@ -119,98 +61,141 @@ router.put("/", (req, res) => {
 })
 
 
-// PUT update user password
-router.put("/pw", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+/* GET users new user page. */
+router.get('/edit/', function (req, res, next) {
 
-	try {
-
-		if (isAdmin(db, req.auth.user)) {
-
-			req.body.Password = req.body.Password?.trim() ?? ""
-			if (!req.body.Password) {
-				res.statusMessage = "nothing to save"
-				res.sendStatus(400)
-				return
-			}
-
-			req.body.Password = require('crypto').createHash('md5').update(req.body.Password).digest("hex")
-
-
-			db.prepare("BEGIN TRANSACTION").run()
-			let query = "UPDATE User SET Password = @Password WHERE Name=@Name"
-			let info = db.prepare(query).run(req.body)
-			console.log(info)
-
-			info = db.prepare(`INSERT INTO AuditLog VALUES (null, 'User', ${info.lastInsertRowid}, 'UPD', '${req.auth.user}', '${new Date().toLocaleString()}') `).run()
-			console.log(info)
-
-			db.prepare("COMMIT").run()
-
-			res.send("ok")
+	if (res.locals.admin) {
+			const user = {
+			Name: "",
+			Admin: false,
+			SalesRep: false,
+			PowerUser: false
 		}
-		else {
-			res.statusMessage = "not authorised to view the users page."
-			res.status(500).end()
-		}
+		res.render("user_edit.ejs", {
+			title: "Create user",
+			user: req.auth.user,
+			userObj: user
+		})
+	}
+	else {
+		res.statusMessage = "not authorised to view the users page."
+		res.status(500).end()
+	}
 
-
-	}
-	catch (ex) {
-		db.prepare("ROLLBACK").run()
-		console.log(ex)
-		res.statusMessage = ex.message
-		res.sendStatus(400)
-	}
-	finally {
-		db.close()
-	}
 })
 
 
-router.post("/", (req, res) => {
+/* POST save user details */
+router.post('/edit/', function (req, res) {
+	if (res.locals.admin) {
+		
+		const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-	try {
+		try {
 
-		if (isAdmin(db, req.auth.user)) {
-
-			req.body.Name = req.body.Name?.trim() ?? ""
-			req.body.Password = req.body.Password?.trim()  ?? ""
-
-			if (req.body.Name == "" || req.body.Password == "") {
-				res.statusMessage = "We require a name and password"
-				res.sendStatus(400)
-				return
+			for (key in req.body) {
+				if (req.body[key] == "on")
+					req.body[key] = 1
+				else 
+					req.body[key] = req.body[key].trim()
 			}
 
-			req.body.Password = require('crypto').createHash('md5').update(req.body.Password).digest("hex")
-
-			const query = `INSERT INTO User VALUES (@Name, @Password, @Admin)`
+			if (req.body.Password.length >  0)
+				req.body.Password = require('crypto').createHash('md5').update(req.body.Password).digest("hex")
+			else
+				delete req.body.Password
 
 			db.prepare("BEGIN TRANSACTION").run()
 
-			let info = db.prepare(query).run(req.body)
-			console.log(info)
+			const user = db.prepare("SELECT rowid, * FROM User WHERE Name=?").get(req.body.originalName)
+			if (user) {
+				// it's an update
+				// get changed columns
+				const changed = Object.keys(req.body).filter(k => k != "originalName" && user[k] != req.body[k])
+				db.prepare(`UPDATE User SET ${changed.map(c => `${c}=@${c}`)} WHERE Name=@originalName`)
+				.run(req.body)
 
-			info = db.prepare(`INSERT INTO AuditLog Values ( null, 'User', ${info.lastInsertRowid}, 'INS', '${req.auth.user}', '${new Date().toLocaleString()}' )`).run()
-			console.log(info)
-			info = db.prepare(`INSERT INTO AuditLogEntry Values ( null, ${info.lastInsertRowid}, 'Name', null, ?)`).run(req.body.Name)
-			console.log(info)
+				const auditLogId = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, 'UPD', ?, ? )")
+					.run(user.rowid, "User", req.auth.user, new Date().toLocaleString())
+					.lastInsertRowid
+
+				const statement = db.prepare("INSERT INTO AuditLogEntry VALUES(null, ? , ? , ?, ?)")
+				delete req.body.Password
+				for (c of changed) {
+					statement.run(auditLogId, c, user[c], req.body[c])
+				}
+
+			}
+			else {
+				// it's an insert
+				delete req.body.originalName
+				const newid = db.prepare(`INSERT INTO USER (${Object.keys(req.body).join(", ")}) VALUES (${Object.keys(req.body).map(k => `@${k}`).join(", ")})`)
+					.run(req.body)
+					.lastInsertRowid
+
+				const auditLogId = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, 'INS', ?, ? )")
+					.run(newid, "User", req.auth.user, new Date().toLocaleString())
+					.lastInsertRowid
+
+				const statement = db.prepare("INSERT INTO AuditLogEntry VALUES(null, ? , ? , null, ?)")
+				delete req.body.Password
+				for (key in req.body) {
+					statement.run(auditLogId, key, req.body[key])
+				}
+
+			}
 
 			db.prepare("COMMIT").run()
-
-			res.send("ok")
+			res.redirect("/user")
 		}
-		else {
+		catch(err) {
 			db.prepare("ROLLBACK").run()
-			res.statusMessage = "not authorised to view the users page."
-			res.status(500).end()
+			res.statusMessage = err.message
+			res.sendStatus(400)
 		}
+		finally {
+			db.close()
+		}
+	}
+	else {
+		res.statusMessage = "not authorised to view the users page."
+		res.status(500).end()
+	}
 
+})
+
+
+
+router.delete("/:name", (req, res) => {
+
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+		if (res.locals.admin) {
+			db.prepare("BEGIN TRANSACTION").run()
+
+			const user = db.prepare("SELECT rowid, Name, Admin, SalesRep, PowerUser FROM User WHERE Name=?").get(req.params.name)
+
+			db.prepare("DELETE FROM User WHERE Name=?").run(req.params.name)
+
+			const date = new Date()
+			const auditLogId = db
+				.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, 'DEL', ?, ? )")
+				.run("User", user.rowid, req.auth.user, date.toLocaleString())
+				.lastInsertRowid
+
+			const query = db.prepare("INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, null)")
+			for (key in user) {
+				query.run(auditLogId, key, user[key])
+			}
+
+			db.prepare("COMMIT").run()
+
+			res.send("ok")
+		}
 	}
 	catch (ex) {
+		db.prepare("ROLLBACK").run()
 		console.log(ex)
 		res.statusMessage = ex.message
 		res.sendStatus(400)
@@ -219,6 +204,5 @@ router.post("/", (req, res) => {
 		db.close()
 	}
 })
-
 
 module.exports = router;

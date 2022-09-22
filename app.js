@@ -64,6 +64,7 @@ app.use((req, res, next) => {
 	db.close()
 	res.locals.poweruser = user.PowerUser == 1
 	res.locals.salesrep = user.SalesRep == 1
+	res.locals.admin = user.Admin == 1
 
 	next()
 })

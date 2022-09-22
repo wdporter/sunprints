@@ -1,205 +1,47 @@
 <%- include("partials/head.ejs") %>
 
-<style>
-
-	input.button {
-		 margin-bottom: 0
-	}
-
-	.button + .button {
-		margin-left: 1em;
-	}
-
-	input[type=checkbox] {
-		all: revert;
-		height:2em;
-		width: 2em;
-		accent-color:green; 
-	}
-
-	td.pw {
-		display:flex;
-	}
-	td.pw input {
-		display: inline
-	}
-</style>
-
-
-<div id="app">
-
-	<dialog id="success">
-		<p>{{message}}</p>
-		<form method="dialog">
-			<button>OK</button>
-		</form>
-	</dialog>
-
+<ul>
+	<li>Admin: can make changes to this page</li>
+	<li>Power User: can make changes to any page</li>
+	<li>Sales Rep: can make changes to orders and customers</li>
+</ul>
+<p>
+	<a href="/user/edit/">Create new user</a>
+</p>
 <table>
-<thead><tr><th>Name</th><th>Admin</th><th></th><th>New Password</th></tr></thead>
+<thead><tr>
+	<th>Name</th>
+	<th>Admin</th>
+	<th>Power User</th>
+	<th>Sales Rep</th>
+	<th>Edit</th>
+	<th>Delete</th>
+</tr></thead>
 <tbody>
-	<tr v-for="(user, i) in users" :key="'user'+i">
-		<td><span v-show="!user.isEditing">{{user.Name}}</span>                  <input v-model="user.Name"  v-show="user.isEditing"  /> </td>
-		<td><span v-show="!user.isEditing">{{user.Admin == 1 ? "✅" : ""}}</span> <input v-model="user.Admin" v-show="user.isEditing" type="checkbox" true-value="1" false-value="0" /> </td>
-		<td>
-			<input type=button value="Edit"   @click="startEdit(user)"           v-if="!user.isEditing" class="button" />
-			<input type=submit value="Save"   @click="saveEdit(user)"    v-if="user.isEditing"  class="button" />
-			<input type=button value="Cancel" @click="cancelEdit(user)"  v-if="user.isEditing"  class="button" />
-		</td>
-		<td class="pw">
-			<input v-model="user.newPassword" placeholder="new password" />&ensp;
-			<input type=submit value="Save" @click="savePassword(user)" class="button" :disabled="user.isEditing" />
-		</td>
-	</tr>
+	<% users.forEach(user => { %>
+		<tr>
+			<td><%= user.Name %></td>
+			<td><span class="<%= user.Admin     == 1 ? 'fa fa-lg fa-check' : ''%>"></span></td>
+			<td><span class="<%= user.PowerUser == 1 ? 'fa fa-lg fa-check' : ''%>"></span></td>
+			<td><span class="<%= user.SalesRep  == 1 ? 'fa fa-lg fa-check' : ''%>"></span></td>
+			<td><a href="/user/edit/<%= user.Name %>"><span class="fa fa-lg fa-edit"></span></td>
+			<td><a href="#" onclick="deleteUser(event, '<%= user.Name %>')"><span class="fa fa-lg fa-trash"></span></a></td>
+				</tr>
+		 
+	<% }) %>
 </tbody>
-<tfoot>
-	<tr>
-	<td> 
-		<p>
-		<label for= "newName">New user name</label>
-		<input v-model="newUser.Name" placeholder="name for new user" id="newName" /> 
-	</p>
-	<p>
-		<label for="newPassword">New user password</label>
-		<input v-model="newUser.Password" placeholder="new user password" id="newPassword" />
-	</p>
-
-</td>
-	<td> 
-	<input v-model="newUser.Admin" type="checkbox" true-value="1" false-value="0"  /> Admin
-	</td>
-	<td>
-		<input type=submit value="Create" @click="saveNew()"   class="button" />
-	</td>
-</tr>
-</tfoot>
 </table>
-</div>
 
 <script>
-	window.vueapp = Vue.createApp({
-		data() {
-			return {
-				users: <%- JSON.stringify(users) %>,
-				newUser: {
-					Name: "",
-					Password: "",
-					Admin: 0
-				},
-				message: ""
-			}
-		},
-		methods: {
-			startEdit(user) {
-				user.isEditing = true
-				user.originalName = user.Name
-				user.originalAdmin = user.Admin
-			},
-			cancelEdit(user) {
-				user.isEditing = false
-				user.Name = user.originalName 
-				user.Admin = user.originalAdmin 
-			},
-			saveEdit(user) {
-				const vue = this
+async function deleteUser(event, name) {
+	console.log (event, name)
+	event.preventDefault()
 
-				user.Name = user.Name.trim()
-
-				if (user.Name == "" || (user.Name == user.originalName && user.Admin == user.originalAdmin )) {
-					return // nothing to save
-				}
-
-				fetch("/user", {
-					method: "PUT",
-					headers: new Headers({"Content-Type": "application/json"}),
-					body: JSON.stringify(user)
-				})
-				.then(response => {
-					if (response.ok) {
-						user.isEditing = false
-						vue.message = "We have saved the changes"
-						document.getElementById("success").showModal()
-					}
-					else {
-						throw new Error(response.statusText)
-					}
-				})
-				.catch(error => {
-					user.Name = user.originalName 
-					user.Admin = user.originalAdmin 
-					user.isEditing = false
-					window.alert(`We encountered an error: ${error}`)
-				})
-
-			},
-			saveNew() {
-				const vue = this
-				this.newUser.Name = this.newUser.Name.trim()
-				this.newUser.Password = this.newUser.Password.trim()
-
-				if (this.newUser.Name == "" || this.newUser.Password == "") {
-					return // nothing to save
-				}
-
-				// yes, we are sending passwords in clear text, security is not important here
-				fetch("/user", {
-					method: "POST",
-					headers: new Headers({"Content-Type": "application/json"}),
-					body: JSON.stringify(this.newUser)
-				})
-				.then(response => {
-					if (response.ok) {
-						const user = JSON.parse(JSON.stringify(vue.newUser)) // make a duplicate
-						vue.users.push(user)
-
-						vue.newUser.Name = ""
-						vue.newUser.Password = ""
-						vue.newUser.Admin = 0
-
-						vue.message = "We have created the user"
-						document.getElementById("success").showModal()
-					}
-					else {
-						throw new Error(response.statusText)
-					}
-				})
-				.catch(error => {
-					window.alert(`We encountered an error: ${error}`)
-				})
-			},
-			savePassword(user) {
-				const vue = this
-
-				if (user.newPassword == "")
-					return
-
-				fetch("/user/pw", {
-					method: "PUT",
-					headers: new Headers({"Content-Type": "application/json"}),
-					body: JSON.stringify({Name: user.Name, Password: user.newPassword}) // yes they are sent in clear text
-				})
-				.then(response => {
-					if (response.ok) {
-						user.Password = user.newPassword
-						user.newPassword = ""
-						vue.message = "We have saved the password"
-						document.getElementById("success").showModal()
-					}
-					else {
-						throw new Error(response.statusText)
-					}
-				})
-				.catch(error => {
-					window.alert(`We encountered an error: ${error}`)
-				})
-			}
-
-		}
-	}).mount("#app")
-
-
-
-
+	const response = await fetch(`/user/${name}`, {method: "DELETE"})
+	if (response.ok) {
+		window.location.reload()
+	}
+}
 </script>
 
 

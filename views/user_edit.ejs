@@ -1,0 +1,56 @@
+<%- include("partials/head.ejs") %>
+
+<style>
+	main {
+		padding-bottom: 4em
+	}
+	input:invalid {
+		border: 2px dashed red;
+	}
+</style>
+
+
+<fieldset><legend>User details</legend>
+<form method="POST" action="/user/edit">
+<input type="hidden" name="originalName" value="<%= userObj.Name %>" > 
+<p>
+	<label for="name">Name:</label>
+	<input id="name" name="Name" value="<%= userObj.Name %>" required />
+</p>
+<p>
+	<label for="password">Password:</label>
+	<input id="password" name="Password" type="password" style="width: calc(100% - 8em)" placeholder="leave empty to retain current password" <%= userObj.Name == "" ? "required" : "" %> />
+	<input type="checkbox" id=show onchange="togglePassword()"><label for="show">Show</label>
+</p>
+<p>
+	<input id="admin" name="Admin" type="checkbox" <%= userObj.Admin ? "checked" : "" %> title="only admins can use this page to edit users"><label for="admin">Admin</label>
+</p>
+<p>
+	<input id="poweruser" name="PowerUser" type="checkbox" <%= userObj.PowerUser ? "checked" : "" %> title="power users can save changes to any item"><label for="poweruser">Power user</label>
+</p>
+<p>
+	<input id="salesrep" name="SalesRep" type="checkbox" <%= userObj.SalesRep ? "checked" : "" %> title="sales reps are able to save changes to customers and their orders"><label for="salesrep">Sales rep</label>
+</p>
+
+<input type="submit" value="<%= userObj.Name=='' ? "Create new user" : "Save user" %>" />
+
+</form>
+</fieldset>
+
+
+<script>
+
+function togglePassword() {
+	const elem = document.getElementById("password")
+	elem.setAttribute("type", elem.getAttribute("type") =='password' ? 'text' : 'password')
+}
+
+document.forms[0].addEventListener(submit, function (event) {
+	if (! document.forms[0].reportValidity())
+		event.preventDefault()
+})
+
+</script>
+
+
+<%- include("partials/foot.ejs") %>
