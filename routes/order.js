@@ -1380,9 +1380,12 @@ router.post("/", function (req, res) {
 		req.body.OrderId = info.lastInsertRowid
 
 		// now also insert it into SalesTotal
-		//DeliveryDate is not in SalesTotal
-		columns.splice(columns.indexOf("DeliveryDate"), 1)
-		const salesTotalCols = columns.filter(c => c != "CreatedBy" && c != "CreatedDateTime" && c != "LastModifiedBy" && c != "LastModifiedDateTime")
+		let salesTotalCols = columns.filter(c => c != "CreatedBy" && c != "CreatedDateTime" && c != "LastModifiedBy" && c != "LastModifiedDateTime")
+		//change name of delivery date
+		salesTotalCols = salesTotalCols.filter(c => c != "DeliveryDate")
+		salesTotalCols.push("Delivery")
+		req.body.Delivery = req.body.DeliveryDate
+
 		salesTotalCols.unshift("OrderId")
 		query = `INSERT INTO SalesTotal (
 			${salesTotalCols.join(", ")}
@@ -1847,9 +1850,11 @@ router.put("/:id", function (req, res) {
 			changedColumns.push("DateInvoiced")
 			changedColumns = changedColumns.filter(c => c != "InvoiceDate")
 		}
-		// delete DeliveryDAte
+		// rename DeliveryDAte
 		if (changedColumns.includes("DeliveryDate")) {
 			changedColumns = changedColumns.filter(c => c != "DeliveryDate")
+			changedColumns.push("Delivery")
+			req.body.Delivery = req.body.DeliveryDate
 		}
 
 		changedColumns = changedColumns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime")
