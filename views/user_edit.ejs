@@ -49,7 +49,7 @@ function togglePassword() {
 	elem.setAttribute("type", elem.getAttribute("type") =='password' ? 'text' : 'password')
 }
 
-document.forms[0].addEventListener(submit, function (event) {
+document.forms[0].addEventListener("submit", function (event) {
 	if (! document.forms[0].reportValidity())
 		event.preventDefault()
 })
