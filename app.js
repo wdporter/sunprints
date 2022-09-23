@@ -53,10 +53,6 @@ function myAuthorizer(username, password) {
 	return require('crypto').createHash('md5').update(password).digest("hex") == user.Password
 }
 
-// ALTER TABLE User ADD COLUMN SalesRep INTEGER DEFAULT 0;
-// UPDATE User SET SalesRep=1 WHERE NAME IN ('kerrie', 'shane', 'joe');
-// ALTER TABLE User ADD COLUMN PowerUser INTEGER DEFAULT 0;
-// UPDATE User SET PowerUser=1 WHERE NAME IN ('porterd', 'cameron', 'kristy', 'reception', 'screen room', 'despatch');
 app.use((req, res, next) => {
 	const Database = require("better-sqlite3")
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
