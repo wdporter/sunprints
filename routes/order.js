@@ -8,6 +8,14 @@ const sz = require("../sizes.js");
 router.get("/", function (req, res, next) {
 	res.render("order.ejs", {
 		title: "Orders",
+		stylesheets: [
+			"/stylesheets/fixedHeader.dataTables.min.css", 
+			"/stylesheets/buttons.dataTables-2.2.3.css",
+			"/stylesheets/order-theme.css"],
+		javascripts: [
+			"/javascripts/dataTables.fixedHeader.min.js",
+			"/javascripts/dataTables.buttons-2.2.3.js"
+		],
 		user: req.auth.user,
 		poweruser: res.locals.poweruser,
 		salesrep: res.locals.salesrep
@@ -144,6 +152,8 @@ router.get("/new", function (req, res, next) {
 
 		res.render("order_new.ejs", {
 			title: "New Order",
+			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css"],
+			javascripts: ["/javascripts/dataTables.fixedHeader.min.js"],
 			mode: "new",
 			customer,
 			order,
@@ -463,6 +473,8 @@ router.get("/edit", function (req, res, next) {
 
 		res.render("order_new.ejs", {
 			title: "Edit Order",
+			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css"],
+			javascripts: ["/javascripts/dataTables.fixedHeader.min.js"],
 			mode: "edit",
 			orderid: req.query.id,
 			customer,

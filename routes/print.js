@@ -8,6 +8,7 @@ const sz = require("../sizes.js")
 router.get("/", function (req, res, next) {
 	res.render("printdesign.ejs", {
 		title: "Print Designs",
+		stylesheets: ["/stylesheets/printdesign-theme.css"],
 		user: req.auth.user,
 		locations: JSON.stringify(sz.locations),
 		poweruser: res.locals.poweruser

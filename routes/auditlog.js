@@ -7,6 +7,7 @@ const Database = require("better-sqlite3");
 router.get("/", function (req, res, next) {
 	res.render("auditlog.ejs", {
 		title: "Audit Log",
+		stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css"],
 		user: req.auth.user
 	})
 })

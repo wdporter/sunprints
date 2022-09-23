@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset=utf-8>
-	<title>SunPrints | <%- title %> </title>
+	<title>SunPrints | <%= title %> </title>
 	<meta name=viewport content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 	<link rel="icon"
 		href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
@@ -17,35 +17,17 @@
 	<script src=/javascripts/datatables-1.11.5.js></script><!-- this has jquery dependency bundled -->
 	<script src=/javascripts/vue-3.2.33.js></script>
 
-	<% if (title=="Home" ) { %>
 
-		<% } else if (title=="New Order" || title=="Edit Order" ) { %>
-			<link rel=stylesheet href=/stylesheets/fixedHeader.dataTables.min.css>
-			<script src=/javascripts/dataTables.fixedHeader.min.js></script>
-		<% } else if (title=="Orders" ) { %>
-			<link rel=stylesheet href=/stylesheets/fixedHeader.dataTables.min.css>
-			<link rel=stylesheet href=/stylesheets/buttons.dataTables-2.2.3.css>
-			<link rel=stylesheet href=/stylesheets/order-theme.css>
-			<script src=/javascripts/dataTables.fixedHeader.min.js></script>
-			<script src="/javascripts/dataTables.buttons-2.2.3.js"></script>
-		<% } else if (title=="Print Designs" || title=="Embroidery Designs" || title=="Transfer Designs" ) { %>
-			<link rel=stylesheet href=/stylesheets/printdesign-theme.css>
-		<% } else if (title=="Usb" ) { %>
-			<link rel=stylesheet href=/stylesheets/usb-theme.css>
-		<% } else if (title=="Transfer Designs" ) { %>
-			<link rel=stylesheet href="/stylesheets/transfer-theme.css">
-		<% } else if (title=="Transfer Names" ) { %>
-			<link rel=stylesheet href="/stylesheets/transfername-theme.css">
-		<% } else if (title=="Purchasing" ) { %>
-			<link rel=stylesheet href=/stylesheets/fixedHeader.dataTables.min.css>
-			<link rel=stylesheet href="/stylesheets/purchasing-theme.css">
-		<% } else if (title=="Audit Log" ) { %>
-			<link rel=stylesheet href=/stylesheets/fixedHeader.dataTables.min.css>
-		<% } %>
+	<% if (typeof stylesheets != "undefined") { 
+		stylesheets.forEach(s => {
+	%>
+	<link rel=stylesheet href="<%- s %>"><% }) } %>
+	<% if (typeof javascripts != "undefined") { 
+		javascripts.forEach(j => {
+	%>
+	<script src="<%-j %>"></script><% }) } %>
 
-
-
-</head>
+	</head>
 
 <body>
 	<button class="back-to-top hidden">

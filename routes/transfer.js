@@ -7,6 +7,7 @@ const sz = require("../sizes.js")
 router.get("/", function (req, res, next) {
 	res.render("transfer.ejs", { 
 		title: "Transfer Designs",
+		stylesheets: ["/stylesheets/printdesign-theme.css", "/stylesheets/transfer-theme.css"],
 		user: req.auth.user,
 		locations: JSON.stringify(sz.locations),
 		poweruser: res.locals.poweruser
@@ -162,6 +163,7 @@ AND TransferName.Deleted=0 `)
 router.get("/name", function (req, res, next) {
 	res.render("transfername.ejs", { 
 		title: "Transfer Names",
+		stylesheets: ["/stylesheets/transfername-theme.css"],
 		user: req.auth.user,
 		poweruser: res.locals.poweruser
 	 })

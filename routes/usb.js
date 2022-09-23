@@ -9,6 +9,7 @@ const Database = require("better-sqlite3")
 router.get("/", function (req, res, next) {
 	res.render("usb.ejs", { 
 		title: "Usb",
+		stylesheets: ["/stylesheets/usb-theme.css"],
 		user: req.auth.user,
 		poweruser: res.locals.poweruser
 	 })

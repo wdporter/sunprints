@@ -51,6 +51,7 @@ router.get("/", function (req, res) {
 
 		res.render("purchasing.ejs", {
 			title: "Purchasing",
+			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/purchasing-theme.css"],
 			user: req.auth.user,
 			stockOrders,
 			suppliers,
