@@ -1,0 +1,7 @@
+.breakall {
+	word-break: break-all;
+}
+
+#createNewButton {
+	margin-bottom: 2em;
+}

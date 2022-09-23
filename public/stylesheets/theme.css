@@ -1,28 +1,30 @@
-/* for some reason they set a colour, but this interfered
-when datatables went 100% width */
+/* for some crazy reason sunprints wanted a background colour, but this interfered
+with gd.css when datatables went 100% width */
 html {
 	background-color: reset !important;
 }
-
 body {
-	background-color: #ddd;
+	background-color: #eee;
+}
+main {
+	background-color: white;
+	padding-top:1em;
+	padding-bottom: 1em;
 }
 
+/* colours for the header */
 header {
 	background-color: orange;
 }
-
 body>header a {
 	color: darkblue;
 }
 
 
 /* navbar */
-
 header nav :last-child {
 	text-align: unset; /* set by gd css */
 }
-
 .navbar {
 	overflow: hidden;
 	background-color: orange;
@@ -30,77 +32,62 @@ header nav :last-child {
 	margin-top: 1em;
 	margin-bottom: -1em;
 }
-
 .navbar a {
-  float: left;
-  font-size: 20px;
-  color: darkblue;
+	float: left;
+	font-size: 20px;
+	color: darkblue;
 	font-weight: bold;
-  text-align: center;
-  padding: 14px 16px;
-  text-decoration: none;
+	text-align: center;
+	padding: 14px 16px;
+	text-decoration: none;
 }
-
 .dropdown {
-  float: left;
-  overflow: hidden;
+	float: left;
+	overflow: hidden;
 }
-
 .dropdown .dropbtn {
-  font-size: 20px;  
-  border: none;
-  outline: none;
-  color: darkblue;
+	font-size: 20px;  
+	border: none;
+	outline: none;
+	color: darkblue;
 	font-weight: bold;
-  padding: 14px 16px;
-  background-color: inherit;
-  font-family: inherit;
-  margin: 0;
+	padding: 14px 16px;
+	background-color: inherit;
+	font-family: inherit;
+	margin: 0;
 }
-
 .navbar a:hover, .dropdown:hover .dropbtn {
-  background-color: rgba(255, 165, 0, .75);
+	background-color: rgba(255, 165, 0, .75);
 	color: darkblue;
 }
-
 .dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f9f9f9;
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
+	display: none;
+	position: absolute;
+	background-color: #f9f9f9;
+	min-width: 160px;
+	box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+	z-index: 1;
 }
-
 .dropdown-content a {
-  float: none;
-  color: darkblue;
+	float: none;
+	color: darkblue;
 	background-color: rgba(255, 165, 0, .75);
-  padding: 12px 16px;
-  text-decoration: none;
-  display: block;
-  text-align: left;
+	padding: 12px 16px;
+	text-decoration: none;
+	display: block;
+	text-align: left;
 }
-
 .dropdown-content a:hover {
-  background-color: #ddd;
+	background-color: #ddd;
 	background-color: orange;
 	color: darkblue;
 	text-decoration: none;
 }
-
 .dropdown:hover .dropdown-content {
-  display: block;
+	display: block;
 }
 /* end navbar */
 
-main {
-	background-color: white;
-}
-
-div#orderTable_wrapper {
-	background-color: white;
-}
 
 /* helps me put an image in the header */
 header h1 {
@@ -112,7 +99,10 @@ header h1 {
 main.wider {
 	width:1280px; 
 	max-width:1280px;
-	padding-bottom: 1em;
+}
+
+td {
+	font-size: 0.875em;
 }
 
 a.edit-link, a.delete-link  {
@@ -122,15 +112,14 @@ a.edit-link:focus,
 a.delete-link:focus {
 	box-shadow: unset;
 	background-color: unset;
-
 }
 
 span.fa-edit, span.fa-plus {
-	color: #005ea5;
+	 color: var(--color-primary); 
 }
 
 span.fa-trash {
-	color: #942514;
+	color:var(--color-tertiary);
 }
 
 button:disabled, input[type=button]:disabled, input[type=reset]:disabled, input[type=submit]:disabled {
@@ -145,24 +134,24 @@ button[type="reset"]:hover {
   background-color: var(--color-tertiary-hover)
 }
 
-th,td {
-	font-size: calc(var(--unit)*0.875);
+input:invalid, select:invalid, textarea:invalid {
+  border: 2px dashed red;
 }
 
 
+/* back to top button */
 .back-to-top {
-  position: fixed;
-  right: 2rem;
-  bottom: 2rem;
-  border-radius: 100%;
-  background: #141c38;
-  /* padding: 0.5rem;
-  border: none; */
-  cursor: pointer;
-  opacity: 100%;
-  transition: opacity 0.5s;
+	position: fixed;
+	right: 2rem;
+	bottom: 2rem;
+	border-radius: 100%;
+	background: #141c38;
+	/* padding: 0.5rem;
+	border: none; */
+	cursor: pointer;
+	opacity: 100%;
+	transition: opacity 0.5s;
 }
-
 .back-to-top:hover {
   opacity: 60%;
 }
@@ -176,13 +165,14 @@ th,td {
   height: 2rem;
   /* color: #7ac9f9; */
 }
+/*~ end back to top button */
+
 
 
 #footLinks {
 	list-style-type: none;
 	float: left;
 }
-
 #footLinks li {
 	display: inline-block;
 }

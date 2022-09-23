@@ -1,29 +1,5 @@
 <%- include("partials/head.ejs") %>
 
-<style>
-
-main {
-	padding-bottom: 1em;
-}
-main.wider {
-	padding-top:1em;
-}
-
-
-.breakall {
-	word-break: break-all;
-}
-
-input:invalid {
-  border: 2px dashed red;
-}
-
-
-#createNewButton {
-	margin-bottom: 2em;
-}
-</style>
-
 <ul>
 <li>Separate email addresses with a comma (,) or semi-colon (;)
 <li>Deleting a customer will retain it for sales history, but you won’t be able to create new orders. 
@@ -37,7 +13,7 @@ input:invalid {
 <main class="wider">
 
 <div >
-<table id="customersTable" class="hover stripe display compact" >
+<table id="customersTable" class="display compact" >
 	<thead>
 		<tr>
 			<th>Id</th><!-- will be hidden -->
