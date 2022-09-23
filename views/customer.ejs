@@ -37,7 +37,7 @@ input:invalid {
 <main class="wider">
 
 <div >
-<table class="hover stripe" >
+<table id="customersTable" class="hover stripe display compact" >
 	<thead>
 		<tr>
 			<th>Id</th><!-- will be hidden -->
@@ -167,7 +167,7 @@ input:invalid {
 	<script>
 
 		// initialise DataTable
-		window.datatable = new DataTable("table", {
+		window.datatable = new DataTable("table#customersTable", {
 			fixedHeader: true,
 			processing: true,
 			serverSide: true,

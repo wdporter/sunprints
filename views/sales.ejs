@@ -153,7 +153,7 @@ div#dt_wrapper {
 
 <main class="wider">
 
-	<table id="dt" class="stripe">
+	<table id="dt" class="stripe display compact">
 		<thead>
 			<tr>
 				<th></th>
@@ -283,14 +283,14 @@ div#dt_wrapper {
 			{ data: "BuyIn",
 				width: "1em",
 				render: function(data) {
-					return data ? "✔️" : "❌"
+					return data ? "✔️" : ""
 				}
 			}, 
 			{ data: "Notes" }, 
 			{ data: "Done",
 				width: "1em",
 				render: function(data) {
-					return data ? "✔️" : "❌"
+					return data ? "✔️" : ""
 				}
 			}
 		],
