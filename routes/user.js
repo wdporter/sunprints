@@ -117,7 +117,7 @@ router.post('/edit/', function (req, res) {
 				.run(req.body)
 
 				const auditLogId = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, 'UPD', ?, ? )")
-					.run(user.rowid, "User", req.auth.user, new Date().toLocaleString())
+					.run("User", user.rowid, req.auth.user, new Date().toLocaleString())
 					.lastInsertRowid
 
 				const statement = db.prepare("INSERT INTO AuditLogEntry VALUES(null, ? , ? , ?, ?)")
@@ -135,7 +135,7 @@ router.post('/edit/', function (req, res) {
 					.lastInsertRowid
 
 				const auditLogId = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, 'INS', ?, ? )")
-					.run(newid, "User", req.auth.user, new Date().toLocaleString())
+					.run("User", newid, req.auth.user, new Date().toLocaleString())
 					.lastInsertRowid
 
 				const statement = db.prepare("INSERT INTO AuditLogEntry VALUES(null, ? , ? , null, ?)")
