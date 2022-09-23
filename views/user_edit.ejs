@@ -18,18 +18,22 @@
 	<input id="name" name="Name" value="<%= userObj.Name %>" required />
 </p>
 <p>
+	<!-- yes, we are transmitting the password in clear text. Hacking is not an issue, this is solely running on intranet -->
 	<label for="password">Password:</label>
-	<input id="password" name="Password" type="password" style="width: calc(100% - 8em)" placeholder="leave empty to retain current password" <%= userObj.Name == "" ? "required" : "" %> />
+	<input id="password" name="Password" type="password" style="width: calc(100% - 8em)" placeholder="enter a new password or leave empty to retain current password" <%= userObj.Name == "" ? "required" : "" %> />
 	<input type="checkbox" id=show onchange="togglePassword()"><label for="show">Show</label>
 </p>
 <p>
-	<input id="admin" name="Admin" type="checkbox" <%= userObj.Admin ? "checked" : "" %> title="only admins can use this page to edit users"><label for="admin">Admin</label>
+	<input id="admin" name="Admin" type="checkbox" <%= userObj.Admin ? "checked" : "" %>><label for="admin">Admin — can make changes to users</label>
 </p>
 <p>
-	<input id="poweruser" name="PowerUser" type="checkbox" <%= userObj.PowerUser ? "checked" : "" %> title="power users can save changes to any item"><label for="poweruser">Power user</label>
+	<input id="poweruser" name="PowerUser" type="checkbox" <%= userObj.PowerUser ? "checked" : "" %>><label for="poweruser">Power user — can save changes accross the application</label>
 </p>
 <p>
-	<input id="salesrep" name="SalesRep" type="checkbox" <%= userObj.SalesRep ? "checked" : "" %> title="sales reps are able to save changes to customers and their orders"><label for="salesrep">Sales rep</label>
+	<input id="salesrep" name="SalesRep" type="checkbox" <%= userObj.SalesRep ? "checked" : "" %>><label for="salesrep">Sales rep — can save changes to orders and customers</label>
+</p>
+<p>
+	<input type="checkbox" checked disabled><label>Read only</label>
 </p>
 
 <input type="submit" value="<%= userObj.Name=='' ? "Create new user" : "Save user" %>" />
