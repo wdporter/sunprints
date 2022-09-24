@@ -131,6 +131,9 @@
 				},
 				{
 					text: "Edit",
+					attr: {
+						title: "double clicking the row will open the editing page"
+					},
 					action: (e, dt) => {
 						var tr = dt.row("tr.selected")
 						if (tr.length) {
@@ -141,6 +144,9 @@
 <% if (poweruser || salesrep) { %>
 				{
 					text: "Done",
+					attr: {
+						title: "sets the done flag to true"
+					},
 					enabled: <%= poweruser || salesrep ? "true" : "false" %>,
 					action: (e, dt) =>  {
 						var tr = dt.row("tr.selected")
@@ -150,6 +156,9 @@
 				},
 				{
 					text: "Ship",
+					attr: {
+						title: "removes the order from this list; sets processed date to today; sets done flag"
+					},
 					action: (e, dt) =>  {
 						var tr = dt.row("tr.selected")
 						if (tr.length)
