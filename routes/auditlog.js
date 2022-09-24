@@ -7,7 +7,7 @@ const Database = require("better-sqlite3");
 router.get("/", function (req, res, next) {
 	res.render("auditlog.ejs", {
 		title: "Audit Log",
-		stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css"],
+		stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/auditlog-theme.css"],
 		user: req.auth.user
 	})
 })
@@ -33,7 +33,10 @@ router.get("/dt", function (req, res) {
 				where.push( ` CreatedDateTime LIKE '${date}%' ` )
 			}	
 			else {
-				where.push(` ${key} LIKE '%${req.query.extraSearch[key]}%' `)
+				if (key=="Identifier")
+					where.push(` ${key} = ${req.query.extraSearch[key]} `)
+				else
+					where.push(` ${key} LIKE '%${req.query.extraSearch[key]}%' `)
 			}
 		}
 

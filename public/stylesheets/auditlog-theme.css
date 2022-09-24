@@ -1,0 +1,19 @@
+main {
+	padding-top: 1em;
+	padding-bottom: 1em;
+}
+input#CreatedDateTime {
+	width: 7em;
+}
+select#ObjectName {
+	width: 6em;
+	min-width: unset;
+}
+select#AuditAction {
+	width: 4em;
+	min-width: unset;
+}
+
+.breakall {
+	word-break: break-all;
+}
