@@ -28,7 +28,7 @@ document.getElementById("successDialog").showModal()
 <% } %>
 
 <fieldset><legend>Customer details</legend>
-<form method="POST" action="/customer/edit">
+<form method="POST" action="/customer/edit" id="customerForm">
 <input type="hidden" name="CustomerId" value="<%= customer.CustomerId %>" > 
 <p>
 	<label for="code">Code:</label>
@@ -66,9 +66,24 @@ document.getElementById("successDialog").showModal()
 	<label for="fax">Fax:</label>
 	<input type="tel" id="fax" name="Fax" value="<%= customer.Fax %>" />
 </p>
+<input type="hidden" name="Email" id="email" value="<%- customer.Email %>" />
+<% 
+	customer.Email1 = ""
+	customer.Email2 = ""
+	if (customer.Email && customer.Email.length > 0) {
+		const parts = customer.Email.split(",")
+		customer.Email1 = parts[0]
+		if (parts.length == 2)
+			customer.Email2 = parts[1]
+	}
+%>
 <p>
-	<label for="email">Email (one per line):</label>
-	<textarea rows="4" type="email" id="email" name="Email" placeholder="one email per line"><%= customer.Email?.split(",") ?? "" %></textarea>
+	<label for="email1">Email 1:</label>
+	<input type="email" id="email1" value="<%- customer.Email1 %>" />
+</p>
+<p>
+	<label for="email2">Email 2:</label>
+	<input type="email" id="email2" value="<%- customer.Email2 %>" />
 </p>
 <p>
 	<label for="addressline1">Address Line 1:</label>
@@ -117,9 +132,21 @@ document.getElementById("successDialog").showModal()
 <script>
 
 
-document.forms[0].addEventListener("submit", function (event) {
-	if (! document.forms[0].reportValidity())
-		event.preventDefault()
+document.forms["customerForm"].addEventListener("submit", function (event) {
+	if (! document.forms["customerForm"].reportValidity()) {
+		return false
+	}
+
+	const email1 = document.getElementById("email1")
+	const email2 = document.getElementById("email2")
+	let emails = [email1.value.trim(), email2.value.trim()]
+	emails = emails.filter(e => e != "")
+	document.getElementById("email").value = emails.join(",")
+
+
+	return true
+	
+	
 })
 
 </script>

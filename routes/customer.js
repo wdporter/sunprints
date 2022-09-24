@@ -139,7 +139,7 @@ router.get("/ordersearch", function (req, res, next) {
 })
 
 
-// create or new or POST  customer
+// create or new or POST  customer deprecated
 router.post("/", (req, res) => {
 
 	let db = null
@@ -256,10 +256,6 @@ router.post("/edit", (req, res) => {
 			salesrep: res.locals.salesrep
 		})
 	}
-
-	// fix emails
-	req.body.Email = req.body.Email.replace(/\r\n/g, ",")
-	req.body.Email = req.body.Email.replace(/\n/g, ",")
 
 	// fix empty strings
 	Object.keys(req.body).forEach(k => {
