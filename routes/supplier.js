@@ -14,17 +14,12 @@ router.get("/", function (req, res, next) {
 })
 
 
-// GET datatables format
-router.get("/dt", function(req, res) {
-
-	let db = null
-
+// GET a listing in DataTables format
+router.get("/dt", function (req, res, next) {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-		
-		// first get count of all records
-		let statement = db.prepare("SELECT COUNT(*) AS Count FROM Supplier WHERE Deleted=0 ")
-		const recordsTotal = statement.get().Count
+
+		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM Supplier WHERE Deleted=0 ").get().Count
 		let recordsFiltered = recordsTotal
 
 		let query = `SELECT Supplier.*, s.maxdate FROM Supplier 
@@ -33,31 +28,27 @@ router.get("/dt", function(req, res) {
 		FROM StockOrder 
 		GROUP BY SupplierId
 		) s
-		ON  s.SupplierId=Supplier.SupplierId `
-		let	whereClause = " WHERE Deleted = 0 "
-		if (req.query.search.value)
-			req.query.search.value = req.query.search.value.trim()
+		ON  s.SupplierId=Supplier.SupplierId 
+		WHERE Deleted=0 `
+
+		let whereParams = []
+		let whereClause = ""
 		if (req.query.search.value) {
-			whereClause += ` AND (Code LIKE '%${req.query.search.value}%' 
-			OR Company LIKE '%${req.query.search.value}%' 
-			OR Notes LIKE '%${req.query.search.value}%') `
-			// get count of filtered records
-			statement = db.prepare(`SELECT Count(*) as Count FROM Supplier ${whereClause}`)
-			recordsFiltered = statement.get().count
+			const searchables = req.query.columns.filter(c => c.searchable == "true")
+			const cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
+			whereParams = searchables.map(c => `%${req.query.search.value}%`)
+			whereClause += ` AND ( ${cols} ) `
+
+			recordsFiltered = db.prepare(`SELECT COUNT(*) AS Count FROM Supplier WHERE Deleted=0 ${whereClause}`).get(whereParams).Count
 		}
 
-		query += whereClause
+		query += ` ${whereClause} 
+		ORDER BY ${req.query.columns[req.query.order[0].column].data} COLLATE NOCASE ${req.query.order[0].dir} 
+		LIMIT ${req.query.length} 
+		OFFSET ${req.query.start} `
 
-		const columns = ["SupplierId", "Code", "Company", "Surname", "FirstName", 
-				"PhoneOffice", "PhoneHome", "PhoneMobile", "Fax", "Email", 
-				"AddressLine1", "AddressLine2", "Locality", "Postcode", "State", "Notes",
-				 "maxdate"]
-		query += ` ORDER BY ${columns[req.query.order[0].column]} COLLATE NOCASE ${req.query.order[0].dir} `
+		const data = db.prepare(query).all(whereParams)
 
-		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
-		const data = db.prepare(query).all()
-
-		data.forEach(d => d.DT_RowAttr = { "data-id": d.SupplierId })
 
 		res.send({
 			draw: Number(req.query.draw),
@@ -65,18 +56,44 @@ router.get("/dt", function(req, res) {
 			recordsFiltered,
 			data
 		})
-
 	}
-	catch(ex) {
+	catch (ex) {
+		console.log(ex)
 		res.statusMessage = ex.message
-		res.status(400)
+		res.sendStatus(400).end()
 	}
 	finally {
-		if (db != null)
-			db.close()
+		db.close()
+	}
+
+
+})
+
+
+router.get("/edit", (req, res) => {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+		let supplier = db.prepare("SELECT * FROM Supplier WHERE SupplierId=?").get(req.query.id)
+
+		if (!supplier) {
+			supplier = {
+				SupplierId: 0,
+			}
+		}
+
+		res.render ("supplier_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Supplier`,
+			supplier,
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+		})
+	}
+	finally {
+		db.close()
 	}
 
 })
+
 
 
 /* GET deleted Suppliers page. */
@@ -97,7 +114,141 @@ router.get("/deleted", function (req, res, next) {
 
 /*************************************************************************** */
 
-/// POST to create a new supplier
+
+router.post("/edit", (req, res) => {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	const errors = []
+
+	if (!req.body.Code) {
+		errors.push("We require a supplier code.")
+	}
+	if (!req.body.Company) {
+		errors.push("We require a supplier name.")
+	}
+
+	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	let count = db.prepare(`SELECT COUNT(*) AS Count FROM Supplier WHERE Code=?`).get(req.body.Code).Count
+	if ((req.body.SupplierId == 0 && count > 0) 
+			|| (req.body.SupplierId != 0 && count > 1) )
+		errors.push("We require a unique supplier code. Check if the supplier already exists.")
+
+	if (errors.length > 0) {
+		res.render ("supplier_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Supplier`,
+			supplier: req.body,
+			errors,
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+		})
+	}
+
+	// fix empty strings
+	Object.keys(req.body).forEach(k => {
+		if (typeof req.body[k] == "string" && req.body[k] == "")
+			req.body[k] = null
+	})
+
+	// audit columns
+	req.body.LastModifiedBy = req.auth.user
+	req.body.LastModifiedDateTime = new Date().toLocaleString("en-AU")
+
+	db.prepare("BEGIN TRANSACTION").run()
+
+	try {
+		if (req.body.SupplierId == 0) {
+			delete req.body.SupplierId
+			// insert
+			req.body.CreatedBy = req.body.LastModifiedBy
+			req.body.CreatedDateTime = req.body.LastModifiedDateTime
+
+			// find properties that have a value
+			const changes = []
+			Object.keys(req.body).forEach(k => {
+				if (req.body[k] != null)
+					changes.push(k)
+			})
+
+			let query = `INSERT INTO Supplier (${changes.join()}) VALUES(${changes.map(c => `@${c}`).join()}) `
+			let statement = db.prepare(query)
+			let info = statement.run(req.body)
+			req.body.SupplierId = info.lastInsertRowid
+
+			query = "INSERT INTO AuditLog VALUES(null, ?, ?, ?, ?, ?)"
+			statement = db.prepare(query)
+			info = statement.run("Supplier", req.body.SupplierId, "INS", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+			const auditLogId = info.lastInsertRowid
+
+			query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
+			statement = db.prepare(query)
+			changes.forEach(c => {
+				statement.run(auditLogId, c, null, req.body[c])
+			})
+
+		} // end insert
+		else {
+			//update
+			let supplier = db.prepare("SELECT * FROM Supplier WHERE SupplierId=?").get(req.body.SupplierId)
+
+			// find properties that have changed
+			const changes = []
+			Object.keys(req.body).forEach(k => {
+				if (supplier[k] != req.body[k])
+					changes.push(k)
+			})
+
+			if (changes.length > 1) { 
+				// LastModifiedDateTime has always changed, so only continue if there is more than that
+				let query = `UPDATE Supplier SET ${changes.map(c => `${c}=@${c}`).join(", ")} WHERE SupplierId=@SupplierId `
+				let statement = db.prepare(query)
+				statement.run(req.body)
+
+				query = "INSERT INTO AuditLog VALUES(null, ?, ?, ?, ?, ?)"
+				statement = db.prepare(query)
+				const info = statement.run("Supplier", supplier.SupplierId, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+				const auditLogId = info.lastInsertRowid
+
+				query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
+				statement = db.prepare(query)
+				changes.forEach(c => {
+					statement.run(auditLogId, c, supplier[c], req.body[c])
+				})
+
+			} // end changes
+
+		} // end update
+
+		db.prepare("COMMIT").run()
+
+		let supplier = db.prepare("SELECT * FROM Supplier WHERE SupplierId=?").get(req.body.SupplierId)
+		res.render ("supplier_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Supplier`,
+			supplier,
+			success: "We have saved your changes",
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+		})
+
+	}
+	catch(err) {
+		console.log(err)
+		res.render ("supplier_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Supplier`,
+			supplier: req.body,
+			errors: [err.message],
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+		})
+	}
+	finally {
+		db.close()
+	}
+})
+
+
+
+/// POST to create a new supplier  --- deprecated
 router.post("/", function(req, res) {
 	
 	if (!req.body.Code) {

@@ -265,14 +265,14 @@ router.post("/edit", (req, res) => {
 
 	// audit columns
 	req.body.LastModifiedBy = req.auth.user
-	req.body.LastModifiedDateTime = new Date().toLocaleString("en-AU", {dateStyle: "short", timeStyle: "short"})
+	req.body.LastModifiedDateTime = new Date().toLocaleString("en-AU")
 
 	db.prepare("BEGIN TRANSACTION").run()
 
 	try {
 		if (req.body.CustomerId == 0) {
-			delete req.body.CustomerId
 			// insert
+			delete req.body.CustomerId
 			req.body.CreatedBy = req.body.LastModifiedBy
 			req.body.CreatedDateTime = req.body.LastModifiedDateTime
 
@@ -334,7 +334,7 @@ router.post("/edit", (req, res) => {
 
 		db.prepare("COMMIT").run()
 
-		customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(req.body.CustomerId)
+		let customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(req.body.CustomerId)
 		res.render ("customer_edit.ejs", {
 			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
 			customer,

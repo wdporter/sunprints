@@ -1,0 +1,149 @@
+<%- include("partials/head.ejs") %>
+
+
+<% if (typeof errors != "undefined") { %>
+	<h4><i class="fa-solid fa-triangle-exclamation"></i> We couldn't save the supplier: </h4>
+	<ul class="errors">
+		<% errors.forEach(e => { %>
+		 <li><%= e %></li>
+		<% }) %>
+	</ul>
+<% } %>
+
+
+<% if (typeof success != "undefined") { %>
+<dialog id="successDialog">
+	<form method="dialog">
+	<h5>Success</h5>
+	<p><%= success %></p>
+	<button>OK</button>
+</form>
+</dialog>
+<script>
+document.getElementById("successDialog").showModal()
+</script>
+
+
+
+<% } %>
+
+<fieldset><legend>Supplier details</legend>
+<form method="POST" action="/supplier/edit" id="supplierForm">
+<input type="hidden" name="SupplierId" value="<%= supplier.SupplierId %>" > 
+<p>
+	<label for="code">Code:</label>
+	<input id="code" name="Code" value="<%= supplier.Code %>" required />
+</p>
+<p>
+	<label for="company">Company:</label>
+	<input id="company" name="Company" value="<%= supplier.Company %>" required />
+</p>
+<p>
+	<label for="firstname">Firstname:</label>
+	<input id="firstname" name="FirstName" value="<%= supplier.FirstName %>" />
+</p>
+<p>
+	<label for="surname">Surname:</label>
+	<input id="surname" name="Surname" value="<%= supplier.Surname %>" />
+</p>
+<p>
+	<label for="phoneoffice">Phone Office:</label>
+	<input type="tel" id="phoneoffice" name="PhoneOffice" value="<%= supplier.PhoneOffice %>" />
+</p>
+<p>
+	<label for="phonehome">Phone Home:</label>
+	<input type="tel" id="phonehome" name="PhoneHome" value="<%= supplier.PhoneHome %>" />
+</p>
+<p>
+	<label for="phonemobile">Phone Mobile:</label>
+	<input type="tel" id="phonemobile" name="PhoneMobile" value="<%= supplier.PhoneMobile %>" />
+</p>
+<p>
+	<label for="fax">Fax:</label>
+	<input type="tel" id="fax" name="Fax" value="<%= supplier.Fax %>" />
+</p>
+<input type="hidden" name="Email" id="email" value="<%- supplier.Email %>" />
+<% 
+	supplier.Email1 = ""
+	supplier.Email2 = ""
+	if (supplier.Email && supplier.Email.length > 0) {
+		const parts = supplier.Email.split(",")
+		supplier.Email1 = parts[0]
+		if (parts.length == 2)
+		supplier.Email2 = parts[1]
+	}
+%>
+<p>
+	<label for="email1">Email 1:</label>
+	<input type="email" id="email1" value="<%- supplier.Email1 %>" />
+</p>
+<p>
+	<label for="email2">Email 2:</label>
+	<input type="email" id="email2" value="<%- supplier.Email2 %>" />
+</p>
+<p>
+	<label for="addressline1">Address Line 1:</label>
+	<input id="addressline1" name="AddressLine1" value="<%= supplier.AddressLine1 %>" />
+</p>
+<p>
+	<label for="addressline2">Address Line 2:</label>
+	<input id="addressline2" name="AddressLine2" value="<%= supplier.AddressLine2 %>" />
+</p>
+<p>
+	<label for="locality">Locality:</label>
+	<input id="locality" name="Locality" value="<%= supplier.Locality %>" placeholder="town, city or suburb" />
+</p>
+<p>
+	<label for="postcode">Postcode:</label>
+	<input id="postcode" name="Postcode" value="<%= supplier.Postcode %>" inputmode="numeric" />
+</p>
+<p>
+	<label for="state">State</label>
+	<select id="state">
+		<% ["", "QLD", "NSW", "VIC", "SA", "WA", "TAS", "NT", "ACT"].forEach(s => { %>
+		<option value="<%= s %>" <%= supplier.State == s ? "selected" : "" %>><%= s %></option>
+		<% }) %>
+	</select>
+</p>
+<p>
+	<label for="notes">Notes:</label>
+	<textarea rows="5" id="notes" name="Notes" ><%= supplier.Notes %></textarea>
+</p>
+
+<dl>
+	<dt>Created by:</dt>
+	<dd><%= supplier.CreatedBy %> on <%= supplier.CreatedDateTime %></dd>
+	<dt>Last modified by:</dt>
+	<dd><%= supplier.LastModifiedBy %> on <%= supplier.LastModifiedDateTime %></dd>
+</dl>
+
+</dl>
+
+<input type="submit" value="<%= supplier.SupplierId=='0' ? "Create new supplier" : "Save supplier details" %>" />
+
+</form>
+</fieldset>
+
+
+<script>
+
+
+document.forms["supplierForm"].addEventListener("submit", function (event) {
+	if (! document.forms["supplierForm"].reportValidity()) {
+		return false
+	}
+
+	const email1 = document.getElementById("email1")
+	const email2 = document.getElementById("email2")
+	let emails = [email1.value.trim(), email2.value.trim()]
+	emails = emails.filter(e => e != "")
+	document.getElementById("email").value = emails.join(",")
+
+	return true
+
+})
+
+</script>
+
+
+<%- include("partials/foot.ejs") %>

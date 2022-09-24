@@ -114,14 +114,15 @@ document.getElementById("successDialog").showModal()
 	<textarea rows="5" id="notes" name="Notes" placeholder="delivery notes"><%= customer.Notes %></textarea>
 </p>
 
+<% if (customer.CustomerId != 0) { %>
 <dl>
 	<dt>Created by:</dt>
 	<dd><%= customer.CreatedBy %> on <%= customer.CreatedDateTime %></dd>
 	<dt>Last modified by:</dt>
 	<dd><%= customer.LastModifiedBy %> on <%= customer.LastModifiedDateTime %></dd>
 </dl>
-
-</dl>
+<p><a href="/auditlog?table=Customer&id=<%= customer.CustomerId %>" target=_blank>Audit log</a></p>
+<% } %>
 
 <input type="submit" value="<%= customer.CustomerId=='0' ? "Create new customer" : "Save customer details" %>" />
 
