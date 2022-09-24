@@ -6,14 +6,12 @@ const Database = require("better-sqlite3");
 router.get("/", function (req, res, next) {
 	res.render("customer.ejs", {
 		title: "Customers",
-		stylesheets: ["customer-theme.css"],
+		stylesheets: ["/stylesheets/customer-theme.css"],
 		user: req.auth.user,
 		poweruser: res.locals.poweruser,
 		salesrep: res.locals.salesrep
 	})
 })
-
-
 
 /* GET deleted customers page. */
 router.get("/deleted", function (req, res) {
@@ -32,13 +30,10 @@ router.get("/deleted", function (req, res) {
 })
 
 
-
-
 // GET a listing in DataTables format
 router.get("/dt", function (req, res, next) {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
-
 
 		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM Customer WHERE Deleted=0 ").get().Count
 		let recordsFiltered = recordsTotal
@@ -52,40 +47,30 @@ router.get("/dt", function (req, res, next) {
 		ON  s.CustomerId=Customer.CustomerId 
 		WHERE Deleted=0 `
 
-		if (req.query.search.value)
-			req.query.search.value = req.query.search.value.trim()
+		let whereParams = []
+		let whereClause = ""
 		if (req.query.search.value) {
-			const whereClause = ` AND Code LIKE '%${req.query.search.value}%' OR Company LIKE '%${req.query.search.value}%' `
-			recordsFiltered = db.prepare(`SELECT COUNT(*) AS Count FROM Customer WHERE Deleted=0 ${whereClause}`).get().Count
-			query += whereClause
+			const searchables = req.query.columns.filter(c => c.searchable == "true")
+			const cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
+			whereParams = searchables.map(c => `%${req.query.search.value}%`)
+			whereClause += ` AND ( ${cols} ) `
+
+			recordsFiltered = db.prepare(`SELECT COUNT(*) AS Count FROM Customer WHERE Deleted=0 ${whereClause}`).get(whereParams).Count
 		}
 
+		query += ` ${whereClause} 
+		ORDER BY ${req.query.columns[req.query.order[0].column].data} COLLATE NOCASE ${req.query.order[0].dir} 
+		LIMIT ${req.query.length} 
+		OFFSET ${req.query.start} `
 
-
-
-		const columns = ["CustomerId", "Code", "Company", "Surname", "FirstName", "PhoneOffice", "PhoneHome", "PhoneMobile", "Fax", "Email", "AddressLine1", "AddressLine2", "Locality", "Postcode", "State", "Notes", "CreatedBy", "CreatedDateTime", "LastModifiedBy", "LastModifiedDateTime", "CustNotes", "maxdate"]
-		const orderByClause = req.query.order.map(o => ` ${columns[o.column]} COLLATE NOCASE ${o.dir} `)
-		query += ` ORDER BY ${orderByClause.join(",")}`
-
-		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
-		const customers = db.prepare(query).all()
+		const customers = db.prepare(query).all(whereParams)
 
 
 		res.send({
 			draw: Number(req.query.draw),
 			recordsTotal,
 			recordsFiltered,
-			data: customers.map(cust => {
-				const retVal = {
-					DT_RowAttr: { "data-id": cust.CustomerId },
-					DT_RowId: `row-${cust.CustomerId}`
-				}
-				columns.forEach(col => {
-					retVal[col] = cust[col]
-				})
-				// retVal.maxdate = cust.maxdate
-				return retVal
-			})
+			data: customers
 		})
 	}
 	catch (ex) {
@@ -97,6 +82,34 @@ router.get("/dt", function (req, res, next) {
 		db.close()
 	}
 
+
+})
+
+
+
+router.get("/edit", (req, res) => {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+		let customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(req.query.id)
+
+		if (!customer) {
+			customer = {
+				CustomerId: 0,
+			}
+		}
+
+		res.render ("customer_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
+			customer,
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+			salesrep: res.locals.salesrep
+		})
+
+	}
+	finally {
+		db.close()
+	}
 
 })
 
@@ -211,6 +224,150 @@ router.post("/", (req, res) => {
 			db.close()
 	}
 })
+
+
+
+router.post("/edit", (req, res) => {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	const errors = []
+
+	if (!req.body.Code) {
+		errors.push("We require a customer code.")
+	}
+	if (!req.body.Company) {
+		errors.push("We require a company name.")
+	}
+
+	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	let count = db.prepare(`SELECT COUNT(*) AS Count FROM Customer WHERE Code=?`).get(req.body.Code).Count
+	if ((req.body.CustomerId == 0 && count > 0) 
+			|| (req.body.CustomerId != 0 && count > 1) )
+		errors.push("We require a unique customer code. Check if the customer already exists.")
+
+	if (errors.length > 0) {
+		res.render ("customer_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
+			customer: req.body,
+			errors,
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+			salesrep: res.locals.salesrep
+		})
+	}
+
+	// fix emails
+	req.body.Email = req.body.Email.replace(/\r\n/g, ",")
+	req.body.Email = req.body.Email.replace(/\n/g, ",")
+
+	// fix empty strings
+	Object.keys(req.body).forEach(k => {
+		if (typeof req.body[k] == "string" && req.body[k] == "")
+			req.body[k] = null
+	})
+
+	// audit columns
+	req.body.LastModifiedBy = req.auth.user
+	req.body.LastModifiedDateTime = new Date().toLocaleString("en-AU", {dateStyle: "short", timeStyle: "short"})
+
+	db.prepare("BEGIN TRANSACTION").run()
+
+	try {
+		if (req.body.CustomerId == 0) {
+			delete req.body.CustomerId
+			// insert
+			req.body.CreatedBy = req.body.LastModifiedBy
+			req.body.CreatedDateTime = req.body.LastModifiedDateTime
+
+			// find properties that have a value
+			const changes = []
+			Object.keys(req.body).forEach(k => {
+				if (req.body[k] != null)
+					changes.push(k)
+			})
+
+			let query = `INSERT INTO Customer (${changes.join()}) VALUES(${changes.map(c => `@${c}`).join()}) `
+			let statement = db.prepare(query)
+			let info = statement.run(req.body)
+			req.body.CustomerId = info.lastInsertRowid
+
+			query = "INSERT INTO AuditLog VALUES(null, ?, ?, ?, ?, ?)"
+			statement = db.prepare(query)
+			info = statement.run("Customer", req.body.CustomerId, "INS", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+			const auditLogId = info.lastInsertRowid
+
+			query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
+			statement = db.prepare(query)
+			changes.forEach(c => {
+				statement.run(auditLogId, c, null, req.body[c])
+			})
+
+		} // end insert
+		else {
+			//update
+			let customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(req.body.CustomerId)
+
+			// find properties that have changed
+			const changes = []
+			Object.keys(req.body).forEach(k => {
+				if (customer[k] != req.body[k])
+					changes.push(k)
+			})
+
+			if (changes.length > 1) { 
+				// LastModifiedDateTime has always changed, so only continue if there is more than that
+				let query = `UPDATE Customer SET ${changes.map(c => `${c}=@${c}`).join(", ")} WHERE CustomerId=@CustomerId `
+				let statement = db.prepare(query)
+				statement.run(req.body)
+
+				query = "INSERT INTO AuditLog VALUES(null, ?, ?, ?, ?, ?)"
+				statement = db.prepare(query)
+				const info = statement.run("Customer", customer.CustomerId, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+				const auditLogId = info.lastInsertRowid
+
+				query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
+				statement = db.prepare(query)
+				changes.forEach(c => {
+					statement.run(auditLogId, c, customer[c], req.body[c])
+				})
+
+			} // end changes
+
+		} // end update
+
+		db.prepare("COMMIT").run()
+
+		customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(req.body.CustomerId)
+		res.render ("customer_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
+			customer,
+			success: "We have saved your changes",
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+			salesrep: res.locals.salesrep
+		})
+
+	}
+	catch(err) {
+		console.log(err)
+		res.render ("customer_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
+			customer: req.body,
+			errors: [err.message],
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+			salesrep: res.locals.salesrep
+		})
+	}
+	finally {
+		db.close()
+	}
+})
+
+
+
+
 
 
 // update or edit PUT  existing customer

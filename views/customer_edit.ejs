@@ -1,0 +1,128 @@
+<%- include("partials/head.ejs") %>
+
+
+<% if (typeof errors != "undefined") { %>
+	<h4><i class="fa-solid fa-triangle-exclamation"></i> We couldn't save the customer: </h4>
+	<ul class="errors">
+		<% errors.forEach(e => { %>
+		 <li><%= e %></li>
+		<% }) %>
+	</ul>
+<% } %>
+
+
+<% if (typeof success != "undefined") { %>
+<dialog id="successDialog">
+	<form method="dialog">
+	<h5>Success</h5>
+	<p><%= success %></p>
+	<button>OK</button>
+</form>
+</dialog>
+<script>
+document.getElementById("successDialog").showModal()
+</script>
+
+
+
+<% } %>
+
+<fieldset><legend>Customer details</legend>
+<form method="POST" action="/customer/edit">
+<input type="hidden" name="CustomerId" value="<%= customer.CustomerId %>" > 
+<p>
+	<label for="code">Code:</label>
+	<input id="code" name="Code" value="<%= customer.Code %>" required />
+</p>
+<p>
+	<label for="company">Company:</label>
+	<input id="company" name="Company" value="<%= customer.Company %>" required />
+</p>
+<p>
+	<label for="custnotes">Our Notes: (our internal use, delivery notes are down the bottom)</label>
+	<textarea rows="5" id="custnotes" name="CustNotes" placeholder="these notes are for our own internal use; scroll down to enter delivery notes."><%= customer.CustNotes %></textarea>
+</p>
+<p>
+	<label for="firstname">Firstname:</label>
+	<input id="firstname" name="FirstName" value="<%= customer.FirstName %>" />
+</p>
+<p>
+	<label for="surname">Surname:</label>
+	<input id="surname" name="Surname" value="<%= customer.Surname %>" />
+</p>
+<p>
+	<label for="phoneoffice">Phone Office:</label>
+	<input type="tel" id="phoneoffice" name="PhoneOffice" value="<%= customer.PhoneOffice %>" />
+</p>
+<p>
+	<label for="phonehome">Phone Home:</label>
+	<input type="tel" id="phonehome" name="PhoneHome" value="<%= customer.PhoneHome %>" />
+</p>
+<p>
+	<label for="phonemobile">Phone Mobile:</label>
+	<input type="tel" id="phonemobile" name="PhoneMobile" value="<%= customer.PhoneMobile %>" />
+</p>
+<p>
+	<label for="fax">Fax:</label>
+	<input type="tel" id="fax" name="Fax" value="<%= customer.Fax %>" />
+</p>
+<p>
+	<label for="email">Email (one per line):</label>
+	<textarea rows="4" type="email" id="email" name="Email" placeholder="one email per line"><%= customer.Email?.split(",") ?? "" %></textarea>
+</p>
+<p>
+	<label for="addressline1">Address Line 1:</label>
+	<input id="addressline1" name="AddressLine1" value="<%= customer.AddressLine1 %>" />
+</p>
+<p>
+	<label for="addressline2">Address Line 2:</label>
+	<input id="addressline2" name="AddressLine2" value="<%= customer.AddressLine2 %>" />
+</p>
+<p>
+	<label for="locality">Locality:</label>
+	<input id="locality" name="Locality" value="<%= customer.Locality %>" placeholder="town, city or suburb" />
+</p>
+<p>
+	<label for="postcode">Postcode:</label>
+	<input id="postcode" name="Postcode" value="<%= customer.Postcode %>" inputmode="numeric" />
+</p>
+<p>
+	<label for="state">State</label>
+	<select id="state">
+		<% ["", "QLD", "NSW", "VIC", "SA", "WA", "TAS", "NT", "ACT"].forEach(s => { %>
+		<option value="<%= s %>" <%= customer.State == s ? "selected" : "" %>><%= s %></option>
+		<% }) %>
+	</select>
+</p>
+<p>
+	<label for="notes">Delivery Notes:</label>
+	<textarea rows="5" id="notes" name="Notes" placeholder="delivery notes"><%= customer.Notes %></textarea>
+</p>
+
+<dl>
+	<dt>Created by:</dt>
+	<dd><%= customer.CreatedBy %> on <%= customer.CreatedDateTime %></dd>
+	<dt>Last modified by:</dt>
+	<dd><%= customer.LastModifiedBy %> on <%= customer.LastModifiedDateTime %></dd>
+</dl>
+
+</dl>
+
+<input type="submit" value="<%= customer.CustomerId=='0' ? "Create new customer" : "Save customer details" %>" />
+
+</form>
+</fieldset>
+
+
+<script>
+
+
+document.forms[0].addEventListener("submit", function (event) {
+	if (! document.forms[0].reportValidity())
+		event.preventDefault()
+})
+
+</script>
+
+
+<%- include("partials/foot.ejs") %>
