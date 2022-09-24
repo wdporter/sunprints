@@ -13,7 +13,7 @@ router.get("/", function (req, res, next) {
 	 })
 })
 router.get("/2", function (req, res, next) {
-	res.render("screen2.ejs", { 
+	res.render("screen3.ejs", { 
 		title: "Screens",
 		user: req.auth.user,
 		poweruser: res.locals.poweruser
@@ -89,13 +89,13 @@ router.get("/dt", function(req, res) {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
-		
+
 		// first get count of all records
 		let statement = db.prepare("SELECT COUNT(*) as Count FROM Screen WHERE Deleted=0 ")
 		const recordsTotal = statement.get().Count
 		let recordsFiltered = recordsTotal
 
-		let query = `SELECT Screen.ScreenId, Name, Number, Colour,  s.maxdate AS LastUsed FROM Screen
+		let query = `SELECT Screen.ScreenId, Name, Number, Colour, s.maxdate AS LastUsed FROM Screen
 		LEFT OUTER JOIN 
 		(SELECT Sales.FrontScreenId AS ScreenId, MAX(SalesTotal.OrderDate, 0) AS maxdate
 		FROM Sales
@@ -139,23 +139,26 @@ router.get("/dt", function(req, res) {
 		) s
 		ON  s.ScreenId=Screen.ScreenId `
 		let	whereClause = " WHERE Deleted=0 "
-		if (req.query.search.value)
-			req.query.search.value = req.query.search.value.trim()
+
+		let whereParams = []
 		if (req.query.search.value) {
-			whereClause += ` AND (Number LIKE '%${req.query.search.value}%' 
-			OR Colour LIKE '%${req.query.search.value}%' 
-			OR Name LIKE '%${req.query.search.value}%') `
-			// get count of filtered records
+			req.query.search.value = req.query.search.value.trim()
+			
+			const searchables = req.query.columns.filter(c => c.searchable == "true")
+			const cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
+			whereParams = searchables.map(c => `%${req.query.search.value}%`)
+			whereClause += ` AND ( ${cols} ) `
+
 			statement = db.prepare(`SELECT Count(*) as Count FROM Screen ${whereClause}`)
-			recordsFiltered = statement.get().Count
+			recordsFiltered = statement.get(whereParams).Count
 		}
 
 		query += whereClause
 
-		query += ` ORDER BY ${parseInt(req.query.order[0].column) } COLLATE NOCASE ${req.query.order[0].dir} `
+		query += ` ORDER BY ${req.query.order[0].column } COLLATE NOCASE ${req.query.order[0].dir} `
 
 		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start} `
-		const data = db.prepare(query).all()
+		const data = db.prepare(query).all(whereParams)
 
 		data.forEach(d => d.DT_RowId=d.ScreenId)
 
@@ -177,6 +180,67 @@ router.get("/dt", function(req, res) {
 	}
 
 })
+
+
+
+/* get screens for data tables server side processing */
+router.get("/dt2", function(req, res) {
+
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+		
+		// first get count of all records
+		let statement = db.prepare("SELECT COUNT(*) as Count FROM Screen WHERE Deleted=0 ")
+		const recordsTotal = statement.get().Count
+		let recordsFiltered = recordsTotal
+
+		let query = "SELECT Name, Number, Colour, ScreenId FROM Screen "
+		let	whereClause = " WHERE Deleted=0 "
+		// if (req.query.search.value)
+		// 	req.query.search.value = req.query.search.value.trim()
+		// if (req.query.search.value) {
+		// 	whereClause += ` AND (Number LIKE '%${req.query.search.value}%' 
+		// 	OR Colour LIKE '%${req.query.search.value}%' 
+		// 	OR Name LIKE '%${req.query.search.value}%') `
+		// 	// get count of filtered records
+		recordsFiltered = db.prepare(`SELECT Count(*) as Count FROM Screen ${whereClause}`).get().Count
+//		}
+
+		query += whereClause
+
+		query += ` ORDER BY ${ req.query.order[0].column } COLLATE NOCASE ${req.query.order[0].dir} `
+
+		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start} `
+		const data = db.prepare(query).all()
+
+		//data.forEach(d => d.DT_RowId=d.ScreenId)
+
+		res.send({
+			draw: parseInt(req.query.draw),
+			recordsTotal,
+			recordsFiltered,
+			data
+		}).end()
+
+	}
+	catch(ex) {
+		res.statusMessage = ex.message
+		res.status(400).end()
+		console.log(ex)
+	}
+	finally {
+		db.close()
+	}
+
+})
+
+
+
+
+
+
+
 
 
 // GET page of deleted screens

@@ -102,9 +102,6 @@ width: 3em;
 
 
 <script>
-
-
-
 	const App = {
 		components: {
 			EasyDataTable: window["vue3-easy-data-table"],
@@ -265,6 +262,33 @@ width: 3em;
 	}
 	window.app = Vue.createApp(App).mount("#app")
 </script>
+
+
+
+
+<div id="app2">
+	<data-table :data="data" class="display"
+	:options="{columns: [{title: 'A'}, {title: 'B'}]}">		
+	<thead><tr><th>ab</th><th>cd</th></tr></thead>
+	</data-table>
+</div>
+
+<script type="module">
+import DataTable from "../javascripts/datatables.net-vue.esm.js" // my edited local copy of datatables.net-vue.esm.js .
+import { createApp } from "../javascripts/vue-3.2.39.esm.js" 
+createApp({
+	components: {
+		DataTable
+	},
+	setup() {
+		return {
+			data: [[1,2], [3,4]]
+		}
+	},
+}).mount('#app2')
+</script>
+
+
 
 
 

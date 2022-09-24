@@ -2,8 +2,15 @@
 
 <style>
 	table.printTable {
-		max-width: 500px !important;
+		min-width: unset;
+		width: unset;
 		border-left: 1px black solid;
+	}
+	table.printTable td {
+		font-size: 1em;
+	}
+	table.printTable th, table.printTable td {
+		border-right: 1px black solid;
 	}
 	table.printTable th:nth-child(2), table.printTable th:nth-child(3), table.printTable th:nth-child(4), table.printTable th:nth-child(5), table.printTable th:nth-child(6) {
 		width: 3em;
@@ -11,6 +18,7 @@
 	table.printTable td:nth-child(3), table.printTable td:nth-child(4), table.printTable td:nth-child(5), table.printTable td:nth-child(6) {
 		text-align: center;
 	}
+
 </style>
 
 <p><a href="/screen/deleted">View (and restore) deleted screens</a></p>
@@ -59,17 +67,21 @@
 			searchPlaceholder: "Search number, colour or name"
 		},
 		order: [[2, 'asc']],
+		orderMulti: false,
 		columns: [
 			{
 				class: "dt-control",
 				orderable: false,
+				searchable: false,
 				data: null,
 				defaultContent: "",
-				width: "2em"
+				width: "2em",
+				searchDelay: 400,
 			},
 			{
-				orderable: false,
 				data: "ScreenId",
+				orderable: false,
+				searchable: false,
 				width: "3em",
 				render(data) {
 <% if (poweruser) { %> 
@@ -86,6 +98,7 @@
 			{ 
 				data: "LastUsed",
 				width: "4em",
+				searchable: false,
 				render: function(data) {
 					const ts = Date.parse(data)
 					if (isNaN(ts))

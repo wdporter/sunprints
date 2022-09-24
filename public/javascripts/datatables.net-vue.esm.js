@@ -1,4 +1,4 @@
-import { defineComponent, setBlockTracking, createElementVNode, normalizeClass, renderSlot } from 'vue';
+import { defineComponent, setBlockTracking, createElementVNode, normalizeClass, renderSlot } from "/javascripts/vue-3.2.39.esm.js";
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang=en>
+<!-- this was made for pages that use the vue3-easy-data-table -->
+
+<head>
+<meta charset=utf-8>
+<title>SunPrints | Screens </title>
+<meta name=viewport content="width=device-width, initial-scale=1.0">
+<link rel=icon
+	href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
+
+<link rel=stylesheet href=/stylesheets/gd.css>
+<link rel=stylesheet href=/stylesheets/theme.css>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+<link rel="stylesheet" href="/stylesheets/datatables-1.11.5.css">
+</head>
+
+<body>
+<button class="back-to-top hidden">
+	<svg class="back-to-top-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+		<path stroke-width=2 fill-rule="evenodd" d="M10 18a.75.75 0 01-.75-.75V4.612L4.29 9.77a.75.75 0 01-1.08-1.04l6.25-6.5a.75.75 0 011.08 0l6.25 6.5a.75.75 0 11-1.08 1.04l-4.96-5.158V17.25A.75.75 0 0110 18z" clip-rule="evenodd" />
+	</svg>
+</button>
+
+<header>
+	<nav>
+		<h1><a href= /><img src="/images/banner.webp" /></a></h1>
+	</nav>
+	<nav class="navbar">
+		<div class="dropdown">
+			<button class="dropbtn" onclick="window.location.href='/'">Home</button>
+		</div>
+		<div class="dropdown">
+			<button class="dropbtn">Orders<i class="fa fa-caret-down"></i></button>
+			<div class="dropdown-content">
+				<a href=/order/new>New Order</a>
+				<a href=/order>Oustanding Orders</a>
+				<a href=/sales>Sales History</a>
+				<a href=/customer>Customers</a>
+				<a href=/order/xero>Export Invoices</a>
+			</div>
+		</div>
+		<div class="dropdown">
+			<button class="dropbtn">Products
+				<i class="fa fa-caret-down"></i>
+			</button>
+			<div class="dropdown-content">
+				<a href=/purchasing>Purchase Orders</a>
+				<a href=/garment>Products</a>
+				<a href=/supplier>Suppliers</a>
+				<a href=/garment/warninglist target="_blank">Print Warning List</a>
+			</div>
+		</div>
+		<div class="dropdown">
+			<button class="dropbtn">Designs
+				<i class="fa fa-caret-down"></i>
+			</button>
+			<div class="dropdown-content">
+				<a href=/print>Prints</a>
+				<a href=/screen>Screens</a>
+				<a href=/embroidery>Embroidery</a>
+				<a href=/usb>Usbs</a>
+				<a href=/transfer>Transfers</a>
+				<a href=/transfer/name>Transfer names</a>
+			</div>
+		</div>
+		<div class="dropdown">
+			<button class="dropbtn">Deleted
+				<i class="fa fa-caret-down"></i>
+			</button>
+			<div class="dropdown-content">
+				<a href="/customer/deleted">Customers</a>
+				<a href="/order/deleted">Orders</a>
+				<a href="/supplier/deleted">Suppliers</a>
+				<a href="/garment/deleted">Garments</a>
+				<a href="/print/deleted">Print designs</a>
+				<a href=/screen/deleted>Screens</a>
+				<a href=/embroidery/deleted>Embroidery designs</a>
+				<a href=/usb/deleted>Usbs</a>
+				<a href=/transfer/deleted>Transfer designs</a>
+				<a href=/transfer/name/deleted>Transfer names</a>
+			</div>
+		</div>
+		<div class="dropdown">
+			<button class="dropbtn">Admin
+				<i class="fa fa-caret-down"></i>
+			</button>
+			<div class="dropdown-content">
+				<a href=/rep>Sales Reps</a>
+				<a href=/user>Users</a>
+				<a href=/auditlog>Audit Log</a>
+			</div>
+		</div>
+	</nav>
+</header>
+
+<main>
+	<h1>SunPrints — Screens</h1>
+	<h2 id=localh2 style=display:none>Running on local server — <i>Not</i> Live Data</h2>
+
+	<p><a href="/screen/deleted">View (and restore) deleted screens</a></p>
+
+
+
+	<div id=app>
+
+		<data-table :options="options" class="display compact">
+		</data-table>
+
+	</div>
+
+
+<script type="module">
+import DataTable from "../javascripts/datatables.net-vue.esm.js" // my edited local copy of datatables.net-vue.esm.js .
+import { createApp } from "../javascripts/vue-3.2.39.esm.js"
+createApp({
+	components: {
+		DataTable
+	},
+	setup() {
+		return {
+			options: { 
+				ajax: "/screen/dt2",
+				processing: true,
+				serverSide: true,
+				pageLength: 100,
+				order: [[1, 'asc']],
+				orderMulti: false,
+				columns: [
+					{ 
+						title: "Action",
+						data: "ScreenId",
+						width: "3em",
+						orderable: false 
+					}, 
+					{ title: "Name",
+						data: "Name" 
+					}, 
+					{ 
+						title: "Number", 
+						data: "Number"
+					}, 
+					{ 
+						title: "Colour", 
+						data: "Colour"
+				 }] 
+			},
+		}
+	},
+	mounted() {
+		console.log("hey!")
+	}
+}).mount('#app')
+</script>
+
+
+</main>
+<footer>
+	<main style="background-color:var(--color-very-light);">
+
+		<ul id=footLinks>
+			<li><a href= />Home</a></li>
+			<li><a href=/order/new>New Order</a></li>
+			<li><a href=/order>Orders</a></li>
+			<li><a href=/garment>Products</a></li>
+			<li><a href=/purchasing>Purchasing</a></li>
+			<li><a href=/sales>History</a></li>
+		</ul>
+
+		<p style="text-align:right; ">
+			logged in as: porterd
+		</p>
+	</main>
+</footer>
+
+
+
+
+<script>
+	// show h2 heading on local host
+	if (window.location.hostname == "localhost")
+		document.getElementById("localh2").style.display = "block"
+
+	// scroll to top
+	const showOnPx = 100;
+	const backToTopButton = document.querySelector(".back-to-top");
+
+	const scrollContainer = () => {
+		return document.documentElement || document.body;
+	};
+
+	const goToTop = () => {
+		document.body.scrollIntoView({
+			behavior: "smooth"
+		});
+	};
+
+	document.addEventListener("scroll", () => {
+		//console.log("Scroll Height: ", scrollContainer().scrollHeight);
+		//console.log("Client Height: ", scrollContainer().clientHeight);
+
+		const scrolledPercentage =
+			(scrollContainer().scrollTop /
+				(scrollContainer().scrollHeight - scrollContainer().clientHeight)) *
+			100;
+
+		if (scrollContainer().scrollTop > showOnPx) {
+			backToTopButton.classList.remove("hidden");
+		} else {
+			backToTopButton.classList.add("hidden");
+		}
+	});
+
+	backToTopButton.addEventListener("click", goToTop);
+</script>
+
+</body>
+
+</html>
