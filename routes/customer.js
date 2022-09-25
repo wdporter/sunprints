@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3");
-const audit = require("../sizes.js");
+const { auditColumns } = require("../sizes.js");
 
 /* GET customers page. */
 router.get("/", function (req, res, next) {
@@ -13,6 +13,7 @@ router.get("/", function (req, res, next) {
 		salesrep: res.locals.salesrep
 	})
 })
+
 
 /* GET deleted customers page. */
 router.get("/deleted", function (req, res) {
@@ -31,7 +32,7 @@ router.get("/deleted", function (req, res) {
 })
 
 
-// GET a listing in DataTables format
+// GET a listing in DataTables format used by datatables ajax
 router.get("/dt", function (req, res, next) {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
@@ -87,7 +88,7 @@ router.get("/dt", function (req, res, next) {
 })
 
 
-
+/* GET the customer edit page, needs ?id=x */
 router.get("/edit", (req, res) => {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
@@ -140,7 +141,11 @@ router.get("/ordersearch", function (req, res, next) {
 })
 
 
-// create or new or POST  customer --- deprecated
+/******************************************************** */
+
+
+
+// POST create or new or POST  customer --- deprecated
 router.post("/", (req, res) => {
 
 	let db = null
@@ -227,7 +232,7 @@ router.post("/", (req, res) => {
 })
 
 
-
+// POST the form from the edit page
 router.post("/edit", (req, res) => {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
@@ -297,7 +302,7 @@ router.post("/edit", (req, res) => {
 			query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
 			statement = db.prepare(query)
 			changes.forEach(c => {
-				if (!audit.auditColumns.includes(c))
+				if (!auditColumns.includes(c))
 					statement.run(auditLogId, c, null, req.body[c])
 			})
 
@@ -327,7 +332,7 @@ router.post("/edit", (req, res) => {
 				query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
 				statement = db.prepare(query)
 				changes.forEach(c => {
-					if (!audit.auditColumns.includes(c))
+					if (!auditColumns.includes(c))
 						statement.run(auditLogId, c, customer[c], req.body[c])
 				})
 

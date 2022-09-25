@@ -1,11 +1,11 @@
 <%- include("partials/head.ejs") %>
 
-<ul>
-	<li><a href=/customer/deleted>Deleted customers</a>
 <% if (poweruser || salesrep) { %> 
-	<li><a href=/customer/edit?id=0>New Customer</a></li>
+	<p>
+		<a href=/customer/edit?id=0>New Customer</a>
+	</p>
 <% } %>
-</ul>
+
 
  </main> <!-- end main from header -->
 

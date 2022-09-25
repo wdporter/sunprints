@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3");
-const audit = require("../sizes.js");
+const { auditColumns } = require("../sizes.js");
 
 /* GET Suppliers page. */
 router.get("/", function (req, res, next) {
@@ -13,7 +13,7 @@ router.get("/", function (req, res, next) {
 })
 
 
-// GET a listing in DataTables format
+// GET a listing in DataTables format used by datatables ajax
 router.get("/dt", function (req, res, next) {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
@@ -69,6 +69,7 @@ router.get("/dt", function (req, res, next) {
 })
 
 
+// GET the supplier edit page, needs ?id=x
 router.get("/edit", (req, res) => {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
@@ -114,6 +115,7 @@ router.get("/deleted", function (req, res, next) {
 /*************************************************************************** */
 
 
+/* POST the form from the edit page */
 router.post("/edit", (req, res) => {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
@@ -182,7 +184,7 @@ router.post("/edit", (req, res) => {
 			query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
 			statement = db.prepare(query)
 			changes.forEach(c => {
-				if (!audit.auditColumns.includes(c))
+				if (!auditColumns.includes(c))
 					statement.run(auditLogId, c, null, req.body[c])
 			})
 
@@ -212,7 +214,7 @@ router.post("/edit", (req, res) => {
 				query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
 				statement = db.prepare(query)
 				changes.forEach(c => {
-					if (!audit.auditColumns.includes(c)) 
+					if (!auditColumns.includes(c)) 
 						statement.run(auditLogId, c, supplier[c], req.body[c])
 				})
 
@@ -249,7 +251,7 @@ router.post("/edit", (req, res) => {
 
 
 
-/// POST to create a new supplier  --- deprecated
+/// POST to create a new supplier via fetch --- deprecated
 router.post("/", function(req, res) {
 	
 	if (!req.body.Code) {
@@ -325,7 +327,7 @@ router.post("/", function(req, res) {
 })
 
 
-// PUT to edit an existing supplier
+// PUT to edit an existing supplier via fetch   --- deprecated
 router.put("/:id", function(req, res) {
 
 	if (req.params.id != req.body.SupplierId) {
@@ -455,7 +457,7 @@ router.put("/restore/:id", (req, res) => {
 
 
 
-// PUT to edit an existing supplier
+// DELETE an existing supplier
 router.delete("/:id", function(req, res) {
 	const errors = []
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
