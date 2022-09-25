@@ -229,7 +229,21 @@
 					data: "Done",
 					visible: false
 				},
-				{ data: "CustomerName" },
+				{ 
+					data: "CustomerName",
+					render(data, type, row) {
+						let ret = ""
+<% if (poweruser || salesrep) { %>
+						 ret += `<a href=/customer/edit?id=${row.CustomerId}>`
+<% } %>
+						ret += data
+<% if (poweruser || salesrep) { %>
+						ret += "</a>"
+<% } %>
+						return ret
+					}
+
+				},
 				{ data: "CustomerOrderNumber", visible: false },
 				{
 					data: "OrderDate",
