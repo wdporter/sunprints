@@ -114,9 +114,9 @@ document.getElementById("successDialog").showModal()
 	<textarea rows="5" id="notes" name="Notes" placeholder="delivery notes"><%= customer.Notes %></textarea>
 </p>
 
-
+<% if (poweruser || salesrep) { %>
 <input type="submit" value="<%= customer.CustomerId=='0' ? "Create new customer" : "Save customer details" %>" />
-
+<% } %> 
 </form>
 </fieldset>
 
@@ -138,7 +138,6 @@ document.getElementById("successDialog").showModal()
 
 <script>
 
-
 document.forms["customerForm"].addEventListener("submit", function (event) {
 	if (! document.forms["customerForm"].reportValidity()) {
 		return false
@@ -150,10 +149,8 @@ document.forms["customerForm"].addEventListener("submit", function (event) {
 	emails = emails.filter(e => e != "")
 	document.getElementById("email").value = emails.join(",")
 
-
 	return true
-	
-	
+
 })
 
 </script>
