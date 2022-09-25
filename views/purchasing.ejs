@@ -41,8 +41,8 @@
 				<select id="supplierSelect" v-model="supplierId" required ref="supplierId">
 					<option value="">—Choose a supplier—</option>
 					<option v-for="supplier in suppliers" :value="supplier.SupplierId">{{ supplier.Company }}</option>
-				</select>&emsp;
-				<span>{{ suppliers.find(s => s.SupplierId == supplierId)?.Notes ?? "" }}</span>
+				</select><br>
+				<span>{{ suppliers.find(s => s.SupplierId == supplierId)?.Notes ?? "" }}</span>&emsp;<a :href="`/supplier/edit?id=${supplierId}`" target="_blank">View/Edit</a>
 			</p>
 
 			<p>
