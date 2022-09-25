@@ -9,6 +9,8 @@ const allSizes = sizes.Kids.concat(sizes.Womens).concat(sizes.Adults)
 
 const locations = ["Front", "Back", "Pocket", "Sleeve"]
 
-sizeCategories = ["Adults", "Womens", "Kids"]
+const sizeCategories = ["Adults", "Womens", "Kids"]
 
-module.exports = {sizes, allSizes, locations, sizeCategories }
+const auditColumns = ["CreatedBy", "CreatedDateTime", "LastModifiedBy", "LastModifiedDateTime"]
+
+module.exports = {sizes, allSizes, locations, sizeCategories, auditColumns }

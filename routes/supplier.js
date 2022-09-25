@@ -1,8 +1,7 @@
 const express = require("express")
 const router = express.Router()
-
 const Database = require("better-sqlite3");
-
+const audit = require("../sizes.js");
 
 /* GET Suppliers page. */
 router.get("/", function (req, res, next) {
@@ -183,7 +182,8 @@ router.post("/edit", (req, res) => {
 			query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
 			statement = db.prepare(query)
 			changes.forEach(c => {
-				statement.run(auditLogId, c, null, req.body[c])
+				if (!audit.auditColumns.includes(c))
+					statement.run(auditLogId, c, null, req.body[c])
 			})
 
 		} // end insert
@@ -212,7 +212,8 @@ router.post("/edit", (req, res) => {
 				query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
 				statement = db.prepare(query)
 				changes.forEach(c => {
-					statement.run(auditLogId, c, supplier[c], req.body[c])
+					if (!audit.auditColumns.includes(c)) 
+						statement.run(auditLogId, c, supplier[c], req.body[c])
 				})
 
 			} // end changes

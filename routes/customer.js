@@ -1,6 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3");
+const audit = require("../sizes.js");
 
 /* GET customers page. */
 router.get("/", function (req, res, next) {
@@ -139,7 +140,7 @@ router.get("/ordersearch", function (req, res, next) {
 })
 
 
-// create or new or POST  customer deprecated
+// create or new or POST  customer --- deprecated
 router.post("/", (req, res) => {
 
 	let db = null
@@ -296,7 +297,8 @@ router.post("/edit", (req, res) => {
 			query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
 			statement = db.prepare(query)
 			changes.forEach(c => {
-				statement.run(auditLogId, c, null, req.body[c])
+				if (!audit.auditColumns.includes(c))
+					statement.run(auditLogId, c, null, req.body[c])
 			})
 
 		} // end insert
@@ -325,7 +327,8 @@ router.post("/edit", (req, res) => {
 				query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
 				statement = db.prepare(query)
 				changes.forEach(c => {
-					statement.run(auditLogId, c, customer[c], req.body[c])
+					if (!audit.auditColumns.includes(c))
+						statement.run(auditLogId, c, customer[c], req.body[c])
 				})
 
 			} // end changes
