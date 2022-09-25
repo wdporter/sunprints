@@ -32,12 +32,13 @@ router.get("/dt", function (req, res) {
 				let date = new Date(req.query.extraSearch.CreatedDateTime).toLocaleDateString()
 				where.push( ` CreatedDateTime LIKE '${date}%' ` )
 			}	
-			else {
-				if (key=="Identifier")
+			else if (key=="Identifier" )
 					where.push(` ${key} = ${req.query.extraSearch[key]} `)
-				else
+			else if (key=="ObjectName" )
+				where.push(` ${key} = '${req.query.extraSearch[key]}' `)
+			else
 					where.push(` ${key} LIKE '%${req.query.extraSearch[key]}%' `)
-			}
+			
 		}
 
 		let whereClause = " WHERE "

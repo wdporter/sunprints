@@ -1712,7 +1712,7 @@ ${columns.map(c => ` @${c} `).join(", ")}
 			req.body.OrderGarmentId = orderGarmentId
 
 			// remove from garment stock order levels
-			const myGarment = db.prepare("SELECT * FROM Garment WHERE GarmentId=?").run(req.body.GarmentId)
+			const myGarment = db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(req.body.GarmentId)
 			query = `UPDATE Garment SET 
 ${quantities.map(q => ` ${q}=${q} - @${q} `).join(", ")}
 WHERE GarmentId = @GarmentId `

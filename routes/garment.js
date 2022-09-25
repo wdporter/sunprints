@@ -374,6 +374,8 @@ router.put("/:id", function (req, res) {
 		query = `INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)`
 		statement = db.prepare(query)
 		for (const key of changes) {
+			if (key=="LastModifiedBy" || key=="LastModifiedDateTime")
+				continue;
 			info = statement.run(auditLogId, key, garment[key], req.body[key])
 			console.log(info)
 		}
@@ -478,7 +480,9 @@ router.post("/", function (req, res) {
 		const auditLogId = info.lastInsertRowid
 
 		statement = db.prepare(`INSERT INTO AuditLogEntry VALUES(null, ?, ?, null, ?)`)
-		for (const column in columns) {
+		for (const column of columns) {
+			if (column == "LastModifiedBy" || column == "LastModifiedDateTime" || column == "CreatedBy" || column == "CreatedDateTime")
+				continue
 			info = statement.run(auditLogId, column, req.body[column])
 			console.log(info)
 		}

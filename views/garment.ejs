@@ -163,7 +163,7 @@ input[type=button] + input[type=button] {
 						<option>Womens</option>
 						<option>Kids</option>
 					</select>
-					note: if you change the size category, the stock levels will stay with the old sizes. First set all stock levels to 0, and then change the size. Then put back the stock numbers.
+					note: if you change the size category, the stock levels will stay with the old sizes. First set all stock levels to 0, and then change the cateogory. Then put back the stock numbers.
 				</p>
 				<p>
 					<label for="code">Code</label>
@@ -193,19 +193,20 @@ input[type=button] + input[type=button] {
 			</div>
 		</section>
 	</form>
-		<dialog id=success>
-			<p>✅ We have saved the garment </p>
-			<form method="dialog">
-				<button>OK</button>
-			</form>
-		</dialog>
-	
-		<ul>
-			<li>Created By: {{garment.CreatedBy }}</li>
-			<li>Created Date/time: {{garment.CreatedDateTime }}</li>
-			<li>Last Modified By: {{garment.LastModifiedBy }}</li>
-			<li>Last Modified Date/time: {{ garment.LastModifiedDateTime }}</li>
-		</ul>
+	<dialog id=success>
+		<p>✅ We have saved the garment </p>
+		<form method="dialog">
+			<button>OK</button>
+		</form>
+	</dialog>
+
+	<dl>
+		<dt>Created By:</dt> <dd>{{garment.CreatedBy }}</dd>
+		<dt>Created Date/time:</dt> <dd>{{garment.CreatedDateTime }}</dd>
+		<dt>Last Modified By:</dt> <dd>{{garment.LastModifiedBy }}</dd>
+		<dt>Last Modified Date/time:</dt> <dd>{{ garment.LastModifiedDateTime }}</dd>
+	</dl>
+	<a :href="`/auditlog?table=Garment&id=${garment.GarmentId}`">Audit log</a>
 	</fieldset>
 
 
