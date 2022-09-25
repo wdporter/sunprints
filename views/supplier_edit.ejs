@@ -110,7 +110,9 @@ document.getElementById("successDialog").showModal()
 	<textarea rows="5" id="notes" name="Notes" ><%= supplier.Notes %></textarea>
 </p>
 
+<% if (poweruser) { %>
 <input type="submit" value="<%= supplier.SupplierId=='0' ? "Create new supplier" : "Save supplier details" %>" />
+<% } %> 
 
 </form>
 </fieldset>
@@ -146,6 +148,10 @@ document.forms["supplierForm"].addEventListener("submit", function (event) {
 	return true
 
 })
+
+<% if (!poweruser) { %>
+	Array.from(document.querySelectorAll("input, select, textarea")).forEach(e => e.setAttribute("disabled", "disabled"))
+<% } %>
 
 </script>
 

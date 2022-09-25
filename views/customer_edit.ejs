@@ -153,6 +153,12 @@ document.forms["customerForm"].addEventListener("submit", function (event) {
 
 })
 
+
+<% if (!poweruser && !salesrep) { %>
+	Array.from(document.querySelectorAll("input, select, textarea")).forEach(e => e.setAttribute("disabled", "disabled"))
+<% } %>
+
+
 </script>
 
 
