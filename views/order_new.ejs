@@ -76,10 +76,11 @@ table.stockWarningTable {
 
 	<p>Code: <span id=selectedCustomerCode>
 			<%= customer ? customer.Code : '' %>
-		</span><br>
+		</span> <br>
 		Company: <span id=selectedCustomerCompany>
 			<%= customer ? customer.Company : '' %>
-		</span>
+		</span> <br>
+		<a id=selectedCustomerLink target=_blank href="/customer/edit?id=<%= customer.CustomerId %>"><%= customer ? "View/Edit" : "" %></a>
 	</p>
 
 	<section class="order-details">
@@ -429,6 +430,8 @@ table.stockWarningTable {
 			console.log("customer selected")
 			document.getElementById("selectedCustomerCode").textContent = tr.children[0].textContent
 			document.getElementById("selectedCustomerCompany").textContent = tr.children[1].textContent
+			document.getElementById("selectedCustomerLink").href = `/customer/edit?id=${tr.dataset.id}`
+			document.getElementById("selectedCustomerLink").textContent = "View/Edit"
 			document.getElementById("selectedCustomerId").value = tr.dataset.id
 			document.getElementById("chooseCustomerDetails").removeAttribute("open")
 			document.getElementById("searchCustomerInput").value = ""
