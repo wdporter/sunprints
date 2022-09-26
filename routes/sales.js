@@ -706,8 +706,8 @@ router.get("/edit/:id", (req, res) => {
 		stn2.TransferNameId AS SleeveTransferName2Id,
 		stn2.Name AS SleeveTransferName2Name
 		FROM SalesTotal 
-		INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId 
-		INNER JOIN Garment ON Sales.GarmentId=Garment.GarmentId
+		LEFT JOIN Sales ON Sales.OrderId=SalesTotal.OrderId 
+		LEFT JOIN Garment ON Sales.GarmentId=Garment.GarmentId
 		LEFT JOIN PrintDesign fpd ON fpd.PrintDesignId=Sales.FrontPrintDesignId
 		LEFT JOIN PrintDesign bpd ON bpd.PrintDesignId=Sales.BackPrintDesignId
 		LEFT JOIN PrintDesign ppd ON ppd.PrintDesignId=Sales.PocketPrintDesignId
@@ -746,6 +746,7 @@ router.get("/edit/:id", (req, res) => {
 		LEFT JOIN TransferName stn2 ON stn2.TransferNameId=Sales.SleeveTransferName2Id
 		WHERE SalesTotal.OrderId=?`
 		
+		// we have an array, so we need to consolidate into one
 		const orderDetails = db.prepare(query).all(req.params.id)
 
 		const order = {
@@ -766,8 +767,7 @@ router.get("/edit/:id", (req, res) => {
 			Products: []
 		}
 		orderDetails.forEach(od => {
-			const product = 
-			{
+			const product = {
 				GarmentId: od.GarmentId,
 				Deleted: od.Deleted,
 				Code: od.Code,
@@ -778,50 +778,48 @@ router.get("/edit/:id", (req, res) => {
 				SizeCategory: od.SizeCategory
 			}
 
-			sz.sizes[od.SizeCategory].forEach(sz => product[sz] = od[sz] )
+			if (od.SizeCategory != null) {
 
-			const locations = ["Front", "Back", "Pocket", "Sleeve"]
-			const decorations = ["Print", "Embroidery", "Transfer"]
-			const media = ["Screen", "Usb", "TransferName"]
+					sz.sizes[od.SizeCategory].forEach(sz => product[sz] = od[sz] )
 
-			locations.forEach(loc => {
-				decorations.forEach(dec => {
-					product[`${loc}${dec}DesignId`] = od[`${loc}${dec}DesignId`]
-					product[`${loc}${dec}DesignName`] = od[`${loc}${dec}DesignName`]
+				sz.locations.forEach(loc => {
+					sz.decorations.forEach(dec => {
+						product[`${loc}${dec}DesignId`] = od[`${loc}${dec}DesignId`]
+						product[`${loc}${dec}DesignName`] = od[`${loc}${dec}DesignName`]
+					})
+
+					sz.media.forEach(m => {
+						product[`${loc}${m}1Id`] = od[`${loc}${m}1Id`]
+						product[`${loc}${m}1Name`] = od[`${loc}${m}1Name`]
+						product[`${loc}${m}2Id`] = od[`${loc}${m}2Id`]
+						product[`${loc}${m}2Name`] = od[`${loc}${m}2Name`]
+					})
 				})
 
-				media.forEach(m => {
-					product[`${loc}${m}1Id`] = od[`${loc}${m}1Id`]
-					product[`${loc}${m}1Name`] = od[`${loc}${m}1Name`]
-					product[`${loc}${m}2Id`] = od[`${loc}${m}2Id`]
-					product[`${loc}${m}2Name`] = od[`${loc}${m}2Name`]
+				sz.locations.forEach(loc => {
+					if (product[`${loc}Screen1Name`] == "(standard)  ")
+						product[`${loc}Screen1Name`] = null
+					if (product[`${loc}Screen2Name`] == "(standard)  ")
+						product[`${loc}Screen2Name`] = null
 				})
-			})
 
-			locations.forEach(loc => {
-				if (product[`${loc}Screen1Name`] == "(standard)  ")
-					product[`${loc}Screen1Name`] = null
-				if (product[`${loc}Screen2Name`] == "(standard)  ")
-					product[`${loc}Screen2Name`] = null
-			})
-
-			order.Products.push(product)
+				order.Products.push(product)
+			}
 		})
 
 		const customers = db.prepare("SELECT CustomerId, Company || CASE WHEN Deleted=1 THEN ' (deleted)' ELSE '' END AS Company  FROM Customer ORDER BY Company").all()
 		const salesReps = db.prepare("SELECT Name || CASE WHEN Deleted=1 THEN ' (deleted)' ELSE '' END AS Name FROM SalesRep ORDER BY Deleted, Name").all().map(sr => sr.Name)
-		const sizes = sz.allSizes
 
-	res.render("sales_edit.ejs", {
-		title: "Edit Sales History",
-		user: req.auth.user,
-		order,
-		customers,
-		salesReps,
-		allSizes: sz.allSizes,
-		sizes: sz.sizes	
 
-	})
+		res.render("sales_edit.ejs", {
+			title: "Edit Sales History",
+			user: req.auth.user,
+			order,
+			customers,
+			salesReps,
+			allSizes: sz.allSizes,
+			sizes: sz.sizes	
+		})
 
 	}
 	catch (ex) {
@@ -929,11 +927,13 @@ router.get("/mediasearch", (req, res) => {
 	}
 	finally {
 		db.close()
-	}})
+}})
+
+
 
 // GET all candidate designs for the given location
 //  example /sales/designsearch?location=Front&decoration=Embroidery&Code=asdf&Notes=abc&Comments=asdf
-router.get("/mediasearch", (req, res) => {
+router.get("/designsearch", (req, res) => {
 
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
