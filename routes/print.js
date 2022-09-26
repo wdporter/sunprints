@@ -1,7 +1,100 @@
 const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3")
-const sz = require("../sizes.js")
+const { auditColumns, locations } = require("../sizes.js")
+
+
+
+/* GET Basic print design page. */
+//experimental 
+router.get("/2", function (req, res, next) {
+	res.render("printdesign2.ejs", {
+		title: "Print Designs",
+		stylesheets: [],//["/stylesheets/printdesign-theme.css"],
+		user: req.auth.user,
+		poweruser: res.locals.poweruser
+	})
+})
+
+
+// GET a listing in DataTables format used by datatables ajax
+//experimental 
+router.get("/dt2", function (req, res, next) {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+
+		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM PrintDesign WHERE Deleted=0 ").get().Count
+		let recordsFiltered = recordsTotal
+
+		let query = `SELECT PrintDesign.* FROM PrintDesign WHERE Deleted=0 `
+
+		let whereParams = []
+		let whereClause = ""
+		if (req.query.search.value) {
+			const searchables = req.query.columns.filter(c => c.searchable == "true")
+			const cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
+			whereParams = searchables.map(c => `%${req.query.search.value}%`)
+			whereClause += ` AND ( ${cols} ) `
+
+			recordsFiltered = db.prepare(`SELECT COUNT(*) AS Count FROM PrintDesign WHERE Deleted=0 ${whereClause}`).get(whereParams).Count
+		}
+
+		query += ` ${whereClause} 
+		ORDER BY ${req.query.columns[req.query.order[0].column].data} COLLATE NOCASE ${req.query.order[0].dir} 
+		LIMIT ${req.query.length} 
+		OFFSET ${req.query.start} `
+
+		const data = db.prepare(query).all(whereParams)
+
+
+		res.send({
+			draw: parseInt(req.query.draw),
+			recordsTotal,
+			recordsFiltered,
+			data
+		})
+	}
+	catch (ex) {
+		console.log(ex)
+		res.statusMessage = ex.message
+		res.sendStatus(400).end()
+	}
+	finally {
+		db.close()
+	}
+
+
+})
+
+
+
+// GET print design edit page, needs ?id=[0|n]
+//experimental 
+router.get("/edit", (req, res) => {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	try {
+		let printdesign = db.prepare("SELECT * FROM PrintDesign WHERE PrintDesignId=?").get(req.query.id)
+
+		if (!printdesign) {
+			printdesign = {
+				PrintDesignId: 0,
+			}
+		}
+
+		res.render ("printdesign_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Print Design`,
+			printdesign,
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+			success: false,
+			errors: []
+		})
+	}
+	finally {
+		db.close()
+	}
+})
+
 
 
 /* GET Basic print design page. */
@@ -10,10 +103,13 @@ router.get("/", function (req, res, next) {
 		title: "Print Designs",
 		stylesheets: ["/stylesheets/printdesign-theme.css"],
 		user: req.auth.user,
-		locations: JSON.stringify(sz.locations),
+		locations: JSON.stringify(locations),
 		poweruser: res.locals.poweruser
 	})
 })
+
+
+
 
 // GET datatables server side processing on Print Design page
 router.get("/dt", function (req, res, next) {
@@ -161,6 +257,139 @@ router.get("/deleted", (req, res) => {
 
 
 /*************************************************************************** */
+
+
+
+// POST the form from the edit page
+router.post("/edit", (req, res) => {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	const errors = []
+
+	if (!req.body.Code) {
+		errors.push("We require a code.")
+	}
+
+	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	if (errors.length > 0) {
+		res.render ("printdesign_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Print Design`,
+			printdesign: req.body,
+			errors,
+			success: false,
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+		})
+	}
+
+	// fix empty strings
+	Object.keys(req.body).forEach(k => {
+		if (typeof req.body[k] == "string" && req.body[k] == "")
+			req.body[k] = null
+	})
+
+	// audit columns
+	req.body.LastModifiedBy = req.auth.user
+	req.body.LastModifiedDateTime = new Date().toLocaleString("en-AU")
+
+	db.prepare("BEGIN TRANSACTION").run()
+
+	try {
+		if (req.body.PrintDesignId == 0) {
+			// insert
+			delete req.body.PrintDesignId
+			req.body.CreatedBy = req.body.LastModifiedBy
+			req.body.CreatedDateTime = req.body.LastModifiedDateTime
+
+			// find properties that have a value
+			const changes = []
+			Object.keys(req.body).forEach(k => {
+				if (req.body[k] != null)
+					changes.push(k)
+			})
+
+			let query = `INSERT INTO PrintDesign (${changes.join()}) VALUES(${changes.map(c => `@${c}`).join()}) `
+			let statement = db.prepare(query)
+			let info = statement.run(req.body)
+			req.body.PrintDesignId = info.lastInsertRowid
+
+			query = "INSERT INTO AuditLog VALUES(null, ?, ?, ?, ?, ?)"
+			statement = db.prepare(query)
+			info = statement.run("PrintDesign", req.body.PrintDesignId, "INS", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+			const auditLogId = info.lastInsertRowid
+
+			query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
+			statement = db.prepare(query)
+			changes.forEach(c => {
+				if (!auditColumns.includes(c))
+					statement.run(auditLogId, c, null, req.body[c])
+			})
+
+		} //~ end insert
+		else {
+			//update
+			let printdesign = db.prepare("SELECT * FROM PrintDesign WHERE PrintDesignId=?").get(req.body.PrintDesignId)
+
+			// find properties that have changed
+			const changes = []
+			Object.keys(req.body).forEach(k => {
+				if (printdesign[k] != req.body[k])
+					changes.push(k)
+			})
+
+			// LastModifiedDateTime has always changed, so only continue if there are more changes than 1
+			if (changes.length > 1) { 
+				let query = `UPDATE PrintDesign SET ${changes.map(c => `${c}=@${c}`).join(", ")} WHERE PrintDesignId=@PrintDesignId `
+				let statement = db.prepare(query)
+				statement.run(req.body)
+
+				query = "INSERT INTO AuditLog VALUES(null, ?, ?, ?, ?, ?)"
+				statement = db.prepare(query)
+				const info = statement.run("PrintDesign", printdesign.PrintDesignId, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+				const auditLogId = info.lastInsertRowid
+
+				query = "INSERT INTO AuditLogEntry VALUES(null, ?, ?, ?, ?)"
+				statement = db.prepare(query)
+				changes.forEach(c => {
+					if (!auditColumns.includes(c))
+						statement.run(auditLogId, c, printdesign[c], req.body[c])
+				})
+
+			} // end changes
+
+		} // end update
+
+		db.prepare("COMMIT").run()
+
+		// fetch the updated print design to return
+		let printdesign = db.prepare("SELECT * FROM PrintDesign WHERE PrintDesignId=?").get(req.body.PrintDesignId)
+		res.render ("printdesign_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Print Design`,
+			printdesign,
+			success: "We have saved your changes",
+			errors: [],
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+		})
+
+	}
+	catch(err) {
+		console.log(err)
+		res.render ("printdesign_edit.ejs", {
+			title: `${req.query.id == 0 ? "New" : "Edit"} Print Design`,
+			printdesign: req.body,
+			errors: [err.message],
+			success: false,
+			user: req.auth.user,
+			poweruser: res.locals.poweruser,
+		})
+	}
+	finally {
+		db.close()
+	}
+})
+
 
 
 // POST data for datatables for deleted PrintDesigns

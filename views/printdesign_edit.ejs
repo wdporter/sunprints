@@ -1,0 +1,86 @@
+<%- include("partials/head.ejs") %>
+
+
+<% if (errors.length > 0) { %>
+	<h4><i class="fa-solid fa-triangle-exclamation"></i> We couldn’t save the design: </h4>
+	<ul class="errors">
+		<% errors.forEach(e => { %>
+			<li><%= e %></li>
+		<% }) %>
+	</ul>
+<% } %>
+
+
+<% if (success) { %>
+<dialog id="successDialog">
+	<form method="dialog">
+	<h5>Success</h5>
+	<p><%= success %></p>
+	<button>OK</button>
+</form>
+</dialog>
+<script>
+document.getElementById("successDialog").showModal()
+</script>
+<% } %>
+
+
+<fieldset><legend>Print Design details</legend>
+<form method="POST" action="/print/edit" id="printForm">
+<input type="hidden" name="PrintDesignId" value="<%= printdesign.PrintDesignId %>" > 
+<p>
+	<label for="code">Code:</label>
+	<input id="code" name="Code" value="<%= printdesign.Code %>" required />
+</p>
+<p>
+	<label for="notes">Notes:</label>
+	<input id="notes" name="Notes" value="<%= printdesign.Notes %>" />
+</p>
+<p>
+	<label for="comments">Comments:</label>
+	<input id="comments" name="Comments" value="<%= printdesign.Comments %>" />
+</p>
+
+<% if (poweruser) { %>
+<input type="submit" value="<%= printdesign.PrintDesignId=='0' ? "Create new print design" : "Save print design details" %>" />
+<% } %> 
+</form>
+</fieldset>
+
+
+<% if (printdesign.PrintDesignId != 0) { %>
+	<dl>
+		<dt>Created by:</dt>
+		<dd><%= printdesign.CreatedBy %></dd>
+		<dt>Created date/time:</dt>
+		<dd><%= printdesign.CreatedDateTime %></dd>
+		<dt>Last modified by:</dt>
+		<dd><%= printdesign.LastModifiedBy %></dd>
+		<dt>Last modified date/time:</dt>
+		<dd><%= printdesign.LastModifiedDateTime %></dd>
+	</dl>
+	<p><a href="/auditlog?table=PrintDesign&id=<%= printdesign.PrintDesignId %>" target=_blank>Audit log</a></p>
+<% } %>
+
+
+<script>
+
+document.forms["printForm"].addEventListener("submit", function (event) {
+	if (! document.forms["printForm"].reportValidity()) {
+		return false
+	}
+
+	return true
+
+})
+
+
+<% if (!poweruser) { %>
+	Array.from(document.querySelectorAll("input, select, textarea")).forEach(e => e.setAttribute("disabled", "disabled"))
+<% } %>
+
+
+</script>
+
+
+<%- include("partials/foot.ejs") %>

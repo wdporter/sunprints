@@ -1,0 +1,163 @@
+<%# experimental %> 
+
+<%- include("partials/head.ejs") %>
+<h3>Experimental</h3>
+<style>
+.screen-table {
+	min-width: unset;
+	width: unset;
+	margin-left: 3em;
+}
+
+</style>
+
+<% if (poweruser) { %> 
+	<p>
+		<a href=/print/edit?id=0>New Print Design</a>
+	</p>
+<% } %>
+
+<div style="overflow-x:auto">
+	<table id="printTable" class="display compact" >
+		<thead>
+			<tr>
+				<th></th>
+				<th>Id</th>
+				<th>Code</th>
+				<th>Notes</th>
+				<th>Comments</th>
+			</tr>
+		</thead>
+		<tbody></tbody>
+	</table>
+</div>
+
+
+<dialog id="successDialog">
+	<form method="dialog">
+		<h5>✅ Success</h5>
+		<p>We have deleted the print design. <a href="/print/deleted">Restore</a></p>
+		<button>OK</button>
+	</form>
+</dialog>
+
+
+<script>
+
+// initialise DataTable
+window.datatable = new DataTable("table#printTable", {
+	processing: true,
+	serverSide: true,
+	ajax: "/print/dt2",
+	order: [[2, "asc"]],
+	orderMulti: false,
+	columns: [
+		{
+			className: "dt-control",
+			orderable: false,
+			data: null,
+			defaultContent: "",
+			width:"2em"
+		},
+		{ 
+			data: "PrintDesignId",
+			title: "",
+			orderable: false,
+			searchable: false,
+			width: "2em",
+			render(data) {
+<% if (poweruser) { %> 
+				return `<a href=/print/edit?id=${data}><span class="fa fa-lg fa-edit"></span></a>&emsp;
+				<a href=# onclick="deletePrint(event, ${data})"><span class="fa fa-lg fa-trash"></span></a>`
+<% } else { %>
+				return ""
+<% } %>
+			}
+		},
+		{ 
+			data: "Code",
+			width: "4em",
+		},
+		{ data: "Notes" },
+		{ data: "Comments" }
+	]
+})
+
+async function format(data) {
+	const response = await fetch(`/print/screens/${data.PrintDesignId}`)
+	const json = await response.json()
+
+	let retVal = `<table class=screen-table>
+		<tr>
+			<th>Name
+			<th>Number
+			<th>Colour
+			<th>Front
+			<th>Back
+			<th>Pocket
+			<th>Sleeve
+			<th>Sizes
+		`
+	json.forEach(screen => {
+		retVal += `<tr data-screenid="${screen.ScreenId}" data-screenprintid="${screen.ScreenPrintDesignId}">
+			<td>${screen.ScreenName}
+			<td>${screen.ScreenNumber}
+			<td>${screen.ScreenColour}
+			<td>${screen.Front == 1 ? "✅" : ""}
+			<td>${screen.Back == 1 ? "✅" : ""}
+			<td>${screen.Pocket == 1 ? "✅" : ""}
+			<td>${screen.Sleeve == 1 ? "✅" : ""}
+			<td>${screen.SizeCategory}`
+	})
+	retVal += `<tr><td colspan=8><a href=#>add screen</a>`
+	retVal += "</table>"
+	
+	return retVal
+}
+
+// Add event listener for opening and closing details
+
+document.querySelector("table#printTable tbody").addEventListener("click", async function() {
+	if (event.target.classList.contains("dt-control")) {
+		const td = event.target
+		const tr = td.closest("tr")
+		const row = window.datatable.row(tr)
+
+		if (row.child.isShown()) {
+				// This row is already open - close it
+				row.child.hide()
+		} else {
+				// Open this row
+				const screenTable = await format(row.data())
+				row.child(screenTable).show();
+		}
+		tr.classList.toggle("shown")
+	}
+})
+
+
+$('table#printTable tbody').on('click', 'td.dt-control', function () {
+});
+
+
+function deletePrint(event, id) {
+	event.preventDefault()
+
+	fetch(`/print/${id}`, { method: "DELETE"})
+	.then(response => {
+		if (response.ok) {
+			document.getElementById("successDialog").showModal()
+			window.datatable.ajax.reload(null, false)
+		}
+		else {
+			throw new Error(response.statusText)
+		}
+	})
+	.catch(error => window.alert(`We encountered an error: ${error}`))
+
+}
+</script>
+
+
+
+<%- include('partials/foot.ejs'); %>

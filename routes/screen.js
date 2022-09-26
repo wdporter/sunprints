@@ -12,6 +12,9 @@ router.get("/", function (req, res, next) {
 		poweruser: res.locals.poweruser
 	 })
 })
+
+/* GET Screens page. 
+expermimental */
 router.get("/2", function (req, res, next) {
 	res.render("screen3.ejs", { 
 		title: "Screens",

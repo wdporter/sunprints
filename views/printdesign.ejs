@@ -9,21 +9,14 @@
 
 </style>
 
+<ul>
+	<li><a href="/screen">Screens</a></li>
+	<li><a href="/print/deleted">Deleted print designs</a></li>
+</ul>
 
-	<h3>About</h3>
-	<ul>
-		<li>This list shows the print designs that can be chosen for a garment</li>
-		<li>Each design can be on multiple physical screens</li>
-		<li>A screen is used in one or more locations (front, back. pocket, sleeve)</li>
-		<li>A screen is suitable according to a garment’s size category (adults, womens, kids)</li>
-		<li>To view the screens for a print design, click the + icon</li>
-		<li>After adding a new print design, expand its row so you can add screen.</li>
-		<li>Removing a screen means it can no longer be selected for a garment, but the screen still exists in the database</li>
-		<li><a href="/screen">Full list of available screens</a></li>
-		<li><a href="/print/deleted">View (and restore) deleted</a></li>
-	</ul>
+<p>
 
-
+</p>
 	<dialog id=printDialog>
 		<form method="dialog">
 			<h3 id="dialogHeading"></h3>
@@ -120,7 +113,9 @@
 	</dialog>
 
 <% if (poweruser) { %>
-	<input type=button id="newPrintButton" onclick="newPrintDesign()" value="New Print Design" style="margin-bottom:2em" />
+<p style="margin-bottom:2em">
+	<a href="/print/edit?id=0">New print design</a>
+</p>
 <% } %>
 
 	<table id="datatable" class="display compact">
@@ -346,7 +341,7 @@
 					render(data) {
 						return `
 <% if (poweruser) { %>
-						<span class="fa fa-lg fa-edit" onclick="editPrintDesign(this)" style=cursor:pointer title=edit></span>&emsp;
+						<a href=/print/edit?id=${data} title=edit><span class="fa fa-lg fa-edit"></span></a>&emsp;
 						<span class="fa fa-lg fa-trash" onclick="deletePrint(this)" style=cursor:pointer title=delete></span>
 <% } %>
 						` 
@@ -468,7 +463,7 @@
 			document.getElementById("editScreenId").value = id
 			document.getElementById("newScreenSuccessMessage").style.display = "none"
 			document.getElementById("addScreenDialogHeading").textContent = "Edit existing screen"
-			fetch(`screen/${id}`)
+			fetch(`/screen/${id}`)
 			.then(response => response.json())
 			.then(json => {
 				document.getElementById("newScreenNumber").value = json.Number
