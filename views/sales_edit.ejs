@@ -506,7 +506,12 @@ window.vueApp = Vue.createApp({
 				const url = `/sales/designsearch?decoration=${this.designSearch.currentDecoration}&location=${this.designSearch.currentLocation}&${encodeURI(terms)}`
 				
 				fetch(url)
-				.then(response => response.json())
+				.then(response => {
+					if (response.ok)
+						return response.json()
+					else 
+						throw new Error(response.statusText)
+				})
 				.then(json => {
 					console.log(json)
 					this.designSearch.results = json.data

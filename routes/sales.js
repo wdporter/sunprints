@@ -842,8 +842,6 @@ router.get("/productsearch", (req, res) => {
 
 	try {
 
-		db.prepare("PRAGMA case_sensitive_like = false;").run()
-		
 		let query = `SELECT Count(*) AS Count  
 		FROM Garment 
 		WHERE ${Object.keys(req.query).map(k => ` ${k} LIKE ? `).join(" AND ")}`
@@ -881,8 +879,6 @@ router.get("/mediasearch", (req, res) => {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
-
-		db.prepare("PRAGMA case_sensitive_like = false;").run()
 
 		const mediaColumns = {
 			Screen: ["Screen.ScreenId AS Id", "Name", "Number", "Colour" ],
@@ -937,41 +933,49 @@ router.get("/designsearch", (req, res) => {
 
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
+	const { location, decoration } = req.query
+
+	const cols = ["Code", "Notes", "comments"]
+
 	try {
 
-		db.prepare("PRAGMA case_sensitive_like = false;").run()
-
-		const mediaColumns = {
-			Screen: ["Screen.ScreenId AS Id", "Name", "Number", "Colour" ],
-			Usb: ["Usb.UsbId  AS Id", "Number", "Notes"],
-			TransferName: ["TransferName.TransferNameId  AS Id", "Name"]
+		const media = {
+			Print: "Screen",
+			Embroidery: "Usb",
+			Transfer:  "TransferName"
 		}
 
+		const joinTable = `${media[decoration]}${req.query.decoration}Design`
+
 		let query = `SELECT Count(*) AS Count  
-	FROM ${req.query.media}
+	FROM ${joinTable}
 	INNER JOIN 
-		${req.query.media}${req.query.decoration}Design 
-			ON ${req.query.media}${req.query.decoration}Design.${req.query.media}Id = ${req.query.media}.${req.query.media}Id
-	WHERE ${req.query.decoration}DesignId=?
-		AND ${req.query.media}${req.query.decoration}Design.${req.query.location}=1
-		AND  ${Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => ` ${k} LIKE ? `).join(" AND ")}`
-		const params = Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => `%${req.query[k]}%`)
-		params.unshift(req.query.design)
-		const count = db.prepare(query).get(params).Count
+		${decoration}Design ON ${decoration}Design.${decoration}DesignId = ${joinTable}.${decoration}DesignId
+	WHERE ${joinTable}.${location}=1
+	AND `
+	// find which columns have search values
+	let whereClauses = []
+	let whereParams = []
+	cols.forEach(col => {
+		if (req.query[col]) {
+			whereClauses.push(`${col} LIKE ? `)
+			whereParams.push(`%${req.query[col]}%`)
+		}
+	})
+	query += ` ${whereClauses.join(" AND ")} `
 
+	const count = db.prepare(query).get(whereParams).Count
 
+	query = query.replace("Count(*) AS Count", ` ${decoration}Design.* `)
+	const LIMIT = 50
+	query += ` LIMIT ${LIMIT} `
 
-		query = query.replace("Count(*) AS Count", mediaColumns[req.query.media].join(", "))
-		query += " LIMIT 50"
-
-		const results = db.prepare(query).all(params)
-
-
+	const data = db.prepare(query).all(whereParams)
 
 		res.send({
-			count: count,
-			limit: 50,
-			data: results
+			count,
+			limit: LIMIT,
+			data
 		})
 
 
