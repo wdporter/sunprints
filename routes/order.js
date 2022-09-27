@@ -25,7 +25,7 @@ router.get("/", function (req, res, next) {
 /* GET orders in datatables format. */
 router.get("/dt", function (req, res, next) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 
@@ -42,9 +42,9 @@ WHERE Orders.Deleted=0 AND ProcessedDate IS NULL  `
 			req.query.search.value = req.query.search.value.trim()
 
 		if (req.query.search.value) {
-			let whereClause = ` AND OrderNumber LIKE '%${req.query.search.value}%' 
+			let whereClause = ` AND (OrderNumber LIKE '%${req.query.search.value}%' 
 				OR Customer.Company LIKE '%${req.query.search.value}%' 
-				OR Orders.Notes LIKE '%${req.query.search.value}%' `
+				OR Orders.Notes LIKE '%${req.query.search.value}%') `
 			recordsFiltered = db.prepare(`SELECT Count(*) AS count 
 FROM Orders 
 INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
@@ -129,7 +129,7 @@ ${whereClause}`).get().count
 /* GET new orders page. */
 router.get("/new", function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	let customer = null
 	let garments = []
 	let order = null
@@ -179,7 +179,7 @@ router.get("/new", function (req, res, next) {
 /* GET edit page, reüsing the new orders view. */
 router.get("/edit", function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	var customerInfo
 	try {
 
@@ -505,7 +505,7 @@ router.get("/edit", function (req, res, next) {
 // GET the jobsheet page
 router.get("/jobsheet/:id", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 
@@ -647,7 +647,7 @@ router.get("/jobsheet/:id", function (req, res) {
 /* GET deleted Orders page. */
 router.get("/deleted", function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	const deleted = db.prepare("SELECT * FROM Orders WHERE DELETED=1 ORDER BY LastModifiedDateTime DESC").all()
 
@@ -664,7 +664,7 @@ router.get("/deleted", function (req, res, next) {
 // GET return the printable printdesigns page
 router.get("/printdesigns/:id", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 		const results = getDesigns(db, req.params.id)
@@ -695,7 +695,7 @@ router.get("/dt/garments/:orderId", function (req, res) {
 
 	let db = null
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+		db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 		// || is the concatenation operator in sqlite
 		let statement = db.prepare(`SELECT Garment.Code || ' ' || Label || ' ' || ' ' || Type || ' ' || Garment.Colour AS Product, Price, 	
@@ -813,7 +813,7 @@ router.get("/dt/garments/:orderId", function (req, res) {
 
 router.get("/outstanding/print", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	try {
 
 		if (req.query.rep == null)
@@ -912,7 +912,7 @@ router.get("/outstanding/print", (req, res) => {
 
 router.get("/outstanding/embroidery", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	try {
 
 		if (req.query.rep == null)
@@ -1007,7 +1007,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 
 router.get("/outstanding/transfer", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	try {
 
 		if (req.query.rep == null)
@@ -1103,7 +1103,7 @@ router.get("/outstanding/transfer", (req, res) => {
 
 router.get("/outstanding/promo", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	try {
 
 		if (req.query.rep == null)
@@ -1195,7 +1195,7 @@ router.get("/outstanding/promo", (req, res) => {
 
 
 router.get("/csv/", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	const records = db.prepare(`SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Done, 
 	Customer.Company, 
 	fpd.Code || ' ' || IFNULL(fpd.Notes, '') AS FrontPrintDesign, 
@@ -1263,7 +1263,7 @@ router.get("/xero/", (req, res) => {
 })
 
 router.get("/xero/invoices", (req, res) => {
-	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	try {
 
 		const data = db.prepare("SELECT OrderNumber, Orders.Notes, Customer.Company FROM Orders INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId WHERE Orders.Deleted=0 AND OrderDate=? ").all(req.query.d)
@@ -1286,7 +1286,7 @@ router.get("/xero/invoices", (req, res) => {
 
 router.get("/xero/csv", (req, res)=> {
 
-	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	try {
 
 		const orders = db.prepare(`SELECT 
@@ -1341,7 +1341,7 @@ router.get("/xero/csv", (req, res)=> {
 // POST for saving a new order
 router.post("/", function (req, res) {
 
-	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	try {
 		if (!req.body.OrderNumber) {
 			res.statusMessage = "We require an order number"
@@ -1472,7 +1472,7 @@ router.post("/", function (req, res) {
 // POST garment details for the order id
 // if it is already in the table, it's an update, otherwise it's an insert
 router.post("/:id/garment", function (req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
@@ -1793,7 +1793,7 @@ WHERE GarmentId = @GarmentId `
 // PUT for saving changes to an order
 router.put("/:id", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 		if (!req.body.OrderNumber) {
@@ -1903,7 +1903,7 @@ router.put("/:id", function (req, res) {
 // set set invoice date and processed date if not already
 
 router.put("/ship/:id", function (req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 
@@ -1986,7 +1986,7 @@ router.put("/ship/:id", function (req, res) {
 // PUT  mark an order as done
 // set Done to "1" (that is, true)
 router.put("/done/:id", function (req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
@@ -2053,7 +2053,7 @@ router.put("/done/:id", function (req, res) {
 // PUT to undelete an order, also adds it back to SalesTotal
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
@@ -2105,7 +2105,7 @@ Company, DateProcessed, DateInvoiced, InvoiceNumber, Done
 // DELETE the order with the id
 router.delete("/:id", function (req, res) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	const date = new Date().toLocaleString()
 
 	try {
@@ -2234,7 +2234,7 @@ router.delete("/:id", function (req, res) {
 
 // DELETE take a garment off an order
 router.delete("/garment/:orderGarmentId", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
