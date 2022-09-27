@@ -1,7 +1,20 @@
+@import url('https://rsms.me/inter/inter.css');
+:root {
+	--font: 'Inter', -apple-system, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; 
+}
+@supports (font-variation-settings: normal) {
+	:root {
+		--font: 'Inter var', -apple-system, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; 
+	}
+}
+
+
 /* for some crazy reason sunprints wanted a background colour, but this interfered
 with gd.css when datatables went 100% width */
 html {
 	background-color: reset !important;
+	font-variant-numeric: tabular-nums ;
+	font-variant-ligatures: no-common-ligatures;
 }
 body {
 	background-color: #eee;
@@ -114,7 +127,7 @@ a.delete-link:focus {
 	background-color: unset;
 }
 
-span.fa-edit, span.fa-plus {
+span.fa-edit, span.fa-plus, .fa-file-circle-plus {
 	 color: var(--color-primary); 
 }
 
