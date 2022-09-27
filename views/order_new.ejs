@@ -80,25 +80,42 @@ table.stockWarningTable {
 		Company: <span id=selectedCustomerCompany>
 			<%= customer ? customer.Company : '' %>
 		</span> <br>
-		<a id=selectedCustomerLink target=_blank href="/customer/edit?id=<%= customer.CustomerId %>"><%= customer ? "View/Edit" : "" %></a>
+		<a id=selectedCustomerLink target=_blank 
+		<% if (customer) { %>
+			href="/customer/edit?id=<%= customer.CustomerId %>"
+		<% } else { %>
+			href=#			
+		<% } %>
+			><%= customer ? "View/Edit" : "" %></a>
 	</p>
 
 	<section class="order-details">
 		<div>
 			<p>
-				<label for=customerOrderNumber>Customer’s order number</label>
-				<input id=customerOrderNumber value="<%= order ? order.CustomerOrderNumber : '' %>" />
-			</p>
-			<p>
 				<label for=orderNumber>Order number</label>
 				<input id=orderNumber required placeholder=required value="<%= order ? order.OrderNumber : '' %>" />
 			</p>
 			<p>
-				<label for=orderDate>Order date</label>
-				<input id=orderDate type=date
-					value="<%= order ? new Date(Date.parse(order.OrderDate)).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10) %>" />
+				<label for="salesRep">Sales Rep.</label>
+				<select id="salesRep" required>
+					<option value="">&mdash;choose&mdash;</option>
+					<% salesReps.forEach(rep => { %>
+						<option <% if (order && order.SalesRep && order.SalesRep == rep.Name) { %>selected<% } %>><%= rep.Name %> 
+					<% }) %>
+				</select>
 			</p>
 			<p>
+				<label for=terms>Terms</label>
+				<select id=terms>
+					<option value="">—choose—</option>
+					<option value="C.O.D." <%=(order && order.Terms=='C.O.D.' ) ? 'selected' : '' %> >C.O.D.</option>
+					<option value="Net 7 days" <%=(order && order.Terms=='Net 7 days' ) ? 'selected' : '' %> >Net 7 days
+					</option>
+					<option value="Net 30 days" <%=(order && order.Terms=='Net 30 days' ) ? 'selected' : '' %> >Net 30 days
+					</option>
+				</select>
+			</p>
+			<p style="margin-top:3rem">
 				<input id=repeat type=checkbox <%=order && order.Repeat && 'checked' %> /><label for=repeat>Repeat</label>
 				<input id=newDesign type=checkbox <%=order && order.New && 'checked' %> /><label for=newDesign>New</label>
 				<input id=buyIn type=checkbox <%=order && order.BuyIn && 'checked' %> /><label for=buyIn>Buy In</label>
@@ -112,27 +129,6 @@ table.stockWarningTable {
 
 		</div>
 		<div>
-			<p>
-				<label for=terms>Terms</label>
-				<select id=terms>
-					<option value="">—choose—</option>
-					<option value="C.O.D." <%=(order && order.Terms=='C.O.D.' ) ? 'selected' : '' %> >C.O.D.</option>
-					<option value="Net 7 days" <%=(order && order.Terms=='Net 7 days' ) ? 'selected' : '' %> >Net 7 days
-					</option>
-					<option value="Net 30 days" <%=(order && order.Terms=='Net 30 days' ) ? 'selected' : '' %> >Net 30 days
-					</option>
-				</select>
-			</p>
-			<p>
-				<label for="salesRep">Sales Rep.</label>
-				<select id="salesRep" required>
-					<option value="">&mdash;choose&mdash;</option>
-					<% salesReps.forEach(rep => { %>
-						<option <% if (order && order.SalesRep && order.SalesRep == rep.Name) { %>selected<% } %>><%= rep.Name %> 
-					<% }) %>
-				</select>
-				
-			</p>
 			<p id="invoiceDatePara">
 				<label for=invoiceDate>Invoice Date</label>
 				<input id=invoiceDate type=date
@@ -142,14 +138,23 @@ table.stockWarningTable {
 				<label for=deliveryDate>Delivery Date</label>
 				<input id=deliveryDate value="<%= order && order.DeliveryDate %>" />
 			</p>
+			<p>
+				<label for=orderDate>Order date</label>
+				<input id=orderDate type=date
+					value="<%= order ? new Date(Date.parse(order.OrderDate)).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10) %>" />
+			</p>
+			<p>
+				<label for=customerOrderNumber>Customer’s order number</label>
+				<input id=customerOrderNumber value="<%= order ? order.CustomerOrderNumber : '' %>" />
+			</p>
 
 		</div>
 	</section>
-
-	<p>
-	<label for=notes>Order Notes</label>
-	<textarea id=orderNotes rows=5><%= order && order.Notes %></textarea>
+	<p style="margin-top:0">
+		<label for=notes>Order Notes</label>
+		<textarea id=orderNotes rows=5><%= order && order.Notes %></textarea>
 	</p>
+
 
 <p style="display:<%= poweruser || salesrep ? "block" : "none" %>">
 	<button value="Save Order" id="saveButton">Save Order Details</button>
