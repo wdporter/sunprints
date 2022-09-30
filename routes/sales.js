@@ -4,7 +4,7 @@ const router = express.Router()
 const Database = require("better-sqlite3");
 const sz = require("../sizes.js")
 
-/* GET Sales page. */
+/* GET Sales History page. */
 router.get("/", (req, res) => {
 
 		res.render("sales.ejs", {
@@ -16,8 +16,9 @@ router.get("/", (req, res) => {
 })
 
 
+// GET datatable ajax for sales history table
 router.get("/dt", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
 console.log(req.query.customSearch)
@@ -26,7 +27,7 @@ console.log(req.query.customSearch)
 		let recordsTotal = recordsFiltered = statement.all().reduce((acc, curr) => { return acc + curr.Count}, 0)
 		
 
-		query = `SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, SalesRep, SalesTotal.DateProcessed, 
+		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, SalesRep, SalesTotal.DateProcessed, 
 		SalesTotal.Delivery, Customer.Code, Customer.Company, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
 		FROM SalesTotal 
 		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId `
@@ -136,7 +137,7 @@ console.log(req.query.customSearch)
 		data = db.prepare(query).all(params)
 
 		// now we have to get the designs used for each sale
-		const query2 = db.prepare(`SELECT 
+		const query2 = db.prepare(/*sql*/`SELECT 
 		fpd.Code || ' ' || fpd.Notes AS FrontPrintDesign
 		,bpd.Code || ' ' || bpd.Notes AS BackPrintDesign 
 		,ppd.Code || ' ' || ppd.Notes AS PocketPrintDesign
@@ -205,7 +206,7 @@ console.log(req.query.customSearch)
 
 
 router.get("/customernames", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
 		res.send(
@@ -224,7 +225,7 @@ router.get("/customernames", (req, res) => {
 
 
 router.get("/customercodes", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
 
@@ -272,7 +273,7 @@ router.get("/customercodes", (req, res) => {
 })
 
 router.get("/salesreps", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const reps = db.prepare("SELECT Name, Deleted FROM SalesRep WHERE Name IN (SELECT Distinct(SalesRep) FROM SalesTotal) ORDER BY 2, 1 ").all()
 		res.send(
@@ -293,7 +294,7 @@ router.get("/salesreps", (req, res) => {
 })
 
 router.get("/prints", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const prints = db.prepare(`SELECT PrintDesignId, Code || ' | ' || IFNULL(Notes, '') AS CodeNotes FROM PrintDesign 
 		WHERE PrintDesignId IN 
@@ -314,7 +315,7 @@ router.get("/prints", (req, res) => {
 })
 
 router.get("/screens", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const screens = db.prepare(`SELECT ScreenId, Number, Colour, Name FROM Screen 
 		WHERE ScreenId IN (
@@ -347,7 +348,7 @@ router.get("/screens", (req, res) => {
 
 
 router.get("/embroideries", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const embroideries = db.prepare(`SELECT EmbroideryDesignId, Code || ' | ' || Notes AS CodeNotes FROM EmbroideryDesign 
 		WHERE EmbroideryDesignId IN (
@@ -372,7 +373,7 @@ router.get("/embroideries", (req, res) => {
 
 
 router.get("/usbs", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const usbs = db.prepare(`SELECT UsbId, Number || ' | ' || IFNULL(Notes, '') AS NumberNotes FROM Usb 
 		WHERE UsbId IN (
@@ -403,7 +404,7 @@ router.get("/usbs", (req, res) => {
 })
 
 router.get("/transfers", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const transfers = db.prepare(`SELECT TransferDesignId, Code || ' | ' || IFNULL(Notes, '') AS CodeNotes FROM TransferDesign 
 		WHERE TransferDesignId IN (
@@ -431,7 +432,7 @@ router.get("/transfers", (req, res) => {
 
 
 router.get("/transfernames", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const names = db.prepare(`SELECT TransferNameId, IFNULL(Name, 'no name') AS Name 
 		WHERE TransferNameId IN (
@@ -464,10 +465,10 @@ router.get("/transfernames", (req, res) => {
 
 router.get("/:orderid/history", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
-		let query = `SELECT Garment.Code || ' ' || Garment.Label || ' ' || Garment.Type || ' ' || Garment.Colour AS Product 
+		let query = /*sql*/`SELECT Garment.Code || ' ' || Garment.Label || ' ' || Garment.Type || ' ' || Garment.Colour AS Product 
 		,fpd.Code || ' | ' || fpd.Notes AS FrontPrintDesign
 		,bpd.Code || ' | ' || bpd.Notes AS BackPrintDesign
 		,ppd.Code || ' | ' || ppd.Notes AS PocketPrintDesign
@@ -577,10 +578,10 @@ router.get("/csv/", (req, res) => {
 		res.sendStatus(400)
 	}
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
-		let query = `SELECT SalesTotal.OrderNumber, Customer.Company, SalesRep, SalesTotal.OrderDate,
+		let query = /*sql*/`SELECT SalesTotal.OrderNumber, Customer.Company, SalesRep, SalesTotal.OrderDate,
 		Garment.Code || ' ' || Type || ' ' || Colour AS Product,
 		${sz.allSizes.map(sz => `Sales.${sz}`).join("+")} AS Qty,
 		Price,
@@ -622,13 +623,14 @@ router.get("/csv/", (req, res) => {
 })
 
 
+// GET edit page for a sales history item
 router.get("/edit/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
 
-		let query = `SELECT 
+		let query = /*sql*/`SELECT 
 		SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.CustomerId, SalesTotal.SalesRep, SalesTotal.OrderDate, SalesTotal.Repeat, SalesTotal.New, SalesTotal.BuyIn, SalesTotal.Terms, SalesTotal.Delivery,SalesTotal.Notes, SalesTotal.CustomerOrderNumber, SalesTotal.DateProcessed, SalesTotal.DateInvoiced, 	
 		Sales.GarmentId,
 		Garment.Code, Label, Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, Garment.Deleted,
@@ -838,7 +840,7 @@ router.get("/edit/:id", (req, res) => {
 
 router.get("/productsearch", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
 
@@ -886,31 +888,24 @@ router.get("/mediasearch", (req, res) => {
 			TransferName: ["TransferName.TransferNameId  AS Id", "Name"]
 		}
 
-		let query = `SELECT Count(*) AS Count  
+		let query = /*sql*/`SELECT ${mediaColumns[req.query.media].join(", ")}, SizeCategory
 	FROM ${req.query.media}
 	INNER JOIN 
 		${req.query.media}${req.query.decoration}Design 
 			ON ${req.query.media}${req.query.decoration}Design.${req.query.media}Id = ${req.query.media}.${req.query.media}Id
 	WHERE ${req.query.decoration}DesignId=?
 		AND ${req.query.media}${req.query.decoration}Design.${req.query.location}=1
-		AND  ${Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => ` ${k} LIKE ? `).join(" AND ")}`
+		AND NOT Name IS NULL
+		`
 		const params = Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => `%${req.query[k]}%`)
 		params.unshift(req.query.design)
-		const count = db.prepare(query).get(params).Count
 
-
-
-		query = query.replace("Count(*) AS Count", mediaColumns[req.query.media].join(", "))
-		query += " LIMIT 50"
-
-		const results = db.prepare(query).all(params)
+		const data = db.prepare(query).all(params)
 
 
 
 		res.send({
-			count: count,
-			limit: 50,
-			data: results
+			data
 		})
 
 
@@ -928,66 +923,101 @@ router.get("/mediasearch", (req, res) => {
 
 
 // GET all candidate designs for the given location
+// this one is used when a design is selected, to test if the media selected relate to this design
 //  example /sales/designsearch?location=Front&decoration=Embroidery&Code=asdf&Notes=abc&Comments=asdf
 router.get("/designsearch", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	const { location, decoration } = req.query
 
-	const cols = ["Code", "Notes", "comments"]
+	const cols = ["Code", "Notes", "Comments"]
+	if (decoration == "TransferName")
+		close.pop()
+
+	const media = sz.media[sz.decorations.indexOf(decoration)]
 
 	try {
 
-		const media = {
-			Print: "Screen",
-			Embroidery: "Usb",
-			Transfer:  "TransferName"
-		}
+		const joinTable = `${media}${req.query.decoration}Design`
 
-		const joinTable = `${media[decoration]}${req.query.decoration}Design`
-
-		let query = `SELECT Count(*) AS Count  
-	FROM ${joinTable}
-	INNER JOIN 
-		${decoration}Design ON ${decoration}Design.${decoration}DesignId = ${joinTable}.${decoration}DesignId
-	WHERE ${joinTable}.${location}=1
-	AND `
-	// find which columns have search values
-	let whereClauses = []
-	let whereParams = []
-	cols.forEach(col => {
-		if (req.query[col]) {
-			whereClauses.push(`${col} LIKE ? `)
-			whereParams.push(`%${req.query[col]}%`)
-		}
-	})
-	query += ` ${whereClauses.join(" AND ")} `
-
-	const count = db.prepare(query).get(whereParams).Count
-
-	query = query.replace("Count(*) AS Count", ` ${decoration}Design.* `)
-	const LIMIT = 50
-	query += ` LIMIT ${LIMIT} `
-
-	const data = db.prepare(query).all(whereParams)
-
-		res.send({
-			count,
-			limit: LIMIT,
-			data
+		let query = /*sql*/`SELECT ${decoration}Design.*, SizeCategory 
+FROM ${joinTable}
+INNER JOIN 
+${decoration}Design ON ${decoration}Design.${decoration}DesignId = ${joinTable}.${decoration}DesignId
+WHERE ${joinTable}.${location}=1
+AND `
+		// find which columns have search values
+		let whereClauses = []
+		let whereParams = []
+		cols.forEach(col => {
+			if (req.query[col]) {
+				whereClauses.push(`${col} LIKE ? `)
+				whereParams.push(`%${req.query[col]}%`)
+			}
 		})
+		query += ` ${whereClauses.join(" AND ")} `
+		query += /*sql*/` GROUP BY (${decoration}Design.${decoration}DesignId) 
+		ORDER BY 2 `
 
+		const data = db.prepare(query).all(whereParams)
 
+		const LIMIT = 50
+		res.send({
+			count: data.length,
+			limit: LIMIT,
+			data: data.slice(0, LIMIT)
+		})
 
 	}
 	catch(err) {
-		console.log(`Error: ${err}`)
 		res.statusMessage = err.message
 		res.sendStatus(400)
+		console.log(`Error: ${err}`)
 	}
 	finally {
 		db.close()
-	}})	
+	}
+})	
+
+
+// GET all media for the given decoration design id
+// for example, /sales/mediasearch/decoration?decoration=?&location=?&id=?
+router.get("/mediasearch/decoration", (req, res) => {
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const { location, decoration, id } = req.query	
+
+	const media = sz.media[sz.decorations.indexOf(decoration)]
+
+	try {
+		if (!sz.decorations.includes(decoration))
+			throw new Error("bad params")
+		if (!sz.locations.includes(location))
+			throw new Error("bad params")
+
+		let statement = db.prepare(/*sql*/`	
+				SELECT * FROM ${media}${decoration}Design 
+				WHERE ${location}=1 AND 
+				${decoration}DesignId=?
+		`)
+		const data = statement.all(id)
+		res.send({
+			media,
+			data
+		})
+	}
+	catch(err) {
+		res.statusMessage = err.message
+		res.sendStatus(400)
+		console.log(`Error: ${err}`)
+	}
+	finally {
+		db.close()
+	}
+
+
+}) 
+
+
 
 module.exports = router

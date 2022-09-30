@@ -1,6 +1,19 @@
 <%- include("partials/head.ejs") %>
 
 
+<style>
+	.design-table th {
+		text-align: center;
+	}
+	.dialog-table {
+		min-width: unset;
+		width: unset;
+	}
+	.dialog-table tbody tr:hover {
+		background-color: aliceblue;
+	}
+</style>
+
 <script id="orderDetails" type="application/json"><%- JSON.stringify(order) %></script>
 <script id="customers" type="application/json"><%- JSON.stringify(customers) %></script>
 <script id="salesReps" type="application/json"><%- JSON.stringify(salesReps) %></script>
@@ -39,31 +52,32 @@
 <input id=OrderDate type=date v-model="order.OrderDate" required />
 </p>
 
-<p><input type=checkbox id=Repeat v-model="order.Repeat" true-value="1" false-value="0" /><label for=Repeat>Repeat</label>
+<p style="padding-top:1em">
+	<input type=checkbox id=Repeat v-model="order.Repeat" true-value="1" false-value="0" />
+	<label for=Repeat>Repeat</label>
+	<input type=checkbox id=New name=New v-model="order.New" true-value="1" false-value="0" />
+	<label for=New>New</label>
+	<input type=checkbox id=BuyIn v-model="order.BuyIn" true-value="1" false-value="0" />
+	<label for=BuyIn>Buy In</label>
 </p>
-
-<p><input type=checkbox id=New name=New v-model="order.New" true-value="1" false-value="0" /><label for=New>New</label>
-</p>
-
-<p><input type=checkbox id=BuyIn v-model="order.BuyIn" true-value="1" false-value="0" /><label for=BuyIn>Buy In</label></p>
 
 <p>
-<label for=Terms>Terms:</label>
-<select id=Terms v-model="order.Terms">
-<optgroup v-if="order.Terms != 'C.O.D.' && order.Terms != 'Net 7 days' && order.Terms != 'Net 30 days'" label="Standard">
-<option>C.O.D.</option>
-<option>Net 7 days</option>
-<option>Net 30 days</option>
-</optgroup>
-<template v-else>
-	<option>C.O.D.</option>
-	<option>Net 7 days</option>
-	<option>Net 30 days</option>
-</template>
-<optgroup v-if="order.Terms != 'C.O.D.' && order.Terms != 'Net 7 days' && order.Terms != 'Net 30 days'" label="Non-standard">
-<option>{{ order.Terms }} </option>
-</optgroup>
-</select>
+	<label for=Terms>Terms:</label>
+	<select id=Terms v-model="order.Terms">
+		<optgroup v-if="order.Terms != 'C.O.D.' && order.Terms != 'Net 7 days' && order.Terms != 'Net 30 days'" label="Standard">
+			<option>C.O.D.</option>
+			<option>Net 7 days</option>
+			<option>Net 30 days</option>
+		</optgroup>
+		<template v-else>
+			<option>C.O.D.</option>
+			<option>Net 7 days</option>
+			<option>Net 30 days</option>
+		</template>
+		<optgroup v-if="order.Terms != 'C.O.D.' && order.Terms != 'Net 7 days' && order.Terms != 'Net 30 days'" label="Non-standard">
+			<option>{{ order.Terms }} </option>
+		</optgroup>
+	</select>
 </p>
 
 <p>
@@ -88,9 +102,51 @@
 
 </fieldset>
 
-<fieldset v-for="product in order.Products" :key="product.GarmentId">
+<fieldset><legend>Design</legend>
+	<table class="design-table">
+		<tr><th></th><th v-for="loc in locations">{{ loc }}</th></tr>
+		<tbody v-for="(dec, i) in decorations">
+			<tr style="border-top:2px black solid">
+				<th>{{ dec }} design</th>
+				<td v-for="loc in locations" :style="{textAlign: order.Products[0][`${loc}${dec}DesignId`] == null ? 'center' : 'left' }">
+					{{ order.Products[0][`${loc}${dec}DesignName`] }} 
+					<a href=# @click.prevent="onSelectDesign(order.Products[0], dec, loc)" title="select design"><span class="fa fa-edit"></span></a>&nbsp;
+					<a href=# title="delete design" v-if="order.Products[0][`${loc}${dec}DesignId`]" ><span class="fa fa-trash"></span></a>
+				</td>
+			</tr>
+			<tr>
+				<th>{{ media[i] }} 1</th>
+				<td v-for="loc in locations" :style="{textAlign: order.Products[0][`${loc}${media[i]}1Id`] == null ? 'center' : 'left' }">
+					{{ order.Products[0][`${loc}${media[i]}1Name`] }} 
+					<a href=# @click.prevent="onSelectMedia(order.Products[0], dec, loc, media[i], 1)" :title="`select ${media[i]}`" v-if="order.Products[0][`${loc}${dec}DesignId`] != null">
+						<span class="fa fa-edit"></span>
+					</a>&nbsp;
+					<a href=# @click.prevent="onDeleteMedia(order.Products[0], dec, loc, media[i], 1)" :title="`delete ${media[i]}`" v-if="order.Products[0][`${loc}${media[i]}1Id`]">
+						<span class="fa fa-trash"></span>
+					</a>
+				</td>
+			<tr>
+				<th>{{ media[i] }} 2</th>
+				<td v-for="loc in locations" :style="{textAlign: order.Products[0][`${loc}${media[i]}2Id`] == null ? 'center' : 'left' }">
+					{{ order.Products[0][`${loc}${media[i]}2Name`] }} 
+					<a href=# @click.prevent="onSelectMedia(order.Products[0], dec, loc, media[i], 2)" :title="`select ${media[i]}`" v-if="order.Products[0][`${loc}${dec}DesignId`] != null">
+						<span class="fa fa-edit"></span>
+					</a>&nbsp;
+					<a href=# @click.prevent="onDeleteMedia(order.Products[0], dec, loc, media[i], 2)" :title="`delete ${media[i]}`" v-if="order.Products[0][`${loc}${media[i]}2Id`]">
+						<span class="fa fa-trash"></span>
+					</a>
+				</td>
+			
+		</tbody>
+	</table>
+
+</fieldset>
+
+<fieldset v-for="(product, i) in order.Products" :key="product.GarmentId">
 	<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
-	<table style="margin-top:1em">
+
+
+	<table style="margin-top:3em">
 		<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
 		<tr>
 			<td>{{ product.Code }}</td>
@@ -101,57 +157,15 @@
 			<td>{{ product.SizeCategory }}</td>
 		</tr>
 	</table>
-	<p>
-	<input type="button" value="Change product" @click="onChangeProduct(product)" />
-	</p>
 
 	<table style="margin-top:3em">
 		<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz }}</th></tr>
 		<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]"></td></tr>
 	</table>
 
-	<table style="margin-top:3em">
-		<tr><th></th><th v-for="loc in locations">{{ loc }}</th></tr>
-		<tbody v-for="(dec, i) in decorations">
-			<tr style="border-top:2px black solid">
-				<th>{{ dec }} design</th>
-				<td v-for="loc in locations" :style="{textAlign: product[`${loc}${dec}DesignId`] == null ? 'center' : 'left' }">
-					{{ product[`${loc}${dec}DesignName`] }} 
-					<a href=# @click.prevent="onSelectDesign(product, dec, loc)" title="select design"><span class="fa fa-edit"></span></a>&nbsp;
-					<a href=# title="delete design" v-if="product[`${loc}${dec}DesignId`]" ><span class="fa fa-trash"></span></a>
-				</td>
-			</tr>
-			<tr>
-				<th>{{ media[i] }} 1</th>
-				<td v-for="loc in locations" :style="{textAlign: product[`${loc}${media[i]}1Id`] == null ? 'center' : 'left' }">
-					{{ product[`${loc}${media[i]}1Name`] }} 
-					<a href=# @click.prevent="onSelectMedia(product, dec, loc, media[i], 1)" :title="`select ${media[i]}`" v-if="product[`${loc}${dec}DesignId`] != null"><span class="fa fa-edit"></span></a>&nbsp;
-					<a href=# @click.prevent="onDeleteMedia(product, dec, loc, media[i], 1)" :title="`delete ${media[i]}`" v-if="product[`${loc}${media[i]}1Id`]"><span class="fa fa-trash"></span></a>
-				</td>
-			<tr>
-				<th>{{ media[i] }} 2</th>
-				<td v-for="loc in locations" :style="{textAlign: product[`${loc}${media[i]}2Id`] == null ? 'center' : 'left' }">
-					{{ product[`${loc}${media[i]}2Name`] }} 
-					<a href=# @click.prevent="onSelectMedia(product, dec, loc, media[i], 2)" :title="`select ${media[i]}`" v-if="product[`${loc}${dec}DesignId`] != null"><span class="fa fa-edit"></span></a>
-					<a href=# @click.prevent="onDeleteMedia(product, dec, loc, media[i], 2)" :title="`delete ${media[i]}`" v-if="product[`${loc}${media[i]}2Id`]"><span class="fa fa-trash"></span></a>
-				</td>
-			
-		</tbody>
-	</table>
-
-	<!-- took a long time, don't want to let go of it <ul>
-		<template v-for="loc in locations">
-			<template v-for="(dec,i) in decorations">
-					<li><b>{{ loc }} {{ dec.toLowerCase() }} design:</b> {{ product[`${loc}${dec}DesignName`] }}</li>
-					<ul  style="margin-top:0;margin-bottom:0"> 
-							<li><b>{{ `${loc} ${media[i]} 1` }}:</b> {{ product[`${loc}${media[i]}1Name`] }}</li>
-							<li><b>{{ `${loc} ${media[i]} 2` }}:</b> {{ product[`${loc}${media[i]}2Name`] }}</li>
-					</ul>
-				</template>
-		</template>
-	</ul> -->
 	<p>
-	<input type="reset" value="Remove product" @click="onRemoveProduct(product.GarmentId)" />
+		<input type="button" value="Change product" @click="onChangeProduct(product)" />&emsp;
+		<input type="reset" value="Remove product" @click="onRemoveProduct(product.GarmentId)" /> 
 	</p>
 
 </fieldset>
@@ -161,23 +175,19 @@
 
 <dialog ref="selectMediaDialog" style="max-width: var(--measure);">
 	<h3>Select {{ mediaSearch.currentMedia }} </h3>
-	<table>
+	<table class="dialog-table">
 		<thead>
 			<tr>
 				<th style="width:2em"></th>
 				<th v-for="col in mediaSearch.columns[mediaSearch.currentMedia]">{{ col }}</th>
-			</tr>
-			<tr>
-				<td>
-				<td v-for="(col, i) in mediaSearch.columns[mediaSearch.currentMedia]" ref="searchMediaInputs" :data-pos="i">
-					<input pattern="^.{3,}" type=search placeholder="search" @input="onSearchMedia($event)" v-model="mediaSearch.terms[col]" />
-				</td>
+				<th>Sizes</th>
 			</tr>
 		</thead>
 		<tbody>
 			<tr v-for="m in mediaSearch.results">
 				<td><a href="#" @click.prevent="onMediaSelected(m)">select</a></td>
 				<td v-for="col in mediaSearch.columns[mediaSearch.currentMedia]">{{ m[col] }}</td>
+				<td>{{ m.SizeCategory }}</td>
 			</tr>
 		</tbody>
 		<tfoot><td colspan=6>{{ mediaSearch.searchMessage }}</td></tfoot>
@@ -189,7 +199,7 @@
 
 <dialog ref="selectProductDialog" style="max-width: var(--measure);">
 	<h3>Select Product</h3>
-	<table>
+	<table class="dialog-table">
 		<thead>
 			<tr>
 				<th style="width:2em"></th>
@@ -230,11 +240,12 @@
 
 <dialog ref="selectDesignDialog" style="max-width: var(--measure);">
 	<h3>Select {{ designSearch.currentDecoration }} Design</h3>
-	<table>
+	<table class="dialog-table">
 		<thead>
 			<tr>
 				<th style="width:2em"></th>
 				<th v-for="col in designSearch.columns[designSearch.currentDecoration]">{{ col }}</th>
+				<th>Sizes</th>
 			</tr>
 			<tr>
 				<td>
@@ -247,6 +258,7 @@
 			<tr v-for="m in designSearch.results">
 				<td><a href="#" @click.prevent="onDesignSelected(m)">select</a></td>
 				<td v-for="col in designSearch.columns[designSearch.currentDecoration]">{{ m[col] }}</td>
+				<td>{{ m.SizeCategory }}</td>
 			</tr>
 		</tbody>
 		<tfoot><td colspan=6>{{ designSearch.searchMessage }}</td></tfoot>
@@ -293,12 +305,6 @@ window.vueApp = Vue.createApp({
 				oldProductId: 0
 			},
 			mediaSearch: {
-				terms: {
-					Number: "",
-					Colour: "",
-					Name: "",
-					Notes: "",
-				},
 				columns: {
 					Screen: ["Name", "Number", "Colour" ],
 					Usb: ["Number", "Notes"],
@@ -403,8 +409,7 @@ window.vueApp = Vue.createApp({
 		},
 		onSelectMedia(product, decoration, location, media, position) {
 	
-			Object.keys(this.mediaSearch.terms).forEach(term => this.mediaSearch.terms[term] = "")
-	
+
 			this.mediaSearch.currentMedia = media
 			this.mediaSearch.currentLocation = location
 			this.mediaSearch.currentDecoration = decoration
@@ -413,47 +418,25 @@ window.vueApp = Vue.createApp({
 
 			this.mediaSearch.results = []
 			this.$refs.selectMediaDialog.showModal()
-			this.$nextTick(function() {
-				for (td in this.$refs.searchMediaInputs) {
-					if (this.$refs.searchMediaInputs[td].dataset.pos == 0) {
-						this.$refs.searchMediaInputs[td].querySelector("input").focus()
-						break
-					}
+
+			this.mediaSearch.searchMessage = ""
+
+			const designId = this.mediaSearch.currentProduct[`${this.mediaSearch.currentLocation}${this.mediaSearch.currentDecoration}DesignId`]
+			const url = `/sales/mediasearch?media=${this.mediaSearch.currentMedia}&location=${this.mediaSearch.currentLocation}&decoration=${this.mediaSearch.currentDecoration}&design=${designId} ` 
+			fetch(url)
+			.then(response => response.json())
+			.then(json => {
+				console.log(json)
+				this.mediaSearch.results = json.data
+				if (json.data.length < json.count) {
+					this.mediaSearch.searchMessage = `showing  ${json.count} results` 
+				}
+				else {
+					this.mediaSearch.searchMessage = `${json.data.length} results returned`
 				}
 			})
-		},
-		onSearchMedia(event) {
-			this.mediaSearch.searchMessage = ""
-			if (event.target.checkValidity()) {
-				// check we have at least one search term
-				let isEmpty = true
-				for (col of this.mediaSearch.columns[this.mediaSearch.currentMedia]) {
-					isEmpty = isEmpty && this.mediaSearch.terms[col] == ""
-				}
-				if (isEmpty) {
-					return // don't bother searching if all are blank
-				}
-				// get our search terms
-				const terms = this.mediaSearch.columns[this.mediaSearch.currentMedia]
-						.filter(t => this.mediaSearch.terms[t].length >= 3) // exclude any that aren't valid
-						.map(t => `${t}=${this.mediaSearch.terms[t]}`) // create query string elements
-						.join("&")  // join to complete query string
-				const designId = this.mediaSearch.currentProduct[`${this.mediaSearch.currentLocation}${this.mediaSearch.currentDecoration}DesignId`]
-				const url = `/sales/mediasearch?media=${this.mediaSearch.currentMedia}&location=${this.mediaSearch.currentLocation}&decoration=${this.mediaSearch.currentDecoration}&design=${designId}&${encodeURI(terms)}`
-				fetch(url)
-				.then(response => response.json())
-				.then(json => {
-					console.log(json)
-					this.mediaSearch.results = json.data
-					if (json.data.length < json.count) {
-						this.mediaSearch.searchMessage = `showing ${json.limit} of ${json.count} results`
-					}
-					else {
-						this.mediaSearch.searchMessage = `${json.data.length} results returned`
-					}
-				})
-				.catch(err => window.alert(`We encountered an error: ${err}`))
-			}
+			.catch(err => window.alert(`We encountered an error: ${err}`))
+			
 		},
 		onMediaSelected(mediaResult) {
 			console.log(mediaResult)
@@ -525,7 +508,32 @@ window.vueApp = Vue.createApp({
 				.catch(err => window.alert(`We encountered an error: ${err}`))
 			}
 		},
+		onDesignSelected(designResult) {
+			const designId = designResult[`${this.designSearch.currentDecoration}DesignId`]
+			this.order.Products[0][`${this.designSearch.currentLocation}${this.designSearch.currentDecoration}DesignId`] = designId
+			this.order.Products[0][`${this.designSearch.currentLocation}${this.designSearch.currentDecoration}DesignName`] = this.designSearch.columns[this.designSearch.currentDecoration].map(c => designResult[c]).join(" ")
+			//todo make sure the two media items are linking to the design, if not remove them
+			// search valid media for this print design, make sure it is contained
+			const media = this.media[this.locations.indexOf(this.designSearch.Decoration)]
+			const vthis = this
 
+			fetch(`/sales/mediasearch/decoration?decoration=${this.designSearch.currentDecoration}&location=${this.designSearch.currentLocation}&id=${designId}`)
+			.then(response => response.json())
+			.then(json => {
+					const mediaIds = json.data.map(m => m[`${json.media}Id`])
+					if (!mediaIds.includes(vthis.order.Products[0][`${vthis.designSearch.currentLocation}${json.media}1Id`])) {
+						vthis.order.Products[0][`${vthis.designSearch.currentLocation}${json.media}1Id`] = null
+						vthis.order.Products[0][`${vthis.designSearch.currentLocation}${json.media}1Name`] = null
+					}
+					if (!mediaIds.includes(vthis.order.Products[0][`${vthis.designSearch.currentLocation}${json.media}2Id`])) {
+						vthis.order.Products[0][`${vthis.designSearch.currentLocation}${json.media}2Id`] = null
+						vthis.order.Products[0][`${vthis.designSearch.currentLocation}${json.media}2Name`] = null
+					}
+			})
+
+			this.$refs.selectDesignDialog.close()
+
+		}
 	}
 }).mount("#app")
 
