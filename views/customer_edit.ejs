@@ -1,5 +1,11 @@
 <%- include("partials/head.ejs") %>
 
+<% if (customer.CustomerId != 0) { %>
+<p>
+	Create a <a href="/order/new?customerid=<%= customer.CustomerId %>">new order</a> for this customer
+</p>
+<% } %>
+	
 
 <% if (typeof errors != "undefined") { %>
 	<h4><i class="fa-solid fa-triangle-exclamation"></i> We couldn’t save the customer: </h4>
