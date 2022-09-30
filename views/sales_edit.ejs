@@ -314,7 +314,6 @@ window.vueApp = Vue.createApp({
 				currentDecoration: "", // Print | Embroidery | Transfer
 				currentLocation:"", // Front | Back | Pocket | Sleeve
 				currentPosition: "", // 1 | 2
-				currentProduct: {},
 				searchMessage: "",
 				results: []
 			},
@@ -331,7 +330,6 @@ window.vueApp = Vue.createApp({
 				},
 				currentDecoration: "", // Print | Embroidery | Transfer
 				currentLocation:"", // Front | Back | Pocket | Sleeve
-				currentProduct: {},
 				searchMessage: "",
 				results: []
 			}
@@ -384,7 +382,9 @@ window.vueApp = Vue.createApp({
 				if (existingProduct.SizeCategory != selectedProduct.SizeCategory)
 				{
 					// when the size category changes, reset all sizes back to 0
-					sizes[existingProduct.SizeCateogry].forEach(s => existingProduct[s] == 0)
+					sizes[existingProduct.SizeCategory].forEach(function(s) {
+						 existingProduct[s] == 0
+					})
 				}
 				existingProduct.GarmentId = selectedProduct.GarmentId
 				existingProduct.Code = selectedProduct.Code
@@ -408,20 +408,18 @@ window.vueApp = Vue.createApp({
 			this.order.Products = this.order.Products.filter(p => p.GarmentId != garmentId)
 		},
 		onSelectMedia(product, decoration, location, media, position) {
-	
 
 			this.mediaSearch.currentMedia = media
 			this.mediaSearch.currentLocation = location
 			this.mediaSearch.currentDecoration = decoration
 			this.mediaSearch.currentPosition = position
-			this.mediaSearch.currentProduct = product
 
 			this.mediaSearch.results = []
 			this.$refs.selectMediaDialog.showModal()
 
 			this.mediaSearch.searchMessage = ""
 
-			const designId = this.mediaSearch.currentProduct[`${this.mediaSearch.currentLocation}${this.mediaSearch.currentDecoration}DesignId`]
+			const designId = this.order.Products[0][`${this.mediaSearch.currentLocation}${this.mediaSearch.currentDecoration}DesignId`]
 			const url = `/sales/mediasearch?media=${this.mediaSearch.currentMedia}&location=${this.mediaSearch.currentLocation}&decoration=${this.mediaSearch.currentDecoration}&design=${designId} ` 
 			fetch(url)
 			.then(response => response.json())
@@ -441,8 +439,8 @@ window.vueApp = Vue.createApp({
 		onMediaSelected(mediaResult) {
 			console.log(mediaResult)
 
-			this.mediaSearch.currentProduct[`${this.mediaSearch.currentLocation}${this.mediaSearch.currentMedia}${this.mediaSearch.currentPosition}Id`] = mediaResult.Id 
-			this.mediaSearch.currentProduct[`${this.mediaSearch.currentLocation}${this.mediaSearch.currentMedia}${this.mediaSearch.currentPosition}Name`] = Object.keys(mediaResult).filter(k => k !== "Id").map(k => mediaResult[k]).join(" ")
+			this.order.Products[0][`${this.mediaSearch.currentLocation}${this.mediaSearch.currentMedia}${this.mediaSearch.currentPosition}Id`] = mediaResult.Id 
+			this.order.Products[0][`${this.mediaSearch.currentLocation}${this.mediaSearch.currentMedia}${this.mediaSearch.currentPosition}Name`] = Object.keys(mediaResult).filter(k => k !== "Id").map(k => mediaResult[k]).join(" ")
 
 			this.$refs.selectMediaDialog.close()
 		},
@@ -455,7 +453,6 @@ window.vueApp = Vue.createApp({
 			Object.keys(this.designSearch.terms).forEach(t => this.designSearch.terms[t] = "")
 			this.designSearch.currentLocation = location
 			this.designSearch.currentDecoration = decoration
-			this.designSearch.currentProduct = product
 			this.designSearch.results = []
 
 			this.$refs.selectDesignDialog.showModal()

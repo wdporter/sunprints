@@ -780,33 +780,32 @@ router.get("/edit/:id", (req, res) => {
 				SizeCategory: od.SizeCategory
 			}
 
-			if (od.SizeCategory != null) {
+			sz.allSizes.forEach(size => {
+				product[size] = od[size]
+			})
 
-					sz.sizes[od.SizeCategory].forEach(sz => product[sz] = od[sz] )
-
-				sz.locations.forEach(loc => {
-					sz.decorations.forEach(dec => {
-						product[`${loc}${dec}DesignId`] = od[`${loc}${dec}DesignId`]
-						product[`${loc}${dec}DesignName`] = od[`${loc}${dec}DesignName`]
-					})
-
-					sz.media.forEach(m => {
-						product[`${loc}${m}1Id`] = od[`${loc}${m}1Id`]
-						product[`${loc}${m}1Name`] = od[`${loc}${m}1Name`]
-						product[`${loc}${m}2Id`] = od[`${loc}${m}2Id`]
-						product[`${loc}${m}2Name`] = od[`${loc}${m}2Name`]
-					})
+			sz.locations.forEach(loc => {
+				sz.decorations.forEach(dec => {
+					product[`${loc}${dec}DesignId`] = od[`${loc}${dec}DesignId`]
+					product[`${loc}${dec}DesignName`] = od[`${loc}${dec}DesignName`]
 				})
 
-				sz.locations.forEach(loc => {
-					if (product[`${loc}Screen1Name`] == "(standard)  ")
-						product[`${loc}Screen1Name`] = null
-					if (product[`${loc}Screen2Name`] == "(standard)  ")
-						product[`${loc}Screen2Name`] = null
+				sz.media.forEach(m => {
+					product[`${loc}${m}1Id`] = od[`${loc}${m}1Id`]
+					product[`${loc}${m}1Name`] = od[`${loc}${m}1Name`]
+					product[`${loc}${m}2Id`] = od[`${loc}${m}2Id`]
+					product[`${loc}${m}2Name`] = od[`${loc}${m}2Name`]
 				})
+			})
 
-				order.Products.push(product)
-			}
+			sz.locations.forEach(loc => {
+				if (product[`${loc}Screen1Name`] == "(standard)  ")
+					product[`${loc}Screen1Name`] = null
+				if (product[`${loc}Screen2Name`] == "(standard)  ")
+					product[`${loc}Screen2Name`] = null
+			})
+
+			order.Products.push(product)
 		})
 
 		const customers = db.prepare("SELECT CustomerId, Company || CASE WHEN Deleted=1 THEN ' (deleted)' ELSE '' END AS Company  FROM Customer ORDER BY Company").all()
@@ -875,12 +874,21 @@ router.get("/productsearch", (req, res) => {
 })
 
 // GET all candidate media types for the given Decoration 
-//  example /sales/mediasearch?media=Usb&location=Front&decoration=Embroidery&design=4885&Number=wsert&Notes=abc
+//  example /sales/mediasearch?media=Usb&location=Front&decoration=Embroidery&design=n
 router.get("/mediasearch", (req, res) => {
 
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
+	const { media, location, decoration, design} = req.query
+
 	try {
+
+		if (! sz.decorations.includes(decoration))
+			throw new Error ("bad decoration")
+		if (! sz.media.includes(media))
+			throw new Error ("bad medium")
+		if (! sz.locations.includes(location))
+			throw new Error ("bad location")
 
 		const mediaColumns = {
 			Screen: ["Screen.ScreenId AS Id", "Name", "Number", "Colour" ],
@@ -889,26 +897,23 @@ router.get("/mediasearch", (req, res) => {
 		}
 
 		let query = /*sql*/`SELECT ${mediaColumns[req.query.media].join(", ")}, SizeCategory
-	FROM ${req.query.media}
+	FROM ${media}
 	INNER JOIN 
-		${req.query.media}${req.query.decoration}Design 
-			ON ${req.query.media}${req.query.decoration}Design.${req.query.media}Id = ${req.query.media}.${req.query.media}Id
-	WHERE ${req.query.decoration}DesignId=?
-		AND ${req.query.media}${req.query.decoration}Design.${req.query.location}=1
-		AND NOT Name IS NULL
+		${media}${decoration}Design 
+			ON ${media}${decoration}Design.${media}Id = ${media}.${media}Id
+	WHERE ${decoration}DesignId=?
+		AND ${media}${decoration}Design.${location}=1
 		`
-		const params = Object.keys(req.query).filter(k => mediaColumns[req.query.media].includes(k)).map(k => `%${req.query[k]}%`)
-		params.unshift(req.query.design)
 
-		const data = db.prepare(query).all(params)
+		if (media == "Screen") {
+			query += " AND NOT Name IS NULL "
+		}
 
-
+		const data = db.prepare(query).all(design)
 
 		res.send({
 			data
 		})
-
-
 
 	}
 	catch(err) {
