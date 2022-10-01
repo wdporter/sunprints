@@ -532,7 +532,6 @@ window.vueApp = Vue.createApp({
 			const designId = designResult[`${this.designSearch.currentDecoration}DesignId`]
 			this.order.Products[0][`${this.designSearch.currentLocation}${this.designSearch.currentDecoration}DesignId`] = designId
 			this.order.Products[0][`${this.designSearch.currentLocation}${this.designSearch.currentDecoration}DesignName`] = this.designSearch.columns[this.designSearch.currentDecoration].map(c => designResult[c]).join(" ")
-			//todo make sure the two media items are linking to the design, if not remove them
 			// search valid media for this print design, make sure it is contained
 			const media = this.media[this.locations.indexOf(this.designSearch.Decoration)]
 			const vthis = this

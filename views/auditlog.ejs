@@ -76,7 +76,7 @@ window.datatable = new DataTable("table#dt", {
 				let html = ""
 				switch (th.textContent) {
 					case "ObjectName":
-						const tables = ["Customer", "EmbroideryDesign", "Garment", "OrderGarment", "Orders", "PrintDesign", "SalesRep", "Screen", "ScreenPrintDesign", "StockOrder", "StockOrderGarment", "Supplier", "TransferDesign", "TransferName", "TransferNameTransferDesign", "Usb", "UsbEmbroideryDesign", "User"]
+						const tables = ["Customer", "EmbroideryDesign", "Garment", "OrderGarment", "Orders", "PrintDesign", "SalesRep", "SalesTotal", "Sales", "Screen", "ScreenPrintDesign", "StockOrder", "StockOrderGarment", "Supplier", "TransferDesign", "TransferName", "TransferNameTransferDesign", "Usb", "UsbEmbroideryDesign", "User"]
 						html = `<select id=${th.textContent} ><option value=>—Select—${ tables.map(t => `<option>${t}`).join("")}</select> `
 						break
 					case "AuditAction":

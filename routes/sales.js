@@ -1147,8 +1147,6 @@ router.put("/:orderid", (req, res) => {
 						db.prepare(query).run(auditLogId, col, original[col])
 				})
 
-				//todo add Sales and SalesTotal columns to audit log page
-
 			} //~ product.removed
 
 			else if (product.added) {
