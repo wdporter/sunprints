@@ -12,6 +12,10 @@
 	.dialog-table tbody tr:hover {
 		background-color: aliceblue;
 	}
+
+	thead input {
+		border-width: 1px;
+	}
 </style>
 
 <script id="orderDetails" type="application/json"><%- JSON.stringify(order) %></script>
@@ -142,36 +146,36 @@
 
 </fieldset>
 
-<fieldset v-for="(product, i) in order.Products" :key="product.GarmentId">
-	<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
+<div v-for="(product, i) in order.Products" :key="product.GarmentId">
+	<fieldset  v-if="!product.removed" >
+		<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
+		<table style="margin-top:3em">
+			<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
+			<tr>
+				<td>{{ product.Code }}</td>
+				<td>{{ product.Label }}</td>
+				<td>{{ product.Type }}</td>
+				<td>{{ product.Colour }}</td>
+				<td>{{ product.Notes}} </td>
+				<td>{{ product.SizeCategory }}</td>
+			</tr>
+		</table>
 
+		<table style="margin-top:2em">
+			<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz }}</th></tr>
+			<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]"></td></tr>
+		</table>
 
-	<table style="margin-top:3em">
-		<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
-		<tr>
-			<td>{{ product.Code }}</td>
-			<td>{{ product.Label }}</td>
-			<td>{{ product.Type }}</td>
-			<td>{{ product.Colour }}</td>
-			<td>{{ product.Notes}} </td>
-			<td>{{ product.SizeCategory }}</td>
-		</tr>
-	</table>
+		<p style="margin-top:2em">
+			<input type="button" value="Change product" @click="onChangeProduct(product)" />&emsp;
+			<input type="reset" value="Remove product" @click="onRemoveProduct(product.GarmentId)" :disabled="order.Products.length==1" /> 
+		</p>
 
-	<table style="margin-top:3em">
-		<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz }}</th></tr>
-		<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]"></td></tr>
-	</table>
+	</fieldset>
+</div>
 
-	<p>
-		<input type="button" value="Change product" @click="onChangeProduct(product)" />&emsp;
-		<input type="reset" value="Remove product" @click="onRemoveProduct(product.GarmentId)" /> 
-	</p>
-
-</fieldset>
-
-<input type="button" value="Add new product" @click="onAddNewProduct" />&emsp;
-<input type="submit" value="Save changes" :disabled = "order.Products.length == 0" />
+<p><input type="button" value="Add new product" @click="onAddNewProduct" />&emsp;</p>
+<p><input type="submit" value="Save changes" @click="onSaveChanges" :disabled = "order.Products.length == 0" /></p>
 
 <dialog ref="selectMediaDialog" style="max-width: var(--measure);">
 	<h3>Select {{ mediaSearch.currentMedia }} </h3>
@@ -268,6 +272,18 @@
 	</p>
 </dialog>
 
+
+<dialog id="messageDialog" ref="messageDialog">
+	<h4>{{ messageDialog.heading }}</h4>
+	<p>{{ messageDialog.icon }} {{ messageDialog.message }}</p>
+	<p>
+		<form method="dialog">
+			<button value="cancel">OK</button>
+		</form>
+	</p>
+</dialog>
+
+
 </div>
 
 
@@ -288,6 +304,11 @@ window.vueApp = Vue.createApp({
 			salesReps,
 			sizes,
 			allSizes,
+			messageDialog: {
+				heading: "",
+				message: "",
+				icon: "❤️"
+			},
 			locations: ["Front", "Back", "Pocket", "Sleeve"],
 			decorations: ["Print", "Embroidery", "Transfer"],
 			media: ["Screen", "Usb", "TransferName"],
@@ -374,6 +395,7 @@ window.vueApp = Vue.createApp({
 			const existingProduct = this.order.Products.find(p => p.GarmentId == this.productSearch.oldProductId)
 			if (!existingProduct) {
 				// it's a new product being added
+				selectedProduct.added = true
 				this.allSizes.forEach(s => selectedProduct[s] = 0 )
 				this.order.Products.push(selectedProduct)
 			}
@@ -405,7 +427,8 @@ window.vueApp = Vue.createApp({
 			})
 		},
 		onRemoveProduct(garmentId) {
-			this.order.Products = this.order.Products.filter(p => p.GarmentId != garmentId)
+			const deletedItem = this.order.Products.find(p => p.GarmentId == garmentId)
+			deletedItem.removed = true
 		},
 		onSelectMedia(product, decoration, location, media, position) {
 
@@ -530,10 +553,40 @@ window.vueApp = Vue.createApp({
 
 			this.$refs.selectDesignDialog.close()
 
+		},
+		onSaveChanges() {
+			const vthis = this
+			fetch(`/sales/${this.order.OrderId}`, {
+				method: "PUT",
+				headers: new Headers({
+					"Content-Type": "application/json"
+				}),
+				body: JSON.stringify(this.order)
+			})
+			.then(response => {
+				if (response.ok) {
+					vthis.messageDialog.heading = "Success"
+					vthis.messageDialog.icon = "✅"
+					vthis.messageDialog.message = "We have saved your changes"
+					vthis.$refs.messageDialog.showModal()
+					
+					// update products array in case there's a subsequent save
+					this.order.Products = this.order.Products.filter(p => p.removed == false)
+					this.order.Products.forEach(p => p.added = false)
+				}
+				else
+					throw new Error(response.statusText)
+			})
+			.catch(err => {
+				vthis.messageDialog.heading = "We encountered an error"
+				vthis.messageDialog.icon = "❌"
+				vthis.messageDialog.message = err.message
+				vthis.$refs.messageDialog.showModal()
+	
+			})
 		}
 	}
 }).mount("#app")
-
 
 </script>
 

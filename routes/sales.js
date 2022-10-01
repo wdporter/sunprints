@@ -631,8 +631,8 @@ router.get("/edit/:id", (req, res) => {
 	try {
 
 		let query = /*sql*/`SELECT 
-		SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.CustomerId, SalesTotal.SalesRep, SalesTotal.OrderDate, SalesTotal.Repeat, SalesTotal.New, SalesTotal.BuyIn, SalesTotal.Terms, SalesTotal.Delivery,SalesTotal.Notes, SalesTotal.CustomerOrderNumber, SalesTotal.DateProcessed, SalesTotal.DateInvoiced, 	
-		Sales.GarmentId,
+		SalesTotal.rowid, SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.CustomerId, SalesTotal.SalesRep, SalesTotal.OrderDate, SalesTotal.Repeat, SalesTotal.New, SalesTotal.BuyIn, SalesTotal.Terms, SalesTotal.Delivery,SalesTotal.Notes, SalesTotal.CustomerOrderNumber, SalesTotal.DateProcessed, SalesTotal.DateInvoiced, 	
+		Sales.rowid AS salesrowid, Sales.GarmentId, Sales.OrderGarmentId,
 		Garment.Code, Label, Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, Garment.Deleted,
 		${sz.allSizes.map(s => `Sales.${s}`).join(",")},
 		fpd.PrintDesignId AS FrontPrintDesignId,
@@ -752,6 +752,7 @@ router.get("/edit/:id", (req, res) => {
 		const orderDetails = db.prepare(query).all(req.params.id)
 
 		const order = {
+			rowid: orderDetails[0].rowid,
 			OrderId: orderDetails[0].OrderId,
 			OrderNumber: orderDetails[0].OrderNumber, 
 			CustomerId: orderDetails[0].CustomerId, 
@@ -770,6 +771,7 @@ router.get("/edit/:id", (req, res) => {
 		}
 		orderDetails.forEach(od => {
 			const product = {
+				salesrowid: od.salesrowid,
 				GarmentId: od.GarmentId,
 				Deleted: od.Deleted,
 				Code: od.Code,
@@ -777,7 +779,9 @@ router.get("/edit/:id", (req, res) => {
 				Type: od.Type,
 				Colour: od.Colour,
 				Notes: od.GarmentNotes,
-				SizeCategory: od.SizeCategory
+				SizeCategory: od.SizeCategory,
+				removed: false,
+				added: false,
 			}
 
 			sz.allSizes.forEach(size => {
@@ -877,7 +881,7 @@ router.get("/productsearch", (req, res) => {
 //  example /sales/mediasearch?media=Usb&location=Front&decoration=Embroidery&design=n
 router.get("/mediasearch", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	const { media, location, decoration, design} = req.query
 
@@ -1019,9 +1023,220 @@ router.get("/mediasearch/decoration", (req, res) => {
 	finally {
 		db.close()
 	}
-
-
 }) 
+
+
+router.put("/:orderid", (req, res) => {
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	const { Products } = req.body
+
+	const salesTotalColumns = ["OrderNumber", "CustomerId", "CustomerOrderNumber", "SalesRep",	
+	"OrderDate", "Repeat", "New", "BuyIn", "Terms", "Delivery", "Notes", "DateProcessed", "DateInvoiced"]
+
+	// these are the relevant columns from our size table
+	const salesColumns = ["OrderId", "GarmentId", "OrderGarmentId"]
+	sz.locations.forEach(location => {
+		sz.decorations.forEach(decoration => salesColumns.push(`${location}${decoration}DesignId`))
+		sz.media.forEach(medium => {
+			salesColumns.push(`${location}${medium}Id`)
+			salesColumns.push(`${location}${medium}2Id`)
+		})
+	})
+	sz.allSizes.forEach(size => salesColumns.push(size))
+
+	const date = new Date().toLocaleString()
+
+	try {
+		// retrieve current record from database
+		let query = /*sql*/`SELECT ${salesTotalColumns.join(",")}
+				FROM SalesTotal
+				WHERE OrderId=?`
+		let original = db.prepare(query).get(req.params.orderid)
+
+		// see if any incoming fields have changed
+		// top level properties in our body all belong to the SalesTotal table
+		let changedFields = []
+		salesTotalColumns.forEach(c => {
+			if (original[c] != req.body[c])
+				changedFields.push(c)
+		})
+
+		db.prepare("BEGIN TRANSACTION").run()
+		// if we have changes, update the table
+		if (changedFields.length > 0) {
+			query = /*sql*/`UPDATE SalesTotal SET 
+					${changedFields.map(c => ` ${c}=@${c} `).join(", ")}
+					WHERE OrderId=@OrderId`
+
+			db.prepare(query).run(req.body)
+
+			// audit logging
+			query = `INSERT INTO AuditLog VALUES (null, 'SalesTotal', ?, 'UPD', ?, ?)`
+			let auditLogId = db.prepare(query).run(req.body.OrderId, req.auth.user, date).lastInsertRowid
+			changedFields.forEach(f => {
+				query = `INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)`
+				db.prepare(query).run(auditLogId, f, original[f], req.body[f])
+			})
+		}
+
+		// the media fields have a "1" inside their names, but the tables don't have this, so normalise
+		sz.locations.forEach(location => {
+			sz.media.forEach(medium => {
+				Products[0][`${location}${medium}Id`] = Products[0][`${location}${medium}1Id`]
+				delete Products[0][`${location}${medium}1Id`]
+			})
+		})
+
+
+		// iterate "Products" which are rows in the Sales Total
+		// note, we are only updating the values int the SalesTotal and Sales table
+		// the corresponding tables, Order and OrderGarment are not affected,
+		// so if you edit something in the Sales history, it becomes out of sync with the those tables
+		Products.forEach((product, i) => {
+			if (product.removed) {
+				// it's been deleted
+				// 1. if it's the first item, then move the values for the decoration/media fields to the first non-deleted item
+				if (i == 0) {
+					let firstNotRemoved = Products.find(p => !p.removed)
+					sz.locations.forEach(location => {
+						sz.decorations.forEach(decoration => firstNotRemoved[`${location}${decoration}DesignId`] = product[`${location}${decoration}DesignId`])
+						sz.media.forEach(medium => {
+							firstNotRemoved[`${location}${medium}Id`] = product[`${location}${medium}Id`]
+							firstNotRemoved[`${location}${medium}2Id`] = product[`${location}${medium}2Id`]
+						 })
+						})
+					}
+
+				// 2. get original item
+				query = "SELECT * FROM Sales WHERE rowid = ?"
+				original = db.prepare(query).get(product.salesrowid)
+
+				// 3. add quantites back into stock
+				// the question here is, what happens if a user changes the quantities, and then deletes it?
+				// we can either use the incoming quantities or discard the changes to quantities and use the original item's quantities
+				// we will use the original quantities
+				query = "SELECT * FROM Garment WHERE GarmentId = ?"
+				let garment = db.prepare(query).get(product.GarmentId)
+
+				let changedSizes = [] 
+				sz.allSizes.forEach(size => {
+					if (product[size] != 0)
+						changedSizes.push(size) // not really changed, but we want all product sizes that aren't 0
+				})
+
+				query = /*sql*/`UPDATE Garment SET ${changedSizes.map(s => `${s}=${s}+@${s}`).join(",")}
+						WHERE GarmentId=@GarmentId`
+				db.prepare(query).run(product)
+				query = "INSERT INTO AuditLog VALUES (null, 'Garment', ?, 'UPD', ?, ?)"
+				auditLogId = db.prepare(query).run(product.GarmentId, req.auth.user, date).lastInsertRowid
+				query = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)"
+				changedSizes.forEach(size => {
+					db.prepare(query).run(auditLogId, size, garment[size], garment[size] + product[size])
+				})
+				
+				// 4. remove from Sales table
+				query = "DELETE FROM Sales WHERE rowid=?"
+				db.prepare(query).run(product.salesrowid)
+				
+				query = "INSERT INTO AuditLog VALUES (null, 'Sales', ?, 'DEL', ?, ?)"
+				auditLogId = db.prepare(query).run(product.salesrowid, req.auth.user, date).lastInsertRowid
+				query = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, null)"
+				salesColumns.forEach(col => {
+					if (original[col])
+						db.prepare(query).run(auditLogId, col, original[col])
+				})
+
+				//todo add Sales and SalesTotal columns to audit log page
+
+			} //~ product.removed
+
+			else if (product.added) {
+				// 1. it's new so do an insert
+				changedFields = []
+				salesColumns.forEach(c => {
+					if (product[c] != null)
+						changedFields.push(c)
+				})
+				query = `INSERT INTO Sales (OrderId, ${changedFields.join(",")}) VALUES (${req.params.orderid}, ${changedFields.map(c => `@${c}`).join(",")})`
+				let newRowid = db.prepare(query).run(product).lastInsertRowid
+				query = "INSERT INTO AuditLog VALUES (null, 'Sales', ?, 'INS', ?, ?)"
+				auditLogId = db.prepare(query).run(newRowid, req.auth.user, date).lastInsertRowid
+				query = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, null, ?)"
+				changedFields.forEach(f => {
+					db.prepare(query).run(auditLogId, f, product[f])
+				})
+				
+				// 2. remove quantities from stock levels
+				let changedSizes = sz.allSizes.filter(s => product[s] > 0)
+				if (changedSizes.length > 0) { // because sometimes every size is 0
+					query = "INSERT INTO AuditLog VALUES (null, 'Garment', ?, 'UPD', ?, ?)"
+					auditLogId = db.prepare(query).run(product.GarmentId, req.auth.user, date).lastInsertRowid
+					original = db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(product.GarmentId)
+					query = `UPDATE Garment SET ${changedSizes.map(s => `${s}=${s}-${product[s]}`).join(",")} WHERE GarmentId=?`
+					let q2 = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)"
+					changedSizes.forEach(function(size) {
+						db.prepare(query).run(product.GarmentId)
+						db.prepare(q2).run(auditLogId, size, original[size], original[size] - product[size])
+					})
+			}
+			} //~ product.added
+
+			else { // update existing product
+				// 1. iterate fields to see if anything has changed
+				let original = db.prepare("SELECT * FROM Sales WHERE rowid=?").get(product.salesrowid)
+				changedFields = []
+				salesColumns.forEach(col => {
+					if (col != "OrderId" && col != "OrderGarmentId")
+						if (original[col] != product[col])
+							changedFields.push(col)
+				})
+
+				// 2. update statement for changes
+				if (changedFields.length > 0) {
+					let query = `UPDATE Sales SET ${changedFields.map(f => `${f}=@${f}`).join(", ")} WHERE rowid=@salesrowid`
+					db.prepare(query).run(product)
+					query = "INSERT INTO AuditLog VALUES (null, 'Sales', ?, 'UPD', ?, ?)"
+					auditLogId = db.prepare(query).run(product.salesrowid, req.auth.user, date).lastInsertRowid
+					query = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)"
+					changedFields.forEach(f => {
+						db.prepare(query).run(auditLogId, f, original[f], product[f])
+					})
+
+					// 3. if quantities are lower, add back into stock, or if quantities are higher, remove from stock
+					changedSizes = sz.allSizes.filter(size => original[size] != product[size])
+					if (changedSizes.length > 0){
+						query = "INSERT INTO AuditLog VALUES (null, 'Garment', ?, 'UPD', ?, ?)"
+						const originalGarment = db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(product.GarmentId)
+						auditLogId = db.prepare(query).run(product.GarmentId, req.auth.user, date).lastInsertRowid
+						query = `UPDATE Garment SET ${changedSizes.map(s => `${s}=${s} + (${original[s]} - @${s})`).join(", ")} WHERE GarmentId=@GarmentId`
+						db.prepare(query).run(product)
+						query = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)"
+						changedSizes.forEach(size => {
+							db.prepare(query).run(auditLogId, size, originalGarment[size], originalGarment[size] + (original[size] - product[size]) )
+						})
+					}//~ changedSizes.length
+				}//~ changedFields.length
+
+			} //~ end update existing product
+
+		}) //~ Products.forEach
+
+		db.prepare("COMMIT").run()
+		res.send()
+	}
+	catch(err) {
+		res.statusMessage = err.message
+		res.sendStatus(400)
+
+		db.prepare("ROLLBACK").run()
+		console.log(`Error: ${err}`)
+	}
+	finally {
+		db.close()
+	}
+
+})
 
 
 
