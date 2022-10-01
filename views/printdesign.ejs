@@ -508,7 +508,6 @@
 					if (id != 0) {
 						// it was an edit, just close the dialog
 						document.getElementById("createScreenDialog").close()
-						// todo, how do we update the display ?
 						document.querySelector(`span.screenNumberSpan[data-id='${id}']`).textContent = document.getElementById("newScreenNumber").value
 						document.querySelector(`span.screenColourSpan[data-id='${id}']`).textContent = document.getElementById("newScreenColour").value
 						document.querySelector(`span.screenNameSpan[data-id='${id}']`).textContent = document.getElementById("newScreenName").value

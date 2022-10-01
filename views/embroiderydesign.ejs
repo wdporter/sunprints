@@ -479,7 +479,6 @@
 					if (id != 0) {
 						// it was an edit, just close the dialog
 						document.getElementById("createUsbDialog").close()
-						// todo, how do we update the display ?
 						document.querySelector(`span.usbNumberSpan[data-id='${id}']`).textContent = document.getElementById("createUsbNumber").value
 						document.querySelector(`span.usbNotesSpan[data-id='${id}']`).textContent = document.getElementById("createUsbNotes").value
 						
