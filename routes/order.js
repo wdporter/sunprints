@@ -205,7 +205,7 @@ router.get("/edit", function (req, res, next) {
 		Code, Type, Colour, Label, Price,  
 		${sz.sizes.Kids.map(s => `OrderGarment.${s}`).join(" , ")}, 
 		${sz.sizes.Womens.map(s => `OrderGarment.${s}`).join(" , ")}, 
-		${sz.sizes.Adults.map(s => `OrderGarment.${s}`).join(" , ")} 
+		${sz.sizes.Adults.map(s => `OrderGarment.${s}`).join(" , ")}, 
 		${sz.sizes.Kids.map(s => `Min${s}`).join(" , ")}, 
 		${sz.sizes.Womens.map(s => `Min${s}`).join(" , ")}, 
 		${sz.sizes.Adults.map(s => `Min${s}`).join(" , ")}, 
