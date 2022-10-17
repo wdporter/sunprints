@@ -2,7 +2,7 @@
 
 
 <style>
-	.design-table th {
+	.design-table thead th {
 		text-align: center;
 	}
 	.dialog-table {
@@ -13,9 +13,6 @@
 		background-color: aliceblue;
 	}
 
-	thead input {
-		border-width: 1px;
-	}
 </style>
 
 <script id="orderDetails" type="application/json"><%- JSON.stringify(order) %></script>
@@ -108,7 +105,12 @@
 
 <fieldset><legend>Design</legend>
 	<table class="design-table">
-		<tr><th></th><th v-for="loc in locations">{{ loc }}</th></tr>
+		<thead>
+			<tr>
+				<th></th>
+				<th v-for="loc in locations">{{ loc }}</th>
+			</tr>
+		</thead>
 		<tbody v-for="(dec, i) in decorations">
 			<tr style="border-top:2px black solid">
 				<th>{{ dec }} design</th>
@@ -119,7 +121,7 @@
 				</td>
 			</tr>
 			<tr>
-				<th>{{ media[i] }} 1</th>
+				<th>&emsp;{{ media[i] }} 1</th>
 				<td v-for="loc in locations" :style="{textAlign: order.Products[0][`${loc}${media[i]}1Id`] == null ? 'center' : 'left' }">
 					{{ order.Products[0][`${loc}${media[i]}1Name`] }} 
 					<a href=# @click.prevent="onSelectMedia(order.Products[0], dec, loc, media[i], 1)" :title="`select ${media[i]}`" v-if="order.Products[0][`${loc}${dec}DesignId`] != null">
@@ -130,7 +132,7 @@
 					</a>
 				</td>
 			<tr>
-				<th>{{ media[i] }} 2</th>
+				<th>&emsp;{{ media[i] }} 2</th>
 				<td v-for="loc in locations" :style="{textAlign: order.Products[0][`${loc}${media[i]}2Id`] == null ? 'center' : 'left' }">
 					{{ order.Products[0][`${loc}${media[i]}2Name`] }} 
 					<a href=# @click.prevent="onSelectMedia(order.Products[0], dec, loc, media[i], 2)" :title="`select ${media[i]}`" v-if="order.Products[0][`${loc}${dec}DesignId`] != null">
@@ -288,6 +290,7 @@
 
 
 <script>
+
 
 const order = JSON.parse(document.querySelector("script#orderDetails").textContent)
 const customers = JSON.parse(document.querySelector("script#customers").textContent)

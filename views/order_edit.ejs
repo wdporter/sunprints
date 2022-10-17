@@ -1,0 +1,254 @@
+<%- include("partials/head2.ejs") %>
+
+
+<style>
+.customer-search-table tr:hover {
+	cursor: pointer;
+}
+.filter-dropdown-input {
+	background-image: url('/images/searchicon.png');
+	background-position: 14px 12px;
+  background-repeat: no-repeat;
+	padding-left: 45px;
+}
+dialog {
+	max-width: var(--measure);
+}
+</style>
+
+
+<div id="app">
+
+	<fieldset><legend>Order details (Id: {{ order.OrderId }})</legend>
+
+		<div style="margin-top:var(--unit-2)" ref="customerInfo">
+			<p  v-if="customer.CustomerId">
+				Customer: <a :href="`/customer/edit?id=${customer.CustomerId}`" target="_blank" title="click to view/edit the customer in a new window"> {{ customer.Code}} {{ customer.Company }}</a> {{ customer.Locality }}, {{ customer.State }} &emsp;
+			</p>
+			<details :open="!customer.CustomerId" ref="customerDetails" style="margin-top:var(--unit)" @toggle="onCustomerDetailsToggle">
+				<summary>Choose customer</summary>
+				<customer-pick @customer-select="onCustomerSelect" ref="customerPick"></customer-pick>
+			</details>
+		</div>
+
+		<section>
+			<div>
+				<p>
+					<label for=orderNumber>Order number</label>
+					<input id=orderNumber required placeholder=required v-model="order.OrderNumber" :autofocus="order.OrderId != 0" ref="orderNumberInput" />
+				</p>
+				<p>
+					<label for="salesRep">Sales Rep.</label>
+					<select id="salesRep" required v-model="order.SalesRep">
+						<option value="">—Select—</option>
+						<option v-for="rep in salesReps" :value="rep">{{ rep }}</option>
+					</select>
+				</p>
+				<p>
+					<label for=terms>Terms</label>
+					<select id=terms v-model="order.Terms">
+						<option value="">—Select—</option>
+						<option value="C.O.D.">C.O.D.</option>
+						<option value="Net 7 days">Net 7 days</option>
+						<option value="Net 30 days">Net 30 days</option>
+					</select>
+				</p>
+				<p style="margin-top:3rem">
+					<input id=repeat type=checkbox v-model="order.Repeat" /><label for=repeat>Repeat</label>
+					<input id=newDesign type=checkbox v-model="order.New" /><label for=newDesign>New</label>
+					<input id=buyIn type=checkbox v-model="order.BuyIn" /><label for=buyIn>Buy In</label>
+				</p>
+				<p v-if="order.OrderId==0 && order.BuyIn">
+					<label for="purchaseSelect">Buy In — choose an existing purchase order to set the products</label>
+					<select id="purchaseSelect" v-model="stockOrderId" @change="onPurchaseOrderSelect">
+						<option value="">— Select —</option>
+						<option v-for="po in purchaseOrders" :value="po.StockOrderId">{{ po.StockOrderId }} {{ po.OrderDate }} {{ po.Company }}</option>
+
+					</select> <a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${stockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View</a>
+					todo change the products array when value changes
+				</p>
+	 
+			</div>
+			<div>
+				<p id="invoiceDatePara">
+					<label for=invoiceDate>Invoice Date</label>
+					<input id=invoiceDate type=date v-model="order.InvoiceDate" />
+				</p>
+				<p>
+					<label for=deliveryDate>Delivery Date</label>
+					<input id=deliveryDate v-model="order.DeliveryDate" />
+				</p>
+				<p>
+					<label for=orderDate>Order date</label>
+					<input id=orderDate type=date v-model="order.OrderDate" />
+				</p>
+				<p>
+					<label for=customerOrderNumber>Customer’s order number</label>
+					<input id=customerOrderNumber v-model="order.CustomerOrderNumber" />
+				</p>
+	
+			</div>
+		</section>
+		<p style="margin-top:0">
+			<label for=notes>Order Notes</label>
+			<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
+		</p>
+	
+	</fieldset>
+
+	<fieldset><legend>Design</legend>
+		<table class="design-table">
+			<thead>
+				<tr>
+					<th></th>
+					<th v-for="location in locations">{{ location }}</th>
+				</tr>
+			</thead>
+			<tbody v-for="(decoration, i) in decorations">
+				<tr style="border-top:2px black solid">
+					<th>{{ decoration }} design</th>
+					<td v-for="location in locations">
+						<span v-if="order.products.length > 0">
+							{{ order.products[0][`${location}${decoration}DesignName`] }}
+						</span>&ensp;
+						<a href=# @click.prevent="onOpenDesignPick(location, decoration)" :title="`select ${decoration} design for ${location}`">
+							<span class="fa fa-edit"></span>
+						</a>&ensp;
+						<a href=# title="delete design" v-if="order.products.length > 0 && order.products[0][`${location}${decoration}DesignId`]" >
+							<span class="fa fa-trash"></span>
+						</a>
+					</td>
+				</tr>
+				<tr v-for="n in 2">
+					<th>&emsp;{{ media[i] }} {{ n }}</th>
+					<td v-for="location in locations" >
+						<span v-if="order.products.length > 0">
+							{{ order.products[0][`${location}${media[i]}${n}Name`] }}
+						</span>&ensp;
+						<a v-if="order.products.length > 0 && order.products[0][`${location}${decoration}DesignId`] != null" href=# @click.prevent="onSelectMedia(order.products[0], decoration, location, media[i], n)" :title="`select ${media[i]} for ${location}`" >
+							<span class="fa fa-edit"></span>
+						</a>&ensp;
+						<a v-if="order.products.length > 0 && order.products[0][`${location}${media[i]}${n}Id`]" href=# @click.prevent="onDeleteMedia(order.products[0], decoration, location, media[i], n)" :title="`delete ${media[i]} for ${location}`" >
+							<span class="fa fa-trash"></span>
+						</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</fieldset>
+
+
+	<dl>
+		<dt>Created by:</dt><dd>{{ order.CreatedBy }}</dd>
+		<dt>Created date/time:</dt><dd>{{ order.CreatedDateTime }}</dd>
+		<dt>Last modified by:</dt><dd>{{ order.LastModifiedBy }}</dd>
+		<dt>Last modified date/time:</dt><dd>{{ order.LastModifiedDateTime }}</dd>
+	</dl>
+	
+	
+	<dialog id="designDialog" ref="designDialog">
+		<h4>Choose {{designPickLocation.toLowerCase()}} {{ designPickDecoration.toLowerCase() }} design </h4>
+		<design-pick 
+			@design-select="onDesignSelect(this)" 
+			ref="designPick" 
+			:location="designPickLocation"
+			:decoration="designPickDecoration" >
+		</design-pick>
+
+		<p>
+			<input type="button" value="Close" onclick="this.closest('dialog').close()" />
+		</p>
+	</dialog>
+
+
+</div>
+
+
+<script type="module">
+
+import { createApp, ref, reactive } from "vue"
+import CustomerPick from "customerPick"
+import DesignPick from "designPick"
+
+createApp ({
+	components: {
+		CustomerPick,
+		DesignPick
+	},
+	setup () {
+		const locations = <%- JSON.stringify(locations) %>;
+		const decorations = <%- JSON.stringify(decorations) %>;
+		const media = <%- JSON.stringify(media) %>;
+
+		const customer = ref(<%- JSON.stringify(customer) %>)
+		const customerDetails = ref(null) // <%# uses ref attribute of element %>
+		const customerPick = ref(null)    // <%# uses ref attribute of element %>
+		const customerInfo = ref(null)    // <%# uses ref attribute of element %>
+
+
+		const onCustomerSelect = function(selected) {
+			customer.value = selected
+			customerDetails.value.removeAttribute("open")
+			orderNumberInput.value.focus()
+			customerInfo.value.scrollIntoView({behavior:"smooth"})
+		}
+
+		const designDialog = ref(null) // <%# uses ref attribute of designDialog element %>
+		const designPickLocation = ref("")
+		const designPickDecoration = ref("")
+		const onOpenDesignPick = function(location, decoration) {
+			this.designPickLocation = location
+			this.designPickDecoration = decoration
+			this.$refs.designDialog.showModal()
+		}
+		const onDesignSelect = function(design, what) {
+			console.log(design)
+			//todo populate products[0]
+			this.$refs.designDialog.close()
+		}
+
+
+		const order = ref(<%- JSON.stringify(order) %>)
+		const orderNumberInput = ref(null)
+		const salesReps = ref(<%- JSON.stringify(salesReps) %>)
+		const purchaseOrders = ref(<%- JSON.stringify(purchaseOrders) %>)
+		
+		const stockOrderId = ref(0)
+
+		function onCustomerDetailsToggle() {
+			if (customerDetails.value.open)
+				customerPick.value.receiveFocus()
+		}
+
+		async function onPurchaseOrderSelect () {
+			//todo order.value.products = await fetch (`/stockorder/${stockOrderId.value}`) etc.
+		}
+
+		return {
+			locations,
+			decorations,
+			media,
+			customer,
+			onCustomerSelect,
+			customerDetails,
+			customerPick,
+			customerInfo,
+			onCustomerDetailsToggle,
+			order,
+			orderNumberInput,
+			salesReps,
+			purchaseOrders,
+			stockOrderId,
+			designPickLocation,
+			designPickDecoration,
+			onOpenDesignPick,
+			onDesignSelect 
+		}
+	},
+}).mount("#app")
+
+
+</script>
+
+
+<%- include("partials/foot.ejs") %>

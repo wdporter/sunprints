@@ -147,6 +147,10 @@ button[type="reset"]:hover {
   background-color: var(--color-tertiary-hover)
 }
 
+thead input {
+	border-width: 1px;
+}
+
 input:invalid, select:invalid, textarea:invalid {
   border: 2px dashed red;
 }

@@ -18,6 +18,9 @@ const decorations = ["Print", "Embroidery", "Transfer"]
 
 const media = ["Screen", "Usb", "TransferName"]
 
+const art = []
+decorations.forEach((d, i) => art.push({decoration: d, medium: media[i]}))
+
 const auditColumns = ["CreatedBy", "CreatedDateTime", "LastModifiedBy", "LastModifiedDateTime"]
 
-module.exports = {sizes, allSizes, locations, sizeCategories, auditColumns, decorations, media }
+module.exports = {sizes, allSizes, locations, sizeCategories, auditColumns, decorations, media, art }
