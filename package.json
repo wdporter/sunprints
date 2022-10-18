@@ -1,6 +1,6 @@
 {
   "name": "sunprints",
-  "version": "0.0.1",
+  "version": "1.0.1810",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
