@@ -1449,7 +1449,7 @@ router.get("/designs", (req, res) => {
 // POST for saving a new order
 router.post("/", function (req, res) {
 
-	db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
+	db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		if (!req.body.OrderNumber) {
 			res.statusMessage = "We require an order number"
@@ -1517,8 +1517,8 @@ router.post("/", function (req, res) {
 
 		// now also save the order's garments, if a purchase order was selected
 		if (stockOrderId) {
-			const products = db.prepare(`SELECT * FROM StockOrderGarment WHERE StockOrderId=?`).all(stockOrderId)
-			const insertStatement = db.prepare(`INSERT INTO OrderGarment 
+			const products = db.prepare(/*sql*/`SELECT * FROM StockOrderGarment WHERE StockOrderId=?`).all(stockOrderId)
+			let insertStatement = db.prepare(/*sql*/`INSERT INTO OrderGarment 
 				(OrderId, GarmentId, ${sz.allSizes.join(", ")}, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime )
 			VALUES ( ?, ?, ${sz.allSizes.map(s => "?").join(", ")}, ?, ?, ?, ? )`)
 			products.forEach(p => {
@@ -1529,6 +1529,18 @@ router.post("/", function (req, res) {
 					...sizeValues,
 					req.body.CreatedBy, req.body.CreatedDateTime, req.body.LastModifiedBy, req.body.LastModifiedDateTime)
 			})
+			// it also goes into sales table
+			insertStatement = db.prepare(/*sql*/`INSERT INTO Sales
+			(OrderId, GarmentId, ${sz.allSizes.join(", ")})
+			VALUES (?, ?, ${sz.allSizes.map(s => "?").join(", ")})
+			`)
+			products.forEach(p => {
+				const sizeValues = sz.allSizes.map(function (s) {
+					return p[s]
+				})
+				insertStatement.run(req.body.OrderId, p.GarmentId, ...sizeValues)
+			})
+			// todo should garment stock levels be updated also?
 		}
 
 		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
