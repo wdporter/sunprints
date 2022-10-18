@@ -117,7 +117,7 @@
 				<td v-for="loc in locations" :style="{textAlign: order.Products[0][`${loc}${dec}DesignId`] == null ? 'center' : 'left' }">
 					{{ order.Products[0][`${loc}${dec}DesignName`] }} 
 					<a href=# @click.prevent="onSelectDesign(order.Products[0], dec, loc)" title="select design"><span class="fa fa-edit"></span></a>&nbsp;
-					<a href=# title="delete design" v-if="order.Products[0][`${loc}${dec}DesignId`]" ><span class="fa fa-trash"></span></a>
+					<a href=# @click.prevent="onDeleteDesign(dec, loc)" title="delete design" v-if="order.Products[0][`${loc}${dec}DesignId`]" ><span class="fa fa-trash"></span></a>
 				</td>
 			</tr>
 			<tr>
@@ -496,6 +496,20 @@ window.vueApp = Vue.createApp({
 					}
 				}
 			})
+		},
+		onDeleteDesign(decoration, location) {
+			const product = this.order.Products[0]
+			
+			// first, delete any media,
+			const media = this.media[this.decorations.indexOf(decoration)]
+			this.onDeleteMedia(product, decoration, location, media, 1 )
+			this.onDeleteMedia(product, decoration, location, media, 2 )
+			
+			// then delete the decoration
+			product[`${location}${decoration}DesignId`] = null
+			product[`${location}${decoration}DesignName`] = ""
+
+
 		},
 		onSearchDesign(event) {
 			this.designSearch.searchMessage = ""
