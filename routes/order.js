@@ -1449,7 +1449,7 @@ router.get("/designs", (req, res) => {
 // POST for saving a new order
 router.post("/", function (req, res) {
 
-	db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
 		if (!req.body.OrderNumber) {
 			res.statusMessage = "We require an order number"
@@ -1498,7 +1498,7 @@ router.post("/", function (req, res) {
 		let info = statement.run(req.body)
 		console.log(info)
 		req.body.OrderId = info.lastInsertRowid
-
+3
 		// now also insert it into SalesTotal
 		let salesTotalCols = columns.filter(c => c != "CreatedBy" && c != "CreatedDateTime" && c != "LastModifiedBy" && c != "LastModifiedDateTime")
 		//change name of delivery date
@@ -1540,7 +1540,21 @@ router.post("/", function (req, res) {
 				})
 				insertStatement.run(req.body.OrderId, p.GarmentId, ...sizeValues)
 			})
-			// todo should garment stock levels be updated also?
+			// update the garment table that has the quantity of each size
+			// in theory this could send the balances negative because the purchase order might not be received yet
+			let updateStatement = /*sql*/db.prepare(`UPDATE Garment SET 
+			${sz.allSizes.map(size => `${size}=${size}-?`).join(", ")}
+			WHERE GarmentId=?`)
+			products.forEach(p => {
+				const sizeValues = sz.allSizes.map(function (s) {
+					return p[s]
+				})
+				info = updateStatement.run(...sizeValues, p.GarmentId)
+				console.log(info)
+			})
+			// todo also into AuditLogEntry for Garment
+
+			
 		}
 
 		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
@@ -1698,9 +1712,6 @@ router.post("/:id/garment", function (req, res) {
 				info = db.prepare(query).run(req.body)
 			}
 			console.log(info)
-			// NOTE we should probably update SalesTotal.TotalQuantity and SalesTotal.TotalValue, 
-			// but we prefer to do that on the fly when using the Sales page
-
 
 			// remove from garment stock order levels
 			let myGarment = null
