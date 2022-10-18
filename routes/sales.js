@@ -780,7 +780,7 @@ router.get("/edit/:id", (req, res) => {
 				Colour: od.Colour,
 				Notes: od.GarmentNotes,
 				SizeCategory: od.SizeCategory,
-				Price: od.Price.toFixed(2),
+				Price: od.Price?.toFixed(2) ?? null,
 				removed: false,
 				added: false,
 			}
