@@ -1580,7 +1580,7 @@ router.post("/", function (req, res) {
 // POST garment details for the order id
 // if it is already in the table, it's an update, otherwise it's an insert
 router.post("/:id/garment", function (req, res) {
-	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
