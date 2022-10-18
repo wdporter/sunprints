@@ -424,19 +424,30 @@ table.stockWarningTable {
 					.then(json => {
 						const table = document.getElementById("customerTable")
 						table.innerHTML = json.map(row => {
-							return `<tr onclick='populateCustomer(this)' data-id=${row.CustomerId} class=customer-row><td>${row.Code}<td>${row.Company}<td>${row.Locality || ""} ${row.State || ""}`
+							return /*html*/`
+								<tr data-id=${row.CustomerId} class=customer-row>
+									<td><a href=# onclick='populateCustomer(this, event)'>Select
+									<td>${row.Code}
+									<td>${row.Company}
+									<td>${row.Locality || ""} ${row.State || ""}`
 						}).join("")
 					})
 			}
 		})
 
 
-		function populateCustomer(tr) {
+		function populateCustomer(a, event) {
+			event.preventDefault()
+
+			const tr = a.closest("tr")
+
 			console.log("customer selected")
-			document.getElementById("selectedCustomerCode").textContent = tr.children[0].textContent
-			document.getElementById("selectedCustomerCompany").textContent = tr.children[1].textContent
-			document.getElementById("selectedCustomerLink").href = `/customer/edit?id=${tr.dataset.id}`
-			document.getElementById("selectedCustomerLink").textContent = "View/Edit"
+			document.getElementById("selectedCustomerCode").textContent = tr.children[1].textContent
+			document.getElementById("selectedCustomerCompany").textContent = tr.children[2].textContent
+			const customerLink = document.getElementById("selectedCustomerLink")
+			customerLink.href = `/customer/edit?id=${tr.dataset.id}`
+			customerLink.textContent = "View/Edit"
+			customerLink.focus()
 			document.getElementById("selectedCustomerId").value = tr.dataset.id
 			document.getElementById("chooseCustomerDetails").removeAttribute("open")
 			document.getElementById("searchCustomerInput").value = ""
