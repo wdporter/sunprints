@@ -127,7 +127,7 @@ ${whereClause}`).get().count
 
 /* GET the experimental new/edit order page */
 router.get("/edit2", function(req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
 		const salesReps = db.prepare("SELECT Name FROM SalesRep WHERE DELETED=0").all().map(sr => sr.Name)
@@ -1398,7 +1398,7 @@ router.get("/xero/csv", (req, res)=> {
 
 router.get("/designs", (req, res) => {
 	console.log(req.query)
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	const medium = sz.art.find(a => a.decoration == req.query.decoration).medium
 

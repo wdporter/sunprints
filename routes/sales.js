@@ -626,7 +626,7 @@ router.get("/csv/", (req, res) => {
 // GET edit page for a sales history item
 router.get("/edit/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
 
@@ -1034,7 +1034,7 @@ router.get("/mediasearch/decoration", (req, res) => {
 
 // called by a fetch, saves a salestotal/sales item
 router.put("/:orderid", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	const { Products } = req.body
 
