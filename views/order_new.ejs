@@ -51,6 +51,7 @@ table.stockWarningTable {
 	margin-left: 2em;
 }
 
+
 </style>
 
 <dialog id=deleteDialog>
@@ -230,8 +231,14 @@ table.stockWarningTable {
 					<input @input="getPrintDesigns(g.SizeCategory)" v-model="printDesignTypeAhead"
 						placeholder="start typing design code or notes — click row to select" />
 					<table class="design-table">
-						<tr v-for="item in printDesignItems" @click="selectPrintDesign($event, g)" :data-id="item.PrintDesignId" title="click to select">
-							<td><span class="fa fa-plus" title="Add print design" ></span></td>
+						<tr v-for="item in printDesignItems" title="click to select">
+							<td>
+								<a href=# title="Add print design" 
+										@click.prevent="selectPrintDesign($event, g, item)" 
+										@keydown.enter.space.prevent="selectPrintDesign($event, g, item)" >
+									<span class="fa fa-plus"  ></span>
+								</a>
+							</td>
 							<td>{{ item.Code }}</td>
 							<td>{{ item.Notes}}</td>
 							<td>{{ item.Comments }}</td>
@@ -277,9 +284,14 @@ table.stockWarningTable {
 					<input @input="getTransferDesigns(g.SizeCategory)" v-model="transferDesignTypeAhead"
 						placeholder="start typing design code or notes — click row to select" />
 					<table class="design-table">
-						<tr v-for="item in transferDesignItems" @click="selectTransferDesign($event, g)"
-							:data-id="item.TransferDesignId">
-							<td><span class="fa fa-plus" title="Add transfer design" ></span></td>
+						<tr v-for="item in transferDesignItems" >
+							<td>
+								<a href="#" title="click to select" 
+										@click.prevent="selectTransferDesign($event, g, item)"
+										@keydown.enter.space.prevent="selectTransferDesign($event, g, item)" >
+									<span class="fa fa-plus" title="Add transfer design" ></span>
+								</a>
+							</td>
 							<td>{{ item.Code }}</td>
 							<td>{{ item.Notes}}</td>
 						</tr>
@@ -311,9 +323,14 @@ table.stockWarningTable {
 					<input @input="getEmbroideryDesigns(g.SizeCategory)" v-model="embroideryDesignTypeAhead"
 						placeholder="start typing design code or notes — click row to select" />
 					<table class="design-table">
-						<tr v-for="item in embroideryDesignItems" @click="selectEmbroideryDesign($event, g)"
-							:data-id="item.EmbroideryDesignId">
-							<td><span class="fa fa-plus" title="Add embroidery design" ></span></td>
+						<tr v-for="item in embroideryDesignItems" >
+							<td>
+								<a href="#" title="Add embroidery design" 
+										@click.prevent="selectEmbroideryDesign($event, g, item)"
+										@keydown.enter.space.prevent="selectEmbroideryDesign($event, g, item)" >
+									<span class="fa fa-plus"></span>
+								</a>
+							</td>
 							<td>{{ item.Code }}</td>
 							<td>{{ item.Notes}}</td>
 							<td>{{ item.Comments }}</td>
@@ -599,9 +616,9 @@ table.stockWarningTable {
 					width: "1em",
 					render: (data) => {
 <% if (poweruser || salesrep) { %> 
-						return `
+						return /*html*/`
 							<a href=# class=add-garment-link >
-								<span class="fa fa-plus   fa-lg" data-id=${data} title="Add product to order" onclick="addGarment(${data}, event)" ></span>
+								<span class="fa fa-plus   fa-lg" data-id=${data} title="Add product to order" ></span>
 							</a>`
 <% } else { %> 
 						return ""
@@ -651,8 +668,14 @@ table.stockWarningTable {
 		})
 
 
-			function addGarment(id) {
-				const data = garmentDataTable.row(`#row-${id}`).data()
+		// also works on keydown for link
+		$("table#garmentTable tbody").on("click", "a", function(event) {
+			event.preventDefault()
+			const row = window.garmentDataTable.row($(this).closest("tr"))
+			addGarment(row.data())
+		})
+
+			function addGarment(data) {
 				if (!app.garments.some(g => g.GarmentId == data.GarmentId)) {
 					app.addGarment({
 					OrderGarmentId: 0,
@@ -782,13 +805,13 @@ table.stockWarningTable {
 							}
 						}
 					},
-					selectPrintDesign(event, garment) {
+					selectPrintDesign(event, garment, item) {
 						// add to garment
 						garment.selectedPrintDesign = {
-							Code: event.currentTarget.children[1].textContent,
-							Notes: event.currentTarget.children[2].textContent,
-							Comments: event.currentTarget.children[3].textContent,
-							PrintDesignId: event.currentTarget.dataset.id
+							Code: item.Code,
+							Notes: item.Notes,
+							Comments: item.Comments,
+							PrintDesignId: item.PrintDesignId
 						}
 						// reset ui
 						event.currentTarget.closest("details").removeAttribute("open")
@@ -820,13 +843,13 @@ table.stockWarningTable {
 							})
 							.catch(error => window.alert(`We encountered an error: ${error}`))
 					},
-					selectEmbroideryDesign(event, garment) {
+					selectEmbroideryDesign(event, garment, item) {
 						// add to garment
 						garment.selectedEmbroideryDesign = {
-							Code: event.currentTarget.children[0].textContent,
-							Notes: event.currentTarget.children[1].textContent,
-							Comments: event.currentTarget.children[2].textContent,
-							EmbroideryDesignId: event.currentTarget.dataset.id
+							Code: item.Code,
+							Notes: item.Notes,
+							Comments: item.Comments,
+							EmbroideryDesignId: item.EmbroideryDesignId
 						}
 						// reset ui
 						event.currentTarget.closest("details").removeAttribute("open")
@@ -861,12 +884,12 @@ table.stockWarningTable {
 						})
 						.catch(error => window.alert(`We encountered an error: ${error}`))
 					},
-					selectTransferDesign(event, garment) {
+					selectTransferDesign(event, garment, item) {
 						// add to garment
 						garment.selectedTransferDesign = {
-							Code: event.currentTarget.children[0].textContent,
-							Notes: event.currentTarget.children[1].textContent,
-							TransferDesignId: event.currentTarget.dataset.id
+							Code: item.Code,
+							Notes: item.Notes,
+							TransferDesignId: item.TransferDesignId
 						}
 						// reset ui
 						event.currentTarget.closest("details").removeAttribute("open")
