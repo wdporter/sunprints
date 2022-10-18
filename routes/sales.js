@@ -626,13 +626,13 @@ router.get("/csv/", (req, res) => {
 // GET edit page for a sales history item
 router.get("/edit/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	try {
 
 		let query = /*sql*/`SELECT 
 		SalesTotal.rowid, SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.CustomerId, SalesTotal.SalesRep, SalesTotal.OrderDate, SalesTotal.Repeat, SalesTotal.New, SalesTotal.BuyIn, SalesTotal.Terms, SalesTotal.Delivery,SalesTotal.Notes, SalesTotal.CustomerOrderNumber, SalesTotal.DateProcessed, SalesTotal.DateInvoiced, 	
-		Sales.rowid AS salesrowid, Sales.GarmentId, Sales.OrderGarmentId,
+		Sales.rowid AS salesrowid, Sales.GarmentId, Sales.OrderGarmentId, Sales.Price, 
 		Garment.Code, Label, Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, Garment.Deleted,
 		${sz.allSizes.map(s => `Sales.${s}`).join(",")},
 		fpd.PrintDesignId AS FrontPrintDesignId,
@@ -780,6 +780,7 @@ router.get("/edit/:id", (req, res) => {
 				Colour: od.Colour,
 				Notes: od.GarmentNotes,
 				SizeCategory: od.SizeCategory,
+				Price: od.Price.toFixed(2),
 				removed: false,
 				added: false,
 			}
@@ -1026,6 +1027,12 @@ router.get("/mediasearch/decoration", (req, res) => {
 }) 
 
 
+/////////////////////////////////////////////////////////
+// PUT
+//////////////////////////////////////////////////////////
+
+
+// called by a fetch, saves a salestotal/sales item
 router.put("/:orderid", (req, res) => {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
@@ -1034,8 +1041,8 @@ router.put("/:orderid", (req, res) => {
 	const salesTotalColumns = ["OrderNumber", "CustomerId", "CustomerOrderNumber", "SalesRep",	
 	"OrderDate", "Repeat", "New", "BuyIn", "Terms", "Delivery", "Notes", "DateProcessed", "DateInvoiced"]
 
-	// these are the relevant columns from our size table
-	const salesColumns = ["OrderId", "GarmentId", "OrderGarmentId"]
+	// compile the relevant columns, use the column names from our size table
+	const salesColumns = ["OrderId", "GarmentId", "OrderGarmentId", "Price"]
 	sz.locations.forEach(location => {
 		sz.decorations.forEach(decoration => salesColumns.push(`${location}${decoration}DesignId`))
 		sz.media.forEach(medium => {
@@ -1080,7 +1087,8 @@ router.put("/:orderid", (req, res) => {
 			})
 		}
 
-		// the media fields have a "1" inside their names, but the tables don't have this, so normalise
+		// the media fields have a "1" inside their names, but the tables don't have this, so normalise 
+		// (for example, FrontScreen1Id → FrontScreenId)
 		sz.locations.forEach(location => {
 			sz.media.forEach(medium => {
 				Products[0][`${location}${medium}Id`] = Products[0][`${location}${medium}1Id`]

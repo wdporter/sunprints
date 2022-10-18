@@ -168,6 +168,11 @@
 			<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]"></td></tr>
 		</table>
 
+		<p>
+			<label :for="`price_${product.ProductId}`">Price:</label>
+			<input :id ="`price_${product.ProductId}` "v-model="product.Price" inputmode="decimal" />
+		</p>
+
 		<p style="margin-top:2em">
 			<input type="button" value="Change product" @click="onChangeProduct(product)" />&emsp;
 			<input type="reset" value="Remove product" @click="onRemoveProduct(product.GarmentId)" :disabled="order.Products.length==1" /> 
