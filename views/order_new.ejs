@@ -1,58 +1,5 @@
 <%- include("partials/head.ejs") %>
 
-<style>
-.design-table  {
-	cursor: pointer;
-	min-width: unset;
-	width: unset;
-}
-
-section { 
-  grid-template-columns: auto auto;
-}
-
-.breakall {
-	word-break: break-all;
-}
-
-.wide-column {
-  width: 250px
-}
-
-.dataTables_wrapper .dataTables_filter {
-  text-align: revert;
-}
-
-#garmentTable_filter {
-  display: none
-
-}
-
-.selected-garment button {
-	margin-bottom: 0;
-}
-
-section.price-section {
-  margin-bottom: 2em;
-}
-
- 
-
-button+button, button+input[type=reset], input[type=submit]+button {
-	margin-left: 2em;
-}
-
-table.stockWarningTable {
-	min-width: unset;
-	width: unset;
-}
-
-#shipOrderButton {
-	margin-left: 2em;
-}
-
-
-</style>
 
 <dialog id=deleteDialog>
 	<form method="dialog">
@@ -198,7 +145,9 @@ table.stockWarningTable {
 
 	<div id="garmentApp">
 		<p v-if="garments.length == 0">Select products from the table above…</p>
-		<div v-for="g in garments" class="selected-garment" :key="g.GarmentId" style="border: 1px black solid; padding: 1em; margin-bottom: 1em">
+		<div v-for="g in garments" class="selected-garment" 
+				:key="g.GarmentId" 
+				:ref="`selected_garment_${g.GarmentId}`">
 			<table style=margin-bottom:1em>
 				<tr><th>Code<th>Type<th>Colour<th>Label
 				<tr><td>{{ g.Code }}<td>{{ g.Type }}<td>{{ g.Colour }}<td>{{ g.Label }}
@@ -208,8 +157,11 @@ table.stockWarningTable {
 				<legend>Quantities ({{g.SizeCategory}})</legend>
 				<div style="display:flex">
 					<p v-for="(data, key) in g.Quantities[g.SizeCategory]">
-						<label :for="key" class=quantity-label>{{ key == "Sm" ? "S" : key }}</label>
-						<input type=number id="key" min="0" v-model="g.Quantities[g.SizeCategory][key]" class="quantity-num" />
+						<label :for="`${g.GarmentId}_${key}_sizeInput`" class=quantity-label>{{ key == "Sm" ? "S" : key }}</label>
+						<input type=number min="0" class="quantity-num"
+							:id="`${g.GarmentId}_${key}_sizeInput`"  
+							v-model="g.Quantities[g.SizeCategory][key]"  
+							:ref="`${g.GarmentId}_${key}_sizeInput`" />
 					</p>
 				</div>
 			</fieldset>
@@ -225,11 +177,12 @@ table.stockWarningTable {
 				</div>
 			</section>
 
-			<div><!-- print design -->
+			<div style="margin-top:1em;"><!-- start print design -->
 				<details>
 					<summary>Choose print design </summary>
-					<input @input="getPrintDesigns(g.SizeCategory)" v-model="printDesignTypeAhead"
-						placeholder="start typing design code or notes — click row to select" />
+					<input placeholder="start typing design code or notes — click row to select"
+							@input="getPrintDesigns(g.SizeCategory)" 
+							v-model="printDesignTypeAhead" />
 					<table class="design-table">
 						<tr v-for="item in printDesignItems" title="click to select">
 							<td>
@@ -257,7 +210,8 @@ table.stockWarningTable {
 				</template>
 				</dl>
 
-				<div style="display:flex;justify-content:space-around">
+				<div style="display:flex;justify-content:space-around" 
+						:ref="`${g.GarmentId}_printDesignLocationsDiv`">
 					<fieldset v-for="(printLocation, key) in g.printLocations" :key="key[0]">
 						<legend>{{key}} Screen (choose one {{printLocation.length > 1 ? ' or two' : ''}})</legend>
 							<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
@@ -278,7 +232,7 @@ table.stockWarningTable {
 				</div>
 			</div>
 
-			<div><!-- transfer design -->
+			<div><!-- start transfer design -->
 				<details>
 					<summary>Choose transfer design </summary>
 					<input @input="getTransferDesigns(g.SizeCategory)" v-model="transferDesignTypeAhead"
@@ -305,7 +259,8 @@ table.stockWarningTable {
 					<dd>{{g.selectedTransferDesign.Notes}}</dd>
 				</dl>
 
-				<div style="display:flex;justify-content:space-around">
+				<div style="display:flex;justify-content:space-around"
+						:ref="`${g.GarmentId}_transferDesignLocationsDiv`">
 					<fieldset v-for="(transferLocation, key) in g.transferLocations" :key="key[0]">
 						<legend>{{key}} (choose one or two)</legend>
 						<p v-for="tname in transferLocation" :key="tname.TransferNameId">
@@ -317,7 +272,7 @@ table.stockWarningTable {
 				</div>
 			</div>
 
-			<div><!-- embroidery design -->
+			<div><!-- start embroidery design -->
 				<details> <!-- list of designs to choose -->
 					<summary>Choose embroidery design </summary>
 					<input @input="getEmbroideryDesigns(g.SizeCategory)" v-model="embroideryDesignTypeAhead"
@@ -349,7 +304,9 @@ table.stockWarningTable {
 				</template>
 				</dl>
 
-				<div style="display:flex;justify-content:space-around"> <!-- the usbs that can be chosen -->
+				<div style="display:flex;justify-content:space-around"
+						:ref="`${g.GarmentId}_embroideryDesignLocationsDiv`"> 
+					<!-- the usbs that can be chosen -->
 					<fieldset v-for="(embroideryLocation, key) in g.embroideryLocations" :key="key[0]">
 						<legend>{{key}} (choose one or two)</legend>
 						<p v-for="usb in embroideryLocation" :key="usb.UsbEmbroideryDesignId">
@@ -464,11 +421,11 @@ table.stockWarningTable {
 			const customerLink = document.getElementById("selectedCustomerLink")
 			customerLink.href = `/customer/edit?id=${tr.dataset.id}`
 			customerLink.textContent = "View/Edit"
-			customerLink.focus()
 			document.getElementById("selectedCustomerId").value = tr.dataset.id
-			document.getElementById("chooseCustomerDetails").removeAttribute("open")
 			document.getElementById("searchCustomerInput").value = ""
 			document.getElementById("customerTable").innerHTML = ""
+			document.getElementById("chooseCustomerDetails").removeAttribute("open")
+			document.getElementById("orderNumber").focus()
 
 		}
 
@@ -676,64 +633,74 @@ table.stockWarningTable {
 		})
 
 			function addGarment(data) {
-				if (!app.garments.some(g => g.GarmentId == data.GarmentId)) {
-					app.addGarment({
-					OrderGarmentId: 0,
-					GarmentId: data.GarmentId,
-					Code: data.Code,
-					Type: data.Type,
-					Colour: data.Colour,
-					Label: data.Label,
-					SizeCategory: data.SizeCategory,
-					Price: null,
-					Quantities: {
-						Adults: {
-							XS: 0,
-							Sm: 0,
-							M: 0,
-							L: 0,
-							XL: 0,
-							"2XL": 0,
-							"3XL": 0,
-							"4XL": 0,
-							"5XL": 0,
-							"6XL": 0,
-							"7XL": 0,
-							"8XL": 0
+				let addedGarment = app.garments.find(g => g.GarmentId == data.GarmentId)
+				if (! addedGarment) {
+					addedGarment = {
+						OrderGarmentId: 0,
+						GarmentId: data.GarmentId,
+						Code: data.Code,
+						Type: data.Type,
+						Colour: data.Colour,
+						Label: data.Label,
+						SizeCategory: data.SizeCategory,
+						Price: null,
+						Quantities: {
+							Adults: {
+								XS: 0,
+								Sm: 0,
+								M: 0,
+								L: 0,
+								XL: 0,
+								"2XL": 0,
+								"3XL": 0,
+								"4XL": 0,
+								"5XL": 0,
+								"6XL": 0,
+								"7XL": 0,
+								"8XL": 0
+							},
+							Womens: {
+								"6": 0,
+								"8": 0,
+								"10": 0,
+								"12": 0,
+								"14": 0,
+								"16": 0,
+								"18": 0,
+								"20": 0,
+								"22": 0,
+								"24": 0,
+								"26": 0,
+								"28": 0
+							},
+							Kids: {
+								"0": 0,
+								"1": 0,
+								"2": 0,
+								"4": 0,
+								"6": 0,
+								"8": 0,
+								"10": 0,
+								"12": 0,
+								"14": 0,
+								"16": 0
+							}
 						},
-						Womens: {
-							"6": 0,
-							"8": 0,
-							"10": 0,
-							"12": 0,
-							"14": 0,
-							"16": 0,
-							"18": 0,
-							"20": 0,
-							"22": 0,
-							"24": 0,
-							"26": 0,
-							"28": 0
-						},
-						Kids: {
-							"0": 0,
-							"1": 0,
-							"2": 0,
-							"4": 0,
-							"6": 0,
-							"8": 0,
-							"10": 0,
-							"12": 0,
-							"14": 0,
-							"16": 0
-						}
-					},
-					selectedPrintDesign: null,
-					selectedEmbroideryDesign: null,
-					selectedTransferDesign: null,
-				})
-					window.setTimeout(() => {Array.from(document.querySelectorAll("div.selected-garment")).pop().scrollIntoView({behavior: "smooth"})}, 10) // :last-child doesn't seem to work
-			}
+						selectedPrintDesign: null,
+						selectedEmbroideryDesign: null,
+						selectedTransferDesign: null,
+					}
+					app.addGarment(addedGarment)
+				}
+				window.setTimeout(() => {
+					// get the first size of the garment's size category
+					const firstSize = Object.keys(addedGarment.Quantities[addedGarment.SizeCategory])[0]
+					// we prevent scroll so we can scroll with smooth behaviour
+					app.$refs[`${data.GarmentId}_${firstSize}_sizeInput`][0].focus({preventScroll:true})
+					// bring the garment into view
+					app.$refs[`selected_garment_${addedGarment.GarmentId}`][0].scrollIntoView({behavior: "smooth"})
+					}, 10) 
+
 		}
 
 
@@ -825,6 +792,7 @@ table.stockWarningTable {
 						garment.checkedScreens = {}
 						locationNames.forEach(loc => garment.checkedScreens[loc] = [])
 
+						const vue = this
 						fetch(`/screen/ordersearch?printdesignid=${garment.selectedPrintDesign.PrintDesignId}&sizes=${garment.SizeCategory}`).
 							then(response => {
 								if (response.ok)
@@ -836,9 +804,15 @@ table.stockWarningTable {
 								json.forEach(j => {
 									locationNames.forEach(loc => {
 										if (j[loc] == 1)
-											// if we have this location, pus it, otherwise, create a new array for it
+											// if we have this location, push it, otherwise, create a new array for it
 											garment.printLocations[loc] ? garment.printLocations[loc].push(j) : garment.printLocations[loc] = [j]
 									})
+								})
+								// set focus to first checkbox
+								vue.$nextTick(function() {
+										const cb = vue.$refs[`${garment.GarmentId}_printDesignLocationsDiv`][0].querySelector("input[type=checkbox]")
+										if (cb) 
+											cb.focus()
 								})
 							})
 							.catch(error => window.alert(`We encountered an error: ${error}`))
@@ -863,6 +837,7 @@ table.stockWarningTable {
 						garment.checkedUsbs = {}
 						locationNames.forEach(name => garment.checkedUsbs[name] = [])
 
+						const vue = this
 						fetch(`/embroidery/usb/ordersearch?embroiderydesignid=${garment.selectedEmbroideryDesign.EmbroideryDesignId}&sizes=${garment.SizeCategory}`)
 						.then(response => {
 								if (response.ok)
@@ -880,6 +855,12 @@ table.stockWarningTable {
 											? garment.embroideryLocations[name].push(j)
 											: garment.embroideryLocations[name] = [j]
 								})
+							})
+							// set focus to first checkbox
+							vue.$nextTick(function() {
+								const cb = vue.$refs[`${garment.GarmentId}_embroideryDesignLocationsDiv`][0].querySelector("input[type=checkbox]")
+							if (cb) 
+								cb.focus()
 							})
 						})
 						.catch(error => window.alert(`We encountered an error: ${error}`))
@@ -903,6 +884,7 @@ table.stockWarningTable {
 						garment.checkedTransferNames = {}
 						locationNames.forEach(name => garment.checkedTransferNames[name] = [])
 
+						const vue = this
 						try {
 							fetch(`/transfer/name/ordersearch?transferdesignid=${garment.selectedTransferDesign.TransferDesignId}&sizes=${garment.SizeCategory}`).
 								then(response => {
@@ -920,6 +902,12 @@ table.stockWarningTable {
 													? garment.transferLocations[name].push(j)
 													: garment.transferLocations[name] = [j]
 										})
+									})
+									// set focus to first checkbox
+									vue.$nextTick(function() {
+										const cb = vue.$refs[`${garment.GarmentId}_transferDesignLocationsDiv`][0].querySelector("input[type=checkbox]")
+									if (cb) 
+										cb.focus()
 									})
 								})
 								.catch(error => window.alert(`We encountered an error: ${error}`))

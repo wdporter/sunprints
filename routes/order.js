@@ -211,7 +211,7 @@ router.get("/new", function (req, res, next) {
 
 		res.render("order_new.ejs", {
 			title: "New Order",
-			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css"],
+			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/order_new-theme.css"],
 			javascripts: ["/javascripts/dataTables.fixedHeader.min.js"],
 			mode: "new",
 			customer,
@@ -532,7 +532,7 @@ router.get("/edit", function (req, res, next) {
 
 		res.render("order_new.ejs", {
 			title: "Edit Order",
-			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css"],
+			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/order_new-theme.css"],
 			javascripts: ["/javascripts/dataTables.fixedHeader.min.js"],
 			mode: "edit",
 			orderid: req.query.id,
