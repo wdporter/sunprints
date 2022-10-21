@@ -1449,7 +1449,7 @@ router.get("/designs", (req, res) => {
 // POST for saving a new order
 router.post("/", function (req, res) {
 
-	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		if (!req.body.OrderNumber) {
 			res.statusMessage = "We require an order number"
