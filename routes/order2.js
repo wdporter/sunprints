@@ -1,14 +1,13 @@
 const express = require("express")
 const router = express.Router()
 const art = require("../config/art.js");
-// const sz = require("../config/sizes.js");
 const orderModel = require("../models/order.js")
+const salesRepService = require("../service/salesRepService.js")
 
 
 /* GET the main order editing page */
 router.get("/edit", function (req, res) {
 
-	const salesRepService = require("../service/salesRepService.js")
 	const salesReps = salesRepService.getCurrentSalesRepNames()
 
 	let purchaseOrders = null
@@ -31,6 +30,7 @@ router.get("/edit", function (req, res) {
 
 	res.render("order_edit.ejs", {
 		title: "New Order testing new page",
+		stylesheets: ["/stylesheets/order_edit-theme.css"],
 		user: req.auth.user,
 		locations: art.locations,
 		decorations: art.decorations,

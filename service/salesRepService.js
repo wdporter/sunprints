@@ -1,8 +1,17 @@
-
-const SalesRepDAO = require("../integration/SalesRepDAO.js")
+const getDB = require("../integration/dbFactory")
+const SalesRepDao = require("../integration/SalesRepDAO.js")
 
 function getCurrentSalesRepNames () {
-	return SalesRepDAO.all().map(sr => sr.Name)
+
+	const db = getDB()
+	try {
+		const dao = new SalesRepDao(db)
+	
+		return dao.all().map(sr => sr.Name)
+	}
+	finally {
+		db.close()
+	}
 }
 
 

@@ -1,23 +1,30 @@
 
-const getDB = require("./dbFactory")
+const DaoBase = require("./dao_base.js")
 
-function get (orderId) {
+module.exports = class OrderDao extends DaoBase {
 
-	const db = getDB()
-	
-	let query = /*sql*/`SELECT 
-	OrderId, CustomerId, OrderNumber, OrderDate, InvoiceDate, Repeat, New, BuyIn, Terms, SalesRep, Notes, Updated, DeliveryDate, CustomerOrderNumber, ProcessedDate, Done, Deleted, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime 
-	FROM Orders 
-	WHERE OrderId = ?`
+	constructor(db) {
+		if (db) {
+			super(db)
+		}
+	}
 
-	const retVal = db.prepare(query).get(orderId)
+	get(orderId) {
 
-	db.close()
+		try {
+			let query = /*sql*/`SELECT 
+		OrderId, CustomerId, OrderNumber, OrderDate, InvoiceDate, Repeat, New, BuyIn, Terms, SalesRep, Notes, Updated, DeliveryDate, CustomerOrderNumber, ProcessedDate, Done, Deleted, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime 
+		FROM Orders 
+		WHERE OrderId = ?`
 
-	return retVal
+			const retVal = this.db.prepare(query).get(orderId)
+			return retVal
+		}
+		finally {
+			if (this.mustClose)
+				this.db.close()
+		}
+	}
 
 }
 
-
-
-module.exports = { get }

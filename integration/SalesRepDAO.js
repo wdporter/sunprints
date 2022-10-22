@@ -1,20 +1,22 @@
-const getDB = require("./dbFactory.js");
+const getDB = require("./dbFactory")
+const DaoBase = require("./dao_base.js")
 
+module.exports = class SalesRepDao extends DaoBase {
 
-function all (deleted=false) {
+	all(includeDeleted = false) {
 
-	const db = getDB()
-	
-	let query = "SELECT * FROM SalesRep "
-	if (!deleted)
-		query += " WHERE Deleted=0"
+		try {
+			let query = "SELECT * FROM SalesRep "
+			if (!includeDeleted)
+				query += " WHERE Deleted=0"
 
-	const retVal = db.prepare(query).all()
+			const retVal = this.db.prepare(query).all()
+			return retVal
 
-	db.close()
-
-	return retVal
-
+		}
+		finally {
+			if (this.mustClose)
+				this.db.close()
+		}
+	}
 }
-
-module.exports = { all }

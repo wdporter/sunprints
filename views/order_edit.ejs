@@ -2,18 +2,7 @@
 
 
 <style>
-.customer-search-table tr:hover {
-	cursor: pointer;
-}
-.filter-dropdown-input {
-	background-image: url('/images/searchicon.png');
-	background-position: 14px 12px;
-  background-repeat: no-repeat;
-	padding-left: 45px;
-}
-dialog {
-	max-width: var(--measure);
-}
+
 </style>
 
 
@@ -22,10 +11,10 @@ dialog {
 	<fieldset><legend>Order details (Id: {{ order.OrderId }})</legend>
 
 		<div style="margin-top:var(--unit-2)" ref="customerInfo">
-			<p  v-if="customer.CustomerId">
-				Customer: <a :href="`/customer/edit?id=${customer.CustomerId}`" target="_blank" title="click to view/edit the customer in a new window"> {{ customer.Code}} {{ customer.Company }}</a> {{ customer.Locality }}, {{ customer.State }} &emsp;
+			<p  v-if="order.CustomerId">
+				Customer: <span v-html="formatCustomer">
 			</p>
-			<details :open="!customer.CustomerId" ref="customerDetails" style="margin-top:var(--unit)" @toggle="onCustomerDetailsToggle">
+			<details :open="!order.CustomerId" ref="customerDetails" style="margin-top:var(--unit)" @toggle="onCustomerDetailsToggle">
 				<summary>Choose customer</summary>
 				<customer-pick @customer-select="onCustomerSelect" ref="customerPick"></customer-pick>
 			</details>
@@ -35,7 +24,7 @@ dialog {
 			<div>
 				<p>
 					<label for=orderNumber>Order number</label>
-					<input id=orderNumber required placeholder=required v-model="order.OrderNumber" :autofocus="order.OrderId != 0" ref="orderNumberInput" />
+					<input id=orderNumber required placeholder=required v-model="order.OrderNumber" :autofocus="order.orderId != 0" ref="orderNumberInput" />
 				</p>
 				<p>
 					<label for="salesRep">Sales Rep.</label>
@@ -166,7 +155,7 @@ dialog {
 
 <script type="module">
 
-import { createApp, ref, reactive } from "vue"
+import { createApp, ref, reactive, computed } from "vue"
 import CustomerPick from "customerPick"
 import DesignPick from "designPick"
 
@@ -180,18 +169,19 @@ createApp ({
 		const decorations = <%- JSON.stringify(decorations) %>;
 		const media = <%- JSON.stringify(media) %>;
 
-		const customer = ref(<%- JSON.stringify(customer) %>)
 		const customerDetails = ref(null) // <%# uses ref attribute of element %>
 		const customerPick = ref(null)    // <%# uses ref attribute of element %>
 		const customerInfo = ref(null)    // <%# uses ref attribute of element %>
 
-
 		const onCustomerSelect = function(selected) {
-			customer.value = selected
+			order.value.customer = selected
 			customerDetails.value.removeAttribute("open")
 			orderNumberInput.value.focus()
 			customerInfo.value.scrollIntoView({behavior:"smooth"})
 		}
+		const formatCustomer = computed(() => {
+			return `<a href="/customer/edit?id=${order.value.CustomerId}" target="_blank" title="click to view/edit the customer in a new window"> ${order.value.customer.Code} ${order.value.customer.Company}</a> ${order.value.customer.Locality ? `, ${order.value.customer.Locality}` : ""} ${order.value.customer.State ? `, ${order.value.customer.State}` : ""} ${order.value.customer.Notes ? `; ${order.value.customer.Notes}` : ""} ${order.value.customer.DeliveryNotes ? `; ${order.value.customer.DeliveryNotes}` : "" }`
+		})
 
 		const designDialog = ref(null) // <%# uses ref attribute of designDialog element %>
 		const designPickLocation = ref("")
@@ -228,12 +218,12 @@ createApp ({
 			locations,
 			decorations,
 			media,
-			customer,
 			onCustomerSelect,
 			customerDetails,
 			customerPick,
 			customerInfo,
 			onCustomerDetailsToggle,
+			formatCustomer,
 			order,
 			orderNumberInput,
 			salesReps,

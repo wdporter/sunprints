@@ -2,6 +2,8 @@ const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3");
 const { auditColumns } = require("../sizes.js");
+const customerService = require("../service/customerService")
+
 
 /* GET customers page. */
 router.get("/", function (req, res, next) {
@@ -118,25 +120,14 @@ router.get("/edit", (req, res) => {
 
 // get a list of customers, used by the New Order page
 router.get("/ordersearch", function (req, res, next) {
-	let db = null
+
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-		let statement = db.prepare(`SELECT CustomerId, Code, Company, Locality, State 
-			FROM Customer 
-			WHERE Deleted=0 AND 
-			(
-				Code LIKE '%${req.query.q}%' 
-				OR Company LIKE '%${req.query.q}%'
-			) `)
-		const records = statement.all()
+		const records = customerService.search(req.query.q)
 		res.send(records)
 	}
 	catch (ex) {
 		res.statusMessage = ex.message
 		res.status(400).end()
-	}
-	finally {
-		db && db.close()
 	}
 })
 

@@ -1,0 +1,14 @@
+.customer-search-table tr:hover {
+	cursor: pointer;
+}
+
+.filter-dropdown-input {
+	background-image: url('/images/searchicon.png');
+	background-position: 14px 12px;
+  background-repeat: no-repeat;
+	padding-left: 45px;
+}
+
+dialog {
+	max-width: var(--measure);
+}
