@@ -2,7 +2,8 @@ const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3");
 const sz = require("../sizes.js");
-
+const designService = require("../service/designService")
+const mediaService = require("../service/mediaService")
 
 /* GET orders page. */
 router.get("/", function (req, res, next) {
@@ -1338,48 +1339,43 @@ router.get("/xero/csv", (req, res)=> {
 
 
 router.get("/designs", (req, res) => {
-	console.log(req.query)
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
-
-	const medium = sz.art.find(a => a.decoration == req.query.decoration).medium
 
 	try {
-		let query = /*sql*/`
-		SELECT DISTINCT ${req.query.decoration}Design.${req.query.decoration}DesignId,  Code, Notes
-		${ req.query.decoration == "Transfer" ? "" : ",Comments"  }
-		,SizeCategory
-		FROM ${req.query.decoration}Design
-		INNER JOIN ${medium}${req.query.decoration}Design USING (${req.query.decoration}DesignId)
-		WHERE Deleted=0
-		AND ${req.query.location}=1 `
+	const recordset = designService.search(req.query.location, req.query.decoration, {
+		code: req.query.code,
+		notes: req.query.notes,
+		comments: req.query.comments
+	})
 
-		const params = []
-		if (req.query.code) {
-			query += " AND Code LIKE ? "
-			params.push(`%${req.query.code}%`)
-		}
-			if (req.query.notes) {
-			query += " AND Notes LIKE ? "
-			params.push(`%${req.query.notes}%`)
-			}
-		
-		if (req.query.decoration != "transfer" && req.query.comments) {
-			query += ` AND Comments LIKE ? `
-			params.push(`%${req.query.comments}%`)
-		}
-		
-		const records = db.prepare(query).all(...params)
-		res.send(records)
+	res.send(recordset)
 
 	}
 	catch (ex) {
 		res.statusMessage = ex.message
 		res.status(400)
 	}
-	finally {
-		db.close()
-	}
 
+
+})
+
+
+router.get("/media", (req, res) => {
+	try {
+		const recordset = mediaService.search(req.query.media, req.query.location, req.query.designid, {
+			colour: req.query.colour,
+			notes: req.query.notes,
+			name: req.query.name,
+			number: req.query.number
+		})
+	
+		res.send(recordset)
+	
+		}
+		catch (ex) {
+			res.statusMessage = ex.message
+			res.status(400)
+		}
+	
 })
 
 

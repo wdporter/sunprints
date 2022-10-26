@@ -1,15 +1,10 @@
 
-const getDB = require("./dbFactory")
-const DaoBase = require("./dao_base.js")
 const { allSizes } = require("../config/sizes.js")
 
-
-module.exports = class ProductDao extends DaoBase {
+module.exports = class ProductDao {
 
 	constructor(db) {
-		if (db) {
-			super(db)
-		}
+		this.db = db
 	}
 
 
@@ -20,8 +15,8 @@ module.exports = class ProductDao extends DaoBase {
  * @returns {Array} products attached to the order
  */
 	getByOrderId(orderId) {
-		try {
-			const query = /*sql*/`SELECT OrderGarmentId, OrderGarment.GarmentId, 
+
+		const query = /*sql*/`SELECT OrderGarmentId, OrderGarment.GarmentId, 
 		${allSizes.map(sz => `OrderGarment.${sz}`).join()},
 		Garment.Code, Garment.Label, Garment.Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, 
 		fpd.PrintDesignId AS FrontPrintDesignId,
@@ -138,10 +133,6 @@ module.exports = class ProductDao extends DaoBase {
 
 			const retVal = this.db.prepare(query).all(orderId)
 			return retVal
-		}
-		finally {
-			if (this.mustClose)
-				this.db.close()
-		}
 	}
+
 }

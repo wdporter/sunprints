@@ -3,6 +3,7 @@ const OrderDao = require("../integration/OrderDAO.js")
 const ProductDao = require("../integration/ProductDAO.js")
 const OrderModel = require("../models/order.js")
 const CustomerDao = require("../integration/CustomerDAO.js")
+const customerService = require("./customerService.js")
 const art = require("../config/art.js")
 const auditing = require("../config/auditColumns.js")
 
@@ -59,15 +60,13 @@ function get (orderId) {
 				CustomerId: customer.CustomerId,
 				Code: customer.Code,
 				Company: customer.Company,
-				Notes: customer.CustNotes,
-				DeliveryNotes: customer.Notes,
-				Locality: customer.Locality,
-				State: customer.State
+				detailsString:  customerService.getDetailsString(customer)
 		}
 
 		return retVal
 
 	}
+
 	finally {
 		db.close()
 	}

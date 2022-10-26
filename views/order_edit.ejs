@@ -10,6 +10,7 @@
 
 	<fieldset><legend>Order details (Id: {{ order.OrderId }})</legend>
 
+		<!-- customer details -->
 		<div style="margin-top:var(--unit-2)" ref="customerInfo">
 			<p  v-if="order.CustomerId">
 				Customer: <span v-html="formatCustomer">
@@ -20,6 +21,7 @@
 			</details>
 		</div>
 
+		<!-- order properties -->
 		<section>
 			<div>
 				<p>
@@ -77,14 +79,15 @@
 				</p>
 	
 			</div>
+			<p style="margin-top:0">
+				<label for=notes>Order Notes</label>
+				<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
+			</p>
 		</section>
-		<p style="margin-top:0">
-			<label for=notes>Order Notes</label>
-			<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
-		</p>
 	
 	</fieldset>
 
+	<!-- design grid -->
 	<fieldset><legend>Design</legend>
 		<table class="design-table">
 			<thead>
@@ -114,7 +117,7 @@
 						<span v-if="order.products.length > 0">
 							{{ order.products[0][`${location}${media[i]}${n}Name`] }}
 						</span>&ensp;
-						<a v-if="order.products.length > 0 && order.products[0][`${location}${decoration}DesignId`] != null" href=# @click.prevent="onSelectMedia(order.products[0], decoration, location, media[i], n)" :title="`select ${media[i]} for ${location}`" >
+						<a v-if="order.products.length > 0 && order.products[0][`${location}${decoration}DesignId`] != null" href=# @click.prevent="onOpenMediaPick(decoration, location, media[i], n)" :title="`select ${n==2 ? ' a second' : ''} ${media[i]} for ${location}`" >
 							<span class="fa fa-edit"></span>
 						</a>&ensp;
 						<a v-if="order.products.length > 0 && order.products[0][`${location}${media[i]}${n}Id`]" href=# @click.prevent="onDeleteMedia(order.products[0], decoration, location, media[i], n)" :title="`delete ${media[i]} for ${location}`" >
@@ -126,7 +129,41 @@
 		</table>
 	</fieldset>
 
+	<!-- array of products -->
+	<div v-for="(product, i) in order.products" :key="product.GarmentId">
+		<fieldset>
+			<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
+			<table style="margin-top:3em">
+				<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
+				<tr>
+					<td>{{ product.Code }}</td>
+					<td>{{ product.Label }}</td>
+					<td>{{ product.Type }}</td>
+					<td>{{ product.Colour }}</td>
+					<td>{{ product.Notes}} </td>
+					<td>{{ product.SizeCategory }}</td>
+				</tr>
+			</table>
+	
+			<table style="margin-top:2em">
+				<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz }}</th></tr> 
+				<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]"></td></tr>
+			</table> 
+	
+			<p>
+				<label :for="`price_${product.ProductId}`">Price:</label>
+				<input :id ="`price_${product.ProductId}` "v-model="product.Price" inputmode="decimal" />
+			</p>
+	
+			<p style="margin-top:2em">
+				<input type="button" value="Change product" @click="onChangeProduct(product)" />&emsp;
+				<input type="reset" value="Remove product" @click="onRemoveProduct(product.GarmentId)" :disabled="order.products.length==1" /> 
+			</p>
+	
+		</fieldset>
+	</div>
 
+	<!-- auditing info -->
 	<dl>
 		<dt>Created by:</dt><dd>{{ order.CreatedBy }}</dd>
 		<dt>Created date/time:</dt><dd>{{ order.CreatedDateTime }}</dd>
@@ -134,23 +171,40 @@
 		<dt>Last modified date/time:</dt><dd>{{ order.LastModifiedDateTime }}</dd>
 	</dl>
 	
-	
+	<!-- decoration pick dialog -->
 	<dialog id="designDialog" ref="designDialog">
 		<h4>Choose {{designPickLocation.toLowerCase()}} {{ designPickDecoration.toLowerCase() }} design </h4>
 		<design-pick 
-			@design-select="onDesignSelect(this)" 
+			@design-select="onDesignSelect" 
 			ref="designPick" 
 			:location="designPickLocation"
 			:decoration="designPickDecoration" >
 		</design-pick>
+		<p>
+			<input type="button" value="Close" @click="onCloseDesignPicker" />
+		</p>
+	</dialog>
+
+	<!-- media pick dialog -->
+	<dialog id="mediaDialog" ref="mediaDialog">
+		<h4>Choose {{mediaPickLocation.toLowerCase()}} {{ mediaPickMedia.toLowerCase() }} </h4>
+		<media-pick 
+			@media-select="onMediaSelect" 
+			ref="mediaPick" 
+			:location="mediaPickLocation"
+			:medium="mediaPickMedium" 
+			:designId="mediaPickDesignId"
+			:decoration="mediaPickDecoration"
+			:position="mediaPickPosition"
+		></media-pick>
 
 		<p>
-			<input type="button" value="Close" onclick="this.closest('dialog').close()" />
+			<input type="button" value="Close" @click="onCloseMediaPicker" />
 		</p>
 	</dialog>
 
 
-</div>
+</div> <!--~ end app -->
 
 
 <script type="module">
@@ -158,16 +212,19 @@
 import { createApp, ref, reactive, computed } from "vue"
 import CustomerPick from "customerPick"
 import DesignPick from "designPick"
+import MediaPick from "mediaPick"
 
 createApp ({
 	components: {
 		CustomerPick,
-		DesignPick
+		DesignPick,
+		MediaPick
 	},
 	setup () {
 		const locations = <%- JSON.stringify(locations) %>;
 		const decorations = <%- JSON.stringify(decorations) %>;
 		const media = <%- JSON.stringify(media) %>;
+		const sizes = <%- JSON.stringify(sizes) %>;
 
 		const customerDetails = ref(null) // <%# uses ref attribute of element %>
 		const customerPick = ref(null)    // <%# uses ref attribute of element %>
@@ -180,21 +237,33 @@ createApp ({
 			customerInfo.value.scrollIntoView({behavior:"smooth"})
 		}
 		const formatCustomer = computed(() => {
-			return `<a href="/customer/edit?id=${order.value.CustomerId}" target="_blank" title="click to view/edit the customer in a new window"> ${order.value.customer.Code} ${order.value.customer.Company}</a> ${order.value.customer.Locality ? `, ${order.value.customer.Locality}` : ""} ${order.value.customer.State ? `, ${order.value.customer.State}` : ""} ${order.value.customer.Notes ? `; ${order.value.customer.Notes}` : ""} ${order.value.customer.DeliveryNotes ? `; ${order.value.customer.DeliveryNotes}` : "" }`
+			return `<a href="/customer/edit?id=${order.value.CustomerId}" target="_blank" title="click to view/edit the customer in a new window"> ${order.value.customer.Code} ${order.value.customer.Company}</a> ${order.value.customer.detailsString}`
 		})
 
 		const designDialog = ref(null) // <%# uses ref attribute of designDialog element %>
 		const designPickLocation = ref("")
 		const designPickDecoration = ref("")
+		const designPick = ref(null)    // <%# uses ref attribute of element, the <design-pick> %>
 		const onOpenDesignPick = function(location, decoration) {
 			this.designPickLocation = location
 			this.designPickDecoration = decoration
 			this.$refs.designDialog.showModal()
 		}
-		const onDesignSelect = function(design, what) {
-			console.log(design)
-			//todo populate products[0]
-			this.$refs.designDialog.close()
+
+		const mediaDialog = ref(null) // <%# uses ref attribute of designDialog element %>
+		const mediaPickLocation = ref("")
+		const mediaPickMedia = ref("")
+		const mediaPickDecoration = ref("")
+		const mediaPickDesignId = ref(0)
+		const mediaPickPosition = ref(1)
+		const mediaPick = ref(null)    // <%# uses ref attribute of element, the <media-pick> %>
+		const onOpenMediaPick = function(decoration, location, media, pos) { 
+			this.mediaPickLocation = location
+			this.mediaPickMedia = media
+			this.mediaPickDecoration = media
+			this.mediaPickDesignId = this.products[0][`${location}${media}DesignId`]
+			this.mediaPickPosition = pos
+			this.$refs.mediaDialog.showModal()
 		}
 
 
@@ -218,6 +287,7 @@ createApp ({
 			locations,
 			decorations,
 			media,
+			sizes,
 			onCustomerSelect,
 			customerDetails,
 			customerPick,
@@ -229,12 +299,56 @@ createApp ({
 			salesReps,
 			purchaseOrders,
 			stockOrderId,
+
 			designPickLocation,
 			designPickDecoration,
 			onOpenDesignPick,
-			onDesignSelect 
+			designPick,
+
+			mediaPickLocation,
+			mediaPickMedia,
+			mediaPickDecoration,
+			mediaPickDesignId,
+			mediaPickPosition,
+
+			onOpenMediaPick,
+			mediaPick
 		}
 	},
+	methods: {
+		onDesignSelect(design) {
+			this.order.products[0][`${design.location}${design.decoration}DesignId`]   = design.PrintDesignId
+			this.order.products[0][`${design.location}${design.decoration}DesignName`] = `${design.Code} ${design.Notes}`
+
+			const medium = this.media[this.decorations.indexOf(design.decoration)];
+			[1,2].forEach(n => {
+				this.order.products[0][`${design.location}${medium}${n}Id`]   = null
+				this.order.products[0][`${design.location}${medium}${n}Name`] = null
+			})
+			this.$refs.designDialog.close()
+		},
+		onCloseDesignPicker() {
+			// we clear this one, because it is reused by the other decorations
+			this.$refs.designPick.clear()
+			this.$refs.designDialog.close() 
+		},
+
+		onMediaSelect(media) {
+			[1,2].forEach(n => {
+				this.order.products[0][`${media.location}${media.medium}${n}Id`]   = null
+				this.order.products[0][`${media.location}${media.medium}${n}Name`] = null
+			})
+
+			this.$refs.mediaDialog.close()
+		},
+		onCloseMediaPicker() {
+			// we clear this one, because it is reused by the other decorations
+			this.$refs.mediaPick.clear()
+			this.$refs.mediaDialog.close() 
+		}
+
+	}
+
 }).mount("#app")
 
 

@@ -1,61 +1,50 @@
-const getDB = require("./dbFactory")
-const DaoBase = require("./dao_base.js")
 const { allSizes } = require("../config/sizes.js")
 
-module.exports = class CustomerDao extends DaoBase {
+/**
+ * Customer Data Access Object
+ * @module 
+ * @see dbFactory.js
+ */
+module.exports = class CustomerDao {
 
+	/**
+	 * Create the Customer Data Access Object
+	 * @constructor
+	 * @param {object} db a db object created by dbFactory, supports "get", "all" and "run"
+	 */
 	constructor(db) {
-		if (db) {
-			super(db)
-		}
-		else {
-			super()
-		}
+		this.db = db
 	}
-
 
 	get(customerId) {
 
-		try {
-			const retVal = this.db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(customerId)
+		const retVal = this.db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(customerId)
 
-			return retVal
-		}
-		finally {
-			if (this.mustClose)
-				this.db.close()
-		}
+		return retVal
 
 	}
 
 	/**
 	 * Returns an array of customers. Matches when the term appears anywhere within Company or Code, case insensitive. Not all fields are returned
 	 *
-	 * @param {String} term the term to search with Company or Code fields
-	 * @returns {Array} matching customers, with fields blah 
+	 * @param {string} term the term to search with Company or Code fields
+	 * @returns {array} matching customers, with fields blah 
 	 */
 	search(term) {
-		try {
 
-			let statement = this.db.prepare(/*sql*/`SELECT CustomerId, Code, Company, Locality, State, Notes AS DeliveryNotes, CustNotes AS Notes
+		let statement = this.db.prepare(/*sql*/`SELECT CustomerId, Code, Company, Locality, State, Notes AS DeliveryNotes, CustNotes AS Notes
 			FROM Customer 
 			WHERE Deleted=0 AND (
 				Code LIKE @term 
 				OR Company LIKE @term
 			)`)
 
-			term = `%${term}%`
-			const recordset = statement.all({term})
-			return recordset
-		}
-		catch(err) {
-			console.log(err)
-		}
-		finally {
-			if (this.mustClose)
-				this.db.close()
-		}
+		term = `%${term}%`
+		const recordset = statement.all({ term })
+		return recordset
 
 	}
+
+
 
 }

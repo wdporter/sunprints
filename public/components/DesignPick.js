@@ -1,4 +1,4 @@
-import {  ref  } from "vue"
+import { ref } from "vue"
 import { debounce } from "lodash-es"
 
 export default {
@@ -8,19 +8,17 @@ export default {
 	},
 	emits: ["designSelect"],
 	setup(props, context) {
-		const code = ref("")
-		const notes = ref("")
+		const code     = ref("")
+		const notes    = ref("")
 		const comments = ref("")
-		const designs = ref([])
+		const designs  = ref([])
 
 		function onDesignSelect(event, design) {
-			context.emit("designSelect", design)
+			this.clear()
 
-			code.value = ""
-			notes.value = ""
-			comments.value = ""
-			designs.value = []
-			//todo, need a way to reset these if they click the close button
+			design.decoration = this.decoration
+			design.location   = this.location
+			context.emit("designSelect", design)
 		}
 
 		const getDesigns = debounce(async (vue) => {
@@ -30,11 +28,6 @@ export default {
 				url += `&comments=${vue.comments.trim()}`
 
 			vue.designs = await (await fetch(url)).json()
-			// fetch(url)
-			// .then(response => response.json())
-			// .then(json => {
-			// 	vue.designs.value = json
-			// })
 
 		}, 500)
 
@@ -45,6 +38,15 @@ export default {
 			designs,
 			onDesignSelect,
 			getDesigns
+		}
+	},
+	methods: {
+		clear() {
+			this.code = ""
+			this.notes = ""
+			this.comments = ""
+			this.designs = []
+
 		}
 	},
 	template: /*html*/`
