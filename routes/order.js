@@ -1462,20 +1462,21 @@ router.post("/", function (req, res) {
 				const sizeValues = sz.allSizes.map(function (s) {
 					return p[s]
 				})
-				insertStatement.run(req.body.OrderId, p.GarmentId,
+				info = insertStatement.run(req.body.OrderId, p.GarmentId,
 					...sizeValues,
 					req.body.CreatedBy, req.body.CreatedDateTime, req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+				p.OrderGarmentId = info.lastInsertRowid
 			})
 			// it also goes into sales table
 			insertStatement = db.prepare(/*sql*/`INSERT INTO Sales
-			(OrderId, GarmentId, ${sz.allSizes.join(", ")})
-			VALUES (?, ?, ${sz.allSizes.map(s => "?").join(", ")})
+			(OrderId, GarmentId, ${sz.allSizes.join(", ")}, OrderGarmentId)
+			VALUES (?, ?, ${sz.allSizes.map(s => "?").join(", ")}, ?)
 			`)
 			products.forEach(p => {
 				const sizeValues = sz.allSizes.map(function (s) {
 					return p[s]
 				})
-				insertStatement.run(req.body.OrderId, p.GarmentId, ...sizeValues)
+				insertStatement.run(req.body.OrderId, p.GarmentId, ...sizeValues, p.OrderGarmentId)
 			})
 			// update the garment table that has the quantity of each size
 			// in theory this could send the balances negative because the purchase order might not be received yet
