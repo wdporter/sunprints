@@ -1645,7 +1645,7 @@ router.post("/:id/garment", function (req, res) {
 			else {
 				// in case it's not in the sales table, we'll update it by OrderId and GarmentId
 				// this is not great because an order might have the same garment multiple times, but it should only be a potential problem during the transition period
-				query = ` UPDATE Sales SET ${salesCols.map(c => ` ${c}=@${c} `).join(", ")}  WHERE OrderId=@OrderId & GarmentId=@GarmentId `
+				query = ` UPDATE Sales SET ${salesCols.map(c => ` ${c}=@${c} `).join(", ")}  WHERE OrderId=@OrderId AND GarmentId=@GarmentId `
 				info = db.prepare(query).run(req.body)
 			}
 			console.log(info)
