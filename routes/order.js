@@ -2485,14 +2485,13 @@ function getDesigns(db, orderid) {
 		sz.locations.forEach(loc => {
 			if (r[loc + "PrintDesignId"]) {
 				// get the standard/unnamed screens for this
-				statement = db.prepare(`SELECT Screen.* FROM Screen
-				INNER JOIN ScreenPrintDesign ON ScreenPrintDesign.ScreenId=Screen.ScreenId
-				WHERE Name is null
-				AND SizeCategory = ?
-				AND PrintDesignId=?
-				AND ${loc}=1
-				`)
-				const standardScreens = statement.all(r.SizeCategory, r[loc + "PrintDesignId"])
+				statement = db.prepare(/*sql*/`SELECT Screen.* FROM Screen
+INNER JOIN ScreenPrintDesign ON ScreenPrintDesign.ScreenId=Screen.ScreenId
+WHERE Name IS NULL
+AND PrintDesignId=?
+AND ${loc}=1`)
+
+				const standardScreens = statement.all(r[loc + "PrintDesignId"])
 
 				standardScreens.forEach(screen => {
 					screens[loc].push(screen)
