@@ -49,6 +49,7 @@ module.exports = class Order {
 
 		this.customer = {} //todo customer model, this needs to be set separately
 		this.products = [] // this needs to be set separately
+		this.designs = {} // this needs to be set separately, it is the design info from products[0]
 	} 
 
 	setCustomer(customer) {

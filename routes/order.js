@@ -1361,12 +1361,7 @@ router.get("/designs", (req, res) => {
 
 router.get("/media", (req, res) => {
 	try {
-		const recordset = mediaService.search(req.query.media, req.query.location, req.query.designid, {
-			colour: req.query.colour,
-			notes: req.query.notes,
-			name: req.query.name,
-			number: req.query.number
-		})
+		const recordset = mediaService.search(req.query.media, req.query.location, req.query.designid)
 	
 		res.send(recordset)
 	

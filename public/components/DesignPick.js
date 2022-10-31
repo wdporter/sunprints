@@ -21,13 +21,13 @@ export default {
 			context.emit("designSelect", design)
 		}
 
-		const getDesigns = debounce(async (vue) => {
-			let url = `/order/designs?location=${vue.location}&decoration=${vue.decoration}&code=${vue.code.trim()}&notes=${vue.notes.trim()}`
+		const getDesigns = debounce(async (me) => {
+			let url = `/order/designs?location=${me.location}&decoration=${me.decoration}&code=${me.code.trim()}&notes=${me.notes.trim()}`
 
-			if (vue.decoration != "Transfer")
-				url += `&comments=${vue.comments.trim()}`
-
-			vue.designs = await (await fetch(url)).json()
+			if (me.decoration != "Transfer")
+				url += `&comments=${me.comments.trim()}`
+			
+			me.designs = await (await fetch(url)).json()
 
 		}, 500)
 

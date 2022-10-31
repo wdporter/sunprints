@@ -13,8 +13,9 @@ const TransferDao = require("../integration/TransferDAO.js")
  */
 function search(location, decoration, terms) {
 
+	let db = getDB()
+
 	try {
-		let db = getDB()
 		let dao = null
 		
 		switch(decoration) {

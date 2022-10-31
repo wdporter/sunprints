@@ -10,7 +10,6 @@ module.exports = class ProductDao {
 
 /**
  * Returns an array of the products attached to this order
- *
  * @param {Number} orderId the id of the order 
  * @returns {Array} products attached to the order
  */
@@ -134,5 +133,27 @@ module.exports = class ProductDao {
 			const retVal = this.db.prepare(query).all(orderId)
 			return retVal
 	}
+
+
+	/**
+	 * Returns an array of the products matching the search terms
+	 * @param {Number} orderId the id of the order 
+	 * @returns {Array} products attached to the order
+	 */
+	search(terms) {
+
+		Object.keys(terms).forEach(t => terms[t] = `%${terms[t]}%`)
+
+		const query = /*sql*/`SELECT GarmentId, Code, Label, Type, Colour, Notes, SizeCategory, 
+		${allSizes.map(s => `0 AS ${s}`).join(", ")}
+		FROM Garment
+		WHERE Deleted=0
+		AND ${Object.keys(terms).map(t => `${t} LIKE @${t}`).join(" AND ")} `
+
+		return this.db.prepare(query).all(terms)
+	}
+
+
+
 
 }

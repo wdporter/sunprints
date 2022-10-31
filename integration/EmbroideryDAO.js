@@ -1,3 +1,5 @@
+const { locations } = require("../config/art.js")
+
 module.exports = class EmbroideryDao {
 
 	constructor(db) {
@@ -33,30 +35,19 @@ module.exports = class EmbroideryDao {
 		}
 	}
 
-	searchMedia(location, designId, terms) {
+	getMedia(location, designId) {
 		if (!locations.includes(location))
 			throw new Error(`error: bad parameter - location: ${location}`)
 
-		const params = [designId]
+		let query = /*sql*/`
+SELECT UsbId AS id, Number, Notes 
+FROM Usb
+INNER JOIN UsbEmbroideryDesign USING (UsbId)
+WHERE EmbroideryDesignId = ?
+AND ${location} = 1 
+AND Deleted = 0`
 
-		let query = /*sql*/`	
-				SELECT UsbId, Number, Notes 
-				FROM Usb
-				INNER JOIN UsbEmbroideryDesign USING (UsbId)
-				WHERE EmbroideryDesignId = ${designId}
-				AND ${location}=1 `
-
-		const fields = ["Number", "Notes"]
-
-		fields.forEach(f => {
-			if (terms[f]) {
-				query += ` AND ${f} LIKE ? `
-				params.push(`%${terms[f]}%`)
-			}
-		})
-
-		const statement = db.prepare(query)
-		const recordset = db.all(params)
+		const recordset = this.db.prepare(query).all(designId)
 
 		return recordset
 	}
