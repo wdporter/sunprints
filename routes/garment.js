@@ -335,6 +335,7 @@ router.get("/search", function (req, res) {
 	
 		}
 		catch (ex) {
+			console.log(ex)
 			res.statusMessage = ex.message
 			res.status(400)
 		}

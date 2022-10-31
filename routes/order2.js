@@ -39,7 +39,9 @@ router.get("/edit", function (req, res) {
 			media: art.media,
 			order,
 			salesReps,
-			purchaseOrders
+			purchaseOrders,
+			user: req.auth.user,
+			poweruser: res.locals.poweruser
 		})
 
 	}
@@ -66,6 +68,8 @@ for each product
 	9. UPDATE Garment (reduce stock level)
 	10. AuditLog UPDATE Garment 
 end each product
+
+consider: must client must reload the products?  (or should I return the new products array ?)
 */
 router.post("/", (req, res) => {
 
@@ -105,8 +109,9 @@ for each product
 		9c. UPDATE Sales
 		9d. UPDATE OrderGarment (reduce stock levels)
 		9e. AuditLog UPDATE OrderGarment
-
 end each product
+
+consider: must client must reload the products?  (or should I return the new products array ?)
 */
 router.put("/:id", (req, res) => {
 

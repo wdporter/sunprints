@@ -168,10 +168,31 @@
 					</div>
 				</section>
 		
-				<p style="margin-top:2em">
-					<input type="reset" value="Remove product" 
-							@click="product.removed=true" /> 
-				</p>
+				<section style="margin-top: var(--unit-2)">
+				<div>
+						<input type="reset" value="Remove product"
+								@click="product.removed=true" />
+				</div>
+				<div>
+					<details v-if="hasStockWarnings(product)"><!-- todo method for has stock warnings -->
+						<summary>Stock Warnings</summary>
+						<table>
+							<tr>
+								<th>Size</th>
+								<th>Quantity</th>
+								<th>Minimum</th>
+							</tr>
+							<template v-for="sz in sizes[product.SizeCategory]">
+								<tr v-if=" product[`Qty${sz}`] < product[`Min${sz}`] ">
+									<td>{{ sz }} </td>
+									<td>{{ product[`Qty${sz}`] }}</td>
+									<td>{{ product[`Min${sz}`] }}</td>
+								</tr>
+							</template>
+					</table>
+					</details>
+				</div>
+			</section>
 		
 			</fieldset>
 		</template>
@@ -179,6 +200,14 @@
 <p>{{ totalProductCount() }} items = Total Value: {{ totalProductValue().toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}) }}</p>
 	<p>
 		<input type="button" value="Add product" @click="onAddProduct()" />
+	</p>
+
+	<p>
+<% if (poweruser || salesrep) { %>
+	<p>
+		<button>Save Order</button>
+	</p>
+<% } %>
 	</p>
 
 
@@ -448,7 +477,13 @@ createApp ({
 				sum += count * product.Price
 			})
 			return sum
-
+		},
+		hasStockWarnings(product) {
+			for (let size of this.sizes[product.SizeCategory]) {
+				if (product[`Qty${size}`] < product[`Min${size}`])
+					return true
+			}
+			return false
 		}
 	}
 

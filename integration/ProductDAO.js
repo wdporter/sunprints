@@ -17,6 +17,8 @@ module.exports = class ProductDao {
 
 		const query = /*sql*/`SELECT OrderGarmentId, OrderGarment.GarmentId, Price, 
 		${allSizes.map(sz => `OrderGarment.${sz}`).join()},
+		${allSizes.map(s => ` Garment.${s} AS Qty${s} `).join(" , ")},
+		${allSizes.map(s => ` Min${s} `).join(" , ")},
 		Garment.Code, Garment.Label, Garment.Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, 
 		fpd.PrintDesignId AS FrontPrintDesignId,
 		IFNULL(fpd.Code, '') || ' ' || IFNULL(fpd.Notes, '') || ' ' || IFNULL(fpd.Comments, '') AS FrontPrintDesignName,
@@ -145,7 +147,9 @@ module.exports = class ProductDao {
 		Object.keys(terms).forEach(t => terms[t] = `%${terms[t]}%`)
 
 		const query = /*sql*/`SELECT GarmentId, Code, Label, Type, Colour, Notes, SizeCategory, 
-		${allSizes.map(s => `0 AS ${s}`).join(", ")}
+		${allSizes.map(s => ` 0 AS ${s} `).join(" , ")},
+		${allSizes.map(s => ` ${s} AS Qty${s} `).join(" , ")},
+		${allSizes.map(s => ` Min${s} `).join(" , ")}
 		FROM Garment
 		WHERE Deleted=0
 		AND ${Object.keys(terms).map(t => `${t} LIKE @${t}`).join(" AND ")} `
