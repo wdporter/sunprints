@@ -15,7 +15,7 @@ module.exports = class ProductDao {
  */
 	getByOrderId(orderId) {
 
-		const query = /*sql*/`SELECT OrderGarmentId, OrderGarment.GarmentId, 
+		const query = /*sql*/`SELECT OrderGarmentId, OrderGarment.GarmentId, Price, 
 		${allSizes.map(sz => `OrderGarment.${sz}`).join()},
 		Garment.Code, Garment.Label, Garment.Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, 
 		fpd.PrintDesignId AS FrontPrintDesignId,

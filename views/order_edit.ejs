@@ -47,17 +47,18 @@
 				<p style="margin-top:3rem">
 					<input id=repeat type=checkbox v-model="order.Repeat" /><label for=repeat>Repeat</label>
 					<input id=newDesign type=checkbox v-model="order.New" /><label for=newDesign>New</label>
-					<input id=buyIn type=checkbox v-model="order.BuyIn" /><label for=buyIn>Buy In</label>
+					<input id=buyIn type=checkbox 
+							v-model="order.BuyIn" 
+							:disabled="(order.OrderId==0 && order.StockOrderId != null) || order.OrderId != 0" />
+					<label for=buyIn>Buy In</label>
 				</p>
 				<p v-if="order.OrderId==0 && order.BuyIn">
 					<label for="purchaseSelect">Buy In — choose an existing purchase order to set the products</label>
-					<select id="purchaseSelect" v-model="stockOrderId" @change="onPurchaseOrderSelect">
+					<select id="purchaseSelect" v-model="order.StockOrderId" @change="onPurchaseOrderSelect">
 						<option value="">— Select —</option>
 						<option v-for="po in purchaseOrders" :value="po.StockOrderId">{{ po.StockOrderId }} {{ po.OrderDate }} {{ po.Company }}</option>
 
-					</select> <a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${stockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View</a>
-					todo change the products array when value changes
-				</p>
+					</select> <a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${order.StockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View</a></p>
 	 
 			</div>
 			<div>
@@ -100,13 +101,13 @@
 				<tr style="border-top:2px black solid">
 					<th>{{ decoration }} design</th>
 					<td v-for="location in locations">
-						<span v-if="order.products.length > 0">
-							{{ order.designs[`${location}${decoration}DesignName`] }}
-						</span>&ensp;
+						{{ order.designs[`${location}${decoration}DesignName`] }} &ensp;
 						<a href=# @click.prevent="onOpenDesignPick(location, decoration)" :title="`select ${decoration} design for ${location}`">
 							<span class="fa fa-edit"></span>
 						</a>&ensp;
-						<a href=# title="delete design" v-if="order.products.length > 0 && order.designs[`${location}${decoration}DesignId`]" @click.prevent="onDeleteDesign(location, decoration)">
+						<a href=# title="delete design" 
+								v-if="order.designs[`${location}${decoration}DesignId`]" 
+								@click.prevent="onDeleteDesign(location, decoration)">
 							<span class="fa fa-trash"></span>
 						</a>
 					</td>
@@ -114,13 +115,17 @@
 				<tr v-for="n in 2">
 					<th>&emsp;{{ media[i] }} {{ n }}</th>
 					<td v-for="location in locations" >
-						<span v-if="order.products.length > 0">
-							{{ order.designs[`${location}${media[i]}${n}Name`] }}
-						</span>&ensp;
-						<a v-if="order.products.length > 0 && order.designs[`${location}${decoration}DesignId`] != null" href=# @click.prevent="onOpenMediaPick(decoration, location, media[i], n)" :title="`select ${n==2 ? ' a second' : ''} ${media[i]} for ${location}`" >
+						{{ order.designs[`${location}${media[i]}${n}Name`] }} &ensp;
+						<a href=#
+								v-if="order.designs[`${location}${decoration}DesignId`] != null" 
+								@click.prevent="onOpenMediaPick(decoration, location, media[i], n)" 
+								:title="`select ${n==2 ? ' a second' : ''} ${media[i]} for ${location}`" >
 							<span class="fa fa-edit"></span>
 						</a>&ensp;
-						<a v-if="order.products.length > 0 && order.designs[`${location}${media[i]}${n}Id`]" href=# @click.prevent="onDeleteMedia(order.designs, location, media[i], n)" :title="`delete ${media[i]} for ${location}`" >
+						<a href=#
+								v-if="order.designs[`${location}${media[i]}${n}Id`]" 
+								@click.prevent="onDeleteMedia(order.designs, location, media[i], n)" 
+								:title="`delete ${media[i]} for ${location}`" >
 							<span class="fa fa-trash"></span>
 						</a>
 					</td>
@@ -157,21 +162,21 @@
 						<input :id ="`price_${product.GarmentId}` "v-model="product.Price" inputmode="decimal" pattern="\d*(\.\d{0,2})?" title="Numeric" />
 					</div>
 					<div>
-						<label>= $ Total (for this product)</label>
-						<input disabled :value="productCount(product) * (product.Price ?? 0)" />
+						<label>= Total (for this product)</label>
+						<input disabled 
+								:value="(productCount(product) * (product.Price ?? 0)).toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})" />
 					</div>
 				</section>
 		
 				<p style="margin-top:2em">
 					<input type="reset" value="Remove product" 
-							@click="product.removed=true"
-							:disabled="order.products.length==1" /> 
+							@click="product.removed=true" /> 
 				</p>
 		
 			</fieldset>
 		</template>
 	</div>
-<p>{{ totalProductCount() }} items = Total Value: ${{ totalProductValue().toFixed(2) }}</p>
+<p>{{ totalProductCount() }} items = Total Value: {{ totalProductValue().toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}) }}</p>
 	<p>
 		<input type="button" value="Add product" @click="onAddProduct()" />
 	</p>
@@ -307,8 +312,6 @@ createApp ({
 		const salesReps = ref(<%- JSON.stringify(salesReps) %>)
 		const purchaseOrders = ref(<%- JSON.stringify(purchaseOrders) %>)
 		
-		const stockOrderId = ref(0)
-
 		function onCustomerDetailsToggle() {
 			if (customerDetails.value.open)
 				customerPick.value.receiveFocus()
@@ -336,7 +339,10 @@ createApp ({
 		}
 
 		async function onPurchaseOrderSelect () {
-			//todo order.products = await fetch (`/stockorder/${stockOrderId.value}`) etc.
+			console.log("stockorderid", order.StockOrderId)
+
+			order.products = await (await fetch(`/stockorder/${order.StockOrderId}/products`)).json()
+
 		}
 
 		const onOpenProductPick = function() {
@@ -357,8 +363,6 @@ createApp ({
 			order,
 			orderNumberInput,
 			salesReps,
-			purchaseOrders,
-			stockOrderId,
 
 			designPickDecoration,
 			onOpenDesignPick,
@@ -374,11 +378,15 @@ createApp ({
 			productDialog,
 			productPicker,
 			onAddProduct,
+
+			onPurchaseOrderSelect,
+			purchaseOrders,
+
 		}
 	},
 	methods: {
 		onDesignSelect(design) {
-			this.order.designs[`${design.location}${design.decoration}DesignId`]   = design[`${design.decoration}DesignId`]
+			this.order.designs[`${design.location}${design.decoration}DesignId`]  = design[`${design.decoration}DesignId`]
 			this.order.designs[`${design.location}${design.decoration}DesignName`] = `${design.Code} ${design.Notes}`
 
 			const medium = this.media[this.decorations.indexOf(design.decoration)];

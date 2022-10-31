@@ -9,7 +9,7 @@ module.exports = class OrderDao {
 	get(orderId) {
 
 		let query = /*sql*/`SELECT 
-		OrderId, CustomerId, OrderNumber, OrderDate, InvoiceDate, Repeat, New, BuyIn, Terms, SalesRep, Notes, Updated, DeliveryDate, CustomerOrderNumber, ProcessedDate, Done, Deleted, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime 
+		OrderId, CustomerId, OrderNumber, OrderDate, InvoiceDate, Repeat, New, BuyIn, Terms, SalesRep, Notes, Updated, DeliveryDate, CustomerOrderNumber, ProcessedDate, Done, Deleted, StockOrderId, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime 
 		FROM Orders 
 		WHERE OrderId = ?`
 

@@ -1,9 +1,11 @@
 const express = require("express")
 const router = express.Router()
-const art = require("../config/art.js")
+
 const salesRepService = require("../service/salesRepService.js")
-const { sizeCategories, sizes } = require("../sizes.js")
 const orderService = require("../service/orderService.js")
+
+const art = require("../config/art.js")
+const { sizeCategories, sizes } = require("../sizes.js")
 
 
 /* GET the main order editing page */
@@ -21,7 +23,7 @@ router.get("/edit", function (req, res) {
 		}
 		else {
 			const newOrder = orderService.getNew()
-			
+
 			order = newOrder.order
 			purchaseOrders = newOrder.purchaseOrders
 		}
