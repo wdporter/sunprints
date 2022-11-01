@@ -3,9 +3,10 @@ const router = express.Router()
 
 const salesRepService = require("../service/salesRepService.js")
 const orderService = require("../service/orderService.js")
+const productService = require("../service/productService.js")
 
 const art = require("../config/art.js")
-const { sizeCategories, sizes } = require("../sizes.js")
+const { sizeCategories, sizes, auditColumns } = require("../sizes.js")
 
 
 /* GET the main order editing page */
@@ -54,24 +55,48 @@ router.get("/edit", function (req, res) {
 ) //~ end get
 
 
+router.get("/products/:orderid", (req, res) => {
+	try {
+	let { products } = productService.getProductsForOrder(req.params.orderid)
+	
+	res.json(products).end()
+	}
+	catch(err) {
+		console.log(err)
+		res.statusMessage = err
+		res.status(400).end()
+	}
+
+})
+
 
 /* POST new order 
-1. INSERT Orders
-2. AuditLog Orders INSERT  
-3. INSERT SalesTotal 
-4. put designs into first product (that is not added and deleted)
-for each product
-	5. if added and deleted are true, continue loop
-	6. INSERT OrderGarment
-	7. AuditLog OrderGarment INSERT 
-	8. INSERT Sales
-	9. UPDATE Garment (reduce stock level)
-	10. AuditLog UPDATE Garment 
-end each product
-
-consider: must client must reload the products?  (or should I return the new products array ?)
+* returns a json with new order id and audit columns
+* client will most likely want to refetch the products
 */
 router.post("/", (req, res) => {
+	try {
+
+		const {order, designs} = req.body
+
+		const { savedOrder, errors } = orderService.createNew(order, designs, req.auth.user)
+
+		if (errors.length > 0) {
+			res.json({errors}).end()
+		}
+		else {
+			const retVal = { OrderId: savedOrder.OrderId}
+			auditColumns.forEach(c => retVal[c] = savedOrder[c])
+			res.json(retVal).end()
+		}
+	}
+
+
+	catch(ex) {
+		res.statusMessage = ex.message
+		res.sendStatus(400).end()
+		console.log(ex.message)
+	}
 
 
 
@@ -111,7 +136,7 @@ for each product
 		9e. AuditLog UPDATE OrderGarment
 end each product
 
-consider: must client must reload the products?  (or should I return the new products array ?)
+return last modified by, last modified date time
 */
 router.put("/:id", (req, res) => {
 

@@ -1,8 +1,10 @@
 
 const auditColumns = ["CreatedBy", "CreatedDateTime", "LastModifiedBy", "LastModifiedDateTime"]
 
-const dateColumns = ["CreatedDateTime", "LastModifiedDateTime"]
+const dateColumns = [auditColumns[1], auditColumns[3]]
 
+const createdColumns = auditColumns.slice(0, 2)
+const lastModifiedColumns = auditColumns.slice(2)
 
 // parses a date formatted by our local tolocalestring method
 // applicable to CreatedBy and CreatedDateTime
@@ -22,4 +24,4 @@ return Date.parse(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}T${time}`)
 }
 
 
-module.exports = { auditColumns, dateColumns, parseDate}
+module.exports = { auditColumns, dateColumns, parseDate, createdColumns, lastModifiedColumns }

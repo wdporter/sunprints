@@ -44,7 +44,7 @@
 						<option value="Net 30 days">Net 30 days</option>
 					</select>
 				</p>
-				<p style="margin-top:3rem">
+				<p style="margin-top:calc(--unit + --unit-2)">
 					<input id=repeat type=checkbox v-model="order.Repeat" /><label for=repeat>Repeat</label>
 					<input id=newDesign type=checkbox v-model="order.New" /><label for=newDesign>New</label>
 					<input id=buyIn type=checkbox 
@@ -52,6 +52,7 @@
 							:disabled="(order.OrderId==0 && order.StockOrderId != null) || order.OrderId != 0" />
 					<label for=buyIn>Buy In</label>
 				</p>
+	
 				<p v-if="order.OrderId==0 && order.BuyIn">
 					<label for="purchaseSelect">Buy In — choose an existing purchase order to set the products</label>
 					<select id="purchaseSelect" v-model="order.StockOrderId" @change="onPurchaseOrderSelect">
@@ -60,6 +61,11 @@
 
 					</select> <a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${order.StockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View</a></p>
 	 
+				<p style="margin-top:var(--unit-2)">
+					<label for=notes>Order Notes</label>
+					<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
+				</p>
+	
 			</div>
 			<div>
 				<p id="invoiceDatePara">
@@ -80,10 +86,6 @@
 				</p>
 	
 			</div>
-			<p style="margin-top:0">
-				<label for=notes>Order Notes</label>
-				<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
-			</p>
 		</section>
 	
 	</fieldset>
@@ -151,15 +153,15 @@
 					</tr>
 				</table>
 		
-				<table style="margin-top:2em">
+				<table style="margin-top:2em"> 
 					<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz.slice(1) }}</th></tr> 
-					<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]" :ref="`product_${product.GarmentId}_size`"></td></tr>
+					<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]" :ref="`product_${product.GarmentId}_size`"></td></tr> <!-- todo set class to reduce padding on the td -->
 				</table> 
 		
 				<section style="margin-top:var(--unit)">
 					<div>
 						<label :for="`price_${product.GarmentId}`">{{ productCount(product) }} products @ Price ($)</label>
-						<input :id ="`price_${product.GarmentId}` "v-model="product.Price" inputmode="decimal" pattern="\d*(\.\d{0,2})?" title="Numeric" />
+						<input :id ="`price_${product.GarmentId}` "v-model="product.Price" inputmode="decimal" pattern="\d*(\.\d{0,2})?" title="Numeric" /> 
 					</div>
 					<div>
 						<label>= Total (for this product)</label>
@@ -197,15 +199,16 @@
 			</fieldset>
 		</template>
 	</div>
-<p>{{ totalProductCount() }} items = Total Value: {{ totalProductValue().toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}) }}</p>
 	<p>
 		<input type="button" value="Add product" @click="onAddProduct()" />
 	</p>
 
+	<p>{{ totalProductCount() }} items = Total Value: {{ totalProductValue().toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}) }}</p>
+
 	<p>
 <% if (poweruser || salesrep) { %>
 	<p>
-		<button>Save Order</button>
+		<button @click="saveOrder">Save Order</button>
 	</p>
 <% } %>
 	</p>
@@ -295,6 +298,7 @@ createApp ({
 
 		const onCustomerSelect = function(selected) { // callback function when customer is chosen
 			order.customer = selected
+			order.CustomerId = selected.CustomerId
 			customerDetails.value.removeAttribute("open")
 			orderNumberInput.value.focus()
 			customerInfo.value.scrollIntoView({behavior:"smooth"})
@@ -337,7 +341,7 @@ createApp ({
 		const productPicker = ref(null) // <%# uses ref attribute of element, the <product-pick> %>
 
 		const order = reactive(<%- JSON.stringify(order) %>)
-		const orderNumberInput = ref(null)
+		const orderNumberInput = ref(null) // <%# ref(null) is for an element of same name, %>
 		const salesReps = ref(<%- JSON.stringify(salesReps) %>)
 		const purchaseOrders = ref(<%- JSON.stringify(purchaseOrders) %>)
 		
@@ -367,16 +371,77 @@ createApp ({
 			this.$refs.productDialog.showModal()
 		}
 
-		async function onPurchaseOrderSelect () {
+		async function onPurchaseOrderSelect() {
 			console.log("stockorderid", order.StockOrderId)
-
 			order.products = await (await fetch(`/stockorder/${order.StockOrderId}/products`)).json()
-
-		}
+		} //~ onPurchaseOrderSelect
 
 		const onOpenProductPick = function() {
 			this.$refs.productDialog.showModal()
 		}
+
+		const saveOrder = function() {
+
+			let method = "POST"
+			let url = "/order2"
+			let isNew = true
+			if (order.OrderId > 0) {
+				method = "PUT"
+				url += `/${order.OrderId}`
+				isNew = false
+			}
+
+			fetch(url, {
+				method,
+				headers: new Headers({ "Content-Type": "application/json" }),
+				body: JSON.stringify({
+					order, 
+					designs: order.designs
+				})
+			})
+			.then(response => {
+				if (! response.ok) {
+					// todo show error dialog and quit
+					throw response.statusText
+				}
+				return response.json()
+			})
+			.then(json => {
+				if (json.errors) {
+					throw json.errors
+				}
+				if (isNew) {
+					order.OrderId = json.OrderId
+					order.CreatedBy = json.CreatedBy
+					order.CreatedDateTime = json.CreatedDateTime
+					order.LastModifiedBy = json.LastModifiedBy
+					order.LastModifiedDateTime = json.LastModifiedDateTime
+					// refetch products
+					fetch(`/order2/products/${order.OrderId}`)
+					.then(r => r.json())
+					.then(json => {
+						order.products = json
+					})
+					.catch(err => window.alert("error fetching updated products: " + err))
+				}
+				else {
+					order.LastModifiedBy = json.LastModifiedBy
+					order.LastModifiedDateTime = json.LastModifiedDateTime
+				}
+
+			})
+			.catch(err => {
+				//todo message dialog component
+				let msg = ""
+				if (typeof err == "string")
+					msg = err
+				else if (typeof err == "Array")
+					msg = err.join("; ")
+
+				window.alert("we encountered an error: " + err)
+			})
+
+		}//~ saveOrder 
 
 		return {
 			locations,
@@ -411,6 +476,7 @@ createApp ({
 			onPurchaseOrderSelect,
 			purchaseOrders,
 
+			saveOrder
 		}
 	},
 	methods: {

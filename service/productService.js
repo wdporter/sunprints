@@ -1,7 +1,9 @@
 const getDB = require("../integration/dbFactory.js")
 const ProductDao = require("../integration/ProductDAO.js")
 const PurchaseOrderProductDAO = require("../integration/PurchaseOrderProductDAO.js")
+const AuditLogDao = require("../integration/AuditLogDAO.js")
 const { art, locations, decorations } = require("../config/art.js")
+const { sizes } = require("../config/sizes.js")
 
 function search (terms) {
 
@@ -41,7 +43,7 @@ function search (terms) {
 
 function getProductsForOrder(orderId, db) {
 
-	const mustClose = false
+	let mustClose = false
 	
 	if (!db) {
 		db = getDB()
@@ -51,7 +53,7 @@ function getProductsForOrder(orderId, db) {
 	try {
 		// now populate our products
 		dao = new ProductDao(db)
-		const products = dao.getByOrderId(orderId)
+		let products = dao.getByOrderId(orderId)
 
 		products.forEach(product => {
 			product.added = false
@@ -59,7 +61,7 @@ function getProductsForOrder(orderId, db) {
 		})
 
 		// move our designs from products[0] into "designs" property
-		const designs = {}
+		let designs = {}
 		for (location of locations) {
 			for (design of art) {
 				designs[`${location}${design.decoration}DesignId`] = products[0][`${location}${design.decoration}DesignId`]
@@ -118,4 +120,50 @@ finally {
 }
 }
 
-module.exports = { search, getProductsForOrder, getStockOrderProducts }
+
+/**
+ * a new order has a product, so stock levels must be reduced by that amount
+ * audit logging is done here
+ * @param {Database} db a db connection
+ * @param {object} product 
+ * @param {user} name name for LastModifiedBy
+ * @param {date} date date for LastModifiedDateTime
+ */
+function reduceStockLevels(db, product, user, date)  {
+	const items = {}
+	sizes[product.SizeCategory].forEach(size => {
+		if (product[size] > 0) {
+			items[size] = product[size]
+		}
+	})
+	
+	if (Object.keys(items).length > 0) // check, because the do sometimes save with no amounts
+	{
+
+		const dao = new ProductDao(db)
+
+		//use the original garment to update audit log
+		const original = dao.get(product.GarmentId)
+
+		dao.reduceStockLevels(items, product)
+
+		// items was holding the quantities from the order
+		// but we'll reuse it here by changing the figures to the stock balance
+		Object.keys(items).forEach(key => {
+			items[key] = original[key] - items[key]
+		})
+
+		// make our items object look like a Garment for the sake of the audit logs
+		items.GarmentId = product.GarmentId 
+		items.LastModifiedBy = user
+		items.LastModifiedDateTime = date
+
+		new AuditLogDao(db).update("Garment", "GarmentId", original, items)
+
+	}
+
+}
+
+
+
+module.exports = { search, getProductsForOrder, getStockOrderProducts, reduceStockLevels }

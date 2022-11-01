@@ -1,5 +1,6 @@
 
 const { allSizes } = require("../config/sizes.js")
+const { auditColumns, createdColumns, lastModifiedColumns } = require("../config/auditColumns.js")
 
 module.exports = class ProductDao {
 
@@ -7,6 +8,15 @@ module.exports = class ProductDao {
 		this.db = db
 	}
 
+
+	/**
+	 * 
+	 * @param {number} garmentId the id of the product you want
+	 * @returns {object} a product from the database
+	 */
+	get(garmentId) {
+		return this.db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(garmentId)
+	}
 
 /**
  * Returns an array of the products attached to this order
@@ -157,6 +167,26 @@ module.exports = class ProductDao {
 		return this.db.prepare(query).all(terms)
 	}
 
+/**
+ * a new order has a product, so stock levels must be reduced by that amount
+ * @param {object} items the stock level items that get updated
+ * @param {object} product 
+ */
+	reduceStockLevels(items, product)  {
+
+		const keys = Object.keys(items).filter(k => !createdColumns.includes(k))
+		
+		const query = /*sql*/`
+UPDATE Garment 
+SET ${keys.map(i => `${i}=${i}-@${i}`).join(", ")},
+${lastModifiedColumns.map(col => `${col}=@${col}` ).join(", ")}
+WHERE GarmentId=@GarmentId`
+
+		const statement = this.db.prepare(query)
+		const info = statement.run(product)
+		console.log("reduceStockLevels", info)
+
+	}
 
 
 
