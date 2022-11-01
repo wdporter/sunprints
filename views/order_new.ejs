@@ -66,7 +66,14 @@
 			<p style="margin-top:3rem">
 				<input id=repeat type=checkbox <%=order && order.Repeat && 'checked' %> /><label for=repeat>Repeat</label>
 				<input id=newDesign type=checkbox <%=order && order.New && 'checked' %> /><label for=newDesign>New</label>
-				<input id=buyIn type=checkbox <%=order && order.BuyIn && 'checked' %> /><label for=buyIn>Buy In</label>
+				<% if (!order) { %>
+					<input id=buyIn type=checkbox /><label for=buyIn>Buy In</label> 
+				<% } else { %>
+					<% if (order.StockOrderId) { %>
+						BuyIn: <a href="/purchasing?stockorderid=<%= order.StockOrderId %>" target="_blank"><%= order.StockOrderId %></a>
+					<% } %>
+				<% } %>
+				
 			</p>
 			<p id="purchaseSelectPara" style="display:none">
 				<label for="purchaseSelect">Buy In — choose an existing purchase order to set the products</label>
