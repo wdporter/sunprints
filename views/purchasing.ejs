@@ -20,7 +20,7 @@
 			<p>
 				<label for="stockOrderSelect">Select existing to edit</label>
 				<select id="stockOrderSelect" v-model="stockOrderId" @change="onSelectOrder">
-					<option value="<%= stockOrderId %>">—Create new or select existing from list—</option>
+					<option value="">—Create new or select existing from list—</option>
 					<option v-for="stockOrder in stockOrders" :value="stockOrder.StockOrderId" :key="stockOrder.StockOrderId">{{ stockOrder.StockOrderId }} {{ new Date(Date.parse(stockOrder.OrderDate)).toLocaleDateString("en-AU") }} {{ stockOrder.Company }}</option>
 				</select>
 			</p>

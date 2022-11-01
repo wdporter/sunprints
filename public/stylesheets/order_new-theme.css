@@ -53,3 +53,14 @@ width: unset;
 #shipOrderButton {
 margin-left: 2em;
 }
+
+table.product-details-table {
+	margin-bottom: var(--unit);
+}
+table.product-details-table td {
+	font-size: 1em;
+}
+
+p.quantity-input {
+	margin-bottom: 0;
+}

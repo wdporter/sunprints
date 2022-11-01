@@ -32,31 +32,22 @@ module.exports = class PrintDao {
 
 	}
 
-	searchMedia(location, designId, terms) {
+	getMedia(location, designId) {
+
 		if (!locations.includes(location))
 			throw new Error(`error: bad parameter - location: ${location}`)
 
-		const params = [designId]
+		let query = /*sql*/`
+SELECT ScreenId AS id, Name, Number, Colour 
+FROM Screen
+INNER JOIN ScreenPrintDesign USING (ScreenId)
+WHERE PrintDesignId = ?
+AND ${location}=1 
+AND NOT Name IS NULL
+AND Deleted=0`
 
-		let query = /*sql*/`	
-				SELECT ScreenId, Code, Notes, Comments 
-				FROM Screen
-				INNER JOIN ScreenPrintDesign USING (ScreenId)
-				WHERE PrintDesignId = ${designId}
-				AND ${location}=1 
-			`
 
-		const fields = ["Name", "Number", "Colour"]
-
-		fields.forEach(f => {
-			if (terms[f]) {
-				query += ` AND ${f} LIKE ? `
-				params.push(`%${terms[f]}%`)
-			}
-		})
-
-		const statement = db.prepare(query)
-		const recordset = db.all(params)
+		const recordset = this.db.prepare(query).all(designId)
 
 		return recordset
 	}

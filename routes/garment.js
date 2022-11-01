@@ -2,7 +2,7 @@ const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3")
 const sz = require("../sizes.js");
-
+const productService = require("../service/productService.js")
 
 // GET the garments page
 router.get("/", function (req, res, next) {
@@ -322,6 +322,25 @@ router.get("/deleted", function (req, res, next) {
 	})
 })
 
+
+
+// GET
+// returns a product search, used by product pick component
+router.get("/search", function (req, res) {
+
+		try {
+			let results = productService.search(req.query)
+
+			res.send(results)
+	
+		}
+		catch (ex) {
+			console.log(ex)
+			res.statusMessage = ex.message
+			res.status(400)
+		}
+	})
+	
 
 
 /*************************************************************************** */

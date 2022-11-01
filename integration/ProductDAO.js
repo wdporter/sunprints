@@ -1,5 +1,6 @@
 
 const { allSizes } = require("../config/sizes.js")
+const { auditColumns, createdColumns, lastModifiedColumns } = require("../config/auditColumns.js")
 
 module.exports = class ProductDao {
 
@@ -8,16 +9,26 @@ module.exports = class ProductDao {
 	}
 
 
+	/**
+	 * 
+	 * @param {number} garmentId the id of the product you want
+	 * @returns {object} a product from the database
+	 */
+	get(garmentId) {
+		return this.db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(garmentId)
+	}
+
 /**
  * Returns an array of the products attached to this order
- *
  * @param {Number} orderId the id of the order 
  * @returns {Array} products attached to the order
  */
 	getByOrderId(orderId) {
 
-		const query = /*sql*/`SELECT OrderGarmentId, OrderGarment.GarmentId, 
+		const query = /*sql*/`SELECT OrderGarmentId, OrderGarment.GarmentId, Price, 
 		${allSizes.map(sz => `OrderGarment.${sz}`).join()},
+		${allSizes.map(s => ` Garment.${s} AS Qty${s} `).join(" , ")},
+		${allSizes.map(s => ` Min${s} `).join(" , ")},
 		Garment.Code, Garment.Label, Garment.Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, 
 		fpd.PrintDesignId AS FrontPrintDesignId,
 		IFNULL(fpd.Code, '') || ' ' || IFNULL(fpd.Notes, '') || ' ' || IFNULL(fpd.Comments, '') AS FrontPrintDesignName,
@@ -134,5 +145,49 @@ module.exports = class ProductDao {
 			const retVal = this.db.prepare(query).all(orderId)
 			return retVal
 	}
+
+
+	/**
+	 * Returns an array of the products matching the search terms
+	 * @param {Number} orderId the id of the order 
+	 * @returns {Array} products attached to the order
+	 */
+	search(terms) {
+
+		Object.keys(terms).forEach(t => terms[t] = `%${terms[t]}%`)
+
+		const query = /*sql*/`SELECT GarmentId, Code, Label, Type, Colour, Notes, SizeCategory, 
+		${allSizes.map(s => ` 0 AS ${s} `).join(" , ")},
+		${allSizes.map(s => ` ${s} AS Qty${s} `).join(" , ")},
+		${allSizes.map(s => ` Min${s} `).join(" , ")}
+		FROM Garment
+		WHERE Deleted=0
+		AND ${Object.keys(terms).map(t => `${t} LIKE @${t}`).join(" AND ")} `
+
+		return this.db.prepare(query).all(terms)
+	}
+
+/**
+ * a new order has a product, so stock levels must be reduced by that amount
+ * @param {object} items the stock level items that get updated
+ * @param {object} product 
+ */
+	reduceStockLevels(items, product)  {
+
+		const keys = Object.keys(items).filter(k => !createdColumns.includes(k))
+		
+		const query = /*sql*/`
+UPDATE Garment 
+SET ${keys.map(i => `${i}=${i}-@${i}`).join(", ")},
+${lastModifiedColumns.map(col => `${col}=@${col}` ).join(", ")}
+WHERE GarmentId=@GarmentId`
+
+		const statement = this.db.prepare(query)
+		const info = statement.run(product)
+		console.log("reduceStockLevels", info)
+
+	}
+
+
 
 }

@@ -44,21 +44,28 @@
 						<option value="Net 30 days">Net 30 days</option>
 					</select>
 				</p>
-				<p style="margin-top:3rem">
+				<p style="margin-top:calc(--unit + --unit-2)">
 					<input id=repeat type=checkbox v-model="order.Repeat" /><label for=repeat>Repeat</label>
 					<input id=newDesign type=checkbox v-model="order.New" /><label for=newDesign>New</label>
-					<input id=buyIn type=checkbox v-model="order.BuyIn" /><label for=buyIn>Buy In</label>
+					<input id=buyIn type=checkbox 
+							v-model="order.BuyIn" 
+							:disabled="(order.OrderId==0 && order.StockOrderId != null) || order.OrderId != 0" />
+					<label for=buyIn>Buy In</label>
 				</p>
+	
 				<p v-if="order.OrderId==0 && order.BuyIn">
 					<label for="purchaseSelect">Buy In — choose an existing purchase order to set the products</label>
-					<select id="purchaseSelect" v-model="stockOrderId" @change="onPurchaseOrderSelect">
+					<select id="purchaseSelect" v-model="order.StockOrderId" @change="onPurchaseOrderSelect">
 						<option value="">— Select —</option>
 						<option v-for="po in purchaseOrders" :value="po.StockOrderId">{{ po.StockOrderId }} {{ po.OrderDate }} {{ po.Company }}</option>
 
-					</select> <a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${stockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View</a>
-					todo change the products array when value changes
-				</p>
+					</select> <a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${order.StockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View</a></p>
 	 
+				<p style="margin-top:var(--unit-2)">
+					<label for=notes>Order Notes</label>
+					<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
+				</p>
+	
 			</div>
 			<div>
 				<p id="invoiceDatePara">
@@ -79,10 +86,6 @@
 				</p>
 	
 			</div>
-			<p style="margin-top:0">
-				<label for=notes>Order Notes</label>
-				<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
-			</p>
 		</section>
 	
 	</fieldset>
@@ -100,13 +103,13 @@
 				<tr style="border-top:2px black solid">
 					<th>{{ decoration }} design</th>
 					<td v-for="location in locations">
-						<span v-if="order.products.length > 0">
-							{{ order.products[0][`${location}${decoration}DesignName`] }}
-						</span>&ensp;
+						{{ order.designs[`${location}${decoration}DesignName`] }} &ensp;
 						<a href=# @click.prevent="onOpenDesignPick(location, decoration)" :title="`select ${decoration} design for ${location}`">
 							<span class="fa fa-edit"></span>
 						</a>&ensp;
-						<a href=# title="delete design" v-if="order.products.length > 0 && order.products[0][`${location}${decoration}DesignId`]" >
+						<a href=# title="delete design" 
+								v-if="order.designs[`${location}${decoration}DesignId`]" 
+								@click.prevent="onDeleteDesign(location, decoration)">
 							<span class="fa fa-trash"></span>
 						</a>
 					</td>
@@ -114,13 +117,17 @@
 				<tr v-for="n in 2">
 					<th>&emsp;{{ media[i] }} {{ n }}</th>
 					<td v-for="location in locations" >
-						<span v-if="order.products.length > 0">
-							{{ order.products[0][`${location}${media[i]}${n}Name`] }}
-						</span>&ensp;
-						<a v-if="order.products.length > 0 && order.products[0][`${location}${decoration}DesignId`] != null" href=# @click.prevent="onOpenMediaPick(decoration, location, media[i], n)" :title="`select ${n==2 ? ' a second' : ''} ${media[i]} for ${location}`" >
+						{{ order.designs[`${location}${media[i]}${n}Name`] }} &ensp;
+						<a href=#
+								v-if="order.designs[`${location}${decoration}DesignId`] != null" 
+								@click.prevent="onOpenMediaPick(decoration, location, media[i], n)" 
+								:title="`select ${n==2 ? ' a second' : ''} ${media[i]} for ${location}`" >
 							<span class="fa fa-edit"></span>
 						</a>&ensp;
-						<a v-if="order.products.length > 0 && order.products[0][`${location}${media[i]}${n}Id`]" href=# @click.prevent="onDeleteMedia(order.products[0], decoration, location, media[i], n)" :title="`delete ${media[i]} for ${location}`" >
+						<a href=#
+								v-if="order.designs[`${location}${media[i]}${n}Id`]" 
+								@click.prevent="onDeleteMedia(order.designs, location, media[i], n)" 
+								:title="`delete ${media[i]} for ${location}`" >
 							<span class="fa fa-trash"></span>
 						</a>
 					</td>
@@ -131,54 +138,100 @@
 
 	<!-- array of products -->
 	<div v-for="(product, i) in order.products" :key="product.GarmentId">
-		<fieldset>
-			<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
-			<table style="margin-top:3em">
-				<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
-				<tr>
-					<td>{{ product.Code }}</td>
-					<td>{{ product.Label }}</td>
-					<td>{{ product.Type }}</td>
-					<td>{{ product.Colour }}</td>
-					<td>{{ product.Notes}} </td>
-					<td>{{ product.SizeCategory }}</td>
-				</tr>
-			</table>
-	
-			<table style="margin-top:2em">
-				<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz }}</th></tr> 
-				<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]"></td></tr>
-			</table> 
-	
-			<p>
-				<label :for="`price_${product.ProductId}`">Price:</label>
-				<input :id ="`price_${product.ProductId}` "v-model="product.Price" inputmode="decimal" />
-			</p>
-	
-			<p style="margin-top:2em">
-				<input type="button" value="Change product" @click="onChangeProduct(product)" />&emsp;
-				<input type="reset" value="Remove product" @click="onRemoveProduct(product.GarmentId)" :disabled="order.products.length==1" /> 
-			</p>
-	
-		</fieldset>
+		<template v-if="!product.removed">
+			<fieldset>
+				<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
+				<table style="margin-top:3em">
+					<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
+					<tr>
+						<td>{{ product.Code }}</td>
+						<td>{{ product.Label }}</td>
+						<td>{{ product.Type }}</td>
+						<td>{{ product.Colour }}</td>
+						<td>{{ product.Notes}} </td>
+						<td>{{ product.SizeCategory }}</td>
+					</tr>
+				</table>
+		
+				<table style="margin-top:2em"> 
+					<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz.slice(1) }}</th></tr> 
+					<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]" :ref="`product_${product.GarmentId}_size`"></td></tr> <!-- todo set class to reduce padding on the td -->
+				</table> 
+		
+				<section style="margin-top:var(--unit)">
+					<div>
+						<label :for="`price_${product.GarmentId}`">{{ productCount(product) }} products @ Price ($)</label>
+						<input :id ="`price_${product.GarmentId}` "v-model="product.Price" inputmode="decimal" pattern="\d*(\.\d{0,2})?" title="Numeric" /> 
+					</div>
+					<div>
+						<label>= Total (for this product)</label>
+						<input disabled 
+								:value="(productCount(product) * (product.Price ?? 0)).toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})" />
+					</div>
+				</section>
+		
+				<section style="margin-top: var(--unit-2)">
+				<div>
+						<input type="reset" value="Remove product"
+								@click="product.removed=true" />
+				</div>
+				<div>
+					<details v-if="hasStockWarnings(product)"><!-- todo method for has stock warnings -->
+						<summary>Stock Warnings</summary>
+						<table>
+							<tr>
+								<th>Size</th>
+								<th>Quantity</th>
+								<th>Minimum</th>
+							</tr>
+							<template v-for="sz in sizes[product.SizeCategory]">
+								<tr v-if=" product[`Qty${sz}`] < product[`Min${sz}`] ">
+									<td>{{ sz }} </td>
+									<td>{{ product[`Qty${sz}`] }}</td>
+									<td>{{ product[`Min${sz}`] }}</td>
+								</tr>
+							</template>
+					</table>
+					</details>
+				</div>
+			</section>
+		
+			</fieldset>
+		</template>
 	</div>
+	<p>
+		<input type="button" value="Add product" @click="onAddProduct()" />
+	</p>
+
+	<p>{{ totalProductCount() }} items = Total Value: {{ totalProductValue().toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}) }}</p>
+
+	<p>
+<% if (poweruser || salesrep) { %>
+	<p>
+		<button @click="saveOrder">Save Order</button>
+	</p>
+<% } %>
+	</p>
+
 
 	<!-- auditing info -->
-	<dl>
+	<p>
+	<dl style="margin-top:var(--unit-2)">
 		<dt>Created by:</dt><dd>{{ order.CreatedBy }}</dd>
 		<dt>Created date/time:</dt><dd>{{ order.CreatedDateTime }}</dd>
 		<dt>Last modified by:</dt><dd>{{ order.LastModifiedBy }}</dd>
 		<dt>Last modified date/time:</dt><dd>{{ order.LastModifiedDateTime }}</dd>
 	</dl>
-	
+</p>
+
 	<!-- decoration pick dialog -->
 	<dialog id="designDialog" ref="designDialog">
-		<h4>Choose {{designPickLocation.toLowerCase()}} {{ designPickDecoration.toLowerCase() }} design </h4>
+		<h4>Choose {{ designPick.location.toLowerCase() }} {{ designPickDecoration.toLowerCase() }} design </h4>
 		<design-pick 
 			@design-select="onDesignSelect" 
-			ref="designPick" 
-			:location="designPickLocation"
-			:decoration="designPickDecoration" >
+			ref="designPicker" 
+			:location="designPick.location"
+			:decoration="designPick.decoration" >
 		</design-pick>
 		<p>
 			<input type="button" value="Close" @click="onCloseDesignPicker" />
@@ -187,22 +240,33 @@
 
 	<!-- media pick dialog -->
 	<dialog id="mediaDialog" ref="mediaDialog">
-		<h4>Choose {{mediaPickLocation.toLowerCase()}} {{ mediaPickMedia.toLowerCase() }} </h4>
+		<h4>Choose {{mediaPick.location.toLowerCase()}} {{ mediaPick.medium.toLowerCase() }} {{ mediaPick.position }} </h4>
 		<media-pick 
 			@media-select="onMediaSelect" 
-			ref="mediaPick" 
-			:location="mediaPickLocation"
-			:medium="mediaPickMedium" 
-			:designId="mediaPickDesignId"
-			:decoration="mediaPickDecoration"
-			:position="mediaPickPosition"
-		></media-pick>
+			ref="mediaPicker" 
+			:location="mediaPick.location"
+			:medium="mediaPick.medium" 
+			:position="mediaPick.position"
+			:designid="mediaPick.designid"
+		></media-pick> <!-- :decoration="mediaPick.decoration" -->
 
 		<p>
 			<input type="button" value="Close" @click="onCloseMediaPicker" />
 		</p>
 	</dialog>
 
+
+	<!-- product pick dialog -->
+	<dialog ref="productDialog">
+		<h4>Choose product </h4>
+		<product-pick 
+			@product-select="onProductSelect" 
+			ref="productPicker" >
+		</product-pick>
+		<p>
+			<input type="button" value="Close" @click="onCloseProductPicker" />
+		</p>
+	</dialog>
 
 </div> <!--~ end app -->
 
@@ -213,12 +277,14 @@ import { createApp, ref, reactive, computed } from "vue"
 import CustomerPick from "customerPick"
 import DesignPick from "designPick"
 import MediaPick from "mediaPick"
+import ProductPick from "productPick"
 
 createApp ({
 	components: {
 		CustomerPick,
 		DesignPick,
-		MediaPick
+		MediaPick,
+		ProductPick
 	},
 	setup () {
 		const locations = <%- JSON.stringify(locations) %>;
@@ -226,62 +292,156 @@ createApp ({
 		const media = <%- JSON.stringify(media) %>;
 		const sizes = <%- JSON.stringify(sizes) %>;
 
-		const customerDetails = ref(null) // <%# uses ref attribute of element %>
-		const customerPick = ref(null)    // <%# uses ref attribute of element %>
-		const customerInfo = ref(null)    // <%# uses ref attribute of element %>
+		const customerDetails = ref(null) // <%# uses ref attribute of details element that contains component %>
+		const customerPick = ref(null)    // <%# uses ref attribute of customer pick component %>
+		const customerInfo = ref(null)    // <%# uses ref attribute of element, div that contains customer name and component %>
 
-		const onCustomerSelect = function(selected) {
-			order.value.customer = selected
+		const onCustomerSelect = function(selected) { // callback function when customer is chosen
+			order.customer = selected
+			order.CustomerId = selected.CustomerId
 			customerDetails.value.removeAttribute("open")
 			orderNumberInput.value.focus()
 			customerInfo.value.scrollIntoView({behavior:"smooth"})
 		}
 		const formatCustomer = computed(() => {
-			return `<a href="/customer/edit?id=${order.value.CustomerId}" target="_blank" title="click to view/edit the customer in a new window"> ${order.value.customer.Code} ${order.value.customer.Company}</a> ${order.value.customer.detailsString}`
+			return /*html*/`<a href="/customer/edit?id=${order.CustomerId}" target="_blank" title="click to view/edit the customer in a new window"> ${order.customer.Code} ${order.customer.Company}</a> ${order.customer.detailsString}`
 		})
 
 		const designDialog = ref(null) // <%# uses ref attribute of designDialog element %>
-		const designPickLocation = ref("")
+		const designPick = reactive({
+			location: "",
+			decoration: ""
+		})
 		const designPickDecoration = ref("")
-		const designPick = ref(null)    // <%# uses ref attribute of element, the <design-pick> %>
+		const designPicker = ref(null)    // <%# uses ref attribute of element, the <design-pick> %>
 		const onOpenDesignPick = function(location, decoration) {
-			this.designPickLocation = location
-			this.designPickDecoration = decoration
+			this.designPick.location = location
+			this.designPick.decoration = decoration
 			this.$refs.designDialog.showModal()
 		}
 
 		const mediaDialog = ref(null) // <%# uses ref attribute of designDialog element %>
-		const mediaPickLocation = ref("")
-		const mediaPickMedia = ref("")
-		const mediaPickDecoration = ref("")
-		const mediaPickDesignId = ref(0)
-		const mediaPickPosition = ref(1)
-		const mediaPick = ref(null)    // <%# uses ref attribute of element, the <media-pick> %>
-		const onOpenMediaPick = function(decoration, location, media, pos) { 
-			this.mediaPickLocation = location
-			this.mediaPickMedia = media
-			this.mediaPickDecoration = media
-			this.mediaPickDesignId = this.products[0][`${location}${media}DesignId`]
-			this.mediaPickPosition = pos
+		const mediaPicker = ref(null) // <%# uses ref attribute of element, the <media-pick> %>
+		const mediaPick = reactive({
+			location: "",
+			medium: "",
+			position: 0,
+			designid: 0
+		})
+		const onOpenMediaPick = function(decoration, location, medium, pos) { 
+			this.mediaPick.position = pos
+			this.mediaPick.location = location
+			this.mediaPick.medium = medium
+			this.mediaPick.designid = this.order.designs[`${location}${decoration}DesignId`]
 			this.$refs.mediaDialog.showModal()
+			this.$nextTick(() => this.$refs.mediaPicker.fetch())
 		}
 
+		const productDialog = ref(null) // <%# uses ref attribute of productDialog element %>
+		const productPicker = ref(null) // <%# uses ref attribute of element, the <product-pick> %>
 
-		const order = ref(<%- JSON.stringify(order) %>)
-		const orderNumberInput = ref(null)
+		const order = reactive(<%- JSON.stringify(order) %>)
+		const orderNumberInput = ref(null) // <%# ref(null) is for an element of same name, %>
 		const salesReps = ref(<%- JSON.stringify(salesReps) %>)
 		const purchaseOrders = ref(<%- JSON.stringify(purchaseOrders) %>)
 		
-		const stockOrderId = ref(0)
-
 		function onCustomerDetailsToggle() {
 			if (customerDetails.value.open)
 				customerPick.value.receiveFocus()
 		}
 
-		async function onPurchaseOrderSelect () {
-			//todo order.value.products = await fetch (`/stockorder/${stockOrderId.value}`) etc.
+		function onDeleteDesign(location, decoration) {
+			console.log("delete design", location, decoration)
+			// get product 0; remove the decoration design; remove the media
+			order.designs[`${location}${decoration}DesignId`] = null
+			order.designs[`${location}${decoration}DesignName`] = ""
+			const medium = this.media[this.decorations.indexOf(decoration)];
+			[1,2].forEach(n => {
+				order.designs[`${location}${medium}${n}Id`] = null
+				order.designs[`${location}${medium}${n}Name`] = ""
+			})
 		}
+
+		function onDeleteMedia(product, location, medium, n) {
+			product[`${location}${medium}${n}Id`] = null
+			product[`${location}${medium}${n}Name`] = ""
+		}
+
+		function onAddProduct() {
+			this.$refs.productDialog.showModal()
+		}
+
+		async function onPurchaseOrderSelect() {
+			console.log("stockorderid", order.StockOrderId)
+			order.products = await (await fetch(`/stockorder/${order.StockOrderId}/products`)).json()
+		} //~ onPurchaseOrderSelect
+
+		const onOpenProductPick = function() {
+			this.$refs.productDialog.showModal()
+		}
+
+		const saveOrder = function() {
+
+			let method = "POST"
+			let url = "/order2"
+			let isNew = true
+			if (order.OrderId > 0) {
+				method = "PUT"
+				url += `/${order.OrderId}`
+				isNew = false
+			}
+
+			fetch(url, {
+				method,
+				headers: new Headers({ "Content-Type": "application/json" }),
+				body: JSON.stringify({
+					order, 
+					designs: order.designs
+				})
+			})
+			.then(response => {
+				if (! response.ok) {
+					// todo show error dialog and quit
+					throw response.statusText
+				}
+				return response.json()
+			})
+			.then(json => {
+				if (json.errors) {
+					throw json.errors
+				}
+				if (isNew) {
+					order.OrderId = json.OrderId
+					order.CreatedBy = json.CreatedBy
+					order.CreatedDateTime = json.CreatedDateTime
+					order.LastModifiedBy = json.LastModifiedBy
+					order.LastModifiedDateTime = json.LastModifiedDateTime
+					// refetch products
+					fetch(`/order2/products/${order.OrderId}`)
+					.then(r => r.json())
+					.then(json => {
+						order.products = json
+					})
+					.catch(err => window.alert("error fetching updated products: " + err))
+				}
+				else {
+					order.LastModifiedBy = json.LastModifiedBy
+					order.LastModifiedDateTime = json.LastModifiedDateTime
+				}
+
+			})
+			.catch(err => {
+				//todo message dialog component
+				let msg = ""
+				if (typeof err == "string")
+					msg = err
+				else if (typeof err == "Array")
+					msg = err.join("; ")
+
+				window.alert("we encountered an error: " + err)
+			})
+
+		}//~ saveOrder 
 
 		return {
 			locations,
@@ -297,56 +457,100 @@ createApp ({
 			order,
 			orderNumberInput,
 			salesReps,
-			purchaseOrders,
-			stockOrderId,
 
-			designPickLocation,
 			designPickDecoration,
 			onOpenDesignPick,
+			designPicker,
 			designPick,
-
-			mediaPickLocation,
-			mediaPickMedia,
-			mediaPickDecoration,
-			mediaPickDesignId,
-			mediaPickPosition,
+			onDeleteDesign,
 
 			onOpenMediaPick,
-			mediaPick
+			mediaPicker,
+			mediaPick,
+			onDeleteMedia,
+
+			productDialog,
+			productPicker,
+			onAddProduct,
+
+			onPurchaseOrderSelect,
+			purchaseOrders,
+
+			saveOrder
 		}
 	},
 	methods: {
 		onDesignSelect(design) {
-			this.order.products[0][`${design.location}${design.decoration}DesignId`]   = design.PrintDesignId
-			this.order.products[0][`${design.location}${design.decoration}DesignName`] = `${design.Code} ${design.Notes}`
+			this.order.designs[`${design.location}${design.decoration}DesignId`]  = design[`${design.decoration}DesignId`]
+			this.order.designs[`${design.location}${design.decoration}DesignName`] = `${design.Code} ${design.Notes}`
 
 			const medium = this.media[this.decorations.indexOf(design.decoration)];
 			[1,2].forEach(n => {
-				this.order.products[0][`${design.location}${medium}${n}Id`]   = null
-				this.order.products[0][`${design.location}${medium}${n}Name`] = null
+				this.order.designs[`${design.location}${medium}${n}Id`]   = null
+				this.order.designs[`${design.location}${medium}${n}Name`] = null
 			})
 			this.$refs.designDialog.close()
 		},
 		onCloseDesignPicker() {
 			// we clear this one, because it is reused by the other decorations
-			this.$refs.designPick.clear()
+			this.$refs.designPicker.clear()
 			this.$refs.designDialog.close() 
 		},
 
 		onMediaSelect(media) {
-			[1,2].forEach(n => {
-				this.order.products[0][`${media.location}${media.medium}${n}Id`]   = null
-				this.order.products[0][`${media.location}${media.medium}${n}Name`] = null
-			})
-
+			this.order.designs[`${media.location}${media.medium}${media.position}Id`] = media.id
+			this.order.designs[`${media.location}${media.medium}${media.position}Name`] = media.name
 			this.$refs.mediaDialog.close()
 		},
 		onCloseMediaPicker() {
-			// we clear this one, because it is reused by the other decorations
-			this.$refs.mediaPick.clear()
 			this.$refs.mediaDialog.close() 
-		}
+		},
+		onCloseProductPicker() {
+			this.$refs.productDialog.close() 
+		},
+		onProductSelect(product) {
+			product.added = true
+			this.order.products.push(product)
+			this.$refs.productDialog.close()
+			this.$nextTick(function() {
+				this.$refs[`product_${product.GarmentId}_size`][0].scrollIntoView({behavior: "smooth"})
+				this.$refs[`product_${product.GarmentId}_size`][0].focus()
 
+			})
+		},
+		productCount(product) {
+			const count = this.sizes[product.SizeCategory].reduce((acc, curr) => { 
+				return product[curr] + acc
+			}, 0)
+			return count
+		},
+		totalProductCount()  {
+			let sum = 0
+			this.order.products.forEach( product => {
+				const count = this.sizes[product.SizeCategory].reduce((acc, curr) => { 
+					return product[curr] + acc
+				}, 0)
+				sum += count
+			})
+			return sum
+		},
+		totalProductValue () {
+			let sum = 0
+			this.order.products.forEach( product => {
+				const count = this.sizes[product.SizeCategory].reduce((acc, curr) => { 
+					return product[curr] + acc
+				}, 0)
+				sum += count * product.Price
+			})
+			return sum
+		},
+		hasStockWarnings(product) {
+			for (let size of this.sizes[product.SizeCategory]) {
+				if (product[`Qty${size}`] < product[`Min${size}`])
+					return true
+			}
+			return false
+		}
 	}
 
 }).mount("#app")

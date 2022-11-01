@@ -1,3 +1,5 @@
+const { locations } = require("../config/art.js")
+
 module.exports = class TransferDao {
 
 	constructor(db) {
@@ -34,21 +36,19 @@ module.exports = class TransferDao {
 	}
 
 
-	searchMedia(location, designId, terms) {
+	getMedia(location, designId, terms) {
 		if (!locations.includes(location))
 			throw new Error(`error: bad parameter - location: ${location}`)
 
-		let query = /*sql*/`	
-				SELECT TransferNameId, Name 
-				FROM Usb
-				INNER JOIN TransferNameTransferDesign USING (TransferNameId)
-				WHERE TransferDesignId = ${designId}
-				AND ${location}=1 
-				AND Name LIKE ?`
+		let query = /*sql*/`
+SELECT TransferNameId AS id, Name 
+FROM TransferName
+INNER JOIN TransferNameTransferDesign USING (TransferNameId)
+WHERE TransferDesignId = ?
+AND ${location} = 1 
+AND Deleted = 0`
 
-		const statement = db.prepare(query)
-		const params = [designId, `%${terms.name}%`]
-		const recordset = db.all(params)
+		const recordset = this.db.prepare(query).all(designId)
 
 		return recordset
 	}

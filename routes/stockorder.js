@@ -3,6 +3,9 @@ const router = express.Router()
 const Database = require("better-sqlite3");
 const sz = require("../sizes.js")
 
+const productService = require("../service/productService.js")
+
+
 
 
 // GET returns stock order details for given id,
@@ -63,6 +66,24 @@ WHERE StockOrder.Deleted = 0 AND StockOrder.ReceiveDate IS NULL`)
 		if (db != null)
 			db.close()
 	}
+
+})
+
+
+// get a list of products, in the same format as for editing an order
+router.get("/:id/products", (req, res) => {
+	try {
+
+		const products = productService.getStockOrderProducts(req.params.id)
+
+		res.json(products)
+
+	}
+	catch(ex) {
+		res.statusMessage = ex.message
+		res.status(400)
+	}
+
 
 })
 
