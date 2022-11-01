@@ -10,7 +10,7 @@ router.get("/", function (req, res) {
 	let stockOrders = []
 	let suppliers = []
 	let orderNumber = ""
-	let stockOrderId = ""
+	let stockOrderId = req.query.stockorderid || ""
 
 	let db = null
 	try {
