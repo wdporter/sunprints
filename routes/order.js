@@ -4,7 +4,7 @@ const Database = require("better-sqlite3");
 const sz = require("../sizes.js");
 const designService = require("../service/designService")
 const mediaService = require("../service/mediaService")
-const auditColumns = require("../config/auditColumns.js")
+const { auditColumns } = require("../config/auditColumns.js")
 
 /* GET orders page. */
 router.get("/", function (req, res, next) {
