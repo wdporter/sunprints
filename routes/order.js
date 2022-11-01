@@ -4,6 +4,7 @@ const Database = require("better-sqlite3");
 const sz = require("../sizes.js");
 const designService = require("../service/designService")
 const mediaService = require("../service/mediaService")
+const auditColumns = require("../config/auditColumns.js")
 
 /* GET orders page. */
 router.get("/", function (req, res, next) {
@@ -1405,7 +1406,6 @@ router.post("/", function (req, res) {
 		let stockOrderId = null
 		if (typeof req.body.StockOrderId != "undefined") {
 			stockOrderId = req.body.StockOrderId
-			delete req.body.StockOrderId
 		}
 
 
@@ -1430,9 +1430,10 @@ router.post("/", function (req, res) {
 		let info = statement.run(req.body)
 		console.log(info)
 		req.body.OrderId = info.lastInsertRowid
-3
+
 		// now also insert it into SalesTotal
-		let salesTotalCols = columns.filter(c => c != "CreatedBy" && c != "CreatedDateTime" && c != "LastModifiedBy" && c != "LastModifiedDateTime")
+		delete req.body.StockOrderId // does not go in SalesTotal
+		let salesTotalCols = columns.filter(c => c != "StockOrderId" && !auditColumns.includes(c))
 		//change name of delivery date
 		salesTotalCols = salesTotalCols.filter(c => c != "DeliveryDate")
 		salesTotalCols.push("Delivery")
