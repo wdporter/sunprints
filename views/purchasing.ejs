@@ -16,7 +16,7 @@
 			<input type=button @click="reset()" value="Create new purchase order"  />
 		</p>
 <% } %>
-		<fieldset><legend>{{ stockOrderId == "<%= stockOrderId %>" ? "Create New" : "Edit existing"  }}</legend>
+		<fieldset><legend>{{ stockOrderId == "" ? "Create New" : "Edit existing"  }}</legend>
 			<p>
 				<label for="stockOrderSelect">Select existing to edit</label>
 				<select id="stockOrderSelect" v-model="stockOrderId" @change="onSelectOrder">
@@ -100,6 +100,15 @@
     <button>OK</button>
   </form>
 </dialog>
+
+<dialog id="receiveOrderDialog">
+  <h4>Success</h4>
+	<p>We have received the order into stock</p>
+  <form method="dialog">
+    <button onclick="window.location.href='/purchasing/'">OK</button>
+  </form>
+</dialog>
+
 
 </div>
 <hr>
@@ -349,14 +358,8 @@ window.vueApp = Vue.createApp({
 			.then(response => {
 				if (response.ok) {
 					// all garments have been received, the database deleted the stock order, so reset our UI
-					vue.chosenGarments.Adults = []
-					vue.chosenGarments.Womens = []
-					vue.chosenGarments.Kids = []
-					vue.stockOrders = vue.stockOrders.filter(s => s.StockOrderId != vue.stockOrderId)
-					vue.orderDate = new Date().toISOString().slice(0, 10)
-					vue.supplierId = ""
-					vue.notes = ""
-					vue.stockOrderId = ""
+					document.getElementById("receiveOrderDialog").showModal()
+					// dialog will call window.location.href
 				}
 				else {
 					throw new Error(response.statusText)
@@ -440,6 +443,7 @@ window.vueApp = Vue.createApp({
 			return total
 		},
 		reset() {
+			window.location.href = "/purchasing"
 			this.stockOrderId=''
 			this.onSelectOrder()
 		},
@@ -481,6 +485,10 @@ window.vueApp = Vue.createApp({
 				this.stockOrderId = id
 				this.onSelectOrder()
 			}
+		}
+
+		if (this.stockOrderId) {
+			this.onSelectOrder()
 		}
 	}
 }).mount("#vueApp")

@@ -35,7 +35,7 @@ router.get("/", function (req, res) {
 		let garment = null
 		if (req.query.garmentid) {
 			garment = db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(req.query.garmentid)
-			for(size of sz.allSizes) {
+			for (size of sz.allSizes) {
 				garment[size] = 0
 			}
 			delete garment.Deleted
@@ -60,7 +60,7 @@ router.get("/", function (req, res) {
 			sizes: JSON.stringify(sz.sizes),
 			supplierId: req.query?.supplier ?? "",
 			garment: JSON.stringify(garment || ""),
-			poweruser: res.locals.poweruser 
+			poweruser: res.locals.poweruser
 		})
 
 
@@ -81,7 +81,7 @@ router.get("/purchaseorder/:id", function (req, res) {
 
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
-		
+
 
 		let statement = db.prepare(`SELECT StockOrder.StockOrderId, OrderDate, StockOrder.Notes AS StockOrderNotes, 
 		FirstName || ' ' || Surname AS Name, Company, AddressLine1, AddressLine2, PhoneHome, PhoneMobile, PhoneOffice, Fax, Email,Locality, Postcode, State 
@@ -111,10 +111,10 @@ router.get("/purchaseorder/:id", function (req, res) {
 		results.forEach(r => {
 			garments[r.SizeCategory].push(r)
 		}
-			
-			)
-		
-		
+
+		)
+
+
 		res.render("purchaseorder.ejs", {
 			title: "Purchase Order",
 			supplier,
