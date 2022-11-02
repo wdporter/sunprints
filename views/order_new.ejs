@@ -182,13 +182,13 @@
 						<dt>Notes</dt>
 						<dd>{{g.selectedPrintDesign.Notes}}</dd>
 						<template v-if="g.selectedPrintDesign.Comments">
-						<dt>Comments</dt>
-						<dd>{{g.selectedPrintDesign.Comments}}</dd>
-					</template>
+							<dt>Comments</dt>
+							<dd>{{g.selectedPrintDesign.Comments}}</dd>
+						</template>
 					</dl>
 
 					<div style="display:flex;justify-content:space-around" 
-							:ref="`${g.GarmentId}_		`">
+							:ref="`${g.GarmentId}_printDesignLocationsDiv`">
 						<fieldset v-for="(printLocation, key) in g.printLocations" :key="key[0]">
 							<legend>{{key}} Screen (choose one {{printLocation.length > 1 ? ' or two' : ''}})</legend>
 								<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
@@ -352,7 +352,10 @@
 			<section>
 				<div>
 <% if (poweruser || salesrep) { %>
-					<button @click="saveGarment(g)" ><span v-if="g.OrderGarmentId==0" class="fa fa-solid fa-triangle-exclamation"></span> Save product</button>&emsp;<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
+					<button @click="saveGarment(g)">
+						<span v-if="g.OrderGarmentId==0" class="fa fa-solid fa-triangle-exclamation"></span> Save product
+					</button>&emsp;
+					<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" :disabled="i==0" /><br>
 <% } %>
 					<span v-text="errorMessage"></span>
 				</div>
@@ -383,12 +386,15 @@
 
 	<input type=button id=printJobButton style="display:none" onclick="printJobSheet()" value="Print Job Sheet" />
 <% if (poweruser || salesrep) { %>
-	<input type=submit id=shipOrderButton style="display:none" onclick="shipOrder()" value="Ship Order" title="Sets done to true, will no longer display on orders page." />
+	<input type=submit id=shipOrderButton class="bottom-button" style="display:none" onclick="shipOrder()" value="Ship Order" title="Sets done to true, will no longer display on orders page." />
+
+	<input type=button class="bottom-button" onclick="window.location.href='/order/new'" value="New Order" title="start a new order" />
+
 <% } %>
 
 
 	<% if (order) { %>
-		<dl style=margin-bottom:2em>
+		<dl style="margin-bottom:2em">
 			<dt>Created by</dt>
 			<dd><%= order.CreatedBy %> on <%= order.CreatedDateTime %></dd>
 			<dt>Last modified by</dt>
