@@ -50,7 +50,7 @@ min-width: unset;
 width: unset;
 }
 
-#shipOrderButton {
+#shipOrderButton, .bottom-button {
 margin-left: 2em;
 }
 
