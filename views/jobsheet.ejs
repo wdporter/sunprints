@@ -148,10 +148,19 @@
 			<b>Terms:</b>&emsp;&emsp;&emsp;<%= order.Terms %><br>
 			<b>Sales Rep:</b>&emsp;&ensp;<%= order.SalesRep || "n/a" %>
 		</td>
-		<td style="vertical-align:text-top; text-align:center; font-size:large">
+		<td style="vertical-align:text-top; font-size:large"> <%#  ext-align:center; %>
 			<% if (order.Repeat) { %> <b>Repeat</b><br> <% } %>
 			<% if (order.New) { %> <b>New</b><br> <% } %>
-			<% if (order.BuyIn) { %> <b>Buy In</b><br> <% } %>
+			<% if (order.BuyIn) { %> 
+				<b>Buy In</b><br> <%#  %> 
+				<% if (stockorder) { %>
+					<%= stockorder.StockOrderId %>
+					<br><%= stockorder.OrderDate %>
+					<br><%= stockorder.Company %>
+					<%# <br>< %- stockorder.Notes % >  %>
+				 
+				<% } %>
+			<% } %>
 		</td>
 		<tr>
 	</table>

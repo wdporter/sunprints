@@ -620,6 +620,16 @@ router.get("/jobsheet/:id", function (req, res) {
 			return acc + designResults.transfers[curr].length
 		}, 0)
 
+		let stockorder = null
+		if (order.StockOrderId) {
+			stockorder = db.prepare(/*sql*/`
+SELECT StockOrderId, OrderDate, StockOrder.Notes, Company 
+FROM StockOrder 
+INNER JOIN Supplier USING (SupplierId)
+WHERE StockOrderId=?`).get(order.StockOrderId)
+			stockorder.OrderDate = new Date(Date.parse(stockorder.OrderDate)).toLocaleDateString()
+		}
+
 		res.render("jobsheet.ejs", {
 			customer,
 			order,
@@ -630,7 +640,8 @@ router.get("/jobsheet/:id", function (req, res) {
 			locations: sz.locations,
 			screensCount,
 			usbsCount,
-			transfersCount
+			transfersCount,
+			stockorder
 		})
 
 	}
