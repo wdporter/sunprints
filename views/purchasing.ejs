@@ -89,6 +89,8 @@
 	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == '' || dirty==true" value="Print Purchase Order" />&emsp;
 <% if (poweruser) { %>
 	<button v-show="stockOrderId != ''" type="reset" @click="deletePurchaseOrder">Delete purchase order</button>
+	&nbsp;&nbsp;<input type=button @click="reset()" value="New"  />
+
 	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true" id=receiveOrder>Receive order</button>
 <% } %>
 </p>
