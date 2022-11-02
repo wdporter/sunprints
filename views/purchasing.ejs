@@ -492,6 +492,8 @@ window.vueApp = Vue.createApp({
 		if (this.stockOrderId) {
 			this.onSelectOrder()
 		}
+
+		this.$refs.supplierId.focus()
 	}
 }).mount("#vueApp")
 
