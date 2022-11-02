@@ -355,7 +355,7 @@
 					<button @click="saveGarment(g)">
 						<span v-if="g.OrderGarmentId==0" class="fa fa-solid fa-triangle-exclamation"></span> Save product
 					</button>&emsp;
-					<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" :disabled="i==0" /><br>
+					<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
 <% } %>
 					<span v-text="errorMessage"></span>
 				</div>
