@@ -17,20 +17,6 @@
 </main>
 
 
-<dialog id="confirmCloneDialog" >
-	<h3>Clone order</h3>
-	<p>We will clone this order to a new order, including all garment details</p>
-	<p>The garment levels will be reduced according to what’s on the order</p>
-	<p>The new order will be added to the Sales History table</p>
-	<p>After the clone is complete, you can change details, garments and quantities</p>
-	<h4>Continue?</h4>
-	<form method="dialog">
-		<button value="default">OK</button>&emsp;
-		<button value="cancel">Cancel</button>
-	</form>
-</dialog>
-
-
 <main class="wider">
 
 <table id=orderTable class="display compact">
@@ -66,10 +52,6 @@
 
 
 	<script>
-
-	function cloneOrder(id) {
-		window.location.href = "/order/new?clone=" + id
-	}
 
 		function format(d) {
 			const ret = fetch(`/order/dt/garments/${d.OrderId}`)
@@ -189,14 +171,6 @@
 						var tr = dt.row("tr.selected")
 						if (tr.length)
 							deleteOrder(tr.data().OrderId)
-					}
-				},
-				{
-					text: "Clone",
-					action: (e, dt) =>  {
-						var tr = dt.row("tr.selected")
-						if (tr.length)
-							cloneOrder(tr.data().OrderId)
 					}
 				},
 <% } %>
