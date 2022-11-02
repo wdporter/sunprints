@@ -11,7 +11,7 @@ router.get("/", function (req, res, next) {
 	res.render("order.ejs", {
 		title: "Orders",
 		stylesheets: [
-			"/stylesheets/fixedHeader.dataTables.min.css", 
+			"/stylesheets/fixedHeader.dataTables.min.css",
 			"/stylesheets/buttons.dataTables-2.2.3.css",
 			"/stylesheets/order-theme.css"],
 		javascripts: [
@@ -216,7 +216,7 @@ router.get("/edit", function (req, res, next) {
 		${sz.sizes.Adults.map(s => ` Garment.${s} AS Qty${s} `).join(" , ")} 
 		FROM OrderGarment INNER JOIN Garment ON Garment.GarmentId=OrderGarment.GarmentId WHERE OrderId=?`
 		var garments = db.prepare(query).all(req.query.id)
-		garments.forEach(g => {
+		garments.forEach((g, i) => {
 
 			// stock warnings
 			if (order.BuyIn) {
@@ -265,205 +265,206 @@ router.get("/edit", function (req, res, next) {
 			sz.sizes.Womens.forEach(s => delete g[s])
 			sz.sizes.Kids.forEach(s => delete g[s])
 
-			// populate print design id
-			const printDesignIds = []
-			if (g.FrontPrintDesignId != null)
-				printDesignIds.push(g.FrontPrintDesignId)
-			if (g.BackPrintDesignId != null)
-				printDesignIds.push(g.BackPrintDesignId)
-			if (g.PocketPrintDesignId != null)
-				printDesignIds.push(g.PocketPrintDesignId)
-			if (g.SleevePrintDesignId != null)
-				printDesignIds.push(g.SleevePrintDesignId)
-			if (printDesignIds.length) {
-				query = `SELECT * FROM PrintDesign WHERE Deleted=0 AND PrintDesignId IN (${printDesignIds.join(",")}) `
-				const printDesign = db.prepare(query).get()
-				g.selectedPrintDesign = {
-					Code: printDesign.Code,
-					Notes: printDesign.Notes,
-					Comments: printDesign.Comments,
-					PrintDesignId: printDesign.PrintDesignId
+			// designs on first product only
+			if (i == 0) {
+				// populate print design id
+				const printDesignIds = []
+				if (g.FrontPrintDesignId != null)
+					printDesignIds.push(g.FrontPrintDesignId)
+				if (g.BackPrintDesignId != null)
+					printDesignIds.push(g.BackPrintDesignId)
+				if (g.PocketPrintDesignId != null)
+					printDesignIds.push(g.PocketPrintDesignId)
+				if (g.SleevePrintDesignId != null)
+					printDesignIds.push(g.SleevePrintDesignId)
+				if (printDesignIds.length) {
+					query = `SELECT * FROM PrintDesign WHERE Deleted=0 AND PrintDesignId IN (${printDesignIds.join(",")}) `
+					const printDesign = db.prepare(query).get()
+					g.selectedPrintDesign = {
+						Code: printDesign.Code,
+						Notes: printDesign.Notes,
+						Comments: printDesign.Comments,
+						PrintDesignId: printDesign.PrintDesignId
+					}
 				}
-			}
-			delete g.FrontPrintDesignId
-			delete g.BackPrintDesignId
-			delete g.PocketPrintDesignId
-			delete g.SleevePrintDesignId
+				delete g.FrontPrintDesignId
+				delete g.BackPrintDesignId
+				delete g.PocketPrintDesignId
+				delete g.SleevePrintDesignId
 
-			// populate embroidery design id
-			const embroideryDesignIds = []
-			if (g.FrontEmbroideryDesignId != null)
-				embroideryDesignIds.push(g.FrontEmbroideryDesignId)
-			if (g.BackEmbroideryDesignId != null)
-				embroideryDesignIds.push(g.BackEmbroideryDesignId)
-			if (g.PocketEmbroideryDesignId != null)
-				embroideryDesignIds.push(g.PocketEmbroideryDesignId)
-			if (g.SleeveEmbroideryDesignId != null)
-				embroideryDesignIds.push(g.SleeveEmbroideryDesignId)
-			if (embroideryDesignIds.length) {
-				query = `SELECT * FROM EmbroideryDesign WHERE Deleted=0 AND EmbroideryDesignId IN (${embroideryDesignIds.join(",")}) `
-				const embroideryDesign = db.prepare(query).get()
-				g.selectedEmbroideryDesign = {
-					Code: embroideryDesign.Code,
-					Notes: embroideryDesign.Notes,
-					Comments: embroideryDesign.Comments,
-					EmbroideryDesignId: embroideryDesign.EmbroideryDesignId
+				// populate embroidery design id
+				const embroideryDesignIds = []
+				if (g.FrontEmbroideryDesignId != null)
+					embroideryDesignIds.push(g.FrontEmbroideryDesignId)
+				if (g.BackEmbroideryDesignId != null)
+					embroideryDesignIds.push(g.BackEmbroideryDesignId)
+				if (g.PocketEmbroideryDesignId != null)
+					embroideryDesignIds.push(g.PocketEmbroideryDesignId)
+				if (g.SleeveEmbroideryDesignId != null)
+					embroideryDesignIds.push(g.SleeveEmbroideryDesignId)
+				if (embroideryDesignIds.length) {
+					query = `SELECT * FROM EmbroideryDesign WHERE Deleted=0 AND EmbroideryDesignId IN (${embroideryDesignIds.join(",")}) `
+					const embroideryDesign = db.prepare(query).get()
+					g.selectedEmbroideryDesign = {
+						Code: embroideryDesign.Code,
+						Notes: embroideryDesign.Notes,
+						Comments: embroideryDesign.Comments,
+						EmbroideryDesignId: embroideryDesign.EmbroideryDesignId
+					}
 				}
-			}
-			delete g.FrontEmbroideryDesignId
-			delete g.BackEmbroideryDesignId
-			delete g.PocketEmbroideryDesignId
-			delete g.SleeveEmbroideryDesignId
+				delete g.FrontEmbroideryDesignId
+				delete g.BackEmbroideryDesignId
+				delete g.PocketEmbroideryDesignId
+				delete g.SleeveEmbroideryDesignId
 
-			// populate transfer design id
-			const transferDesignIds = []
-			if (g.FrontTransferDesignId != null)
-				transferDesignIds.push(g.FrontTransferDesignId)
-			if (g.BackTransferDesignId != null)
-				transferDesignIds.push(g.BackTransferDesignId)
-			if (g.PocketTransferDesignId != null)
-				transferDesignIds.push(g.PocketTransferDesignId)
-			if (g.SleeveTransferDesignId != null)
-				transferDesignIds.push(g.SleeveTransferDesignId)
-			if (transferDesignIds.length) {
-				query = `SELECT * FROM TransferDesign WHERE TransferDesignId IN (${transferDesignIds.join(",")}) `
-				const transferDesign = db.prepare(query).get()
-				g.selectedTransferDesign = {
-					Code: transferDesign.Code,
-					Notes: transferDesign.Notes,
-					TransferDesignId: transferDesign.TransferDesignId
+				// populate transfer design id
+				const transferDesignIds = []
+				if (g.FrontTransferDesignId != null)
+					transferDesignIds.push(g.FrontTransferDesignId)
+				if (g.BackTransferDesignId != null)
+					transferDesignIds.push(g.BackTransferDesignId)
+				if (g.PocketTransferDesignId != null)
+					transferDesignIds.push(g.PocketTransferDesignId)
+				if (g.SleeveTransferDesignId != null)
+					transferDesignIds.push(g.SleeveTransferDesignId)
+				if (transferDesignIds.length) {
+					query = `SELECT * FROM TransferDesign WHERE TransferDesignId IN (${transferDesignIds.join(",")}) `
+					const transferDesign = db.prepare(query).get()
+					g.selectedTransferDesign = {
+						Code: transferDesign.Code,
+						Notes: transferDesign.Notes,
+						TransferDesignId: transferDesign.TransferDesignId
+					}
 				}
-			}
-			delete g.FrontTransferDesignId
-			delete g.BackTransferDesignId
-			delete g.PocketTransferDesignId
-			delete g.SleeveTransferDesignId
+				delete g.FrontTransferDesignId
+				delete g.BackTransferDesignId
+				delete g.PocketTransferDesignId
+				delete g.SleeveTransferDesignId
 
 
 
-			// now set available print locations for the selected print design
-			if (g.selectedPrintDesign) {
-				g.printLocations = {}
-				query = `SELECT ${sz.locations.join(",")}, ScreenPrintDesignId, Screen.ScreenId, Colour, Screen.Name, Number 
-				FROM ScreenPrintDesign 
-				INNER JOIN Screen ON Screen.ScreenId = ScreenPrintDesign.ScreenId
-				WHERE SizeCategory=? 
-				AND PrintDesignId=? `
-				const screenPrintDesigns = db.prepare(query).all(g.SizeCategory, g.selectedPrintDesign.PrintDesignId)
-				screenPrintDesigns.forEach(sp => {
-					sz.locations.forEach(l => {
-						if (sp[l]) {
-							if (!g.printLocations[l]) {
-								g.printLocations[l] = []
+				// now set available print locations for the selected print design
+				if (g.selectedPrintDesign) {
+					g.printLocations = {}
+					query = /*sql*/`
+SELECT ${sz.locations.join(",")}, ScreenPrintDesignId, Screen.ScreenId, Colour, Screen.Name, Number 
+FROM ScreenPrintDesign 
+INNER JOIN Screen ON Screen.ScreenId = ScreenPrintDesign.ScreenId
+AND PrintDesignId=? `
+					const screenPrintDesigns = db.prepare(query).all(g.selectedPrintDesign.PrintDesignId)
+					screenPrintDesigns.forEach(sp => {
+						sz.locations.forEach(l => {
+							if (sp[l]) {
+								if (!g.printLocations[l]) {
+									g.printLocations[l] = []
+								}
+								const obj = {}
+								sz.locations.forEach(loc => obj[loc] = 0)
+								obj.ScreenPrintDesignId = sp.ScreenPrintDesignId
+								obj.ScreenId = sp.ScreenId
+								obj[l] = 1
+								obj.Colour = sp.Colour
+								obj.Name = sp.Name
+								obj.Number = sp.Number
+								g.printLocations[l].push(obj)
 							}
-							const obj = {}
-							sz.locations.forEach(loc => obj[loc] = 0)
-							obj.ScreenPrintDesignId = sp.ScreenPrintDesignId
-							obj.ScreenId = sp.ScreenId
-							obj[l] = 1
-							obj.Colour = sp.Colour
-							obj.Name = sp.Name
-							obj.Number = sp.Number
-							g.printLocations[l].push(obj)
-						}
+						})
 					})
-				})
 
-				g.checkedScreens = {}
-				for (var loc of sz.locations) {
-					g.checkedScreens[loc] = []
-					if (g[`${loc}ScreenId`])
-						g.checkedScreens[loc].push(g[`${loc}ScreenId`])
-					if (g[`${loc}Screen2Id`])
-						g.checkedScreens[loc].push(g[`${loc}Screen2Id`])
+					g.checkedScreens = {}
+					for (var loc of sz.locations) {
+						g.checkedScreens[loc] = []
+						if (g[`${loc}ScreenId`])
+							g.checkedScreens[loc].push(g[`${loc}ScreenId`])
+						if (g[`${loc}Screen2Id`])
+							g.checkedScreens[loc].push(g[`${loc}Screen2Id`])
 
-					delete g[loc + "ScreenId"]
-					delete g[loc + "Screen2Id"]
+						delete g[loc + "ScreenId"]
+						delete g[loc + "Screen2Id"]
+					}
 				}
-			}
 
-			// now set available embroidery locations
-			if (g.selectedEmbroideryDesign) {
-				g.embroideryLocations = {}
-				query = `SELECT ${sz.locations.join(",")}, UsbEmbroideryDesignId, Usb.UsbId, Number, Notes
-				FROM UsbEmbroideryDesign 
-				INNER JOIN Usb ON Usb.UsbId = UsbEmbroideryDesign.UsbId
-				WHERE SizeCategory=? 
-				AND EmbroideryDesignId=? `
-				const usbEmbroideryDesigns = db.prepare(query).all(g.SizeCategory, g.selectedEmbroideryDesign.EmbroideryDesignId)
-				usbEmbroideryDesigns.forEach(de => {
-					sz.locations.forEach(l => {
-						if (de[l]) {
-							if (!g.embroideryLocations[l]) {
-								g.embroideryLocations[l] = []
+				// now set available embroidery locations
+				if (g.selectedEmbroideryDesign) {
+					g.embroideryLocations = {}
+					query = /*sql*/`SELECT ${sz.locations.join(",")}, UsbEmbroideryDesignId, Usb.UsbId, Number, Notes
+FROM UsbEmbroideryDesign 
+INNER JOIN Usb ON Usb.UsbId = UsbEmbroideryDesign.UsbId
+AND EmbroideryDesignId=? `
+					const usbEmbroideryDesigns = db.prepare(query).all(g.selectedEmbroideryDesign.EmbroideryDesignId)
+					usbEmbroideryDesigns.forEach(de => {
+						sz.locations.forEach(l => {
+							if (de[l]) {
+								if (!g.embroideryLocations[l]) {
+									g.embroideryLocations[l] = []
+								}
+								const obj = {}
+								sz.locations.forEach(loc => obj[loc] = 0)
+								obj.usbEmbroideryDesignId = de.usbEmbroideryDesignId
+								obj.UsbId = de.UsbId
+								obj[l] = 1
+								obj.Notes = de.Notes
+								obj.Number = de.Number
+								g.embroideryLocations[l].push(obj)
 							}
-							const obj = {}
-							sz.locations.forEach(loc => obj[loc] = 0)
-							obj.usbEmbroideryDesignId = de.usbEmbroideryDesignId
-							obj.UsbId = de.UsbId
-							obj[l] = 1
-							obj.Notes = de.Notes
-							obj.Number = de.Number
-							g.embroideryLocations[l].push(obj)
-						}
+						})
 					})
-				})
 
 
-				g.checkedUsbs = {}
-				for (var loc of sz.locations) {
-					g.checkedUsbs[loc] = []
+					g.checkedUsbs = {}
+					for (var loc of sz.locations) {
+						g.checkedUsbs[loc] = []
 
-					for (var usb of usbEmbroideryDesigns) {
-						if (usb[loc] == 1)
-							g.checkedUsbs[loc].push(usb.UsbId)
+						for (var usb of usbEmbroideryDesigns) {
+							if (usb[loc] == 1)
+								g.checkedUsbs[loc].push(usb.UsbId)
+						}
+
+						delete g[loc + "UsbId"]
+						delete g[loc + "Usb2Id"]
 					}
 
-					delete g[loc + "UsbId"]
-					delete g[loc + "Usb2Id"]
 				}
 
-			}
 
-
-			// now set available transfers
-			if (g.selectedTransferDesign) {
-				g.transferLocations = {}
-				query = `SELECT ${sz.locations.join(",")}, TransferNameTransferDesignId, TransferName.TransferNameId, Name
-				FROM TransferNameTransferDesign 
-				INNER JOIN TransferName ON TransferName.TransferNameId = TransferNameTransferDesign.TransferNameId
-				WHERE SizeCategory=? 
-				AND TransferDesignId=? `
-				const transferNameTransferDesigns = db.prepare(query).all(g.SizeCategory, g.selectedTransferDesign.TransferDesignId)
-				transferNameTransferDesigns.forEach(t => {
-					sz.locations.forEach(l => {
-						if (t[l]) {
-							if (!g.transferLocations[l]) {
-								g.transferLocations[l] = []
+				// now set available transfers
+				if (g.selectedTransferDesign) {
+					g.transferLocations = {}
+					query = /*sql*/`SELECT ${sz.locations.join(",")}, TransferNameTransferDesignId, TransferName.TransferNameId, Name
+FROM TransferNameTransferDesign 
+INNER JOIN TransferName ON TransferName.TransferNameId = TransferNameTransferDesign.TransferNameId
+AND TransferDesignId=? `
+					const transferNameTransferDesigns = db.prepare(query).all(g.selectedTransferDesign.TransferDesignId)
+					transferNameTransferDesigns.forEach(t => {
+						sz.locations.forEach(l => {
+							if (t[l]) {
+								if (!g.transferLocations[l]) {
+									g.transferLocations[l] = []
+								}
+								const obj = {}
+								sz.locations.forEach(loc => obj[loc] = 0)
+								obj.TransferNameTransferDesignId = t.TransferNameTransferDesignId
+								obj.TransferNameId = t.TransferNameId
+								obj[l] = 1
+								obj.Name = t.Name
+								g.transferLocations[l].push(obj)
 							}
-							const obj = {}
-							sz.locations.forEach(loc => obj[loc] = 0)
-							obj.TransferNameTransferDesignId = t.TransferNameTransferDesignId
-							obj.TransferNameId = t.TransferNameId
-							obj[l] = 1
-							obj.Name = t.Name
-							g.transferLocations[l].push(obj)
-						}
+						})
 					})
-				})
 
 
-				g.checkedTransferNames = {}
-				for (var loc of sz.locations) {
-					g.checkedTransferNames[loc] = []
+					g.checkedTransferNames = {}
+					for (var loc of sz.locations) {
+						g.checkedTransferNames[loc] = []
 
-					for (var t of transferNameTransferDesigns) {
-						if (t[loc] == 1)
-							g.checkedTransferNames[loc].push(t.TransferNameId)
+						for (var t of transferNameTransferDesigns) {
+							if (t[loc] == 1)
+								g.checkedTransferNames[loc].push(t.TransferNameId)
+						}
+
+						delete g[loc + "TransferNameId"]
+						delete g[loc + "TransferName2Id"]
 					}
-
-					delete g[loc + "TransferNameId"]
-					delete g[loc + "TransferName2Id"]
 				}
 			}
 		})
@@ -887,7 +888,7 @@ router.get("/outstanding/print", (req, res) => {
 
 				r2[r.OrderNumber].Qty += r.Qty
 				r2[r.OrderNumber].Value += r.Qty * r.Price
-		
+
 			}
 		})
 
@@ -1161,8 +1162,8 @@ router.get("/outstanding/promo", (req, res) => {
 				if (!r2[r.OrderNumber]) {
 					// we only keep it if it has no designs on it
 					if (r.FrontPrintDesignId == null && r.BackPrintDesignId == null && r.PocketPrintDesignId == null && r.SleevePrintDesignId == null
-							&& r.FrontEmbroideryDesignId == null && r.BackEmbroideryDesignId == null && r.PocketEmbroideryDesignId == null && r.SleeveEmbroideryDesignId == null
-							&& r.FrontTransferDesignId == null && r.BackTransferDesignId == null && r.PocketTransferDesignId == null && r.SleeveTransferDesignId == null) {
+						&& r.FrontEmbroideryDesignId == null && r.BackEmbroideryDesignId == null && r.PocketEmbroideryDesignId == null && r.SleeveEmbroideryDesignId == null
+						&& r.FrontTransferDesignId == null && r.BackTransferDesignId == null && r.PocketTransferDesignId == null && r.SleeveTransferDesignId == null) {
 
 						r2[r.OrderNumber] = r
 						r2[r.OrderNumber].Value = r.Qty * r.Price
@@ -1248,18 +1249,18 @@ router.get("/csv/", (req, res) => {
 	LEFT JOIN TransferDesign ptd ON ptd.TransferDesignId=OrderGarment.PocketTransferDesignId
 	LEFT JOIN TransferDesign std ON std.TransferDesignId=OrderGarment.SleeveTransferDesignId
 	WHERE ProcessedDate IS NULL  ORDER BY 2 ASC `).all()
-	
+
 	const lines = ["OrderNumber,OrderDate,DeliveryDate,BuyIn,Done,Company,FrontPrintDesign,BackPrintDesign,PocketPrintDesign,SleevePrintDesign,FrontEmbroideryDesign,BackEmbroideryDesign,PocketEmbroideryDesign,SleeveEmbroideryDesign,FrontTransferDesign,BackTransferDesign,PocketTransferDesign,SleeveTransferDesign,Qty,Price,Value,Product"]
 	const data = records.map(r => {
-		const values = Object.keys(r).map(k => `"${r[k]}"` )
+		const values = Object.keys(r).map(k => `"${r[k]}"`)
 		lines.push(values.join(","))
 	})
-	
+
 	let csv = lines.join("\n")
 	csv = csv.replace(/\"null\"/g, "")
 
 	res.header("Content-Type", "text/csv")
-	res.attachment(`outstanding_orders_${new Date().toISOString().substring(0,10)}.csv`);
+	res.attachment(`outstanding_orders_${new Date().toISOString().substring(0, 10)}.csv`);
 	res.status(200).send(csv)
 
 
@@ -1299,7 +1300,7 @@ router.get("/xero/invoices", (req, res) => {
 })
 
 
-router.get("/xero/csv", (req, res)=> {
+router.get("/xero/csv", (req, res) => {
 
 	db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 	try {
@@ -1321,7 +1322,7 @@ router.get("/xero/csv", (req, res)=> {
 		const csv = ["*ContactName,EmailAddress,POAddressLine1,POAddressLine2,POAddressLine3,POAddressLine4,POCity,PORegion,POPostalCode,POCountry,*InvoiceNumber,Reference,*InvoiceDate,*DueDate,InventoryItemCode,*Description,*Quantity,*UnitAmount,Discount,*AccountCode,*TaxType,TrackingName1,TrackingOption1,TrackingName2,TrackingOption2,Currency,BrandingTheme"]
 
 		orders.forEach(order => {
-			const qty = sz.allSizes.reduce((acc, curr)=> { return acc + order[curr]}, 0)
+			const qty = sz.allSizes.reduce((acc, curr) => { return acc + order[curr] }, 0)
 			let description = '"' + order.Type
 			const mySizes = []
 			sz.allSizes.forEach(size => {
@@ -1353,13 +1354,13 @@ router.get("/xero/csv", (req, res)=> {
 router.get("/designs", (req, res) => {
 
 	try {
-	const recordset = designService.search(req.query.location, req.query.decoration, {
-		code: req.query.code,
-		notes: req.query.notes,
-		comments: req.query.comments
-	})
+		const recordset = designService.search(req.query.location, req.query.decoration, {
+			code: req.query.code,
+			notes: req.query.notes,
+			comments: req.query.comments
+		})
 
-	res.send(recordset)
+		res.send(recordset)
 
 	}
 	catch (ex) {
@@ -1374,15 +1375,15 @@ router.get("/designs", (req, res) => {
 router.get("/media", (req, res) => {
 	try {
 		const recordset = mediaService.search(req.query.media, req.query.location, req.query.designid)
-	
+
 		res.send(recordset)
-	
-		}
-		catch (ex) {
-			res.statusMessage = ex.message
-			res.status(400)
-		}
-	
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.status(400)
+	}
+
 })
 
 
@@ -1499,7 +1500,7 @@ router.post("/", function (req, res) {
 			})
 			// todo also into AuditLogEntry for Garment
 
-			
+
 		}
 
 		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
@@ -1684,29 +1685,29 @@ router.post("/:id/garment", function (req, res) {
 				res.send({ message: "ok" }).end()
 			}
 
-				// add the update to AuditLog
+			// add the update to AuditLog
+			statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
+			info = statement.run("OrderGarment", req.body.OrderGarmentId, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+
+			// add the insert to AuditLogEntry
+			for (col of columns) {
+				if (col.startsWith("LastM"))
+					continue
+				statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
+				statement.run(info.lastInsertRowid, col, myOrderGarment[col], req.body[col])
+			}
+
+			// if there are any changes sizes, add the update to AuditLog for Garment
+			if (changedSizes.length > 0) {
 				statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-				info = statement.run("OrderGarment", req.body.OrderGarmentId, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
+				info = statement.run("Garment", req.body.GarmentId, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
 
 				// add the insert to AuditLogEntry
-				for (col of columns) {
-					if (col.startsWith("LastM"))
-						continue
+				for (size of changedSizes) {
 					statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
-					statement.run(info.lastInsertRowid, col, myOrderGarment[col], req.body[col])
+					statement.run(info.lastInsertRowid, size, myGarment[size], myGarment[size] - (req.body[size] - myOrderGarment[size]))
 				}
-
-				// if there are any changes sizes, add the update to AuditLog for Garment
-				if (changedSizes.length > 0) {
-					statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-					info = statement.run("Garment", req.body.GarmentId, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
-
-					// add the insert to AuditLogEntry
-					for (size of changedSizes) {
-						statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
-						statement.run(info.lastInsertRowid, size, myGarment[size], myGarment[size] - (req.body[size] - myOrderGarment[size]))
-					}
-				}
+			}
 
 		} // end mode = update
 
