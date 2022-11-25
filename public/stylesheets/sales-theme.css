@@ -1,0 +1,41 @@
+
+div#dt_wrapper {
+	padding-top: 2em;
+}
+
+	.flex {
+		display:flex;
+	}
+
+	.flex>div + div {
+		margin-left: 1em;
+	}
+
+
+	div#dt_wrapper {
+		margin-left: 2em;
+	}
+
+	.buttondiv {
+		clear:both;
+	}
+
+
+	select {
+		/* max-width: unset; */
+		width: 100%;
+	}
+
+	.sales-item {
+		border: 1px black solid;
+		padding: .5em;
+	}
+	.sales-item + .sales-item {
+		margin-left: .5em;
+	}
+
+
+	td.centred {
+		text-align: center;
+	}
+

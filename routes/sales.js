@@ -10,10 +10,12 @@ router.get("/", (req, res) => {
 		res.render("sales.ejs", {
 			title: "Sales History",
 			user: req.auth.user,
-			poweruser: res.locals.poweruser
+			poweruser: res.locals.poweruser,
+			stylesheets: ["/stylesheets/buttons.dataTables-2.2.3.css", "/stylesheets/sales-theme.css"],
+			javascripts:  ["/javascripts/dataTables.buttons-2.2.3.js"]
 		})
-
 })
+
 
 
 // GET datatable ajax for sales history table
