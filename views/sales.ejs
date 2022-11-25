@@ -321,19 +321,29 @@ div#dt_wrapper {
 	function format(data) {
 		if (!data) return // happens when you click the clone button
 
-		const retVal = fetch(`/sales/${data.OrderId}/history`)
-				.then(response => {
-					if (response.ok) 
-						return response.json()
-					else 
-						throw new Error(response.statusText)
-				})
-				.then(data => {
+//		const retVal = 
+//			return retVal
+
+	}
+
+	async function onOpenRowButtonClick(evt) {
+		const row = window.datatable.row(evt.target)
+		const data = row.data()
+
+		if (row.child.isShown()) {
+				// This row is already open - close it
+				row.child.hide();
+				evt.target.classList.remove('shown');
+		} else {
+				// Open this row
+				var response = await fetch(`/sales/${data.OrderId}/history`)
+				if (response.ok) {
+					var json = await response.json()
 					let html = "<div style=display:flex>"
-					if (data.length == 0)
+					if (json.length == 0)
 					html += "<span class=nousbs>no sales items<span>"
 					else {
-						for (var item of data) {
+						for (var item of json) {
 							html += "<div class=sales-item>"
 							const items = []
 							for (key in item) {
@@ -345,30 +355,18 @@ div#dt_wrapper {
 						}
 					}
 					html += "</div>"
-					return html
-				})
-				.catch(error => window.alert(`We encountered an error: ${error}`))
+					row.child(html).show()
+					evt.target.classList.add('shown');
 
-			return retVal
-
+				}
+				else 
+					throw new Error(response.statusText)
+		}
 	}
+	
 
 	// Add event listener for opening and closing details
-	document.querySelector("table#dt tbody").addEventListener("click", function(evt) {
-		const row = window.datatable.row(evt.target)
-		const data = row.data()
-
-		if (row.child.isShown()) {
-				// This row is already open - close it
-				row.child.hide();
-				evt.target.classList.remove('shown');
-		} else {
-				// Open this row
-				let myData = format(data)
-				myData.then(d => row.child(d).show())
-				evt.target.classList.add('shown');
-		}
-	})
+	document.querySelector("table#dt tbody").addEventListener("click", onOpenRowButtonClick)
 
 	Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
 		// when focus happens first time, load options via ajax
