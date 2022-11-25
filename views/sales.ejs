@@ -1,53 +1,5 @@
 <%- include("partials/head.ejs") %>
 
-<link rel=stylesheet href=/stylesheets/buttons.dataTables-2.2.3.css>
-<script src="/javascripts/dataTables.buttons-2.2.3.js"></script>
-
-<style>
-
-div#dt_wrapper {
-	padding-top: 2em;
-}
-
-	.flex {
-		display:flex;
-	}
-
-	.flex>div + div {
-		margin-left: 1em;
-	}
-
-
-	div#dt_wrapper {
-		margin-left: 2em;
-	}
-
-	.buttondiv {
-		clear:both;
-	}
-
-
-	select {
-		/* max-width: unset; */
-		width: 100%;
-	}
-
-	.sales-item {
-		border: 1px black solid;
-		padding: .5em;
-	}
-	.sales-item + .sales-item {
-		margin-left: .5em;
-	}
-
-
-	td.centred {
-		text-align: center;
-	}
-
-</style>
-
-
 
 <section>
 	<div>
@@ -174,7 +126,8 @@ div#dt_wrapper {
 
 	
 <script>
-	function cloneOrder(a, event) {
+
+function cloneOrder(a, event) {
 		event.preventDefault()
 		const tr = a.closest("tr")
 		const api = $("table#dt").dataTable().api()
@@ -186,7 +139,7 @@ div#dt_wrapper {
 	}
 
 
-	window.datatable = new DataTable("table#dt", {
+window.datatable = new DataTable("table#dt", {
 		fixedHeader: true,
 		processing: true,
 		serverSide: true,
@@ -223,7 +176,7 @@ div#dt_wrapper {
 <% if (!poweruser) { %>
 						return ""
 <% } %>
-					let retVal = `&ensp;<a href=# onclick="cloneOrder(this, event)" title="Clone this order"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span></a>`
+					let retVal =""// clone doesn't work properly `&ensp;<a href=# onclick="cloneOrder(this, event)" title="Clone this order"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span></a>`
 
 					let href = ""
 
@@ -314,11 +267,11 @@ div#dt_wrapper {
 		]
 	})
 
-	window.datatable.on("draw", function() {
+window.datatable.on("draw", function() {
 		window.datatable.buttons(0).text("Expand all")
 	})
 
-	function format(data) {
+function format(data) {
 		if (!data) return // happens when you click the clone button
 
 //		const retVal = 
@@ -326,7 +279,7 @@ div#dt_wrapper {
 
 	}
 
-	async function onOpenRowButtonClick(evt) {
+async function onOpenRowButtonClick(evt) {
 		const row = window.datatable.row(evt.target)
 		const data = row.data()
 
@@ -363,42 +316,44 @@ div#dt_wrapper {
 					throw new Error(response.statusText)
 		}
 	}
-	
 
-	// Add event listener for opening and closing details
-	document.querySelector("table#dt tbody").addEventListener("click", onOpenRowButtonClick)
 
-	Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
-		// when focus happens first time, load options via ajax
-		s.addEventListener("focus", function() {
-			if (this.childElementCount == 1) {
-				fetch(`/sales/${this.dataset.location}`)
-				.then(response => response.json() )
-				.then(json => {
-					for(item of json) {
-						this.insertAdjacentHTML("beforeend", `<option value="${item.value}">${item.name}`)
-					}
-				})
-			}
-		})
-	})
+// Add event listener for opening and closing details
+document.querySelector("table#dt tbody").addEventListener("click", onOpenRowButtonClick)
 
-	Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
-		s.addEventListener("change", function(input) {
-			Array.from(document.querySelectorAll("fieldset select")).forEach(sel => {
-				if (sel != input.currentTarget) {
-					sel.value= "0"	
+
+Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
+	// when focus happens first time, load options via ajax
+	s.addEventListener("focus", function() {
+		if (this.childElementCount == 1) {
+			fetch(`/sales/${this.dataset.location}`)
+			.then(response => response.json() )
+			.then(json => {
+				for(item of json) {
+					this.insertAdjacentHTML("beforeend", `<option value="${item.value}">${item.name}`)
 				}
 			})
-			window.datatable.ajax.reload()
-		})
+		}
 	})
+})
 
-	Array.from(document.querySelectorAll("fieldset input")).forEach(s => {
-		s.addEventListener("input", function() {
-			window.datatable.ajax.reload()
+
+Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
+	s.addEventListener("change", function(input) {
+		Array.from(document.querySelectorAll("fieldset select")).forEach(sel => {
+			if (sel != input.currentTarget) {
+				sel.value= "0"	
+			}
 		})
+		window.datatable.ajax.reload()
 	})
+})
+
+Array.from(document.querySelectorAll("fieldset input")).forEach(s => {
+	s.addEventListener("input", function() {
+		window.datatable.ajax.reload()
+	})
+})
 
 
 
@@ -407,9 +362,7 @@ document.getElementById("dateRangeCsv").addEventListener("click", function(event
 	const dateFrom = document.getElementById("dateFrom").value
 	const dateTo = document.getElementById("dateTo").value
 	if (dateFrom != "" && dateTo != "" && dateFrom <= dateTo) {
-
 			event.target.setAttribute("href", `/sales/csv?datefrom=${dateFrom}&dateto=${dateTo}` )
-
 	}
 	else 
 		event.preventDefault()
