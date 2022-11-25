@@ -159,6 +159,11 @@ summary:focus {
 	text-decoration: underline;
 }
 
+input.yellow-on-black-buttton, button.yellow-on-black-buttton {
+	background-color: black;
+	color: yellow;
+}
+
 
 
 /* back to top button */

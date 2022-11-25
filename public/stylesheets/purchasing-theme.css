@@ -19,8 +19,11 @@ select:invalid {
 	border-color: red
 }
 
-button#receiveOrder {
-	background-color: black;
-	color: yellow;
+button.yellow-on-black-buttton {
 	float:right;
+}
+
+input.orange-on-blue-button {
+	background-color: navy;
+	color: orange;
 }

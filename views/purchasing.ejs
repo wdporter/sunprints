@@ -13,7 +13,7 @@
 	<div id=vueApp>
 <% if (poweruser) { %> 
 		<p>
-			<input type=button @click="reset()" value="Create new purchase order"  />
+			<input type=button class="orange-on-blue-button" @click="reset()" value="Create new purchase order"  />
 		</p>
 <% } %>
 		<fieldset><legend>{{ stockOrderId == "" ? "Create New" : "Edit existing"  }}</legend>
@@ -89,9 +89,9 @@
 	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == '' || dirty==true" value="Print Purchase Order" />&emsp;
 <% if (poweruser) { %>
 	<button v-show="stockOrderId != ''" type="reset" @click="deletePurchaseOrder">Delete purchase order</button>
-	&nbsp;&nbsp;<input type=button @click="reset()" value="New"  />
+	&nbsp;&nbsp;<input type=button class="orange-on-blue-button" @click="reset()" value="New"  />
 
-	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true" id=receiveOrder>Receive order</button>
+	<button type="submit" @click.prevent="receiveOrder" :disabled="stockOrderId == '' || dirty==true" id=receiveOrder class="yellow-on-black-buttton">Receive order</button>
 <% } %>
 </p>
 
