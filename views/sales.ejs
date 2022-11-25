@@ -8,13 +8,13 @@
 			<p>
 				<label for="customerCode">Customer code</label>
 				<select id="customerCode" data-location="customercodes">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 			<p>
 				<label for="customerName">Customer name</label>
 				<select id="customerName" data-location="customernames">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 		</fieldset>
@@ -23,7 +23,7 @@
 			<p>
 				<label for=salesRep>Name</label>
 				<select id="salesRep" data-location="salesreps">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 		</fieldset>
@@ -53,13 +53,13 @@
 			<p>
 				<label for="print">Design</label>
 				<select id="print" data-location="prints">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 			<p>
 				<label for="screen">Screen</label>
 				<select id="screen" data-location="screens">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 		</fieldset>
@@ -68,13 +68,13 @@
 			<p>
 				<label for="embroidery">Design</label>
 				<select id="embroidery" data-location="embroideries">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 			<p>
 				<label for="usb">Usb</label>
 				<select id="usb" data-location="usbs">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 		</fieldset>
@@ -83,13 +83,13 @@
 			<p>
 				<label for="transfer">Design</label>
 				<select id="transfer" data-location="transfers">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 			<p>
 				<label for="transferName">Name</label>
 				<select id="transferName" data-location="transfernames">
-					<option value="0">—select—</option>
+					<option value="0">--select--</option>
 				</select>
 			</p>
 	</fieldset>
@@ -340,17 +340,23 @@ Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
 
 Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
 	s.addEventListener("change", function(input) {
-		Array.from(document.querySelectorAll("fieldset select")).forEach(sel => {
-			if (sel != input.currentTarget) {
-				sel.value= "0"	
-			}
-		})
+		// select fields searching is exclusive of order number so reset it
+		document.getElementById("orderNumber").value = "";
 		window.datatable.ajax.reload()
 	})
 })
 
-Array.from(document.querySelectorAll("fieldset input")).forEach(s => {
+Array.from(document.querySelectorAll("fieldset input")).forEach(function(s)  {
 	s.addEventListener("input", function() {
+		if (s.id == "orderNumber") {
+			// if it's the ordernumber field, reset all selects and date fields
+			Array.from(document.querySelectorAll("fieldset select")).forEach(select => select.value = "0")
+			Array.from(document.querySelectorAll("fieldset input[type=date]")).forEach(date => date.value = "")
+		}
+		else {
+			// it was the date fields, reset our order number
+			document.getElementById("orderNumber").value = "";
+		}
 		window.datatable.ajax.reload()
 	})
 })
