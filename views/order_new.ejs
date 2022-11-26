@@ -329,18 +329,20 @@
 								:for="`${g.GarmentId}_${key}_sizeInput`" >
 							{{ key == "Sm" ? "S" : key }}
 						</label>
-						<input type=number min="0" class="quantity-num"
-								:id="`${g.GarmentId}_${key}_sizeInput`"  
-								v-model="g.Quantities[g.SizeCategory][key]"  
-								:ref="`${g.GarmentId}_${key}_sizeInput`" />
+						<input type=number min=0 class=quantity-num 
+								:id="`${g.GarmentId}_${key}_sizeInput`" 
+								v-model="g.Quantities[g.SizeCategory][key]" 
+								:ref="`${g.GarmentId}_${key}_sizeInput`"
+								@keyup.enter="$refs[`${g.GarmentId}_priceInput`][0].focus()" />
 					</p>
 				</div>
 			</fieldset>
 			<section class=price-section>
 				<div>
 					<label for="Price">{{ getGarmentQuantity(g) }} products @ Price ($)</label>
-					<input id="Price" inputmode=numeric pattern="\d*\.?\d*?" v-model="g.Price"
-						placeholder="add price per product">
+					<input id="Price" inputmode=numeric pattern="\d*\.?\d*?" placeholder="add price per product" 
+							v-model="g.Price" 
+							:ref="`${g.GarmentId}_priceInput`" />
 				</div>
 				<div>
 					<label>= Total (for this product)</label>
