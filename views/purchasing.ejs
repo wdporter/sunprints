@@ -74,7 +74,13 @@
 						<td rowspan=2>{{ garment.Type }}</td>
 						<td rowspan=2>{{ garment.Colour }}</td>
 						<td rowspan=2>{{ garment.Label }}</td>
-						<td v-for="(size, i) in sizes[sizeCategory]" style="padding-bottom:0"><input type=number min=0 v-model="garment[size]" @change="dirty=true" :ref="size" /></td>
+						<td v-for="(size, i) in sizes[sizeCategory]" style="padding-bottom:0">
+							<input type=number min=0 
+									v-model="garment[size]" 
+									@change="dirty=true" 
+									:ref="size" 
+									@keyup.enter="$refs.savePurchaseOrderButton.focus()" />
+						</td>
 					</tr>
 					<tr><td :colspan="sizes[sizeCategory].length" style="text-align:center;padding-top:0">Total: {{getCount(sizeCategory, garment)}}</tr>
 				</template>
@@ -84,7 +90,11 @@
 <hr>
 <p>
 <% if (poweruser) { %>
-	<button type="submit" @click.prevent="saveItem" :disabled="isInvalid()">Save purchase order</button>&emsp;
+	<button type="submit" 
+			@click.prevent="saveItem" 
+			:disabled="isInvalid()"
+			ref="savePurchaseOrderButton"
+			>Save purchase order</button>&emsp;
 <% } %>	
 	<input type="button" @click.prevent="printItem" :disabled="stockOrderId == '' || dirty==true" value="Print Purchase Order" />&emsp;
 <% if (poweruser) { %>
