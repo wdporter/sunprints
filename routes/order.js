@@ -24,6 +24,7 @@ router.get("/", function (req, res, next) {
 	})
 })
 
+
 /* GET orders in datatables format. */
 router.get("/dt", function (req, res, next) {
 
@@ -125,7 +126,6 @@ ${whereClause}`).get().count
 		db.close()
 	}
 })
-
 
 
 /* GET new orders page. */
