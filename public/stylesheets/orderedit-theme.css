@@ -1,0 +1,17 @@
+div.customer-info-div {
+	margin-top:var(--unit-2)
+}
+
+div.customer-details {
+	margin-top:var(--unit);
+}
+
+.customer-search-table tr:hover {
+	cursor: pointer;
+	background-color: aliceblue;
+}
+
+p.checkbox-para {
+	margin-top: calc(var(--unit) + var(--unit-2));
+}
+

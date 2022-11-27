@@ -1,0 +1,250 @@
+<%- include("partials/head2.ejs") %>
+
+<div id=app>
+
+	<fieldset>
+		<legend>Order details</legend>
+		<!-- customer details -->
+		<div class=customer-info-div 
+				ref=customerInfo>
+			<p v-if="order.CustomerId">
+				Customer: 
+				<span v-html="formatCustomer()"></span>
+			</p>
+			<details class=customer-details 
+					:open="!order.CustomerId" 
+					ref="customerDetails" 
+					@toggle="onCustomerDetailsToggle">
+				<summary>Choose customer</summary>
+				<customer-pick 
+						ref="customerPick"
+						@customer-select="onCustomerSelect" >
+				</customer-pick>
+			</details>
+		</div>
+
+		<!-- order properties -->
+		<section>
+			<div>
+				<p>
+					<label for=orderNumber>Order number</label>
+					<input id=orderNumber required placeholder=required 
+							v-model="order.OrderNumber" 
+							:autofocus="order.orderId != 0" 
+							ref="orderNumberInput" />
+				</p>
+				<p>
+					<label for=salesRep>Sales Rep.</label>
+					<select id=salesRep required
+							ref="salesRepSelect"
+							v-model="order.SalesRep">
+						<option value="">—Select—</option>
+						<option 
+								v-for="rep in salesReps" 
+								:value="rep">{{ rep }}
+						</option>
+					</select>
+				</p>
+				<p>
+					<label for=terms>Terms</label>
+					<select id=terms v-model="order.Terms">
+						<option value="">—Select—</option>
+						<option value="C.O.D.">C.O.D.</option>
+						<option value="Net 7 days">Net 7 days</option>
+						<option value="Net 30 days">Net 30 days</option>
+					</select>
+				</p>
+				<p class="checkbox-para">
+					<input id=repeat type=checkbox 
+							v-model="order.Repeat" />
+					<label for=repeat>Repeat</label>
+					<input id=newDesign type=checkbox 
+							v-model="order.New" />
+					<label for=newDesign>New</label>
+					<input id=buyIn type=checkbox 
+							v-model="order.BuyIn" 
+							:disabled="(order.OrderId==0 && order.StockOrderId != null) || order.OrderId != 0"
+							@change="loadPurchaseOrders" />
+					<label for=buyIn>Buy In</label>
+				</p>
+				<p v-if="order.OrderId==0 && order.BuyIn">
+					<label for="purchaseSelect">Buy In — choose an existing purchase order to set the products</label>
+					<select id="purchaseSelect" 
+							v-model="order.StockOrderId" >
+						<option value="">— Select —</option>
+						<option 
+								v-for="po in purchaseOrders" 
+								:value="po.StockOrderId">
+							{{ po.StockOrderId }} {{ po.OrderDate }} {{ po.Company }}</option>
+					</select>&emsp; 
+					<a id="viewSelectedPurchaseOrder" title="open the selected purchase order in a new window" target="_blank"
+							:href="`/purchasing?id=${order.StockOrderId}`" >View</a>
+				</p>
+
+				<p style="margin-top:var(--unit-2)">
+					<label for=notes>Order Notes</label>
+					<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
+				</p>
+
+			</div>
+			<div>
+				<p id="invoiceDatePara">
+					<label for=invoiceDate>Invoice Date</label>
+					<input id=invoiceDate type=date v-model="order.InvoiceDate" />
+				</p>
+				<p>
+					<label for=deliveryDate>Delivery Date</label>
+					<input id=deliveryDate v-model="order.DeliveryDate" />
+				</p>
+				<p>
+					<label for=orderDate>Order date</label>
+					<input id=orderDate type=date v-model="order.OrderDate" />
+				</p>
+				<p>
+					<label for=customerOrderNumber>Customer’s order number</label>
+					<input id=customerOrderNumber v-model="order.CustomerOrderNumber" />
+				</p>
+	
+			</div>
+
+		</section>
+<% if (poweruser || salesrep) { %>
+	<button @click="saveOrder">Save Order</button>&emsp;
+	<div v-html="detailsMessage"></div>
+<% } %>
+
+
+	</fieldset>
+
+	<!-- auditing info -->
+	<p v-if="order.OrderId != 0">{{order.OrderId != 0}}
+		<dl style="margin-top:var(--unit-2)">
+			<dt>Created by:</dt><dd>{{ order.CreatedBy }} on {{ order.CreatedDateTime }}</dd>
+			<dt>Last modified by:</dt><dd>{{ order.LastModifiedBy }} on {{ order.LastModifiedDateTime }}</dd>
+		</dl>
+		<a :href=`/auditlog/order/${order.OrderId}`>Audit Log</a>
+	</p>
+
+
+</div> <!--~ end app -->
+
+
+<script type=module>
+
+import { createApp, ref, reactive, computed } from "vue"
+import CustomerPick from "customerPick"
+
+createApp ({
+	components: {
+		CustomerPick,
+	},
+	setup () {
+		const order = reactive(<%- JSON.stringify(order) %>) // from backend
+		const customer = reactive(<%- JSON.stringify(customer) %>) // from backend
+		const salesReps = ref(<%- JSON.stringify(salesReps) %>) // from backend
+		const products = ref([])
+		const purchaseOrders = ref([]) // will be loaded when buy in checkbox is checked
+		const detailsMessage = ref("") // shows errors or information when saving order
+
+		if (order.OrderId == 0) {
+			order.DeliveryDate = window.localStorage.getItem("deliveryDate")
+		}
+
+		return {
+			order,
+			customer,
+			salesReps,
+			purchaseOrders,
+			detailsMessage,
+			products
+		}
+	},
+	methods: {
+		onCustomerDetailsToggle() { // set focus to search box when opened
+			if (this.$refs.customerDetails.open)
+				this.$refs.customerPick.receiveFocus()
+		},
+		onCustomerSelect(selectedCustomer) { // callback function when customer is chosen
+			this.customer = selectedCustomer
+			this.order.CustomerId = selectedCustomer.CustomerId
+			this.$refs.customerDetails.removeAttribute("open")
+			this.$refs.orderNumberInput.focus()
+			this.$refs.customerInfo.scrollIntoView({behavior:"smooth"})
+		},
+		formatCustomer() {
+			return /*html*/`<a href="/customer/edit?id=${this.customer.CustomerId}" target="_blank" title="click to view/edit the customer in a new window"> ${this.customer.Code} ${this.customer.Company}</a> ${this.customer.detailsString}`
+		},
+		async loadPurchaseOrders() {
+			const response = await fetch("/purchasing/outstanding")
+			const json = await response.json()
+			this.purchaseOrders = json
+
+		},
+		async onPurchaseOrderSelect() {
+			//TODO we will populate these after save has been clicked on a new order
+			this.order.products = await (await fetch(`/stockorder/${order.StockOrderId}/products`)).json()
+		},
+		async saveOrder() {
+			// reset the last message
+			this.detailsMessage = ""
+
+			// validations
+			if (!this.order.CustomerId) {
+				this.detailsMessage += "❌ 💡 We require a customer.<br />"
+				this.$refs.customerDetails.setAttribute("open", "open")
+				this.$nextTick(function() {
+					this.$refs.customerDetails.scrollIntoView({behavior: "smooth"})
+				})
+			}
+			if (!this.$refs.orderNumberInput.checkValidity()) {
+				this.detailsMessage += "❌💡 We require an order number.<br />"
+				this.$nextTick(function() {
+					this.$refs.orderNumberInput.scrollIntoView({behavior: "smooth"})
+				})
+			}
+			if (!this.$refs.salesRepSelect.checkValidity()) {
+				this.detailsMessage += "❌💡 We require a sales rep.<br />"
+				this.$nextTick(function() {
+					this.$refs.salesRepSelect.scrollIntoView({behavior: "smooth"})
+				})
+			}
+			if (this.detailsMessage != "")
+				return
+
+			const method = this.order.OrderId == 0 ? "POST" : "PUT"
+			let url = "/api/order"
+			if (method == "PUT")
+				url += `/${this.order.OrderId}`
+			const response = await fetch(url, {
+				method,
+				headers: new Headers({ "Content-Type": "application/json" }),
+				body: JSON.stringify(this.order)
+			})
+			if (response.ok) {
+				this.order = await response.json()
+				if (method == "POST") {
+					// it was a new save, so if there is stock order number, set our products
+					if (this.order.StockOrderId) {
+						const response = await fetch(`/stockorder/${this.order.StockOrderId}/products`)
+						const json = await response.json()
+						this.products = json
+					}
+					// we prepopulate delivery date on a new order with a delivery date used previously
+					window.localStorage.setItem("deliveryDate", this.order.DeliveryDate)  
+				}
+			}
+			else {
+				window.alert (`We encountered an error: ${response.statusText}`)
+				this.detailsMessage.textContent = `❌ We encountered an error : ${response.statusText}`
+			}
+
+		}
+
+	}
+
+}).mount("#app")
+
+</script>
+
+
+<%- include("partials/foot.ejs") %>

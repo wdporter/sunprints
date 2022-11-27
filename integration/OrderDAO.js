@@ -10,7 +10,7 @@ module.exports = class OrderDao {
 	/**
 	 * returns the order with the given id
 	 * @param {number} orderId 
-	 * @returns the order straight from order table
+	 * @returns all fields in the order table
 	 */
 	get(orderId) {
 

@@ -6,7 +6,7 @@ const logger = require("morgan")
 const bodyParser = require("body-parser")
 const basicAuth = require('express-basic-auth')
 
-
+const apiRouter = require("./routes/api")
 const auditLogRouter = require("./routes/auditlog")
 const customerRouter = require("./routes/customer")
 const embroideryRouter = require("./routes/embroidery")
@@ -14,6 +14,7 @@ const productRouter = require("./routes/garment")
 const homeRouter = require("./routes/home")
 const orderRouter = require("./routes/order")
 const order2Router = require("./routes/order2")
+const order3Router = require("./routes/order3")
 const printRouter = require("./routes/print")
 const purchasingRouter = require("./routes/purchasing")
 const repRouter = require("./routes/rep")
@@ -68,6 +69,7 @@ app.use((req, res, next) => {
 
 
 app.use("/", homeRouter)
+app.use("/api", apiRouter)
 app.use("/auditlog", auditLogRouter)
 app.use("/customer", customerRouter)
 app.use("/embroidery", embroideryRouter)
@@ -75,6 +77,7 @@ app.use("/garment", productRouter) // deprecated, use product instead
 app.use("/product", productRouter)
 app.use("/order", orderRouter)
 app.use("/order2", order2Router)
+app.use("/order3", order3Router)
 app.use("/print", printRouter)
 app.use("/purchasing", purchasingRouter)
 app.use("/rep", repRouter)

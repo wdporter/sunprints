@@ -41,7 +41,6 @@ router.get("/edit", function (req, res) {
 			order,
 			salesReps,
 			purchaseOrders,
-			user: req.auth.user,
 			poweruser: res.locals.poweruser
 		})
 

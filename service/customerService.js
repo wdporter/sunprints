@@ -4,6 +4,21 @@ const CustomerDao = require("../integration/CustomerDAO.js")
 
 /**
  * Returns an array of customers. Matches when the term appears anywhere within Company or Code, case insensitive
+ * @param {int} id the customer id
+ * @returns {array} the customer object all fields from table
+ */
+function get(id) {
+	const db = getDB()
+	const dao = new CustomerDao(db)
+
+	return dao.get(id)
+
+}
+
+
+
+/**
+ * Returns an array of customers. Matches when the term appears anywhere within Company or Code, case insensitive
  * @param {string} term the term to search with Company or Code fields
  * @returns {array} matching customers
  */
@@ -33,19 +48,19 @@ function search(term) {
  * @returns {string} a summary of details separated by commas and semi-colons
  */
 function getDetailsString(customer) {
-	let detailsString = ""
+	const details = []
 	if (customer.Locality)
-		detailsString += `, ${customer.Locality}`
+		details.push(customer.Locality)
 	if (customer.State)
-		detailsString += `, ${customer.State}`
+		details.push(customer.State)
 	if (customer.Notes)
-		detailsString += `; ${customer.Notes}`
+		details.push(customer.Notes)
 	if (customer.DeliveryNotes)
-		detailsString += `; ${customer.DeliveryNotes}`
+		details.push(customer.DeliveryNotes)
 
-	return detailsString
+	return details.join("; ")
 
 }
 
 
-module.exports = { search, getDetailsString }
+module.exports = { search, getDetailsString, get }

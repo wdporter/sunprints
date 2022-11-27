@@ -1,4 +1,4 @@
-import {  ref  } from "vue"
+import { ref } from "vue"
 import { debounce } from "lodash-es"
 
 export default {
@@ -38,8 +38,8 @@ export default {
 		<td><a href=# @click.prevent="onCustomerSelect($event, customer)">Select</a></td>
 		<td>{{ customer.Code }} </td>
 		<td>{{ customer.Company }} </td>
-		<td>{{ customer.Locality }} </td>
-		<td>{{ customer.State }} </td>
+		<td>{{ customer.detailsString }} </td>
+		<!--<td>{{ customer.State }} </td>-->
 	</tr>
 </table>
 `

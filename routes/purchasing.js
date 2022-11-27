@@ -136,4 +136,13 @@ router.get("/purchaseorder/:id", function (req, res) {
 
 })
 
+router.get("/outstanding", (req, res) => {
+
+	const purchaseOrderService = require("../service/purchaseOrderService.js")
+
+	res.json(purchaseOrderService.getOutstanding()).end()
+})
+
+
+
 module.exports = router

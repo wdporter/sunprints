@@ -11,11 +11,8 @@ module.exports = class PurchaseOrderProductDAO {
 		try {
 			return this.db.prepare(
 			/*sql*/`
-			SELECT StockOrderGarment.GarmentId,  
-			${allSizes.map(sz => `StockOrderGarment.${sz}`).join()},
-			Code, Label, Type, Colour, SizeCategory, Notes AS GarmentNotes
+			SELECT *
 			FROM StockOrderGarment
-			INNER JOIN Garment USING (GarmentId)
 			WHERE StockOrderId = ?`
 			).all(stockOrderId)
 		}

@@ -91,10 +91,11 @@ function validate(order, db) {
 	if (!order.OrderDate) {
 		errors.push("We require an order date")
 	}
-	if (! order.products || order.products.length == 0){
-		errors.push("We require at least one product")
-	}
 
+	// save the products separately
+	// if (! order.products || order.products.length == 0){
+	// 	errors.push("We require at least one product")
+	// }
 
 	// check unique order number
 	const orderDao = new  OrderDao(db)
@@ -118,7 +119,8 @@ function validate(order, db) {
  * 0. Validation
  * 1. INSERT Orders
  * 2. AuditLog Orders INSERT  
- * 3. INSERT Sales History 
+ * 3. INSERT Sales History
+ * 		after a change of heart, we quit at this point 
  * 4. filter out any products that have both added:true and removed:true
  * 5. put designs into first product 
  * for each product
@@ -131,12 +133,12 @@ function validate(order, db) {
  * 
  * @see validate make sure you call validate first, we will throw exceptions here
  * @param {object} order the new order
- * @param {object} designs the designs to be added to the first product
+ * @param {string} user the name of the user to record in CreatedBy field
  * @returns {object} savedOrder: the same order with the new OrderId and audit columns and full audit info; errors: an array of error messages
  */
 
 
-function createNew(order, designs, user) {
+function createNew(order, user) {
 
 	const db = getDB()
 
@@ -144,7 +146,7 @@ function createNew(order, designs, user) {
 		// 0. validation
 		const errors = validate(order, db)
 		if (errors.length > 0) {
-			return { errors }
+			return errors 
 		}
 
 		const orderDao = new  OrderDao(db)
@@ -177,6 +179,40 @@ function createNew(order, designs, user) {
 
 		// 3. INSERT Sales History 
 		salesHistoryService.insertOrder(db, savedOrder)
+
+		db.prepare("COMMIT").run()
+
+		//todo refetch the products also and put them in return value
+		savedOrder = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(savedOrder.OrderId)
+		// convert boolean numbers to true/false
+		savedOrder.Repeat =  !!savedOrder.Repeat
+		savedOrder.New =     !!savedOrder.New
+		savedOrder.BuyIn =   !!savedOrder.BuyIn
+		savedOrder.Done =    !!savedOrder.Done
+		savedOrder.Deleted = !!savedOrder.Deleted
+
+
+
+		return {
+			errors, 
+			savedOrder, 
+		}
+	}
+	catch (ex) {
+		if (db.inTransaction)
+			db.prepare("ROLLBACK").run()
+		
+		throw ex
+	}
+	finally {
+		db.close()
+	}
+
+
+	// // code below is deprecated, belongs with saving an OrderGarment object
+	// and should be unreachable
+	throw "unreachable code"
+
 
 		// 4. filter out any products that have both added:true and removed:true
 		order.products = order.products.filter(p => !(p.added && p.removed))
@@ -248,25 +284,6 @@ function createNew(order, designs, user) {
 		
 
 
-		db.prepare("COMMIT").run()
-
-		//todo refetch the products also and put them in return value
-
-		return {
-			errors, 
-			savedOrder, // has the orderid and audit columns filled in
-			// , audit columns
-		}
-	}
-	catch (ex) {
-		if (db.inTransaction)
-			db.prepare("ROLLBACK").run()
-		
-		throw ex
-	}
-	finally {
-		db.close()
-	}
 
 
 

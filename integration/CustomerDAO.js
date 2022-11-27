@@ -16,6 +16,11 @@ module.exports = class CustomerDao {
 		this.db = db
 	}
 
+	/**
+	 * 
+	 * @param {int} customerId the id of the customer to be returned
+	 * @returns {object} an object with all fields of the customer
+	 */
 	get(customerId) {
 
 		const retVal = this.db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(customerId)
