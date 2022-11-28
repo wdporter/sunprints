@@ -1443,9 +1443,7 @@ router.post("/", function (req, res) {
 		console.log(info)
 		req.body.OrderId = info.lastInsertRowid
 
-		// now also insert it into SalesTotal
-		delete req.body.StockOrderId // does not go in SalesTotal
-		let salesTotalCols = columns.filter(c => c != "StockOrderId" && !auditColumns.includes(c))
+		let salesTotalCols = columns.filter(c => !auditColumns.includes(c))
 		//change name of delivery date
 		salesTotalCols = salesTotalCols.filter(c => c != "DeliveryDate")
 		salesTotalCols.push("Delivery")

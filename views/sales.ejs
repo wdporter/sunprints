@@ -228,12 +228,19 @@ window.datatable = new DataTable("table#dt", {
 				render(data) { return data.join("<br>")},
 				orderable: false
 			}, 
-			{ data: "Company"}, 
+			{ data: "Company",
+				render: function(data, word, row) {
+					return `<a href=/customer/edit?id=${row.CustomerId}>${data}</a>`
+				}	
+		}, 
 			{ data: "Terms", width: "2em" }, 
 			{ data: "BuyIn",
 				width: "1em",
-				render: function(data) {
-					return data ? "✔️" : ""
+				render: function(data, word, row) {
+					if (row.StockOrderId == null || row.StockOrderId=="0")
+						return ""
+					else
+						return `<a href="/purchasing?stockorderid=${row.StockOrderId}">${row.StockOrderId}</a>`
 				}
 			}, 
 			{ data: "Notes" }, 

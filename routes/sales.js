@@ -27,10 +27,11 @@ console.log(req.query.customSearch)
 		let query = `SELECT COUNT(*) AS Count FROM SalesTotal`
 		let statement = db.prepare(query)
 		let recordsTotal = recordsFiltered = statement.all().reduce((acc, curr) => { return acc + curr.Count}, 0)
-		
+
 
 		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, SalesRep, SalesTotal.DateProcessed, 
-		SalesTotal.Delivery, Customer.Code, Customer.Company, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
+		SalesTotal.Delivery, Customer.Code, Customer.Company, Customer.CustomerId, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
+		,SalesTotal.StockOrderId
 		FROM SalesTotal 
 		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId `
 		
