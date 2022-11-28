@@ -300,8 +300,14 @@ async function onOpenRowButtonClick(evt) {
 							html += "<div class=sales-item>"
 							const items = []
 							for (key in item) {
-								if (item[key])
-									items.push(`<b>${key == "ASm" ? "AS" : key}:</b> ${item[key]}`)
+								if (item[key]) {
+									if (key == "ASm")	
+										items.push(`<b>AS</b>: ${item[key]}`)
+									else if (key == "Price")
+										items.push(`<b>Price:</b> ${item[key].toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}`)
+									else 
+										items.push(`<b>${key}</b>: ${item[key]}`)
+								}
 							}
 							html += items.join("<br>")
 							html += "</div>"
