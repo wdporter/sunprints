@@ -2515,6 +2515,8 @@ AND ${loc}=1`)
 
 			if (r[`TransferName${loc}1Name`].length > 0)
 				transfers[loc].push(r[`TransferName${loc}1Name`])
+			if (r[`TransferName${loc}2Name`].length > 0)
+				transfers[loc].push(r[`TransferName${loc}2Name`])
 
 			if (r[`Usb${loc}1Number`].length > 0)
 				usbs[loc].push({ Number: r[`Usb${loc}1Number`], Notes: r[`Usb${loc}1Notes`] })
