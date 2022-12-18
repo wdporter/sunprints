@@ -10,7 +10,8 @@ router.get("/", function (req, res, next) {
 		title: "Products",
 		user: req.auth.user,
 		sizes: JSON.stringify(sz.sizes),
-		poweruser: res.locals.poweruser
+		poweruser: res.locals.poweruser,
+		stylesheets: ["/stylesheets/product-theme.css"]
 	})
 })
 

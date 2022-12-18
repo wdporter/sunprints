@@ -1,0 +1,43 @@
+main.wider {
+	padding-top: 2em;
+}
+
+tr.filters select {
+	min-width: unset;
+}
+
+.container-div {
+	display: flex;
+	margin-left: 2em;
+}
+
+.edit-div {
+	min-width: 450px;
+	flex-grow: 1;
+
+}
+
+#garmentTable td {
+	padding: 1px !important;
+}
+
+#garmentTable {
+	cursor: default;
+	}
+
+#sizeTable {
+	width: unset;
+}
+
+#sizeTable td input {
+max-width: 75px
+}
+
+#newGarmentDialog {
+width: 400px;
+}
+
+input[type=button] + input[type=button] {
+margin-left: 3em;
+margin-bottom: 2em
+}
