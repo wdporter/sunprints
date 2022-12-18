@@ -20,11 +20,10 @@ router.get("/warninglist", function (req, res, next) {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
 
-		
-
-		const statement = db.prepare(`SELECT Garment.*, ${sz.allSizes.map(sz => `StockOrderGarment.${sz} AS sog${sz}`).join(",")} FROM Garment 
+		const statement = db.prepare(`SELECT Garment.*, ${sz.allSizes.map(sz => `sum(StockOrderGarment.${sz}) AS sog${sz}`).join(",")} FROM Garment 
 		LEFT JOIN StockOrderGarment ON StockOrderGarment.GarmentId=Garment.GarmentId
-		WHERE Deleted=0
+		GROUP BY Garment.GarmentId
+		HAVING Deleted=0
 		ORDER BY Garment.GarmentId`)
 
 		const results = statement.all()
