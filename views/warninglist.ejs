@@ -14,6 +14,10 @@
 		text-align: left;
 	}
 
+	table {
+		font-variant-numeric: tabular-nums;
+	}
+
 	.qtyTable, .garmentTable {
 		border-collapse: collapse;
 	}
@@ -33,12 +37,9 @@
 
 span.warning {
 	color: darkred;
-	font-weight: bold;
 }
 
 span.warning:before {
-	color: darkred;
-	font-weight: bold;
 	content: "*"
 }
 
@@ -68,14 +69,14 @@ td.bold {
 	<li>Use the Destination/Printer option to save a PDF 
 	<li>Under <i>More settings</i> you can remove the header/footer
 </ul>
-	<hr>
+<hr>
 </div>
 
 
 <h1>Product Stock Warnings — <%= new Date().toLocaleDateString("en-AU") %></h1>
 <ul>
-<li>These products have one or more sizes below the minimum quantity.
-<li>An asterisk * indicates sizes where Stock is below Min.</li>
+	<li>These products have one or more sizes below the minimum quantity.
+	<li>An asterisk * indicates sizes where Stock is below Min.</li>
 </ul>
 
 <% garments.forEach(g => { %>
