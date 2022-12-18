@@ -1123,7 +1123,7 @@ router.put("/:orderid", (req, res) => {
 				query = "SELECT * FROM Sales WHERE rowid = ?"
 				original = db.prepare(query).get(product.salesrowid)
 
-				// 3. add quantites back into stock
+				// 3. add quantities back into stock
 				// the question here is, what happens if a user changes the quantities, and then deletes it?
 				// we can either use the incoming quantities or discard the changes to quantities and use the original item's quantities
 				// we will use the original quantities
