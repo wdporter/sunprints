@@ -33,7 +33,15 @@
 
 span.warning {
 	color: darkred;
+	font-weight: bold;
 }
+
+span.warning:before {
+	color: darkred;
+	font-weight: bold;
+	content: "*"
+}
+
 
 td.bold {
 	font-weight: bold;
@@ -96,7 +104,12 @@ td.bold {
 	<tr>
 		<th>Stock
 		<% sizes[g.SizeCategory].forEach(size => { %>
-			<td><% if (g[size] < g[`Min${size}`]) { %><span class="warning"><% } %><%= g[size] %><% if (g[size] < g[`Min${size}`]) { %>*</span><% } %>
+			<td>
+				<% if (g[size] < g[`Min${size}`]) { %>
+					<span class="warning"><%= unicodeMinus(g[size]) %></span>
+				<% } else { %>
+				<%= g[size] %>
+				<% } %>
 		<% }) %>
 	<tr>
 		<th>Min.
@@ -111,7 +124,7 @@ td.bold {
 	<tr>
 		<th>Stock + On order
 		<% sizes[g.SizeCategory].forEach(size => { %>
-			<td><%= g[size] + g[`OnOrder${size}`] %>
+			<td><%= unicodeMinus(g[size] + g[`OnOrder${size}`]) %>
 		<% }) %>
 	<tr>
 		<th>&nbsp;
@@ -132,3 +145,12 @@ td.bold {
 <script>
 	window.print()
 </script>
+
+<% 
+function unicodeMinus(qty) {
+	var ret = qty
+	if (qty < 0)
+		ret = `−${Math.abs(qty)}`
+	return ret
+}
+%> 
