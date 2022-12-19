@@ -2,7 +2,8 @@ const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3")
 const sz = require("../sizes.js");
-const productService = require("../service/productService.js")
+const productService = require("../service/productService.js");
+const { json } = require("body-parser");
 
 // GET the garments page
 router.get("/", function (req, res, next) {
@@ -340,7 +341,18 @@ router.get("/search", function (req, res) {
 			res.status(400)
 		}
 	})
-	
+
+
+// GET 
+// fetches a single garment by garment id
+router.get("/:id", (req, res) => {
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const query = `SELECT * FROM Garment WHERE GarmentId=?`
+	const statement = db.prepare(query)
+	const product = statement.get(req.params.id)
+	res.json(product).end()
+})
+
 
 
 /*************************************************************************** */

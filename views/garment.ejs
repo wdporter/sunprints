@@ -243,9 +243,21 @@
 			$(this).addClass('selected');
 			var data = datatable.row(this).data();
 			console.log(data)
-			const clone = JSON.parse(JSON.stringify(data))
-			app.setGarment(clone)
-			app.setLegend(`${data.Code}; ${data.Type}; ${data.Label}; ${data.Colour}`)
+
+			// download the row again, it may have changed in another tab
+			fetch(`/garment/${data.GarmentId}`)
+			.then(r => {
+				console.log(r)
+				return r.json()
+			})
+			.then(garment => {
+				console.log(garment)
+
+				app.setGarment(garment)
+				app.setLegend(`${garment.Code}; ${garment.Type}; ${garment.Label}; ${garment.Colour}`)
+
+				datatable.row(this).data(garment);
+			})
 		}
 	});
 
