@@ -102,12 +102,15 @@ router.get("/edit", (req, res) => {
 			}
 		}
 
+		let salesreps = db.prepare("SELECT Name, Deleted FROM SalesRep ").all()
+
 		res.render ("customer_edit.ejs", {
 			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
 			customer,
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
-			salesrep: res.locals.salesrep
+			salesrep: res.locals.salesrep,
+			salesreps
 		})
 
 	}
@@ -334,13 +337,15 @@ router.post("/edit", (req, res) => {
 		db.prepare("COMMIT").run()
 
 		let customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(req.body.CustomerId)
+		let salesreps = db.prepare("SELECT Name, Deleted FROM SalesRep ").all()
 		res.render ("customer_edit.ejs", {
 			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
 			customer,
 			success: "We have saved your changes",
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
-			salesrep: res.locals.salesrep
+			salesrep: res.locals.salesrep,
+			salesreps
 		})
 
 	}

@@ -120,6 +120,25 @@ document.getElementById("successDialog").showModal()
 	<textarea rows="5" id="notes" name="Notes" placeholder="delivery notes"><%= customer.Notes %></textarea>
 </p>
 
+<p>
+	<label for="salesrep">Sales Rep:</label>
+	<select id="salesrep" name="salesrep" value="customer.SalesRep">
+		<option value="">— Select —</option>
+		<% salesreps.filter(sr => sr.Deleted == 0).forEach(function(sr){ %>
+			<option key="<%= sr.Name %>" <%= sr.Name==customer.SalesRep ? 'selected' : '' %>><%= sr.Name %></option>
+		<% }) %>
+
+		<% 
+		var deletedRep = salesreps.find(s => s.Deleted==1 && s.Name==customer.SalesRep)
+		if (deletedRep) { %>
+			<optgroup label="Deleted reps:">
+				<option key="<%= deletedRep.Name %>" selected><%= deletedRep.Name %></option>
+			</optgroup>
+		<% } %>
+	</select>
+</p>
+
+
 <% if (poweruser || salesrep) { %>
 <input type="submit" value="<%= customer.CustomerId=='0' ? "Create new customer" : "Save customer details" %>" />
 <% } %> 
