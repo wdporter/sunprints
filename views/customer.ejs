@@ -24,8 +24,8 @@
 				<th>Contact</th>
 				<th>Address</th>
 				<th>Delivery Notes</th>
-				<th>Last Order</th>
 				<th>Sales Rep</th>
+				<th>Last Order</th>
 			</tr>
 		</thead>
 		<tbody></tbody>
@@ -145,6 +145,10 @@ window.datatable = new DataTable("table#customersTable", {
 			searchable: false,
 			orderable: false, 
 		},
+		{
+			data: "SalesRep",
+			width: "3em"
+		},
 		{ 
 			data: "maxdate", 
 			width: "4em",
@@ -153,14 +157,10 @@ window.datatable = new DataTable("table#customersTable", {
 				const timestamp = Date.parse(data)
 				let retVal = isNaN(timestamp) ? "" : `${new Date(timestamp).toLocaleString("en-AU", {dateStyle: "short"})}<br>`
 <% if (poweruser || salesrep) { %> 
-				retVal += `<a class=action-link href=/order/new?customerid=${row.CustomerId} title="start a new order with this customer preselected">New Order</a>`
+				retVal += `<a class=action-link href=/order/new?customerid=${row.CustomerId}&salesrep=${row.SalesRep} title="start a new order with this customer preselected">New Order</a>`
 <% } %>
 				return retVal
 			}
-		},
-		{
-			data: "SalesRep",
-			width: "3em"
 		}
 	]
 })

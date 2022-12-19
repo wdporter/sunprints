@@ -414,6 +414,16 @@
 
 		if (window.sunprints.mode == "new") {
 			document.getElementById("deliveryDate").value = window.localStorage.getItem("deliveryDate")
+			const params = new URLSearchParams(window.location.search)
+			if (params.has("salesrep")) {
+				const salesrep = params.get("salesrep")
+				const salesRepSelect = document.getElementById("salesRep")
+				for (const option of salesRepSelect.options)
+					if (option.label == salesrep) {
+						option.selected = true
+						break
+					}
+			}
 		}
 
 		document.getElementById("garmentSection").style.display = window.sunprints.mode == "edit" ? "block" : "none"
