@@ -193,7 +193,7 @@
 							<legend>{{key}} Screen (choose one {{printLocation.length > 1 ? ' or two' : ''}})</legend>
 								<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
 									<p v-if="screen.Name != null">
-										<input type="checkbox" @change="screenChange(g, key)" :value="screen.ScreenId"
+										<input type=checkbox @change="screenChange(g, key)" :value="screen.ScreenId"
 											v-model="g.checkedScreens[key]" :id="`screen${key}${screen.ScreenId}`" />
 										<label :for="`screen${key}${screen.ScreenId}`">{{screen.Name}} — {{screen.Number}} — {{screen.Colour}} </label>
 									</p>
@@ -201,7 +201,7 @@
 							<hr>
 							<div v-for="screen in printLocation" :key="screen.ScreenPrintDesignId" >
 								<p v-if="screen.Name == null">
-									<input type="checkbox" :value="screen.ScreenId" :checked="g.checkedScreens[key].length>0" :id="'screen' + screen.ScreenId" disabled>
+									<input type=checkbox :value="screen.ScreenId" :checked="g.checkedScreens[key].length>0" :id="'screen' + screen.ScreenId" disabled>
 									<label :for="'screen' + screen.ScreenId">(Standard) — {{screen.Number}} — {{screen.Colour}}  </label>
 								</p>
 							</div>
@@ -241,7 +241,7 @@
 						<fieldset v-for="(transferLocation, key) in g.transferLocations" :key="key[0]">
 							<legend>{{key}} Name (choose one or two)</legend>
 							<p v-for="tname in transferLocation" :key="tname.TransferNameId">
-								<input type="checkbox" @change="transferNameChange(g, key, `${key}`, $event)" :data-key="key" :value="tname.TransferNameId"
+								<input type=checkbox @change="transferNameChange(g, key, `${key}`, $event)" :data-key="key" :value="tname.TransferNameId"
 									v-model="g.checkedTransferNames[key]" :id="`transferName${key}${tname.TransferNameId}`">
 								<label :for="`transferName${key}${tname.TransferNameId}`">{{tname.Name}} {{ key }}</label>
 							</p>
@@ -287,7 +287,7 @@
 						<fieldset v-for="(embroideryLocation, key) in g.embroideryLocations" :key="key[0]">
 							<legend>{{key}} USB (choose one or two)</legend>
 							<p v-for="usb in embroideryLocation" :key="usb.UsbEmbroideryDesignId">
-								<input type="checkbox" @change="usbChange(g, key)" :value="usb.UsbId"
+								<input type=checkbox @change="usbChange(g, key)" :value="usb.UsbId"
 									v-model="g.checkedUsbs[key]" :id="`usb${key}${usb.UsbId}`" />
 								<label :for="`usb${key}${usb.UsbId}`">{{usb.Number}} {{usb.Notes}}</label>
 							</p>
@@ -333,7 +333,7 @@
 								:id="`${g.GarmentId}_${key}_sizeInput`" 
 								v-model="g.Quantities[g.SizeCategory][key]" 
 								:ref="`${g.GarmentId}_${key}_sizeInput`"
-								@keyup.enter="$refs[`${g.GarmentId}_priceInput`][0].focus()" />
+								@keydown.enter="$refs[`${g.GarmentId}_priceInput`][0].focus()" />
 					</p>
 				</div>
 			</fieldset>
@@ -357,7 +357,7 @@
 					<button @click="saveGarment(g)">
 						<span v-if="g.OrderGarmentId==0" class="fa fa-solid fa-triangle-exclamation"></span> Save product
 					</button>&emsp;
-					<input type="reset" @click="deleteGarment(g, $event)" value="Delete product" /><br>
+					<input type=reset @click="deleteGarment(g, $event)" value="Delete product" /><br>
 <% } %>
 					<span v-text="errorMessage"></span>
 				</div>
