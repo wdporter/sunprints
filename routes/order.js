@@ -56,7 +56,7 @@ ${whereClause}`).get().count
 			query += whereClause
 		}
 
-		const columns = ["OrderId", "OrderId", "OrderNumber", "", "Done", "Customer.Company", "CustomerOrderNumber", "OrderDate", "InvoiceDate", "Repeat", "New", "BuyIn", "Terms", "SalesRep", "Notes", "DeliveryDate", "ProcessedDate"]
+		const columns = ["OrderId", "OrderId", "OrderNumber", "", "Done", "Customer.Company", "CustomerOrderNumber", "OrderDate", "InvoiceDate", "Repeat", "New", "BuyIn", "Done", "Terms", "SalesRep", "Notes", "DeliveryDate", "ProcessedDate"]
 		const orderByClause = req.query.order.map(o => {
 			return ` ${columns[Number(o.column)]} COLLATE NOCASE ${o.dir} `
 		})
@@ -833,7 +833,7 @@ router.get("/outstanding/print", (req, res) => {
 		if (req.query.rep == null)
 			req.query.rep = "All"
 
-		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, Done, 
+		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, Done, 
 		Customer.Company, 
 		fpd.Code AS FrontDesign, 
 		bpd.Code AS BackDesign, 
@@ -852,9 +852,9 @@ router.get("/outstanding/print", (req, res) => {
 
 		if (req.query.rep !== "All") {
 			if (req.query.rep == "none")
-				query += " AND IFNULL(SalesRep, '')='' "
+				query += " AND IFNULL(Orders.SalesRep, '')='' "
 			else
-				query += " AND SalesRep = ? "
+				query += " AND Orders.SalesRep = ? "
 		}
 
 		query += "ORDER BY OrderDate "
@@ -932,7 +932,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 		if (req.query.rep == null)
 			req.query.rep = "All"
 
-		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, Done, 
+		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, Done, 
 		Customer.Company, 
 		fed.Code AS FrontDesign, 
 		bed.Code AS BackDesign, 
@@ -951,7 +951,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 
 		if (req.query.rep !== "All") {
 			if (req.query.rep == "none")
-				query += " AND IFNULL(SalesRep, '')='' "
+				query += " AND IFNULL(Orders.SalesRep, '')='' "
 			else
 				query += " AND SalesRep = ? "
 		}
@@ -1046,9 +1046,9 @@ router.get("/outstanding/transfer", (req, res) => {
 
 		if (req.query.rep !== "All") {
 			if (req.query.rep == "none")
-				query += " AND IFNULL(SalesRep, '')='' "
+				query += " AND IFNULL(Orders.SalesRep, '')='' "
 			else
-				query += " AND SalesRep = ? "
+				query += " AND Orders.SalesRep = ? "
 		}
 
 		query += " ORDER BY 2 ASC "
@@ -1123,7 +1123,7 @@ router.get("/outstanding/promo", (req, res) => {
 		if (req.query.rep == null)
 			req.query.rep = "All"
 
-		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, SalesRep, 
+		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, 
 		Customer.Company, 
 		${sz.allSizes.join(" + ")} AS Qty,
 		Price,
@@ -1137,9 +1137,9 @@ router.get("/outstanding/promo", (req, res) => {
 
 		if (req.query.rep !== "All") {
 			if (req.query.rep == "none")
-				query += " AND IFNULL(SalesRep, '')='' "
+				query += " AND IFNULL(Orders.SalesRep, '')='' "
 			else
-				query += " AND SalesRep = ? "
+				query += " AND Orders.SalesRep = ? "
 		}
 		query += " ORDER BY OrderDate "
 

@@ -584,7 +584,7 @@ router.get("/csv/", (req, res) => {
 	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
-		let query = /*sql*/`SELECT SalesTotal.OrderNumber, Customer.Company, SalesRep, SalesTotal.OrderDate,
+		let query = /*sql*/`SELECT SalesTotal.OrderNumber, Customer.Company, SalesTotal.SalesRep, SalesTotal.OrderDate,
 		Garment.Code || ' ' || Type || ' ' || Colour AS Product,
 		${sz.allSizes.map(sz => `Sales.${sz}`).join("+")} AS Qty,
 		Price,
