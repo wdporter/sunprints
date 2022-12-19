@@ -277,8 +277,7 @@ router.get("/dt", function (req, res) {
 			const sizeItems = []
 			sz.sizes[g.SizeCategory].forEach(s => {
 				return sizeItems.push(`SUM(${s}) AS O${s}`)
-			}
-			)
+			})
 			query += sizeItems.join(" , ")
 			query += " FROM StockOrderGarment WHERE GarmentId=?"
 			statement = db.prepare(query)
@@ -307,9 +306,6 @@ router.get("/dt", function (req, res) {
 	finally {
 		db.close()
 	}
-
-
-
 })
 
 
@@ -347,9 +343,29 @@ router.get("/search", function (req, res) {
 // fetches a single garment by garment id
 router.get("/:id", (req, res) => {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-	const query = `SELECT * FROM Garment WHERE GarmentId=?`
-	const statement = db.prepare(query)
+	let query = `SELECT * FROM Garment WHERE GarmentId=?`
+	let statement = db.prepare(query)
 	const product = statement.get(req.params.id)
+
+	// get the "on order" amounts from StockOrderGarment
+	// todo should combine this in one query but I was in a huge hurry because it is a production error
+	query = "SELECT "
+	const sizeItems = []
+	sz.sizes[product.SizeCategory].forEach(s => {
+		return sizeItems.push(`SUM(${s}) AS O${s}`)
+	})
+	query += sizeItems.join(" , ")
+	query += " FROM StockOrderGarment WHERE GarmentId=?"
+	statement = db.prepare(query)
+	sums = statement.get(product.GarmentId)
+	for (let s in sums) {
+		if (s) {
+			product[s] = sums[s] || 0
+		}
+	}
+
+	product.DT_RowId = `row-${product.GarmentId}`
+
 	res.json(product).end()
 })
 
