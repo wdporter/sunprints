@@ -145,7 +145,7 @@
 		<template v-if="!product.removed">
 			<fieldset>
 				<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
-				<table style="margin-top:3em">
+				<table style="margin-top:1em">
 					<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
 					<tr>
 						<td>{{ product.Code }}</td>
@@ -214,7 +214,7 @@
 		</template>
 	</div>
 	<p>
-		<input type="button" value="Add product" @click="onAddProduct()" />
+		<input type="button" value="Add product (Alt+P)" accesskey="p" @click="onAddProduct()" />
 	</p>
 
 	<p>{{ totalProductCount() }} items = Total Value: {{ totalProductValue().toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}) }}</p>
@@ -574,7 +574,7 @@ createApp ({
 				const count = this.sizes[product.SizeCategory].reduce((acc, curr) => { 
 					return product[curr] + acc
 				}, 0)
-				sum += count * product.Price
+				sum += count * product.Price || 0
 			})
 			return sum
 		},
