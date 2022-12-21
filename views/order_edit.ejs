@@ -374,6 +374,8 @@ createApp ({
 				order.designs[`${location}${medium}${n}Id`] = null
 				order.designs[`${location}${medium}${n}Name`] = ""
 			})
+			// set standard (unnamed) screens to empty
+			order.designs[`${location}ScreenStandard`] = ""
 		}
 
 		function onDeleteMedia(product, location, medium, n) {
@@ -501,15 +503,27 @@ createApp ({
 	},
 	methods: {
 		onDesignSelect(design) {
+			//set the selected design id and name
 			this.order.designs[`${design.location}${design.decoration}DesignId`]  = design[`${design.decoration}DesignId`]
 			this.order.designs[`${design.location}${design.decoration}DesignName`] = `${design.Code} ${design.Notes}`
 
+			// initialise the medium (screen, usb, transfername)
 			const medium = this.media[this.decorations.indexOf(design.decoration)];
 			[1,2].forEach(n => {
 				this.order.designs[`${design.location}${medium}${n}Id`]   = null
 				this.order.designs[`${design.location}${medium}${n}Name`] = null
 			})
 			this.$refs.designDialog.close()
+
+			if (design.decoration == "Print") {
+				// fetch the standard screens for display
+				// todo empty this if delete is clicked
+				fetch(`/print/${design.PrintDesignId}/standardscreens`)
+				.then(response => response.json())
+				.then(json => this.order.designs[`${design.location}ScreenStandard`] = json.join("<br />"))
+				.catch(err => console.error(err))
+				
+			}
 		},
 		onCloseDesignPicker() {
 			// we clear this one, because it is reused by the other decorations
@@ -520,7 +534,7 @@ createApp ({
 		onMediaSelect(media) {
 			this.order.designs[`${media.location}${media.medium}${media.position}Id`] = media.id
 			this.order.designs[`${media.location}${media.medium}${media.position}Name`] = media.name
-			this.$refs.mediaDialog.close()
+			onCloseMediaPicker()
 		},
 		onCloseMediaPicker() {
 			this.$refs.mediaDialog.close() 

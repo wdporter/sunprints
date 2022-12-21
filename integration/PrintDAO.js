@@ -52,4 +52,21 @@ AND Deleted=0`
 		return recordset
 	}
 
+
+	getStandardScreens(id) {
+		let query = /*sql*/`
+		SELECT Number || ' ' || IFNULL(Colour, '') AS Name
+		FROM Screen
+		INNER JOIN ScreenPrintDesign USING (ScreenId)
+		INNER JOIN PrintDesign USING (PrintDesignId)
+		WHERE PrintDesignId=?
+		AND Name IS NULL
+		AND Screen.Deleted=0`
+		const recordset = this.db.prepare(query).all(id)
+		
+		return recordset
+
+
+	}
+
 }

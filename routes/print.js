@@ -2,7 +2,7 @@ const express = require("express")
 const router = express.Router()
 const Database = require("better-sqlite3")
 const { auditColumns, locations } = require("../sizes.js")
-
+const {standardScreens} = require("../service/printDesignService")
 
 
 /* GET Basic print design page. */
@@ -251,6 +251,15 @@ router.get("/deleted", (req, res) => {
 		user: req.auth.user,
 		poweruser: res.locals.poweruser
 	})
+
+})
+
+
+// GET The standard screens for the given print design id
+router.get("/:printdesignid/standardscreens", (req, res) => {
+
+	res.json(standardScreens(req.params.printdesignid))
+
 
 })
 
