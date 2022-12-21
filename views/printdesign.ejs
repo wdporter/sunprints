@@ -378,7 +378,7 @@
 									myLocations.push(loc)
 							})
 							itemString += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>
-							<b>Screen Name:</b> <span class=screenNameSpan data-id=${item.ScreenId}>${item.ScreenName}</span><br>
+							<b>Screen Name:</b> <span class=screenNameSpan data-id=${item.ScreenId}>${item.ScreenName ?? "<i>standard</i>"}</span><br>
 							<b>Screen Number:</b> <span class=screenNumberSpan data-id=${item.ScreenId}>${item.ScreenNumber}</span><br>
 							<b>Screen Colour:</b> <span class=screenColourSpan data-id=${item.ScreenId}>${item.ScreenColour}</span><br>
 <% if (poweruser) { %> 
