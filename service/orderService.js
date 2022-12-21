@@ -7,7 +7,6 @@ const OrderModel = require("../models/order.js")
 
 const productService = require("./productService.js")
 const customerService = require("./customerService.js")
-const purchaseOrderService = require("./purchaseOrderService.js")
 const auditLogService = require("./auditLogService.js")
 const salesHistoryService = require("./salesHistoryService.js")
 
@@ -64,11 +63,7 @@ function get(orderId) {
 
 function getNew() {
 
-	const retVal = {
-		order: new OrderModel(),
-		purchaseOrders: purchaseOrderService.getOutstanding()
-	}
-	return retVal
+	return new OrderModel()
 
 }
 

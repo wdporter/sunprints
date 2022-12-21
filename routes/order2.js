@@ -4,6 +4,7 @@ const router = express.Router()
 const salesRepService = require("../service/salesRepService.js")
 const orderService = require("../service/orderService.js")
 const productService = require("../service/productService.js")
+const purchaseOrderService = require("../service/purchaseOrderService.js")
 
 const art = require("../config/art.js")
 const { sizeCategories, sizes, auditColumns } = require("../sizes.js")
@@ -16,19 +17,19 @@ router.get("/edit", function (req, res) {
 		const salesReps = salesRepService.getCurrentSalesRepNames()
 
 		let purchaseOrders = null
-
 		let order = null
 
 		if (req.query.id) {
+			// editing
 			order = orderService.get(req.query.id)
 		}
 		else {
-			const newOrder = orderService.getNew()
+			// create
+			order = orderService.getNew()
 
-			order = newOrder.order
-			purchaseOrders = newOrder.purchaseOrders
+			// purchase orders needed in case of buyin
+			purchaseOrders = purchaseOrderService.getOutstanding()
 		}
-
 
 		res.render("order_edit.ejs", {
 			title: "New Order testing new page",
@@ -56,9 +57,8 @@ router.get("/edit", function (req, res) {
 
 router.get("/products/:orderid", (req, res) => {
 	try {
-	let { products } = productService.getProductsForOrder(req.params.orderid)
-	
-	res.json(products).end()
+		let { products } = productService.getProductsForOrder(req.params.orderid)
+		res.json(products).end()
 	}
 	catch(err) {
 		console.log(err)

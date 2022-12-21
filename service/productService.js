@@ -2,13 +2,14 @@ const getDB = require("../integration/dbFactory.js")
 const ProductDao = require("../integration/ProductDAO.js")
 const PurchaseOrderProductDAO = require("../integration/PurchaseOrderProductDAO.js")
 const AuditLogDao = require("../integration/AuditLogDAO.js")
+const OrderGarment = require("../models/ordergarment.js")
 const { art, locations, decorations } = require("../config/art.js")
-const { sizes } = require("../config/sizes.js")
+const { allSizes, sizes } = require("../config/sizes.js")
 
-function search (terms) {
+function search(terms) {
 
 	const { code, label, type, colour } = terms
-	
+
 	if (code == "" && label == "" && type == "" && colour == "")
 		return []
 
@@ -28,7 +29,7 @@ function search (terms) {
 
 		const LIMIT = 50
 		let data = productDao.search(terms)
-		return({
+		return ({
 			totalRecords: data.length,
 			data: data.slice(0, LIMIT),
 			limit: LIMIT
@@ -44,7 +45,7 @@ function search (terms) {
 function getProductsForOrder(orderId, db) {
 
 	let mustClose = false
-	
+
 	if (!db) {
 		db = getDB()
 		mustClose = true
@@ -111,13 +112,27 @@ function getStockOrderProducts(stockOrderId) {
 	const db = getDB()
 	try {
 		const stockOrderGarmentDao = new PurchaseOrderProductDAO(db)
-		const retVal = stockOrderGarmentDao.getPurchaseOrderProducts(stockOrderId)
+		const purchaseOrderProducts = stockOrderGarmentDao.getPurchaseOrderProducts(stockOrderId)
 
-		return retVal 
-}
-finally {
-	db.close()
-}
+		const retVal = purchaseOrderProducts.map(po => {
+			const orderProduct = new OrderGarment()
+			orderProduct.GarmentId = po.GarmentId
+			allSizes.forEach(sz => orderProduct[sz] = po[sz] )
+			orderProduct.Code = po.Code
+			orderProduct.Label = po.Label
+			orderProduct.Type = po.Type
+			orderProduct.Colour = po.Colour
+			orderProduct.Notes = po.Notes
+			orderProduct.SizeCategory = po.SizeCategory
+
+			return orderProduct
+		})
+
+		return retVal
+	}
+	finally {
+		db.close()
+	}
 }
 
 
@@ -129,14 +144,14 @@ finally {
  * @param {user} name name for LastModifiedBy
  * @param {date} date date for LastModifiedDateTime
  */
-function reduceStockLevels(db, product, user, date)  {
+function reduceStockLevels(db, product, user, date) {
 	const items = {}
 	sizes[product.SizeCategory].forEach(size => {
 		if (product[size] > 0) {
 			items[size] = product[size]
 		}
 	})
-	
+
 	if (Object.keys(items).length > 0) // check, because the do sometimes save with no amounts
 	{
 
@@ -154,7 +169,7 @@ function reduceStockLevels(db, product, user, date)  {
 		})
 
 		// make our items object look like a Garment for the sake of the audit logs
-		items.GarmentId = product.GarmentId 
+		items.GarmentId = product.GarmentId
 		items.LastModifiedBy = user
 		items.LastModifiedDateTime = date
 

@@ -886,7 +886,7 @@ caption {
 }
 
 td, th, tr {
-  padding: .4rem .8rem;
+  padding: .4rem .4rem;
   text-align: var(--justify-important)
 }
 

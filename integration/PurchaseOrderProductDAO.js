@@ -11,8 +11,9 @@ module.exports = class PurchaseOrderProductDAO {
 		try {
 			return this.db.prepare(
 			/*sql*/`
-			SELECT *
+			SELECT StockOrderGarment.*, Code, Label, Type, Colour, Notes, SizeCategory
 			FROM StockOrderGarment
+			INNER JOIN Garment USING (GarmentId)
 			WHERE StockOrderId = ?`
 			).all(stockOrderId)
 		}

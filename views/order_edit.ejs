@@ -132,6 +132,10 @@
 						</a>
 					</td>
 				</tr>
+				<tr v-if="decoration=='Print'">
+					<th>&emsp;Standard</th>
+					<td v-for="location in locations" v-html="order.designs[`${location}ScreenStandard`]"></td>
+				</tr>
 			</tbody>
 		</table>
 	</fieldset>
@@ -153,15 +157,25 @@
 					</tr>
 				</table>
 		
-				<table style="margin-top:2em"> 
+				<table class="product-size-table"> 
 					<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz.slice(1) }}</th></tr> 
-					<tr><td v-for="sz in sizes[product.SizeCategory]"><input type="number" min="0" v-model="product[sz]" :ref="`product_${product.GarmentId}_size`"></td></tr> <!-- todo set class to reduce padding on the td -->
+					<tr>
+						<td v-for="sz in sizes[product.SizeCategory]">
+							<input type="number" min="0" 
+									v-model="product[sz]" 
+									:ref="`product_${product.GarmentId}_size`"
+									@keydown.enter="$refs[`price_${product.GarmentId}`][0].focus()" >
+						</td>
+					</tr> <!-- todo set class to reduce padding on the td -->
 				</table> 
 		
 				<section style="margin-top:var(--unit)">
 					<div>
 						<label :for="`price_${product.GarmentId}`">{{ productCount(product) }} products @ Price ($)</label>
-						<input :id ="`price_${product.GarmentId}` "v-model="product.Price" inputmode="decimal" pattern="\d*(\.\d{0,2})?" title="Numeric" /> 
+						<input inputmode="decimal" pattern="\d*(\.\d{0,2})?" title="Numeric"
+								:id="`price_${product.GarmentId}`" 
+								:ref="`price_${product.GarmentId}`"
+								v-model="product.Price" /> 
 					</div>
 					<div>
 						<label>= Total (for this product)</label>
@@ -172,7 +186,7 @@
 		
 				<section style="margin-top: var(--unit-2)">
 				<div>
-						<input type="reset" value="Remove product"
+						<input type="reset" value="Remove product" 
 								@click="product.removed=true" />
 				</div>
 				<div>
@@ -337,11 +351,11 @@ createApp ({
 			this.$nextTick(() => this.$refs.mediaPicker.fetch())
 		}
 
-		const productDialog = ref(null) // <%# uses ref attribute of productDialog element %>
-		const productPicker = ref(null) // <%# uses ref attribute of element, the <product-pick> %>
+		const productDialog = ref(null) // uses ref attribute of productDialog element 
+		const productPicker = ref(null) // uses ref attribute of element, the <product-pick> 
 
 		const order = reactive(<%- JSON.stringify(order) %>)
-		const orderNumberInput = ref(null) // <%# ref(null) is for an element of same name, %>
+		const orderNumberInput = ref(null) // ref(null) is for an element of same name, 
 		const salesReps = ref(<%- JSON.stringify(salesReps) %>)
 		const purchaseOrders = ref(<%- JSON.stringify(purchaseOrders) %>)
 		
@@ -373,8 +387,14 @@ createApp ({
 
 		async function onPurchaseOrderSelect() {
 			console.log("stockorderid", order.StockOrderId)
-			order.products = await (await fetch(`/stockorder/${order.StockOrderId}/products`)).json()
-		} //~ onPurchaseOrderSelect
+			try {
+				order.products = await (await fetch(`/stockorder/${order.StockOrderId}/products`)).json()
+			}
+			catch(err) {
+				console.error(err)
+			}
+
+	} //~ onPurchaseOrderSelect
 
 		const onOpenProductPick = function() {
 			this.$refs.productDialog.showModal()

@@ -12,3 +12,10 @@
 dialog {
 	max-width: var(--measure);
 }
+
+product-size-table {
+margin-top:2em;
+}
+product-size-table td {
+	padding: .4em;
+}
