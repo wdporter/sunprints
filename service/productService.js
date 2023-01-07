@@ -180,5 +180,42 @@ function reduceStockLevels(db, product, user, date) {
 }
 
 
+/**
+ * an order has a product removed, so stock levels must be increased (they were reduced when created)
+ * audit logging is done here
+ * @param {Database} db a db connection
+ * @param {object} product 
+ * @param {user} name name for LastModifiedBy
+ * @param {date} date date for LastModifiedDateTime
+ */
+function increaseStockLevels(db, product, user, date) {
+	const items = {}
+	allSizes.forEach(size => {
+		items[size] = product[size] ?? 0
+	})
 
-module.exports = { search, getProductsForOrder, getStockOrderProducts, reduceStockLevels }
+		const dao = new ProductDao(db)
+
+		//use the original garment to update audit log
+		const original = dao.get(product.GarmentId)
+
+		dao.increaseStockLevels(items, product)
+
+		// items was holding the quantities from the order
+		// but we'll reuse it here by changing the figures to the stock balance
+		Object.keys(items).forEach(key => {
+			items[key] = original[key] + items[key]
+		})
+
+		// make our items object look like a Garment for the sake of the audit logs
+		items.GarmentId = product.GarmentId
+		items.LastModifiedBy = user
+		items.LastModifiedDateTime = date
+
+		new AuditLogDao(db).update("Garment", "GarmentId", original, items)
+
+
+}
+
+
+module.exports = { search, getProductsForOrder, getStockOrderProducts, reduceStockLevels, increaseStockLevels }

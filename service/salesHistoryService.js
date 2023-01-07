@@ -5,21 +5,19 @@ const { auditColumns } = require("../config/auditColumns.js")
 /**
  * 
  * @param {Database} db  a Database connection because this is probably part of a transaction
- * @param {object} order the order that gets inserted
+ * @param {object} order the order that gets inserted into the SalesTotal table
  */
 function insertOrder (db, order) {
 
 	const dao = new SalesHistoryDao(db)
 	
-	//there are variations in the column names, so fix those
-	// note: update also fixes InvoiceDate→DateInvoiced, but new items are always null for this one
+	// there are variations in the column names, so fix those
+	// note: update also fixes InvoiceDate→DateInvoiced, but new items are always null for this one (same is true for processed date)
 	let keys = Object.keys(order).filter(k => ! auditColumns.includes(k))
 	const salesTotal = {}
 	Object.keys(order).forEach (k => {
 		if (auditColumns.includes(k))
 			return // ignore audit columns
-		if (k == "StockOrderId")
-			return // ignore
 
 		if (k == "DeliveryDate") {
 			salesTotal.Delivery = order[k] // DeliveryDate becomes Delivery
@@ -48,4 +46,42 @@ function insertProduct(db, product,) {
 
 
 
-module.exports = { insertOrder, insertProduct }
+/**
+ * 
+ * @param {Database} db  a Database connection because this is probably part of a transaction
+ * @param {object} order the order that gets updated in the SalesTotal table
+ */
+function updateOrder (db, order) {
+
+	const dao = new SalesHistoryDao(db)
+	
+	// there are variations in the column names, so fix those
+	let keys = Object.keys(order).filter(k => ! auditColumns.includes(k))
+	const salesTotal = {}
+	Object.keys(order).forEach (k => {
+		if (auditColumns.includes(k))
+			return // ignore audit columns
+		if (k == "Deleted")
+			return // ignore, does not exist in SalesTotal
+
+		if (k == "DeliveryDate") {
+			salesTotal.Delivery = order[k] // DeliveryDate becomes Delivery
+		}
+		else if (k == "InvoiceDate") {
+			salesTotal.DateInvoiced = order[k] // InvoiceDate becomes DateInvoiced (this is not needed on the inserts)
+		}
+		else if (k == "ProcessedDate") {
+			salesTotal.DateProcessed = order[k]
+		}
+		else 
+			salesTotal[k] = order[k]
+	})
+
+	dao.updateSalesTotal(salesTotal)
+
+
+}
+
+
+
+module.exports = { insertOrder, insertProduct, updateOrder }

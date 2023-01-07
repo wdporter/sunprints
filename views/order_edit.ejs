@@ -6,6 +6,8 @@
 </style>
 
 
+todo, needs a button to create new order
+
 <div id="app">
 
 	<fieldset><legend>Order details (Id: {{ order.OrderId }})</legend>
@@ -16,7 +18,7 @@
 				Customer: <span v-html="formatCustomer">
 			</p>
 			<details :open="!order.CustomerId" ref="customerDetails" style="margin-top:var(--unit)" @toggle="onCustomerDetailsToggle">
-				<summary>Choose customer</summary>
+				<summary>{{ this.order.CustomerId ? 'Change' : 'Choose' }} customer</summary>
 				<customer-pick @customer-select="onCustomerSelect" ref="customerPick"></customer-pick>
 			</details>
 		</div>
@@ -144,7 +146,7 @@
 	<div v-for="(product, i) in order.products" :key="product.GarmentId">
 		<template v-if="!product.removed">
 			<fieldset>
-				<legend>Product Id:{{ product.GarmentId }} <span v-if="product.Deleted==1">(deleted)</span></legend>
+				<legend>Product (Id:{{ product.GarmentId }}) <span v-if="product.Deleted==1">(deleted)</span></legend>
 				<table style="margin-top:1em">
 					<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
 					<tr>
@@ -185,9 +187,9 @@
 				</section>
 		
 				<section style="margin-top: var(--unit-2)">
-				<div>
-						<input type="reset" value="Remove product" 
-								@click="product.removed=true" />
+					<div>
+					<input type="button" value="Change" @click="onAddProduct(product.GarmentId)" />&emsp;
+					<input type="reset" value="Remove" @click="product.removed=true" />
 				</div>
 				<div>
 					<details v-if="hasStockWarnings(product)"><!-- todo method for has stock warnings -->
@@ -310,17 +312,6 @@ createApp ({
 		const customerPick = ref(null)    // <%# uses ref attribute of customer pick component %>
 		const customerInfo = ref(null)    // <%# uses ref attribute of element, div that contains customer name and component %>
 
-		const onCustomerSelect = function(selected) { // callback function when customer is chosen
-			order.customer = selected
-			order.CustomerId = selected.CustomerId
-			customerDetails.value.removeAttribute("open")
-			orderNumberInput.value.focus()
-			customerInfo.value.scrollIntoView({behavior:"smooth"})
-		}
-		const formatCustomer = computed(() => {
-			return /*html*/`<a href="/customer/edit?id=${order.CustomerId}" target="_blank" title="click to view/edit the customer in a new window"> ${order.customer.Code} ${order.customer.Company}</a> ${order.customer.detailsString}`
-		})
-
 		const designDialog = ref(null) // <%# uses ref attribute of designDialog element %>
 		const designPick = reactive({
 			location: "",
@@ -328,11 +319,6 @@ createApp ({
 		})
 		const designPickDecoration = ref("")
 		const designPicker = ref(null)    // <%# uses ref attribute of element, the <design-pick> %>
-		const onOpenDesignPick = function(location, decoration) {
-			this.designPick.location = location
-			this.designPick.decoration = decoration
-			this.$refs.designDialog.showModal()
-		}
 
 		const mediaDialog = ref(null) // <%# uses ref attribute of designDialog element %>
 		const mediaPicker = ref(null) // <%# uses ref attribute of element, the <media-pick> %>
@@ -342,14 +328,6 @@ createApp ({
 			position: 0,
 			designid: 0
 		})
-		const onOpenMediaPick = function(decoration, location, medium, pos) { 
-			this.mediaPick.position = pos
-			this.mediaPick.location = location
-			this.mediaPick.medium = medium
-			this.mediaPick.designid = this.order.designs[`${location}${decoration}DesignId`]
-			this.$refs.mediaDialog.showModal()
-			this.$nextTick(() => this.$refs.mediaPicker.fetch())
-		}
 
 		const productDialog = ref(null) // uses ref attribute of productDialog element 
 		const productPicker = ref(null) // uses ref attribute of element, the <product-pick> 
@@ -358,150 +336,53 @@ createApp ({
 		const orderNumberInput = ref(null) // ref(null) is for an element of same name, 
 		const salesReps = ref(<%- JSON.stringify(salesReps) %>)
 		const purchaseOrders = ref(<%- JSON.stringify(purchaseOrders) %>)
-		
-		function onCustomerDetailsToggle() {
-			if (customerDetails.value.open)
-				customerPick.value.receiveFocus()
-		}
 
-		function onDeleteDesign(location, decoration) {
-			console.log("delete design", location, decoration)
-			// get product 0; remove the decoration design; remove the media
-			order.designs[`${location}${decoration}DesignId`] = null
-			order.designs[`${location}${decoration}DesignName`] = ""
-			const medium = this.media[this.decorations.indexOf(decoration)];
-			[1,2].forEach(n => {
-				order.designs[`${location}${medium}${n}Id`] = null
-				order.designs[`${location}${medium}${n}Name`] = ""
-			})
-			// set standard (unnamed) screens to empty
-			order.designs[`${location}ScreenStandard`] = ""
-		}
-
-		function onDeleteMedia(product, location, medium, n) {
-			product[`${location}${medium}${n}Id`] = null
-			product[`${location}${medium}${n}Name`] = ""
-		}
-
-		function onAddProduct() {
-			this.$refs.productDialog.showModal()
-		}
-
-		async function onPurchaseOrderSelect() {
-			console.log("stockorderid", order.StockOrderId)
-			try {
-				order.products = await (await fetch(`/stockorder/${order.StockOrderId}/products`)).json()
-			}
-			catch(err) {
-				console.error(err)
-			}
-
-	} //~ onPurchaseOrderSelect
-
-		const onOpenProductPick = function() {
-			this.$refs.productDialog.showModal()
-		}
-
-		const saveOrder = function() {
-
-			let method = "POST"
-			let url = "/order2"
-			let isNew = true
-			if (order.OrderId > 0) {
-				method = "PUT"
-				url += `/${order.OrderId}`
-				isNew = false
-			}
-
-			fetch(url, {
-				method,
-				headers: new Headers({ "Content-Type": "application/json" }),
-				body: JSON.stringify({
-					order, 
-					designs: order.designs
-				})
-			})
-			.then(response => {
-				if (! response.ok) {
-					// todo show error dialog and quit
-					throw response.statusText
-				}
-				return response.json()
-			})
-			.then(json => {
-				if (json.errors) {
-					throw json.errors
-				}
-				if (isNew) {
-					order.OrderId = json.OrderId
-					order.CreatedBy = json.CreatedBy
-					order.CreatedDateTime = json.CreatedDateTime
-					order.LastModifiedBy = json.LastModifiedBy
-					order.LastModifiedDateTime = json.LastModifiedDateTime
-					// refetch products
-					fetch(`/order2/products/${order.OrderId}`)
-					.then(r => r.json())
-					.then(json => {
-						order.products = json
-					})
-					.catch(err => window.alert("error fetching updated products: " + err))
-				}
-				else {
-					order.LastModifiedBy = json.LastModifiedBy
-					order.LastModifiedDateTime = json.LastModifiedDateTime
-				}
-
-			})
-			.catch(err => {
-				//todo message dialog component
-				let msg = ""
-				if (typeof err == "string")
-					msg = err
-				else if (typeof err == "Array")
-					msg = err.join("; ")
-
-				window.alert("we encountered an error: " + err)
-			})
-
-		}//~ saveOrder 
+		const productChangeId = ref(0)
 
 		return {
 			locations,
 			decorations,
 			media,
 			sizes,
-			onCustomerSelect,
-			customerDetails,
-			customerPick,
-			customerInfo,
-			onCustomerDetailsToggle,
-			formatCustomer,
-			order,
-			orderNumberInput,
 			salesReps,
-
+			order,
 			designPickDecoration,
-			onOpenDesignPick,
-			designPicker,
 			designPick,
-			onDeleteDesign,
-
-			onOpenMediaPick,
-			mediaPicker,
 			mediaPick,
-			onDeleteMedia,
-
-			productDialog,
-			productPicker,
-			onAddProduct,
-
-			onPurchaseOrderSelect,
+			productChangeId,
 			purchaseOrders,
-
-			saveOrder
 		}
 	},
 	methods: {
+		onCustomerSelect(selected) { // callback function when customer is chosen
+			this.order.customer = selected
+			this.order.CustomerId = selected.CustomerId
+			this.$refs.customerDetails.removeAttribute("open")
+			this.$refs.orderNumberInput.focus()
+			this.$refs.customerInfo.scrollIntoView({behavior:"smooth"})
+		},
+		onCustomerDetailsToggle() {
+			if (this.$refs.customerDetails.open)
+				this.$refs.customerPick.receiveFocus()
+		},
+		onOpenDesignPick(location, decoration) {
+			this.designPick.location = location
+			this.designPick.decoration = decoration
+			this.$refs.designDialog.showModal()
+		},
+		onOpenMediaPick(decoration, location, medium, pos) { 
+			this.mediaPick.position = pos
+			this.mediaPick.location = location
+			this.mediaPick.medium = medium
+			this.mediaPick.designid = this.order.designs[`${location}${decoration}DesignId`]
+			this.$refs.mediaDialog.showModal()
+			this.$nextTick(() => this.$refs.mediaPicker.fetch())
+		},
+		onDeleteMedia(product, location, medium, n) {
+			product[`${location}${medium}${n}Id`] = null
+			product[`${location}${medium}${n}Name`] = ""
+		},
+
 		onDesignSelect(design) {
 			//set the selected design id and name
 			this.order.designs[`${design.location}${design.decoration}DesignId`]  = design[`${design.decoration}DesignId`]
@@ -522,19 +403,33 @@ createApp ({
 				.then(response => response.json())
 				.then(json => this.order.designs[`${design.location}ScreenStandard`] = json.join("<br />"))
 				.catch(err => console.error(err))
-				
 			}
+			//todo, if there is only one media item for the design, load it up
 		},
 		onCloseDesignPicker() {
 			// we clear this one, because it is reused by the other decorations
 			this.$refs.designPicker.clear()
 			this.$refs.designDialog.close() 
 		},
+		onDeleteDesign(location, decoration) {
+			console.log("delete design", location, decoration)
+			// get product 0; remove the decoration design; remove the media
+			this.order.designs[`${location}${decoration}DesignId`] = null
+			this.order.designs[`${location}${decoration}DesignName`] = ""
+			const medium = this.media[this.decorations.indexOf(decoration)];
+			[1,2].forEach(n => {
+				this.order.designs[`${location}${medium}${n}Id`] = null
+				this.order.designs[`${location}${medium}${n}Name`] = ""
+			})
+			// set standard (unnamed) screens to empty
+			this.order.designs[`${location}ScreenStandard`] = ""
+		},
+
 
 		onMediaSelect(media) {
 			this.order.designs[`${media.location}${media.medium}${media.position}Id`] = media.id
 			this.order.designs[`${media.location}${media.medium}${media.position}Name`] = media.name
-			onCloseMediaPicker()
+			this.onCloseMediaPicker()
 		},
 		onCloseMediaPicker() {
 			this.$refs.mediaDialog.close() 
@@ -543,15 +438,43 @@ createApp ({
 			this.$refs.productDialog.close() 
 		},
 		onProductSelect(product) {
-			product.added = true
-			this.order.products.push(product)
 			this.$refs.productDialog.close()
-			this.$nextTick(function() {
-				this.$refs[`product_${product.GarmentId}_size`][0].scrollIntoView({behavior: "smooth"})
-				this.$refs[`product_${product.GarmentId}_size`][0].focus()
 
-			})
+			if (this.productChangeId) {
+				// find the product with the id which is the one we are changing
+				const myProduct = this.order.products.find(p => p.GarmentId == this.productChangeId)
+				// reset its properties
+				myProduct.GarmentId = product.GarmentId
+				myProduct.Code = product.Code
+				myProduct.Label = product.Label
+				myProduct.Type = product.Type
+				myProduct.Colour = product.Colour
+				myProduct.Notes = product.Notes
+
+				if (myProduct.SizeCategory != product.SizeCategory) {
+					// reset all sizes
+					for (let category in this.sizes) 
+						for (let size of category)
+							myProduct[size] = 0
+				}
+				myProduct.SizeCategory = product.SizeCategory
+			}
+			else { // it's a new product to be added
+				product.added = true
+				this.order.products.push(product)
+				this.$nextTick(function() {
+					this.$refs[`product_${product.GarmentId}_size`][0].scrollIntoView({behavior: "smooth"})
+					this.$refs[`product_${product.GarmentId}_size`][0].focus()
+
+				})
+			}
 		},
+
+		onAddProduct(productId) {
+			this.productChangeId = productId ? productId : 0
+			this.$refs.productDialog.showModal()
+		},
+
 		productCount(product) {
 			const count = this.sizes[product.SizeCategory].reduce((acc, curr) => { 
 				return product[curr] + acc
@@ -584,9 +507,85 @@ createApp ({
 					return true
 			}
 			return false
+		},
+		async onPurchaseOrderSelect() {
+			console.log("stockorderid", this.order.StockOrderId)
+			try {
+				this.order.products = await (await fetch(`/stockorder/${this.order.StockOrderId}/products`)).json()
+				this.order.products.forEach(p => p.added = true)
+			}
+			catch(err) {
+				console.error(err)
+			}
+		}, //~ onPurchaseOrderSelect
+		saveOrder() {
+			let method = "POST"
+			let url = "/order2"
+			if (this.order.OrderId > 0) {
+				method = "PUT"
+				url += `/${this.order.OrderId}`
+			}
+
+			fetch(url, {
+				method,
+				headers: new Headers({ "Content-Type": "application/json" }),
+				body: JSON.stringify({
+					order: this.order, 
+					designs: this.order.designs
+				})
+			})
+			.then(response => {
+				if (! response.ok) {
+					// todo show error dialog and quit
+					throw response.statusText
+				}
+				return response.json()
+			})
+			.then(json => {
+				if (json.errors) {
+					throw json.errors
+				}
+				if (method == "POST") { // new
+					this.order.OrderId = json.OrderId
+					this.order.CreatedBy = json.CreatedBy
+					this.order.CreatedDateTime = json.CreatedDateTime
+					this.order.LastModifiedBy = json.LastModifiedBy
+					this.order.LastModifiedDateTime = json.LastModifiedDateTime
+				}
+				else { // method == "PUT", edit
+					this.order.LastModifiedBy = json.LastModifiedBy
+					this.order.LastModifiedDateTime = json.LastModifiedDateTime
+				}
+				// refetch products
+				fetch(`/order2/products/${this.order.OrderId}`)
+				.then(r => r.json())
+				.then(json => {
+					this.order.products = json
+				})
+				.catch(err => window.alert("We encountered an error fetching the updated products: " + err))
+
+
+			})
+			.catch(err => {
+				//todo message dialog component
+				let msg = ""
+				if (typeof err == "string")
+					msg = err
+				else if (typeof err == "Array")
+					msg = err.join(";\n ")
+
+				window.alert("we encountered an error:\n " + err)
+			})
+
+		}//~ saveOrder 
+
+
+	},
+	computed: {
+		formatCustomer ()  {
+			return /*html*/`<a href="/customer/edit?id=${this.order.CustomerId}" target="_blank" title="click to view/edit the customer in a new window"> ${this.order.customer.Code} ${this.order.customer.Company}</a> ${this.order.customer.detailsString}`
 		}
 	}
-
 }).mount("#app")
 
 

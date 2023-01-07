@@ -93,18 +93,19 @@ function validate(order, db) {
 	// }
 
 	// check unique order number
-	const orderDao = new  OrderDao(db)
-	const existing = orderDao.getByOrderNumber(order.OrderNumber)
-	if (order.OrderId == 0) {
-		// it's new, so make sure we don't a have a duplicated order number
-		if (existing) // should be null
-			errors.push(`We require a unique order number. "${order.orderNumber}" is already in use.`)
-	}
-	else {
-		// it's an update, if the order number belongs to a different order id, it is invalid
-		if (existing.OrderId != order.OrderId) // should be the same
-			errors.push(`We require a unique order number. "${order.orderNumber}" is already in use.`)
-	}
+	const orderDao = new OrderDao(db)
+	const existing = orderDao.getByOrderNumber(order.OrderNumber) 
+	if (existing) {
+		if (order.OrderId == 0) {
+			// we found the order number, but this is a new order, so it's an error
+			errors.push(`We require a unique order number. "${existing.orderNumber}" is already in use.`)
+		}
+		else {
+			// we found the order number, so make sure it's on the same order id
+			if (existing.OrderId != order.OrderId) // should be the same
+				errors.push(`We require a unique order number. "${order.orderNumber}" is already in use.`)
+		}
+	} // the order number is not in the database so that's fine
 
 
 	return errors
@@ -126,14 +127,13 @@ function validate(order, db) {
  *    10. AuditLog UPDATE Garment 
  * end each product
  * 
- * @see validate make sure you call validate first, we will throw exceptions here
+ *
  * @param {object} order the new order
+ * @param {object} designs property names for the OrderGarment table and values
  * @param {string} user the name of the user to record in CreatedBy field
  * @returns {object} savedOrder: the same order with the new OrderId and audit columns and full audit info; errors: an array of error messages
  */
-
-
-function createNew(order, user) {
+function createNew(order, designs, user) {
 
 	const db = getDB()
 
@@ -141,10 +141,10 @@ function createNew(order, user) {
 		// 0. validation
 		const errors = validate(order, db)
 		if (errors.length > 0) {
-			return errors 
+			return {savedOrder: null, errors}
 		}
 
-		const orderDao = new  OrderDao(db)
+		const orderDao = new OrderDao(db)
 
 		const now = new Date().toLocaleString()
 		order.CreatedBy = order.LastModifiedBy = user
@@ -153,11 +153,11 @@ function createNew(order, user) {
 		db.prepare("BEGIN TRANSACTION").run()
 
 		// 1. INSERT Orders
-		for (let key in order ) {
+		for (let key in order) {
 			// remove default values, no point saving them
 			if (order[key] == null)
 				delete order[key]
-			if (order[key]=== 0)
+			if (order[key] === 0)
 				delete order[key]
 			if (order[key] === "")
 				delete order[key]
@@ -173,41 +173,7 @@ function createNew(order, user) {
 		// this is done by the DAO
 
 		// 3. INSERT Sales History 
-		salesHistoryService.insertOrder(db, savedOrder)
-
-		db.prepare("COMMIT").run()
-
-		//todo refetch the products also and put them in return value
-		savedOrder = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(savedOrder.OrderId)
-		// convert boolean numbers to true/false
-		savedOrder.Repeat =  !!savedOrder.Repeat
-		savedOrder.New =     !!savedOrder.New
-		savedOrder.BuyIn =   !!savedOrder.BuyIn
-		savedOrder.Done =    !!savedOrder.Done
-		savedOrder.Deleted = !!savedOrder.Deleted
-
-
-
-		return {
-			errors, 
-			savedOrder, 
-		}
-	}
-	catch (ex) {
-		if (db.inTransaction)
-			db.prepare("ROLLBACK").run()
-		
-		throw ex
-	}
-	finally {
-		db.close()
-	}
-
-
-	// // code below is deprecated, belongs with saving an OrderGarment object
-	// and should be unreachable
-	throw "unreachable code"
-
+		// this will be done with a a trigger salesHistoryService.insertOrder(db, savedOrder)
 
 		// 4. filter out any products that have both added:true and removed:true
 		order.products = order.products.filter(p => !(p.added && p.removed))
@@ -215,19 +181,19 @@ function createNew(order, user) {
 		//5. put designs into first product
 		locations.forEach(location => {
 			decorations.forEach(decoration => {
-				
+
 				if (designs[`${location}${decoration}DesignId`])
 					order.products[0][`${location}${decoration}DesignId`] = designs[`${location}${decoration}DesignId`]
-				
+
 				const medium = media[decorations.indexOf(decoration)]
 				if (designs[`${location}${medium}1Id`])
-					order.products[0][`${location}${medium}Id` ] = designs[`${location}${medium}1Id`]
+					order.products[0][`${location}${medium}Id`] = designs[`${location}${medium}1Id`]
 				if (designs[`${location}${medium}2Id`])
 					order.products[0][`${location}${medium}2Id`] = designs[`${location}${medium}2Id`]
 			})
 		})
 
-		//iterate products and save them
+		// 5.5 iterate products and save them
 		order.products.forEach(product => {
 			// tidy up our product
 			for (let key in product) {
@@ -235,7 +201,7 @@ function createNew(order, user) {
 					delete product[key]
 
 				if (!product[key])
-					delete product[key] // we don't insert nulls
+					delete product[key] // we don't insert nulls, zeros or empty strings
 			}
 
 			// audit values
@@ -243,7 +209,7 @@ function createNew(order, user) {
 			product.CreatedDateTime = product.LastModifiedDateTime = now
 			// foreign key
 			product.OrderId = savedOrder.OrderId
-			
+
 			// remove garment details if any
 			delete product.Code
 			delete product.Colour
@@ -251,13 +217,12 @@ function createNew(order, user) {
 			delete product.Type
 			delete product.GarmentNotes
 			delete product.Notes
-			delete product.added // this is only used when editing
-			
+			delete product.added // this is only relevant when editing
+
 			const sizeCategory = product.SizeCategory //might need this
-			delete product.SizeCategory 
-	
-				
-			//6. INSERT product 
+			delete product.SizeCategory
+
+			//6. INSERT product , note a trigger side effect to insert into Sales
 			const orderProductDao = new OrderProductDao(db)
 			product.OrderGarmentId = orderProductDao.insert(product)
 
@@ -265,23 +230,230 @@ function createNew(order, user) {
 			// do this from dao
 
 			// 8. INSERT Sales History
-			salesHistoryService.insertProduct(db, product)
+			// do this with a trigger
+			// salesHistoryService.insertProduct(db, product)
 
 			// 9. UPDATE Garment (reduce stock level)
 			product.SizeCategory = sizeCategory
 			productService.reduceStockLevels(db, product, user, now)
-			
+
 			// 10. AuditLog UPDATE Garment 
 			// this is done by productService.reduceStockLevels
 
 		})
-		
-		
+
+		db.prepare("COMMIT").run()
+
+		savedOrder = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(savedOrder.OrderId)
+		// convert boolean numbers to true/false
+		savedOrder.Repeat = !!savedOrder.Repeat
+		savedOrder.New = !!savedOrder.New
+		savedOrder.BuyIn = !!savedOrder.BuyIn
+		savedOrder.Done = !!savedOrder.Done
+		savedOrder.Deleted = !!savedOrder.Deleted
+		// the client should refetch products separately
 
 
 
+		return {
+			errors,
+			savedOrder,
+		}
+	}
+	catch (ex) {
+		if (db.inTransaction)
+			db.prepare("ROLLBACK").run()
 
+		throw ex
+	}
+	finally {
+		db.close()
+	}
 
 }
 
-module.exports = { get, getNew, validate, createNew }
+
+/** edit an order
+ * 
+ * @see validate make sure you call validate first, we will throw exceptions here
+ * @param {object} order an order object that has the new values for its properties
+ * @param {object} designs property names for the OrderGarment table and values, goes in the first product
+ * @param {string} user the name of the user to record in LastModifiedBy field
+ * @returns {object} savedOrder: the same order audit columns updated; errors: an array of error messages
+*/
+
+
+// for each product
+
+// 	8. if the product is deleted
+// 		8a. DELETE OrderGarment
+// 		8b. AuditLog OrderGarment DELETE
+// 		8c. DELETE Sales
+// 		8d. UPDATE Garment (increase stock level)
+// 		8e. AuditLog UPDATE Garment
+// 	9. Check Diffs.
+// 		if there are no diffs, continue loop	
+// 	10. if the product is changed:
+// 		10a. UPDATE OrderGarment
+// 		10b. AuditLog OrderGarment UPDATE
+// 		10c. UPDATE Sales
+// 		10d. UPDATE OrderGarment (reduce stock levels)
+// 		10e. AuditLog UPDATE OrderGarment
+// end each product
+// 11. update last modified by, last modified date time
+// 12. return savedOrder
+
+function edit(order, designs, user) {
+
+	const db = getDB()
+
+	try {
+
+		//******** 1. validation
+		const errors = validate(order, db)
+		if (errors.length > 0) {
+			return {savedOrder: null, errors}
+		}
+
+		//******** 2. UPDATE changes to order
+		const orderDao = new OrderDao(db)
+		order.Repeat = order.Repeat ? 1 : 0 // convert true/false to 1/0
+		order.New = order.New ? 1 : 0
+		order.BuyIn = order.BuyIn ? 1 : 0
+		order.Done = order.Done ? 1 : 0
+		order.Deleted = order.Deleted ? 1 : 0
+
+		db.prepare("BEGIN TRANSACTION").run()
+
+		const updatedOrder = orderDao.update(order, user) // note, there is a trigger to update SalesTotal table
+
+
+		//******** 3. add our designs to our first non-removed product 
+		let index = order.products.findIndex(p => !p.removed)
+		if (index > -1) {
+			locations.forEach(location => {
+				decorations.forEach(decoration => {
+					if (designs[`${location}${decoration}DesignId`])
+						order.products[index][`${location}${decoration}DesignId`] = designs[`${location}${decoration}DesignId`]
+					const medium = media[decorations.indexOf(decoration)]
+					if (designs[`${location}${medium}1Id`])
+						order.products[index][`${location}${medium}Id`] = designs[`${location}${medium}1Id`]
+					if (designs[`${location}${medium}2Id`])
+						order.products[index][`${location}${medium}2Id`] = designs[`${location}${medium}2Id`]
+				})
+			})
+		}
+
+		const orderProductDao = new OrderProductDao(db)
+
+		//******** 4. Iterate our products (OrderGarment) and save each one
+		order.products.forEach(product => {
+
+			//******** 5. If the user added it and removed it, we don't need to save it
+			if (product.added && product.removed)
+				return 
+
+			// foreign key
+			product.OrderId = order.OrderId
+
+			// tidy up our product, remove properties that don't get saved to db
+			for (let key in product) {
+				if (key.startsWith("Min") || key.startsWith("Qty")) // these were used by front end for stock warnings
+					delete product[key]
+			}
+			// remove garment details if any
+			delete product.Code
+			delete product.Colour
+			delete product.Label
+			delete product.Type
+			delete product.GarmentNotes
+			delete product.Notes
+
+			const sizeCategory = product.SizeCategory // save it for later
+			delete product.SizeCategory
+
+			if (product.added) {
+				//******** 6. insert into database
+
+				// audit values
+				product.CreatedBy = product.LastModifiedBy = user
+				product.CreatedDateTime = product.LastModifiedDateTime = new Date().toLocaleString()
+				for (let key in product) {
+					// remove default values, no point saving them
+					if (product[key] == null)
+						delete product[key]
+					if (product[key] === 0)
+						delete product[key]
+					if (product[key] === "")
+						delete product[key]
+				}
+				delete product.added
+
+				// **** 6a. INSERT OrderGarment, note: there is a trigger side effect to insert into Sales
+				product.OrderGarmentId = orderProductDao.insert(product)
+
+				// **** 6b. AuditLog OrderGarment INSERT 
+				// do this from dao
+
+				// **** 6c  INSERT Sales History (Sales table)
+				// done with a trigger salesHistoryService.insertProduct(db, product)
+
+				// **** 6d. UPDATE Garment (reduce stock level)
+				product.SizeCategory = sizeCategory
+				productService.reduceStockLevels(db, product, user, product.CreatedDateTime)
+
+				// **** 6e. AuditLog UPDATE Garment
+				// this will be done from DAO
+			}
+			else if (product.removed) {
+				// ******** 7 delete from database
+
+				product.LastModifiedBy = user
+				product.LastModifiedDateTime = new Date().toLocaleString()
+
+				// **** 7a. DELETE OrderGarment
+				orderProductDao.delete(product)
+
+				// **** 7b. AuditLog OrderGarment DELETE, done by DAO
+				// **** 7c. DELETE Sales, done by trigger
+				// **** 7d. UPDATE Garment (increase stock level)
+				product.SizeCategory = sizeCategory
+				productService.increaseStockLevels(db, product, user, product.LastModifiedDateTime)
+
+				// **** 7e. AuditLog UPDATE Garment, done by DAO
+
+			}
+			else {
+				// ******** 8 update database, if there are diffs
+			}
+
+
+		})
+
+
+
+		db.prepare("COMMIT").run()
+
+
+		const ret = {
+			LastModifiedBy: order.LastModifiedBy,
+			LastModifiedDateTime: order.LastModifiedDateTime
+		}
+		return { savedOrder: ret, errors}
+
+	}
+	catch (ex) {
+		if (db.inTransaction)
+			db.prepare("ROLLBACK").run()
+
+		throw ex
+	}
+	finally {
+		db.close()
+		}
+
+}
+
+
+
+module.exports = { get, getNew, validate, createNew, edit }

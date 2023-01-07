@@ -48,7 +48,7 @@ VALUES ( ${auditLogId}, ?, ? )
 
 
 	/**
-	 * inserts the give information into the audit log tables
+	 * updates the audit log tables with the given information
 	 * @param {string} table name of the table
 	 * @param {string} pkey name of the primary key id of the object
 	 * @param {object} old the original object
@@ -81,7 +81,51 @@ VALUES ( ${auditLogId}, ?, ?, ?)
 			if (key == pkey)
 				return // we don't insert primary key into Audit Log Entry
 
-			statement.run(key, old[key], newObj[key])
+			if (old[key] !== newObj[key])
+				statement.run(key, old[key], newObj[key])
 		})
-	}//~ update
+	} 
+	//~ update
+
+
+
+
+	/**
+	 * updates the audit log tables with the given information
+	 * @param {string} table name of the table
+	 * @param {string} pkey name of the primary key id of the object
+	 * @param {object} old the original object
+	 */
+	delete(table, pkey, oldObj) {
+
+		// 1. Audit Log
+		let query = /*sql*/`
+INSERT INTO AuditLog 
+( ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime )
+VALUES (?, ?, 'DEL', ?, ?) `
+
+		let statement = this.db.prepare(query)
+
+		let info = statement.run(table, oldObj[pkey], oldObj.LastModifiedBy, oldObj.LastModifiedDateTime)
+		let auditLogId = info.lastInsertRowid
+
+		// 2. Audit Log Entry
+		query = /*sql*/`
+INSERT INTO AuditLogEntry 
+( AuditLogId, PropertyName, OldValue, NewValue)
+VALUES ( ${auditLogId}, ?, ?, null)
+		`
+		statement = this.db.prepare(query)
+
+		Object.keys(oldObj).forEach(key => {
+			if (auditColumns.includes(key))
+				return // we don't insert audit columns into AuditLog Entry
+			if (key == pkey)
+				return // we don't insert primary key into Audit Log Entry
+
+			statement.run(key, oldObj[key])
+		})
+	}
+	//~ delete
+
 }

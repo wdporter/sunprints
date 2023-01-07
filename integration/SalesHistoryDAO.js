@@ -43,5 +43,13 @@ VALUES
 
 	}
 
+	updateSalesTotal(salesTotal) {
+		let query = /*sql*/`UPDATE SalesTotal
+		SET ${Object.keys(salesTotal).map(k => `${k}=@${k}`).join(", ")}
+		WHERE OrderId=@OrderId`
+		let statement = this.db.prepare(query)
+		statement.run(salesTotal)
+	}
+
 
 }

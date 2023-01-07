@@ -189,5 +189,27 @@ WHERE GarmentId=@GarmentId`
 	}
 
 
+/**
+ * a product has been removed from an order, so return the amounts back to stock
+ * @param {object} items the stock level items that get updated
+ * @param {object} product 
+ */
+increaseStockLevels(items, product)  {
+
+	const keys = Object.keys(items).filter(k => !createdColumns.includes(k))
+	
+	const query = /*sql*/`
+UPDATE Garment 
+SET ${keys.map(i => `${i}=${i}+@${i}`).join(", ")},
+${lastModifiedColumns.map(col => `${col}=@${col}` ).join(", ")}
+WHERE GarmentId=@GarmentId`
+
+	const statement = this.db.prepare(query)
+	const info = statement.run(product)
+	console.log("increaseStockLevels", info)
+
+}
+
+
 
 }

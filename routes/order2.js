@@ -71,7 +71,7 @@ router.get("/products/:orderid", (req, res) => {
 
 /* POST new order 
 * returns a json with new order id and audit columns
-* client will most likely want to refetch the products
+* client will refetch the products
 */
 router.post("/", (req, res) => {
 	try {
@@ -97,48 +97,35 @@ router.post("/", (req, res) => {
 		console.log(ex.message)
 	}
 
-
-
-
-
 })
 
 
 /* PUT update order 
-1. Check order for diffs
-	if there are no diffs, go to 5
-2. UPDATE Orders
-3. AuditLog Orders UPDATE
-4. UPDATE SalesTotal
-5. put designs into first non-deleted product 
-for each product
-	5. if added and deleted are true, continue
-	6. if the product is added:
-		6a. INSERT OrderGarment
-		6b. AuditLog OrderGarment INSERT 
-		6c. INSERT Sales
-		6d. UPDATE Garment (reduce stock level)
-		6e. AuditLog UPDATE Garment 
-	7. if the product is deleted
-		7a. DELETE OrderGarment
-		7b. AuditLog OrderGarment DELETE
-		7c. DELETE Sales
-		7d. UPDATE Garment (increase stock level)
-		7e. AuditLog UPDATE Garment
-	8. Check Diffs.
-		if there are no diffs, continue loop	
-	9. if the product is changed:
-		9a. UPDATE OrderGarment
-		9b. AuditLog OrderGarment UPDATE
-		9c. UPDATE Sales
-		9d. UPDATE OrderGarment (reduce stock levels)
-		9e. AuditLog UPDATE OrderGarment
-end each product
-
-return last modified by, last modified date time
+returns the saved item from the Orders table
+client should refetch the products (items from OrderGarment table)
 */
 router.put("/:id", (req, res) => {
 
+	try {
+
+		const {order, designs} = req.body
+
+		const { savedOrder, errors } = orderService.edit(order, designs, req.auth.user)
+
+		if (errors.length > 0) {
+			res.json({errors}).end()
+		}
+		else {
+			res.json(savedOrder).end()
+		}
+	}
+
+
+	catch(ex) {
+		res.statusMessage = ex.message
+		res.sendStatus(400).end()
+		console.log(ex.message)
+	}
 
 
 })
