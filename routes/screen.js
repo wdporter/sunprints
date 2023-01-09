@@ -30,16 +30,14 @@ router.get("/ordersearch", function (req, res, next) {
 		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		//note Womens and Adults are the same, ie Adult screens are for womens garments also
-		const statement = db.prepare(`SELECT ScreenPrintDesignId, Screen.ScreenId, Front, Back, Pocket, Sleeve, Number, Colour, Screen.Name 
+		const statement = db.prepare(/*sql*/`SELECT ScreenPrintDesignId, Screen.ScreenId, Front, Back, Pocket, Sleeve, Number, Colour, Screen.Name 
 FROM ScreenPrintDesign 
 INNER JOIN Screen on Screen.ScreenId = ScreenPrintDesign.ScreenId 
 WHERE PrintDesignId = ${req.query.printdesignid} 
 AND Screen.Deleted = 0
+AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}'
 ORDER BY Name COLLATE NOCASE, Number COLLATE NOCASE, Colour COLLATE NOCASE`)
-// --AND SizeCategory = '${req.query.sizes == 'Kids' ? 'Kids' : 'Adults'}' 
-// we have taken this out because they decided that any screen could go on any size product, ignoring size categories
-// that means that the query string parameter "sizes" is ignored
-// but they might decide to change their minds
+
 
 		const records = statement.all()
 		res.send(records)
