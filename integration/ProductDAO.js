@@ -1,4 +1,4 @@
-
+const AuditLogDao = require("./AuditLogDAO.js")
 const { allSizes } = require("../config/sizes.js")
 const { auditColumns, createdColumns, lastModifiedColumns } = require("../config/auditColumns.js")
 
@@ -210,6 +210,42 @@ WHERE GarmentId=@GarmentId`
 
 }
 
+	/**
+	 * a product on an order has had ajdustments made to stock levels, so adjust each balance
+	 * @param {object} originalOrderGarment the product(garment) as it exists in the datebase
+	 * @param {object} orderGarment the updated product(garment) that could have changed 
+	 */
+	adjustStockLevels(originalOrderGarment, orderGarment)  {
 
+		const originalGarment = this.db.prepare(/*sql*/`SELECT * FROM Garment WHERE GarmentId=?`).get(orderGarment.GarmentId)
+
+		const changedSizes = []
+		allSizes.forEach(size => {
+			if (originalOrderGarment[size] !== orderGarment[size]) 
+				// the new balanace is current balance + ( original order value - updated order value )
+				changedSizes.push({
+					size,
+					originalBalance: originalOrderGarment[size],
+					newBalance: originalGarment[size] + (originalOrderGarment[size] - orderGarment[size])
+				})
+		})
+
+
+		if (changedSizes.length > 0) {
+			let query = /*sql*/`UPDATE Garment SET 
+			${changedSizes.map(s => `${s.size}=${s.newBalance}`).join(", ")}
+			,LastModifiedBy=@LastModifiedBy, LastModifiedDateTime=@LastModifiedDateTime
+			WHERE GarmentId=@GarmentId `
+
+			this.db.prepare(query).run(orderGarment)
+
+			const newGarment = this.db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(orderGarment.GarmentId)
+
+			// now do audit log
+			new AuditLogDao(this.db).update("Garment", "GarmentId", originalGarment, newGarment)
+
+		}
+
+	}
 
 }

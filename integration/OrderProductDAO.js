@@ -7,8 +7,12 @@ module.exports = class OrderProductDao {
 	}
 
 
-	insert(product) {
+	get(orderGarmentId) {
+		return this.db.prepare(/*sql*/`SELECT * FROM OrderGarment WHERE OrderGarmentId=?`).get(orderGarmentId)
+	}
 
+
+	insert(product) {
 
 		try {
 			let query = /*sql*/`
@@ -56,6 +60,40 @@ VALUES (${Object.keys(product).map(k => `@${k}`).join(" , ")})`
 			console.log("error", ex)
 			throw ex
 		}
+
+
+	}
+
+
+	update(orderGarment) {
+		try {
+
+			// get the original OrderProduct item
+		const original = new OrderProductDao(this.db).get(orderGarment.OrderGarmentId)
+
+		// get a list of changed columns
+		const changedColumns = [] 
+		for (let key in original) {
+			if (key == "OrderGarmentId")
+				continue // ignore these
+			if (typeof orderGarment[key] == "undefined")
+				continue
+			if (original[key] !== orderGarment[key])
+				changedColumns.push(key)
+		}
+
+		let query = /*sql*/`UPDATE OrderGarment SET 
+			${changedColumns.map(c => `${c}=@${c}`).join(", ")}
+			WHERE OrderGarmentId=@OrderGarmentId`
+		this.db.prepare(query).run(orderGarment)
+
+		new AuditLogDao(this.db).update("OrderGarment", "OrderGarmentId", original, orderGarment )
+
+	}
+	catch (ex) {
+		console.log("error", ex)
+		throw ex
+	}
 
 
 	}

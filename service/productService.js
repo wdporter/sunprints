@@ -3,6 +3,7 @@ const ProductDao = require("../integration/ProductDAO.js")
 const PurchaseOrderProductDAO = require("../integration/PurchaseOrderProductDAO.js")
 const AuditLogDao = require("../integration/AuditLogDAO.js")
 const OrderGarment = require("../models/ordergarment.js")
+const OrderProductDao = require("../integration/OrderProductDAO")
 const { art, locations, decorations } = require("../config/art.js")
 const { allSizes, sizes } = require("../config/sizes.js")
 
@@ -218,4 +219,25 @@ function increaseStockLevels(db, product, user, date) {
 }
 
 
-module.exports = { search, getProductsForOrder, getStockOrderProducts, reduceStockLevels, increaseStockLevels }
+
+/**
+ * an order has a product updated, so stock levels must be either increased or decreased based on changes
+ * make sure your "product" (OrderGarment) has LastModifiedBy set
+ * audit logging is done here
+ * @param {Database} db a db connection
+ * @param {object} originalOrderProduct the OrderGarment object before it was updated with new stock level
+ * @param {object} product an OrderGarment object that has updated stock levels in it
+ */
+function adjustStockLevels(db, originalOrderProduct, product) {
+
+		const dao = new OrderProductDao(db)
+
+
+		const productDao = new ProductDao(db)
+		productDao.adjustStockLevels(originalOrderProduct, product) 
+
+}
+
+
+
+module.exports = { search, getProductsForOrder, getStockOrderProducts, reduceStockLevels, increaseStockLevels, adjustStockLevels }

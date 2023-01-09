@@ -425,6 +425,23 @@ function edit(order, designs, user) {
 			}
 			else {
 				// ******** 8 update database, if there are diffs
+				product.LastModifiedBy = user
+				product.LastModifiedDateTime = new Date().toLocaleString()
+
+				delete product.added
+				delete product.removed
+
+				const originalOrderProduct = orderProductDao.get(product.OrderGarmentId)
+
+				// save updated details
+				orderProductDao.update(product)
+
+				//update stock levels in Garment (Product) table
+				productService.adjustStockLevels(db, originalOrderProduct, product)
+
+
+
+
 			}
 
 
