@@ -32,7 +32,7 @@ router.get("/edit", function (req, res) {
 		}
 
 		res.render("order_edit.ejs", {
-			title: "New Order testing new page",
+			title: req.query.id ? "Edit Order" : "New Order",
 			stylesheets: ["/stylesheets/order_edit-theme.css"],
 			user: req.auth.user,
 			locations: art.locations,
