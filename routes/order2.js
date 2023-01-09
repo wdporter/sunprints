@@ -5,6 +5,7 @@ const salesRepService = require("../service/salesRepService.js")
 const orderService = require("../service/orderService.js")
 const productService = require("../service/productService.js")
 const purchaseOrderService = require("../service/purchaseOrderService.js")
+const customerService = require("../service/customerService")
 
 const art = require("../config/art.js")
 const { sizeCategories, sizes, auditColumns } = require("../sizes.js")
@@ -30,6 +31,21 @@ router.get("/edit", function (req, res) {
 			// purchase orders needed in case of buyin
 			purchaseOrders = purchaseOrderService.getOutstanding()
 		}
+
+		if (req.query.customerid) {
+			order.CustomerId = req.query.customerid
+			const myCustomer = customerService.get(req.query.customerid)
+			order.customer = {
+				Code: myCustomer.Code,
+				Company: myCustomer.Company,
+				detailsString: customerService.getDetailsString(myCustomer)
+			}
+		}
+
+		if (req.query.salesrep) {
+			order.SalesRep = req.query.salesrep
+		}
+
 
 		res.render("order_edit.ejs", {
 			title: req.query.id ? "Edit Order" : "New Order",
