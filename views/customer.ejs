@@ -157,7 +157,7 @@ window.datatable = new DataTable("table#customersTable", {
 				const timestamp = Date.parse(data)
 				let retVal = isNaN(timestamp) ? "" : `${new Date(timestamp).toLocaleString("en-AU", {dateStyle: "short"})}<br>`
 <% if (poweruser || salesrep) { %> 
-				retVal += `<a class=action-link href=/order2/edit?customerid=${row.CustomerId}&salesrep=${row.SalesRep} title="start a new order with this customer preselected">New Order</a>`
+				retVal += `<a class=action-link href=/order/new?customerid=${row.CustomerId}&salesrep=${row.SalesRep} title="start a new order with this customer preselected">New Order</a>`
 <% } %>
 				return retVal
 			}
