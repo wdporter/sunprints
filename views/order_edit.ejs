@@ -6,7 +6,6 @@
 </style>
 
 
-todo, needs a button to create new order
 
 <div id="app">
 
@@ -224,21 +223,26 @@ todo, needs a button to create new order
 	<p>
 <% if (poweruser || salesrep) { %>
 	<p>
-		<button @click="saveOrder">Save Order</button>
+		<button @click="saveOrder">Save Order</button> 
+		<template v-if="order.OrderId != 0">
+			<input type=button id=printJobButton @click="printJobSheet" value="Print Job Sheet" style="margin-left:2em" />
+			<input type=submit id=shipOrderButton class="bottom-button yellow-on-black-buttton" @click="shipOrder" value="Ship Order" title="Sets done to true, will no longer display on orders page." style="margin-left:2em" />
+			<input type=reset value="Delete Order" @click="deleteOrder" v-if="order.OrderId != 0" style="margin-left:2em"  />
+		</template>
 	</p>
 <% } %>
 	</p>
 
 
 	<!-- auditing info -->
-	<p>
-	<dl style="margin-top:var(--unit-2)">
-		<dt>Created by:</dt><dd>{{ order.CreatedBy }}</dd>
-		<dt>Created date/time:</dt><dd>{{ order.CreatedDateTime }}</dd>
-		<dt>Last modified by:</dt><dd>{{ order.LastModifiedBy }}</dd>
-		<dt>Last modified date/time:</dt><dd>{{ order.LastModifiedDateTime }}</dd>
-	</dl>
-</p>
+	<div style="display:none">
+		<dl style="margin-top:var(--unit-2)">
+			<dt>Created by:</dt><dd>{{ order.CreatedBy }}</dd>
+			<dt>Created date/time:</dt><dd>{{ order.CreatedDateTime }}</dd>
+			<dt>Last modified by:</dt><dd>{{ order.LastModifiedBy }}</dd>
+			<dt>Last modified date/time:</dt><dd>{{ order.LastModifiedDateTime }}</dd>
+		</dl>
+	</div>
 
 	<!-- decoration pick dialog -->
 	<dialog id="designDialog" ref="designDialog">
@@ -284,7 +288,35 @@ todo, needs a button to create new order
 		</p>
 	</dialog>
 
+
 </div> <!--~ end app -->
+
+
+<dialog id=successDialog style="width: 400px" >
+	<h4>Success</h4>
+	<p>✅ We have saved the order </p>
+	<form method="dialog">
+		<button>OK</button>
+	</form>
+</dialog>
+
+
+<dialog id=deleteDialog>
+	<form method="dialog">
+		<h4>Order Deleted</h3>
+		<p>We have deleted the order.</p>
+		<p><a href=/order/deleted>Undo</a> (but does not restore garment details)</p>
+		<button>OK</button>
+	</form>
+</dialog>
+
+
+
+
+<hr>
+
+<p><input type="button" class="bottom-button" onclick="window.location.href='/order2/edit'" value="New Order" title="start a new order"></p>
+
 
 
 <script type="module">
@@ -454,7 +486,7 @@ createApp ({
 				if (myProduct.SizeCategory != product.SizeCategory) {
 					// reset all sizes
 					for (let category in this.sizes) 
-						for (let size of category)
+						for (let size of this.sizes[category])
 							myProduct[size] = 0
 				}
 				myProduct.SizeCategory = product.SizeCategory
@@ -556,6 +588,9 @@ createApp ({
 					this.order.LastModifiedBy = json.LastModifiedBy
 					this.order.LastModifiedDateTime = json.LastModifiedDateTime
 				}
+
+				document.getElementById("successDialog").showModal()
+
 				// refetch products
 				fetch(`/order2/products/${this.order.OrderId}`)
 				.then(r => r.json())
@@ -567,7 +602,6 @@ createApp ({
 
 			})
 			.catch(err => {
-				//todo message dialog component
 				let msg = ""
 				if (typeof err == "string")
 					msg = err
@@ -577,7 +611,47 @@ createApp ({
 				window.alert("we encountered an error:\n " + err)
 			})
 
-		}//~ saveOrder 
+		},//~ saveOrder 
+		deleteOrder() {
+			if (window.confirm("Are you sure you want to delete this order")) {
+				fetch(`/order/${this.order.OrderId}`, { method: "DELETE" })
+					.then(response => {
+						if (response.ok) {
+							const deleteDialog = document.getElementById("deleteDialog")
+							deleteDialog.addEventListener("close", () => window.location="/order2/edit") 
+							deleteDialog.showModal()
+						}
+
+						else
+							throw new Error(response.statusText)
+					})
+					.catch(error => alert("We encountered an error: " + error))
+			}
+		},
+		printJobSheet() {
+			window.open(`/order/jobsheet/${this.order.OrderId}`)
+		},
+		shipOrder() {
+			console.log("ship")
+			fetch(`/order/ship/${this.order.OrderId}`, { method: "PUT" })
+			.then(response => {
+				if (response.ok) {
+					return response.text()
+				}
+				else {
+					throw new Error(response.statusText)
+				}
+			})
+			.then(text => {
+				const successDialog = document.getElementById("successDialog")
+				successDialog.querySelector("p").textContent = "✅ We have shipped the order"
+				successDialog.addEventListener("close", function() {
+					window.location.href=`/order`
+				})
+				successDialog.showModal()
+			})
+			.catch(error => window.alert(`We encountered an error: ${error}`)) 
+		} //~ end ship order
 
 
 	},
