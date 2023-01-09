@@ -350,10 +350,8 @@ router.get("/edit", function (req, res, next) {
 SELECT ${sz.locations.join(",")}, ScreenPrintDesignId, Screen.ScreenId, Colour, Screen.Name, Number 
 FROM ScreenPrintDesign 
 INNER JOIN Screen ON Screen.ScreenId = ScreenPrintDesign.ScreenId
-WHERE SizeCategory=?
-AND Screen.Deleted=0
 AND PrintDesignId=? `
-					const screenPrintDesigns = db.prepare(query).all(g.SizeCategory,g.selectedPrintDesign.PrintDesignId)
+					const screenPrintDesigns = db.prepare(query).all(g.selectedPrintDesign.PrintDesignId)
 					screenPrintDesigns.forEach(sp => {
 						sz.locations.forEach(l => {
 							if (sp[l]) {
@@ -392,10 +390,8 @@ AND PrintDesignId=? `
 					query = /*sql*/`SELECT ${sz.locations.join(",")}, UsbEmbroideryDesignId, Usb.UsbId, Number, Notes
 FROM UsbEmbroideryDesign 
 INNER JOIN Usb ON Usb.UsbId = UsbEmbroideryDesign.UsbId
-WHERE SizeCategory=?
-AND Usb.Deleted=0
 AND EmbroideryDesignId=? `
-					const usbEmbroideryDesigns = db.prepare(query).all(g.SizeCategory, g.selectedEmbroideryDesign.EmbroideryDesignId)
+					const usbEmbroideryDesigns = db.prepare(query).all(g.selectedEmbroideryDesign.EmbroideryDesignId)
 					usbEmbroideryDesigns.forEach(de => {
 						sz.locations.forEach(l => {
 							if (de[l]) {
@@ -437,10 +433,8 @@ AND EmbroideryDesignId=? `
 					query = /*sql*/`SELECT ${sz.locations.join(",")}, TransferNameTransferDesignId, TransferName.TransferNameId, Name
 FROM TransferNameTransferDesign 
 INNER JOIN TransferName ON TransferName.TransferNameId = TransferNameTransferDesign.TransferNameId
-WHERE SizeCategory=?
-AND TransferName.Deleted=0
 AND TransferDesignId=? `
-					const transferNameTransferDesigns = db.prepare(query).all(g.SizeCategory, g.selectedTransferDesign.TransferDesignId)
+					const transferNameTransferDesigns = db.prepare(query).all(g.selectedTransferDesign.TransferDesignId)
 					transferNameTransferDesigns.forEach(t => {
 						sz.locations.forEach(l => {
 							if (t[l]) {
