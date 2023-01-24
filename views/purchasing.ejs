@@ -79,7 +79,7 @@
 									v-model="garment[size]" 
 									@change="dirty=true" 
 									:ref="size" 
-									@keyup.enter.prevent="$refs.savePurchaseOrderButton.focus()" />
+									@keydown.enter.prevent="$refs.savePurchaseOrderButton.focus()" />
 						</td>
 					</tr>
 					<tr><td :colspan="sizes[sizeCategory].length" style="text-align:center;padding-top:0">Total: {{getCount(sizeCategory, garment)}}</tr>
