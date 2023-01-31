@@ -247,13 +247,15 @@ router.post("/edit", (req, res) => {
 		errors.push("We require a unique customer code. Check if the customer already exists.")
 
 	if (errors.length > 0) {
+		let salesreps = db.prepare("SELECT Name, Deleted FROM SalesRep ").all()
 		res.render ("customer_edit.ejs", {
 			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
 			customer: req.body,
 			errors,
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
-			salesrep: res.locals.salesrep
+			salesrep: res.locals.salesrep,
+			salesreps
 		})
 	}
 
