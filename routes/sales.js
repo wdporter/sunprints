@@ -58,7 +58,7 @@ console.log(req.query.customSearch)
 				params.DateTo = req.query.customSearch.DateTo
 			}
 			if (req.query.customSearch.SalesRep && req.query.customSearch.SalesRep != "0") {
-				where.push(`SalesRep = @SalesRep`)
+				where.push(`SalesTotal.SalesRep = @SalesRep`)
 				params.SalesRep = req.query.customSearch.SalesRep.trimEnd(" (*)")
 			}
 			if (req.query.customSearch.Print && req.query.customSearch.Print != "0") {
