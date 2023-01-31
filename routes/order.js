@@ -953,7 +953,7 @@ router.get("/outstanding/embroidery", (req, res) => {
 			if (req.query.rep == "none")
 				query += " AND IFNULL(Orders.SalesRep, '')='' "
 			else
-				query += " AND SalesRep = ? "
+				query += " AND Orders.SalesRep = ? "
 		}
 
 		query += " ORDER BY 2 ASC "
