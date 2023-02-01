@@ -1075,6 +1075,12 @@ in which the "edit" in the name doesn't really mean anything either
 					},
 					deleteGarment(garment, event) {
 						event.preventDefault()
+
+						if (! window.confirm("Confirm OK to go ahead and remove this product from the order")) {
+							return
+						}
+
+
 						console.log(`deleting garment id !${JSON.stringify(garment)}!`)
 						const vue = this
 						if (garment.OrderGarmentId == 0) {
