@@ -93,6 +93,9 @@
 				</select>
 			</p>
 	</fieldset>
+	<div>
+		<button onclick="clearSearchFields()">Clear Search</button>
+	</div>
 	</div>
 </section>
 
@@ -388,6 +391,18 @@ document.getElementById("dateTo").addEventListener("input", function() {
 	document.getElementById("dateFrom").setAttribute("max", this.value)
 })
 
+
+function clearSearchFields() {
+
+	Array.from(document.querySelectorAll("input[type=date]")).forEach(i => i.value = "")
+
+	Array.from(document.querySelectorAll("fieldset select")).forEach(s => s.value = 0)
+
+	document.querySelector("fieldset input[type=search]").value = ""
+
+
+	datatable.ajax.reload()
+}
 
 </script>
 
