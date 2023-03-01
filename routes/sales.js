@@ -103,7 +103,7 @@ console.log(req.query.customSearch)
 									OR Sales.PocketTransferNameId=@TransferName OR Sales.PocketTransferName2Id=@TransferName 
 									OR Sales.SleeveTransferNameId=@TransferName OR Sales.SleeveTransferName2Id=@TransferName 
 									)`)
-				params.Usb = req.query.customSearch.Usb
+				params.TransferName = req.query.customSearch.TransferName
 				useSalesJoin = true
 			}
 			if (req.query.customSearch.OrderNumber.trim()) {
@@ -438,6 +438,7 @@ router.get("/transfernames", (req, res) => {
 	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 	try {
 		const names = db.prepare(`SELECT TransferNameId, IFNULL(Name, 'no name') AS Name 
+		FROM TransferName
 		WHERE TransferNameId IN (
 			SELECT FrontTransferNameId FROM Sales 
 			UNION SELECT FrontTransferName2Id FROM Sales 
@@ -447,7 +448,7 @@ router.get("/transfernames", (req, res) => {
 			UNION SELECT SleeveTransferName2Id FROM Sales
 			UNION SELECT PocketTransferNameId FROM Sales
 			UNION SELECT PocketTransferName2Id FROM Sales)
-		FROM TransferName ORDER BY 2 COLLATE NOCASE`).all()
+		 ORDER BY 2 COLLATE NOCASE`).all()
 		res.send(
 			names.map(n => {
 				return {
