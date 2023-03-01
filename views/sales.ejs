@@ -214,14 +214,7 @@ window.datatable = new DataTable("table#dt", {
 					}
 			}, 
 			{ data: "Delivery",
-				width: "4em",
-				render: function (data) {
-					const num = Date.parse(data)
-					if (isNaN(num))
-						return data
-					else
-						return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
-				}
+				width: "4em"
 			},
 			{
 				data: "designItems",
