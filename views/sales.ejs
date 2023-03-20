@@ -1,5 +1,6 @@
 <%- include("partials/head.ejs") %>
 
+<button id="topClearButton" onclick="clearSearchFields()" style="margin-left:3em;">Clear Search</button>
 
 <section>
 	<div>
@@ -413,6 +414,9 @@ function clearSearchFields() {
 
 	datatable.ajax.reload()
 }
+
+var button = document.getElementById("topClearButton")
+document.querySelector("main>h1").appendChild(button)
 
 </script>
 
