@@ -899,6 +899,20 @@ router.get("/outstanding/print", (req, res) => {
 				r2set.push(r2[r])
 		}
 
+		r2set.forEach(r => {
+			var numberOfDesigns = 0
+			if (r.FrontDesign)
+				numberOfDesigns++
+			if (r.BackDesign)
+				numberOfDesigns++
+			if (r.PocketDesign)
+				numberOfDesigns++
+			if (r.SleeveDesign)
+				numberOfDesigns++
+
+			r.Qty *= numberOfDesigns
+		})
+
 		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
 
