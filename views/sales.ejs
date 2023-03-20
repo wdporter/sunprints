@@ -304,9 +304,13 @@ async function onOpenRowButtonClick(evt) {
 							const items = []
 							for (key in item) {
 								if (item[key]) {
-									if (key == "ASm")	
+									if (key == "Product")
+										items.push(`<span class=nowrap>${item[key]}</span>`)
+									else if (key == "Product2")
+										items.push(`<span class=nowrap>${item[key]}</span>`)
+									else if (key == "ASm")	
 										items.push(`<b>AS</b>: ${item[key]}`)
-									else if (key == "Price")
+									else if (key == "Price") 
 										items.push(`<b>Price:</b> ${item[key].toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}`)
 									else 
 										items.push(`<b>${key}</b>: ${item[key]}`)
@@ -317,6 +321,12 @@ async function onOpenRowButtonClick(evt) {
 						}
 					}
 					html += "</div>"
+
+					const totalValue = json.reduce((acc, curr) => {
+						return acc + parseFloat(curr.Value.replace("$", ""))
+					}, 0)
+					html += `Total Value: $${totalValue.toFixed(2)}`
+
 					row.child(html).show()
 					evt.target.classList.add('shown');
 
