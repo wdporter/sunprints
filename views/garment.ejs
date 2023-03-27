@@ -1,5 +1,14 @@
 <%- include("partials/head.ejs") %>
 
+<style>
+	tfoot td {
+		text-align: center;
+		font-weight: bold;
+		font-size: 1.2rem;
+	}
+
+</style>
+
 <p><a href=/garment/deleted>View (and restore) deleted products</a></p>
 
 <input type=button onclick="app.addNew()" value="Add new item" />
@@ -103,6 +112,13 @@
 						<td><input type=number v-model="garment['Min' + size]" min="0" /></td>
 					</tr>
 				</tbody>
+				<tfoot>
+					<tr>
+						<td>Total:</td>
+						<td>{{ getTotalProductQuantity() }}</td>
+						<td colspan="2"></td>
+					</tr>
+				</tfoot>
 				</table>
 				<p v-else>No product selected</p>
 			</div>
@@ -338,7 +354,12 @@
 						throw new Error(response.statusText)
 				})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
-
+			},
+			getTotalProductQuantity() {
+				const result = this.sizes[this.garment.SizeCategory].reduce((acc, currentSize) => {
+								return acc += Number(this.garment[currentSize])
+							}, 0)
+				return result
 			}
 		}
 	})
