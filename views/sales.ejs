@@ -179,7 +179,8 @@ window.datatable = new DataTable("table#dt", {
 <% if (!poweruser) { %>
 						return ""
 <% } %>
-					let retVal =""// clone doesn't work properly `&ensp;<a href=# onclick="cloneOrder(this, event)" title="Clone this order"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span></a>`
+					let result = ""
+					// clone doesn't work properly `&ensp;<a href=# onclick="cloneOrder(this, event)" title="Clone this order"><span class="fa fa-clone fa-lg" style="margin-top:.5em"></span></a>`
 
 					let href = ""
 
@@ -187,9 +188,11 @@ window.datatable = new DataTable("table#dt", {
 						href = `/sales/edit/${data.OrderId}`
 					else
 						href = `/order/edit?id=${data.OrderId}`
-					
-						retVal += `&ensp;<a href="${href}" title="Edit this order"><span class="fa fa-edit fa-lg" style="margin-top:.5em"></span></a>`
-					return retVal
+					result += `&ensp;<a href="${href}" title="Edit this order"><span class="fa fa-edit fa-lg" style="margin-top:.5em"></span></a>`
+
+					result += `&ensp;<a href=/order/jobsheet/${data.OrderId} title="Print this order" target=_blank><span class="fa fa-print fa-lg" style=margin-top:.5em></span></a>`
+
+					return result
 				}			},
 			{ data: "OrderId",
 				visible: false
