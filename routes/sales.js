@@ -472,8 +472,9 @@ router.get("/:orderid/history", (req, res) => {
 	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
 
 	try {
-		let query = /*sql*/`SELECT Garment.Code || ' ' || Garment.Label AS Product
-		, Garment.Type || ' ' || Garment.Colour AS Product2 
+		let query = /*sql*/`SELECT 
+		 Garment.Code || ' ' || Garment.Type AS Product
+		,Garment.Colour || ' ' || Garment.Label  AS Product2 
 		,fpd.Code || ' | ' || fpd.Notes AS FrontPrintDesign
 		,bpd.Code || ' | ' || bpd.Notes AS BackPrintDesign
 		,ppd.Code || ' | ' || ppd.Notes AS PocketPrintDesign
