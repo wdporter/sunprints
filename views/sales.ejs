@@ -329,7 +329,7 @@ async function onOpenRowButtonClick(evt) {
 					const totalValue = json.reduce((acc, curr) => {
 						return acc + parseFloat(curr.Value.replace("$", ""))
 					}, 0)
-					html += `Total Value: $${totalValue.toFixed(2)}`
+					html += `<div style="font-weight: bold; margin-top:1em">Total Value: $${totalValue.toFixed(2)}</div>`
 
 					row.child(html).show()
 					evt.target.classList.add('shown');
