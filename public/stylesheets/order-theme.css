@@ -1,6 +1,3 @@
-
-
-
 td.alignCentre {
 	text-align: center;
 }
@@ -15,6 +12,12 @@ td.alignCentre {
 
 .buttondiv {
 	clear:both;
+}
+
+div.garment-total-value {
+	font-weight: bold;
+	margin-top:1rem;
+	margin-bottom: 1rem;
 }
 
 

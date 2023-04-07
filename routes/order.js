@@ -20,7 +20,8 @@ router.get("/", function (req, res, next) {
 		],
 		user: req.auth.user,
 		poweruser: res.locals.poweruser,
-		salesrep: res.locals.salesrep
+		salesrep: res.locals.salesrep,
+		allSizes: JSON.stringify(sz.allSizes)
 	})
 })
 
@@ -712,8 +713,10 @@ router.get("/dt/garments/:orderId", function (req, res) {
 		db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 		// || is the concatenation operator in sqlite
-		let statement = db.prepare(`SELECT Garment.Code || ' ' || Label || ' ' || ' ' || Type || ' ' || Garment.Colour AS Product, Price, 	
-  OrderGarment.K0, OrderGarment.K1, OrderGarment.K2, OrderGarment.K4, OrderGarment.K6, OrderGarment.K8, OrderGarment.K10,	OrderGarment.K12, OrderGarment.K14, OrderGarment.K16,
+		let statement = db.prepare(/*sql*/`
+		SELECT Garment.Code || ' ' || Type AS Product,
+		Garment.Colour || ' ' || Label AS Product2, 
+		Price, OrderGarment.K0, OrderGarment.K1, OrderGarment.K2, OrderGarment.K4, OrderGarment.K6, OrderGarment.K8, OrderGarment.K10,	OrderGarment.K12, OrderGarment.K14, OrderGarment.K16,
   OrderGarment.W6, OrderGarment.W8, OrderGarment.W10, OrderGarment.W12, OrderGarment.W14, OrderGarment.W16, OrderGarment.W18, OrderGarment.W20, OrderGarment.W22, OrderGarment.W24, OrderGarment.W26, OrderGarment.W28, 
   OrderGarment.AXS, OrderGarment.ASm, OrderGarment.AM, OrderGarment.AL, OrderGarment.AXL, OrderGarment.A2XL, OrderGarment.A3XL, OrderGarment.A4XL, OrderGarment.A5XL, OrderGarment.A6XL, OrderGarment.A7XL, OrderGarment.A8XL
   ,PrintDesignF.Code || ' ' || IFNULL(PrintDesignF.Notes, '') AS FrontPrintDesign
