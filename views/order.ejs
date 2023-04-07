@@ -71,6 +71,7 @@
 				})
 				.then(data => {
 					let totalValue = 0;
+					let totalQuantity = 0
 					var ret = "<div style=display:flex>"
 					if (data.length == 0) {
 						ret += "<div class=garmentDiv>&emsp;no garments to display&emsp;</div>"
@@ -78,26 +79,31 @@
 					else {
 						for (var item of data) {
 							let productValue = 0;
+							let productQuantity = 0;
 							ret += "<div class=garmentDiv>"
 							for (var d in item) {
-								if (d == "Product2")
-									ret += `${item[d]}</br>`
+								if (d == "Product")
+									ret += /*html*/`<span class=nowrap><b>Product:</b> ${item[d]}</span><br>`
+								else if (d == "Product2")
+									ret += /*html*/`<span class=nowrap>${item[d]}</span><br>`
 								else if (d == "AS")
-									ret += /*html*/`<b>ASm:</b>${item[d]}</br>`
+									ret += /*html*/`<b>ASm:</b>${item[d]}<br>`
 								else
-									ret += /*html*/`<b>${d}:</b> ${item[d]}</br>`
+									ret += /*html*/`<b>${d}:</b> ${item[d]}<br>`
 
 								if (sizes.includes(d)) {
 									productValue += item[d] * parseFloat(item.Price)
+									productQuantity += item[d]
 								}
 							}
-							ret += `<b>Value:</b> ${productValue.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}`
-							totalValue += productValue
+							ret += /*html*/`<b>Quantity:</b> ${productQuantity}<br /><b>Value:</b> ${productValue.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}`
 							ret += "</div>"
+							totalValue += productValue
+							totalQuantity += productQuantity
 						}
 					}
 					ret += "</div>"
-					ret += `<div class=garment-total-value>Total Value: ${totalValue.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}</div>`
+					ret += /*html*/`<div class=garment-total-value>Total Quantity: ${totalQuantity}; Total Value: ${totalValue.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}</div>`
 					return ret
 				})
 				.catch(err => window.alert(`We enountered an error: ${error}`))

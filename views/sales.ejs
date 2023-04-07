@@ -309,15 +309,17 @@ async function onOpenRowButtonClick(evt) {
 							for (key in item) {
 								if (item[key]) {
 									if (key == "Product")
-										items.push(`<span class=nowrap><b>Product:</b> ${item[key]}</span>`)
+										items.push(/*html*/`<span class=nowrap><b>Product:</b> ${item[key]}</span>`)
 									else if (key == "Product2")
-										items.push(`<span class=nowrap>${item[key]}</span>`)
+										items.push(/*html*/`<span class=nowrap>${item[key]}</span>`)
 									else if (key == "ASm")	
-										items.push(`<b>AS</b>: ${item[key]}`)
+										items.push(/*html*/`<b>AS</b>: ${item[key]}`)
 									else if (key == "Price") 
-										items.push(`<b>Price:</b> ${item[key].toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}`)
+										items.push(/*html*/`<b>Price:</b> ${item[key].toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`)
+									else if (key == "Total") 
+										items.push(/*html*/`<b>Product Qty:</b> ${item[key]}`)
 									else 
-										items.push(`<b>${key}</b>: ${item[key]}`)
+										items.push(/*html*/`<b>${key}</b>: ${item[key]}`)
 								}
 							}
 							html += items.join("<br>")
@@ -329,10 +331,13 @@ async function onOpenRowButtonClick(evt) {
 					const totalValue = json.reduce((acc, curr) => {
 						return acc + parseFloat(curr.Value.replace("$", ""))
 					}, 0)
-					html += `<div style="font-weight: bold; margin-top:1em">Total Value: $${totalValue.toFixed(2)}</div>`
+					const totalQuantity = json.reduce((acc, curr) => {
+						return acc + curr.Total
+					}, 0)
+					html += /*html*/`<div style="font-weight: bold; margin-top:1rem; margin-bottom: 1rem;">Total Quantity: ${totalQuantity}; Total Value: ${totalValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}</div>`
 
 					row.child(html).show()
-					evt.target.classList.add('shown');
+					evt.target.classList.add("shown");
 
 				}
 				else 
