@@ -47,8 +47,8 @@
 
 	<div class="no-print">
 		<ul>
-			<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
-			<li>Use the Destination/Printer option to save a PDF 
+			<li><a href="#" onclick="saveAsPdf()">Save a pdf</a> 
+				<li>Print the document by hitting Ctrl-P or <a href=# onclick="window.print()">this link</a>.
 			<li>Under <i>More settings</i> you can remove the header/footer
 			<% if (supplier.Email != null && supplier.Email.length > 0) { %> <li><a href="mailto:<%= supplier.Email %>?subject=SunPrints%20Order">Email the supplier</a><% } %> (multiple email addresses should be separated with a comma)
 		</ul>
@@ -59,7 +59,9 @@
 <!-- <%- JSON.stringify(supplier) %><br>
 <%- JSON.stringify(garments) %> -->
 
-<div style="display:flex; justify-content: space-between">
+<div id="printme">
+
+<div style="display:flex; justify-content: space-between" >
 	<div>
 		<h2>
 			SunPrints Purchase Order <br />
@@ -153,9 +155,37 @@ for (var sizeCategory in garments) {
 	<% } %>
 
 <b>Total Products:</b> <%= sum %>
-	<script>
-		window.print()
+
+</div>
+
+<script src="/javascripts/html2pdf-0.10.1.js"></script>
+<script>
+		//window.print()
+
+		function saveAsPdf() {
+			
+			const element = document.getElementById("printme")
+
+			const options = {
+				filename: "<%= supplier.StockOrderId %>.pdf",
+				margin: 10
+			}
+
+
+			html2pdf().set(options).from(element).save()
+
+
+		}
+
+		window.addEventListener(
+  "message",
+  (data, event) => {
+		console.log("message! " + data)
+		saveAsPdf()
+  }
+);
 	</script>
+
 
 
 </body>

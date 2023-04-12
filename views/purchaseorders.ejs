@@ -1,0 +1,85 @@
+<%- include("partials/head.ejs") %>
+
+<div style="display:flex; justify-content: space-between; margin-bottom: 1rem">
+	<div><input id="showAllCheckbox" type="checkbox" onchange="window.datatable.draw()" /><label for="showAllCheckbox">Include received purchase orders</label></div>
+	<div>
+		<input type=button onclick="window.location.href='/purchasing'" value="Create new purchase order" />
+	</div>
+</div>
+
+	<table id="orderTable" class="display compact">
+		<thead>
+			<tr>
+				<th>
+				<th>Supplier
+				<th>Order Date
+				<th>Receive Date
+				<th>Notes
+		<tbody>
+	</table>
+
+
+
+	<script>
+		window.datatable = new DataTable("#orderTable", {
+			processing: true,
+			serverSide: true,
+			ajax: {
+				url: "/purchaseorders/dt",
+				data: (d) => {
+					d.includeReceived = document.getElementById("showAllCheckbox").checked
+				}
+			},
+			language: {
+				searchPlaceholder: "search customer and notes"
+			},
+			order: [[2, 'desc']], // order date
+			columns: [
+				{
+					data: "StockOrderId",
+					width: "3em",
+					render: (data) => {
+						return /*html*/`
+						<a title=edit href=/purchasing?stockorderid=${data}>
+							<i class="fa fa-lg fa-edit"></i>
+						</a>
+						&emsp;
+						<a title=print href=/purchasing/purchaseorder/${data}>
+							<i class="fa fa-lg fa-print"></i>
+						</a>` 
+					}
+				},
+				{
+					data: "Supplier",
+				},
+				{
+					data: "OrderDate",
+					width: "4rem",
+					render(data, type, row) {
+						return new Date(Date.parse(data)).toLocaleDateString()
+					}
+				},
+				{
+					data: "ReceiveDate",
+					width: "4rem",
+					render(data, type, row) {
+						if (data)
+							return new Date(Date.parse(data)).toLocaleDateString()
+						else
+							return ""
+					}
+				},
+				{
+					data: "Notes",
+				}
+			]
+		})
+
+	</script>
+
+
+
+
+
+
+	<%- include("partials/foot.ejs") %>
