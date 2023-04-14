@@ -109,6 +109,11 @@ ${whereClause}`).get().count
 			o.Designs = [...o.Designs]
 		})
 
+		orders.forEach(o => {
+			o.DT_RowData = {id: o.OrderId}
+			o.DT_RowAttr = {tabindex: 0}
+		})
+
 
 		res.send({
 			draw: Number(req.query.draw),

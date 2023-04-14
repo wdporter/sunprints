@@ -148,7 +148,9 @@ window.datatable = new DataTable("table#dt", {
 		processing: true,
 		serverSide: true,
 		dom: "l<'buttondiv'B>rtip", 
-
+		tabIndex: 1,
+		pageLength: 50,
+		createdRow: (row, data, dataIndex) => row.setAttribute("tabIndex", 0),
 		ajax: { 
 			url: "/sales/dt",
 			data: function(d) {
@@ -274,9 +276,70 @@ window.datatable = new DataTable("table#dt", {
 		]
 	})
 
-window.datatable.on("draw", function() {
+	window.datatable.on("draw", function() {
 		window.datatable.buttons(0).text("Expand all")
 	})
+
+	// don't do this any more because the keyboard nav gives an outline
+	// gives rows a colour when selected
+	// $("tbody").on("click", "tr", function () {
+	// 	if ($(this).hasClass("selected")) {
+	// 		$(this).removeClass("selected")
+	// 	}
+	// 	else {
+	// 		window.datatable.$("tr.selected").removeClass("selected")
+	// 		$(this).addClass("selected")
+	// 	}
+	// })
+
+	// navigate with up/down keys
+	$("tbody").on("keydown", "tr", function (event) {
+
+		const row = window.datatable.row(this)
+		console.log(event)
+		let td = null
+
+		switch (event.originalEvent.key) {
+
+			case "ArrowDown": 
+				let next = this.nextElementSibling
+				if (next != null) {
+					if (this.classList.contains("dt-hasChild"))
+						next = next.nextElementSibling			
+					next.focus()
+					//next.classList.add("selected")
+					//this.classList.remove("selected")
+				}
+				break;
+			
+			case "ArrowUp":
+				let previous = this.previousElementSibling
+				if (previous != null) {
+					if (previous.getAttribute("tabindex") == null)
+						previous = previous.previousElementSibling			
+					previous.focus()
+					//previous.classList.add("selected")
+					//this.classList.remove("selected")
+				}
+				break;
+
+			case "ArrowLeft":
+				if (row.child.isShown())
+					onOpenRowButtonClick(event)
+				break;
+
+			case "ArrowRight":
+				if (! row.child.isShown()) {
+					onOpenRowButtonClick(event)
+				}
+				break
+
+			case "Enter":
+				window.location.href = `/order/edit?id=${$(this).data("id")}`
+
+		}
+})
+
 
 function format(data) {
 		if (!data) return // happens when you click the clone button

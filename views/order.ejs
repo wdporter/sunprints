@@ -117,6 +117,7 @@
 			processing: true,
 			serverSide: true,
 			ajax: "/order/dt",
+			pageLength: 50,
 			language: {
 				searchPlaceholder: "number, customer, notes"
 			},
@@ -304,7 +305,9 @@
 		})
 
 		// Add event listener for opening and closing details
-		$('#orderTable tbody').on('click', 'td.dt-control', function () {
+		$('#orderTable tbody').on('click', 'td.dt-control', onRowClick)
+
+		function onRowClick() {
 			var tr = $(this).closest('tr');
 			var row = window.datatable.row(tr);
 
@@ -319,9 +322,7 @@
 				myData.then(d => row.child(d).show())
 				tr.addClass('shown');
 			}
-		})
-
-
+		}
 
 
 
@@ -380,6 +381,48 @@
 			const id = window.datatable.row(this).data().OrderId
 			window.location.href = `/order/edit?id=${id}`
 		})
+
+			// navigate with up/down keys
+	$("tbody").on("keydown", "tr", function (event) {
+
+		const row = window.datatable.row(this)
+		console.log(event)
+		let td = null
+
+		switch (event.originalEvent.key) {
+
+			case "ArrowDown": 
+				let next = this.nextElementSibling
+				if (next != null) {
+					if (this.classList.contains("dt-hasChild"))
+						next = next.nextElementSibling			
+					next.focus()
+					next.classList.add("selected")
+					this.classList.remove("selected")
+				}
+				break;
+			
+			case "ArrowUp":
+				let previous = this.previousElementSibling
+				if (previous != null) {
+					if (previous.getAttribute("tabindex") == null)
+						previous = previous.previousElementSibling			
+					previous.focus()
+					previous.classList.add("selected")
+					this.classList.remove("selected")
+				}
+				break;
+
+			case "ArrowLeft":
+			case "ArrowRight":
+				onRowClick.call(this)
+				break
+
+				case "Enter":
+						window.location.href = `/order/edit?id=${$(this).data("id")}`
+
+		}
+	})
 
 
 	</script>

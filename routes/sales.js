@@ -11,8 +11,15 @@ router.get("/", (req, res) => {
 			title: "Sales History",
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
-			stylesheets: ["/stylesheets/buttons.dataTables-2.2.3.css", "/stylesheets/sales-theme.css"],
-			javascripts:  ["/javascripts/dataTables.buttons-2.2.3.js"]
+			stylesheets: [
+				"/stylesheets/buttons.dataTables-2.2.3.css", 
+				"/stylesheets/sales-theme.css",
+				"/stylesheets/fixedHeader.dataTables.min.css"
+			],
+			javascripts:  [
+				"/javascripts/dataTables.buttons-2.2.3.js",
+				"/javascripts/dataTables.fixedHeader.min.js",
+			]
 		})
 })
 
@@ -138,6 +145,9 @@ console.log(req.query.customSearch)
 		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start}`
 
 		data = db.prepare(query).all(params)
+
+		data.forEach(d => d.DT_RowData = {id: d.OrderId})
+
 
 		// now we have to get the designs used for each sale
 		const query2 = db.prepare(/*sql*/`SELECT 
