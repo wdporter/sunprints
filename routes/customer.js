@@ -3,7 +3,7 @@ const router = express.Router()
 const Database = require("better-sqlite3");
 const { auditColumns } = require("../sizes.js");
 const customerService = require("../service/customerService")
-
+const getDb = require("../integration/dbFactory")
 
 /* GET customers page. */
 router.get("/", function (req, res, next) {
@@ -42,7 +42,10 @@ router.get("/dt", function (req, res, next) {
 		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM Customer WHERE Deleted=0 ").get().Count
 		let recordsFiltered = recordsTotal
 
-		let query = `SELECT Customer.*, s.maxdate FROM Customer 
+		let query = /*sql*/`SELECT Customer.*, 
+		DATE(FollowUpDate, 'unixepoch') AS FollowUpDate, 
+		CASE WHEN STRFTIME('%s') > FollowUpDate THEN 1 ELSE 0 END AS NeedsFollowUp,
+		s.maxdate FROM Customer 
 		LEFT OUTER JOIN 
 		(SELECT CustomerId, MAX(OrderDate) AS maxdate
 		FROM SalesTotal 
@@ -94,7 +97,7 @@ router.get("/dt", function (req, res, next) {
 router.get("/edit", (req, res) => {
 	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
-		let customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(req.query.id)
+		let customer = db.prepare("SELECT *, DATE(FollowUpDate, 'unixepoch') AS fudate FROM Customer WHERE CustomerId=?").get(req.query.id)
 
 		if (!customer) {
 			customer = {
@@ -135,7 +138,61 @@ router.get("/ordersearch", function (req, res, next) {
 })
 
 
+
+
 /******************************************************** */
+
+
+// PATCH send a new follow up date
+router.patch("/:id/followupdate", (req, res) => {
+	let db = null
+	try {
+		db = getDb()
+
+		oldFollowUpDate = db.prepare(/*sql*/`SELECT FollowUpDate FROM Customer WHERE CustomerId=?`).run(req.params.id)
+
+		db.prepare("BEGIN TRANSACTION").run()
+
+		const seconds = Date.parse(req.body.date) / 1000 // sqlite does uses only seconds
+
+		let query = /*sql*/`UPDATE Customer SET FollowUpDate=${seconds} WHERE CustomerId=?`
+
+		db.prepare(query).run(req.params.id)
+
+		// audit log
+		query = /*sql*/`INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)`
+		let statement = db.prepare(query)
+		const info = statement.run("Customer", req.params.id, "UPD", req.auth.user, new Date().toLocaleString())
+
+		query = /*sql*/ `INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES (?, ?, ?, ?)`
+		statement = db.prepare(query)
+		statement.run(info.lastInsertRowid, "FollowUpDate", oldFollowUpDate, seconds)
+
+	} 
+	catch (error) {
+		console.log(error)
+		db.prepare("ROLLBACK").run()
+		res.statusMessage = error.message
+		res.status(400).end()
+		return
+	}
+	finally {
+		db || db.close()
+	}
+
+	db.prepare("COMMIT").run()
+
+	res.send("ok").end()
+
+
+})
+
+
+
+
+
+/******************************************************** */
+
 
 
 
@@ -239,6 +296,11 @@ router.post("/edit", (req, res) => {
 		errors.push("We require a company name.")
 	}
 
+	//fix the followup date
+	if (req.body.FollowUpDate) {
+			req.body.FollowUpDate = Date.parse(req.body.FollowUpDate) / 1000 // sqlite date functions only use seconds
+	}
+
 	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	let count = db.prepare(`SELECT COUNT(*) AS Count FROM Customer WHERE Code=?`).get(req.body.Code).Count
@@ -338,7 +400,7 @@ router.post("/edit", (req, res) => {
 
 		db.prepare("COMMIT").run()
 
-		let customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(req.body.CustomerId)
+		let customer = db.prepare("SELECT *, DATE(FollowUpDate, 'unixepoch') AS fudate FROM Customer WHERE CustomerId=?").get(req.body.CustomerId)
 		let salesreps = db.prepare("SELECT Name, Deleted FROM SalesRep ").all()
 		res.render ("customer_edit.ejs", {
 			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,

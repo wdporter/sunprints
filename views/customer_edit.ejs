@@ -28,9 +28,6 @@
 <script>
 document.getElementById("successDialog").showModal()
 </script>
-
-
-
 <% } %>
 
 <fieldset><legend>Customer details</legend>
@@ -43,6 +40,10 @@ document.getElementById("successDialog").showModal()
 <p>
 	<label for="company">Company:</label>
 	<input id="company" name="Company" value="<%= customer.Company %>" required />
+</p>
+<p>
+	<label for="followup">Next follow-up due:</label>
+	<input id="followup" type=date value="<%= customer.fudate %>" name="FollowUpDate" /> 
 </p>
 <p>
 	<label for="custnotes">Our Notes: (our internal use, delivery notes are down the bottom)</label>
@@ -183,6 +184,12 @@ document.forms["customerForm"].addEventListener("submit", function (event) {
 	Array.from(document.querySelectorAll("input, select, textarea")).forEach(e => e.setAttribute("disabled", "disabled"))
 <% } %>
 
+
+
+document.addEventListener("DOMContentLoaded", () => {
+	const elem = document.getElementById("followup")
+	elem.setAttribute("min", new Date().toISOString().substring(0, 10))
+})
 
 </script>
 

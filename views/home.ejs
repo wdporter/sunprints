@@ -1,8 +1,26 @@
 <%- include("partials/head.ejs") %>
 
-	<style>
+<style>
+	.follow-up-date > input {
+		all: revert !important;
+	}
+</style>
 
-	</style>
+<div id=app>
+<details v-if="customers.length > 0" open>
+	<summary>Customers due for follow up</summary>
+	<table>
+		<tr v-for="c in customers">
+			<td v-html="getCompany(c)"></td>
+			<td style=width:15rem><a :href="`mailto:${c.Email}`">{{ c.Email }}</a></td>
+			<td v-html="getPhones(c)"></td>
+			<td class=follow-up-date><input :data-id="c.CustomerId" :value="c.FollowUpDate" type=date /><input type="button" value="set next" @click="setReminder(c.CustomerId)" /></td>
+			<td style=width:2rem><a href=# title="no more reminders" @click="setReminder(c, true)"><i class="fa fa-ban fa-lg" style=color:red></i></a></td>
+		</tr>
+	</table>
+</details>
+</div>
+
 
 	<section>
 		<div>
@@ -74,7 +92,64 @@
 </section>
 
 
+<script>
+	const customers = <%- JSON.stringify(customers) %>
+	console.log(customers)
 
+	Vue.createApp({
+	data() {
+		return {
+			customers
+		}
+	},
+	methods: {
+		getCompany(c) {
+			var result = /*html*/`<a href=/customer/edit?id=${c.CustomerId}>${c.Company}</a>`
+			var locationItems = []
+			if (c.Locality)
+				locationItems.push(c.Locality)
+			if (c.State)
+				locationItems.push(c.State)
+			result += /*html*/`<br>${locationItems.join(", ")}`
+			return result
+		},
+		getPhones(c) {
+			var phones = []
+			var items = [
+				{ col: "PhoneOffice", abb: "O"}, 
+				{ col: "PhoneHome", abb: "H"},
+				{ col: "PhoneMobile", abb: "M"}
+			]
+			items.forEach(p => {
+				if (c[p.col])
+					phones.push(/*html*/`${p.abb}: <a href=tel:${c[p.col]}>${c[p.col]}</a>`)
+			})
+			return phones.join("<br>")
+		},
+		setReminder(customerId, remove) {
+			var input = document.querySelector(`input[data-id="${customerId}"]`)
+			var date = input.value
+			if (remove)
+				date = null
+			fetch(`/customer/${customerId}/followupdate`, {
+				method: "PATCH",
+				headers: new Headers({
+						"Content-Type": "application/json"
+					}),
+				body: JSON.stringify({date})
+			})
+			.then(response => {
+				if (!response.ok)
+					alert("We encountered an error\n\n" + response.message)
+				else if (remove) {
+					customers = customers.filter (c => c.customerId != customerId)
+					// todo, find a nice fade out transition
+				}
+			})
+		}
+	}
+	}).mount("#app")
+</script>
 
 
 	<%- include("partials/foot.ejs") %>

@@ -84,6 +84,14 @@ window.datatable = new DataTable("table#customersTable", {
 			title: "Our Notes",
 			orderable: false,
 			searchable: false,
+			render: (data, type, row) => {
+				if (row.FollowUpDate) {
+					data = `${ data ? data + "<br><br>" : ""}Follow up: ${new Date(Date.parse(row.FollowUpDate)).toLocaleDateString()}`
+					if (row.NeedsFollowUp)
+						data += "⚠"
+				}
+				return data
+			}
 		},
 		{ 
 			data: "FirstName",
