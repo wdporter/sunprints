@@ -149,11 +149,13 @@ router.patch("/:id/followupdate", (req, res) => {
 	try {
 		db = getDb()
 
-		oldFollowUpDate = db.prepare(/*sql*/`SELECT FollowUpDate FROM Customer WHERE CustomerId=?`).run(req.params.id)
+		oldFollowUpDate = db.prepare(/*sql*/`SELECT FollowUpDate FROM Customer WHERE CustomerId=?`).get(req.params.id).FollowUpDate
 
 		db.prepare("BEGIN TRANSACTION").run()
 
-		const seconds = Date.parse(req.body.date) / 1000 // sqlite does uses only seconds
+		let seconds = Date.parse(req.body.date) / 1000 // sqlite does uses only seconds
+		if (isNaN(seconds))
+			seconds = null
 
 		let query = /*sql*/`UPDATE Customer SET FollowUpDate=${seconds} WHERE CustomerId=?`
 

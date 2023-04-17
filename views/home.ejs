@@ -4,19 +4,37 @@
 	.follow-up-date > input {
 		all: revert !important;
 	}
+
+.list-move,
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s ease;
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.list-leave-active {
+  position: absolute;
+}
+
+
 </style>
 
 <div id=app>
 <details v-if="customers.length > 0" open>
 	<summary>Customers due for follow up</summary>
 	<table>
-		<tr v-for="c in customers">
-			<td v-html="getCompany(c)"></td>
-			<td style=width:15rem><a :href="`mailto:${c.Email}`">{{ c.Email }}</a></td>
-			<td v-html="getPhones(c)"></td>
-			<td class=follow-up-date><input :data-id="c.CustomerId" :value="c.FollowUpDate" type=date /><input type="button" value="set next" @click="setReminder(c.CustomerId)" /></td>
-			<td style=width:2rem><a href=# title="no more reminders" @click="setReminder(c, true)"><i class="fa fa-ban fa-lg" style=color:red></i></a></td>
-		</tr>
+		<TransitionGroup tag="tbody" name="list">
+			<tr v-for="c in customers" :key="c.CustomerId">
+				<td v-html="getCompany(c)"></td>
+				<td style=width:15rem><a :href="`mailto:${c.Email}`">{{ c.Email }}</a></td>
+				<td v-html="getPhones(c)"></td>
+				<td class=follow-up-date><input :data-id="c.CustomerId" :value="c.FollowUpDate" type=date /><input type="button" value="set next" @click="setReminder(c.CustomerId)" /></td>
+				<td style=width:2rem><a href=# title="no more reminders" @click="setReminder(c.CustomerId, true)"><i class="fa fa-ban fa-lg" style=color:red></i></a></td>
+			</tr>
+	</tbody>
 	</table>
 </details>
 </div>
@@ -129,8 +147,11 @@
 		setReminder(customerId, remove) {
 			var input = document.querySelector(`input[data-id="${customerId}"]`)
 			var date = input.value
-			if (remove)
+			if (date == "")
+				remove = true
+			if (remove) {
 				date = null
+			}
 			fetch(`/customer/${customerId}/followupdate`, {
 				method: "PATCH",
 				headers: new Headers({
@@ -140,9 +161,9 @@
 			})
 			.then(response => {
 				if (!response.ok)
-					alert("We encountered an error\n\n" + response.message)
+					alert("We encountered an error\n\n" + response.statusText)
 				else if (remove) {
-					customers = customers.filter (c => c.customerId != customerId)
+					this.customers = this.customers.filter (c => c.CustomerId != customerId)
 					// todo, find a nice fade out transition
 				}
 			})
