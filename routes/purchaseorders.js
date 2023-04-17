@@ -36,8 +36,11 @@ router.get("/dt", (req, res) => {
 		if (req.query.search.value) {
 			const searchTerm = req.query.search.value.trim()
 
-			let whereClause = /*sql*/` AND (Supplier.Company LIKE '%${searchTerm}%' 
-			OR StockOrder.Notes LIKE '%${searchTerm}%')  `
+			let whereClause = /*sql*/` AND (
+			Supplier.Company LIKE '%${searchTerm}%' 
+			OR StockOrder.Notes LIKE '%${searchTerm}%' 
+			OR CAST(StockOrderId AS TEXT) LIKE  '%${searchTerm}%' 
+			) `
 
 			var recordsFilteredQuery = /*sql*/`SELECT COUNT(*) AS Count 
 			FROM StockOrder 

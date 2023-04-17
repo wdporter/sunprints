@@ -11,6 +11,7 @@
 		<thead>
 			<tr>
 				<th>
+				<th>Number</th>
 				<th>Supplier
 				<th>Order Date
 				<th>Receive Date
@@ -31,8 +32,9 @@
 				}
 			},
 			language: {
-				searchPlaceholder: "search customer and notes"
+				searchPlaceholder: "number, customer or notes"
 			},
+			pageLength: 100,
 			order: [[2, 'desc']], // order date
 			columns: [
 				{
@@ -48,6 +50,10 @@
 							<i class="fa fa-lg fa-print"></i>
 						</a>` 
 					}
+				},
+				{
+					data: "StockOrderId",
+					width: "3em"
 				},
 				{
 					data: "Supplier",

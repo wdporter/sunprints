@@ -31,7 +31,7 @@
 				<td v-html="getCompany(c)"></td>
 				<td style=width:15rem><a :href="`mailto:${c.Email}`">{{ c.Email }}</a></td>
 				<td v-html="getPhones(c)"></td>
-				<td class=follow-up-date><input :data-id="c.CustomerId" :value="c.FollowUpDate" type=date /><input type="button" value="set next" @click="setReminder(c.CustomerId)" /></td>
+				<td class=follow-up-date><input :data-id="c.CustomerId" :value="c.FollowUpDate" type=date /><input type="button" value="set next" @click="setReminder(c.CustomerId)" title="remind again on the selected date" /></td>
 				<td style=width:2rem><a href=# title="no more reminders" @click="setReminder(c.CustomerId, true)"><i class="fa fa-ban fa-lg" style=color:red></i></a></td>
 			</tr>
 	</tbody>
