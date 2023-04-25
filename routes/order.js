@@ -1324,7 +1324,7 @@ router.get("/xero/invoices", (req, res) => {
 
 router.get("/xero/csv", (req, res) => {
 
-	db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
+	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 	try {
 
 		const orders = db.prepare(`SELECT 

@@ -8,25 +8,54 @@
 		height: 2em;
 		width: 2em;
 	}
+
+
 </style>
 
-	<p>
-		<label for=orderdate>Order Date:</label>
-		<input type=date id="orderdate" autofocus %> />
-	</p>
-	<p>
-		<a href="#" id="downloadLink">Download CSV</a>
-	</p>
-</form>
+<div style="display:flex; justify-content: space-between;">
+	<div>
+		<p>
+				<label for=orderdate>Order Date</label>
+				<input type=date id="orderdate" autofocus />
+		</p>
+		<p>
+				<input type=button value="Clear all" id="clearButton" />
+				<input type=button value="Check all" id="checkAllButton" />
+		</p>
+	</div>
+	<div>
+		<p>
+			<label for=orderNumber>Order Number</label>
+			<input id=orderNumber type=text />
+		</p>
+		<p>
+			<a href=# id=oneOrderLink>Csv for this order</a>
+		</p>
+	</div>
+</div>
 
 <table id=orderTable>
 	<thead>
-		<tr><th style="width:2em">Select<th>Order Number<th>Customer<th>Notes
-		<tbody>
-
+		<tr><th style="width:3em">Select<th>Order Number<th>Customer<th>Notes
+	<tbody>
 </table>
 
+	<p>
+		<a href=# id=downloadLink>Download CSV</a>
+	</p>
+
+
+
 <script>
+
+	document.getElementById("clearButton").addEventListener("click", () => {
+		Array.from(document.querySelectorAll("input[type=checkbox]")).forEach(cb => cb.checked = false)
+	})
+
+	document.getElementById("checkAllButton").addEventListener("click", () => {
+		Array.from(document.querySelectorAll("input[type=checkbox]")).forEach(cb => cb.checked = true)
+	})
+	
 
 document.getElementById("orderdate").addEventListener("input", function () {
 	const orderTable = document.querySelector("#orderTable tbody")
@@ -46,6 +75,12 @@ document.getElementById("downloadLink").addEventListener("click", function(event
 	const checkboxen = Array.from(document.querySelectorAll("table#orderTable input:checked")).map(cb => cb.dataset.ordernumber)
 	event.target.setAttribute("href", `/order/xero/csv?d=${document.getElementById("orderdate").value}&ordernumbers=${checkboxen.join(",")}`)
 	
+})
+
+document.getElementById("oneOrderLink").addEventListener("click", (event) => {
+	event.target.setAttribute("href", `/order/xero/csv?d=${document.getElementById("orderdate").value}&ordernumbers=${document.getElementById("orderNumber").value}`)
+
+
 })
 
 </script>
