@@ -1369,7 +1369,6 @@ router.get("/xero/csv", (req, res) => {
 	finally {
 		db.close()
 	}
-
 })
 
 
