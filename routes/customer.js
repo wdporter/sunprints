@@ -146,6 +146,7 @@ router.get("/ordersearch", function (req, res, next) {
 // PATCH send a new follow up date
 router.patch("/:id/followupdate", (req, res) => {
 	let db = null
+	let now = new Date().toLocaleString()
 	try {
 		db = getDb()
 
@@ -157,14 +158,14 @@ router.patch("/:id/followupdate", (req, res) => {
 		if (isNaN(seconds))
 			seconds = null
 
-		let query = /*sql*/`UPDATE Customer SET FollowUpDate=${seconds} WHERE CustomerId=?`
+		let query = /*sql*/`UPDATE Customer SET FollowUpDate=${seconds}, LastModifiedBy=?, LastModifiedDateTime=? WHERE CustomerId=?`
 
-		db.prepare(query).run(req.params.id)
+		db.prepare(query).run(req.auth.user, now, req.params.id)
 
 		// audit log
 		query = /*sql*/`INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)`
 		let statement = db.prepare(query)
-		const info = statement.run("Customer", req.params.id, "UPD", req.auth.user, new Date().toLocaleString())
+		const info = statement.run("Customer", req.params.id, "UPD", req.auth.user, now)
 
 		query = /*sql*/ `INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES (?, ?, ?, ?)`
 		statement = db.prepare(query)
