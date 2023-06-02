@@ -5,7 +5,7 @@
 
 <ul>
 	<li><a href="/order/new">Create a new order</a></li>
-	<li>Print outstanding orders: <a href=/order/outstanding/print target=_blank>Prints</a>, <a href=/order/outstanding/embroidery target=_blank>Embroidery</a>, <a href=/order/outstanding/transfer target=_blank>Transfers</a>, <a href=/order/outstanding/promo target=_blank>Promo/Sub</a></li> <!-- todo, examine these, see if they can be programmed better -->
+	<li>Print outstanding orders: <a href=/order/outstanding/print target=_blank>Prints</a>, <a href=/order/outstanding/embroidery target=_blank>Embroidery</a>, <a href=/order/outstanding/transfer target=_blank>Transfers</a>, <a href=/order/outstanding/promo target=_blank>Promo/Sub</a></li> 
 	<li style="margin-bottom:3em"><a href=/order/deleted>View deleted orders</a></li>
 </ul>
 
@@ -57,7 +57,7 @@
 <main>
 
 
-	<script>
+<script>
 
 		var sizes = <%- allSizes %>
 
@@ -174,7 +174,7 @@
 					action: (e, dt) =>  {
 						var tr = dt.row("tr.selected")
 						if (tr.length)
-							ship(tr.data().OrderId)
+							showShipOrderDialog(tr.data().OrderId)
 					}
 				},
 <% } %>
@@ -425,7 +425,38 @@
 	})
 
 
-	</script>
+function showShipOrderDialog(id) {
+
+	var shipAlertDialog = document.getElementById("shipAlertDialog")
+	shipAlertDialog.addEventListener("close", (event) => {
+		if (shipAlertDialog.returnValue == "ok") {
+			ship(id);
+		}
+	})
+
+	document.getElementById("shipAlertCancelButton").addEventListener("click", (e) => {
+		shipAlertDialog.close()
+	})
+	
+	document.getElementById("shipAlertOkButton").addEventListener("click", (event)=> {
+		event.preventDefault()
+		shipAlertDialog.close("ok")
+	})
+
+	shipAlertDialog.showModal()
+}
+
+</script>
 
 
-	<%- include("partials/foot.ejs") %>
+<dialog id=shipAlertDialog>
+	<form method=dialog>
+		<p>⚠ Do you want to ship the order?</p>
+		<p>
+		<button id=shipAlertOkButton>Yes, go ahead</button>&emsp;
+		<input type=button formmethod=dialog id=shipAlertCancelButton value="No, cancel" />
+		</p>
+	</form>
+</dialog>
+
+<%- include("partials/foot.ejs") %>

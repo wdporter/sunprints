@@ -396,25 +396,35 @@ in which the "edit" in the name doesn't really mean anything either
 
 	<input type=button id=printJobButton style="display:none" onclick="printJobSheet()" value="Print Job Sheet" />
 <% if (poweruser || salesrep) { %>
-	<input type=submit id=shipOrderButton class="bottom-button yellow-on-black-buttton" style="display:none" onclick="shipOrder()" value="Ship Order" title="Sets done to true, will no longer display on orders page." />
+	<input type=submit id=shipOrderButton class="bottom-button" style="display:none" onclick="showShipOrderDialog()" value="Ship Order" title="Sets done to true, will no longer display on orders page." />
 
 	<input type=button class="bottom-button" onclick="window.location.href='/order/new'" value="New Order" title="start a new order" />
 
 <% } %>
 
 
-	<% if (order) { %>
-		<dl style="margin-bottom:2em">
-			<dt>Created by</dt>
-			<dd><%= order.CreatedBy %> on <%= order.CreatedDateTime %></dd>
-			<dt>Last modified by</dt>
-			<dd><%= order.LastModifiedBy %> on <%= order.LastModifiedDateTime %></dd>
-		</dl>
-		<a href="/auditlog?table=Orders&id=<%= order.OrderId %>" target=_blank>Audit log</a>
-		<% } %>
+<% if (order) { %>
+	<dl style="margin-bottom:2em">
+		<dt>Created by</dt>
+		<dd><%= order.CreatedBy %> on <%= order.CreatedDateTime %></dd>
+		<dt>Last modified by</dt>
+		<dd><%= order.LastModifiedBy %> on <%= order.LastModifiedDateTime %></dd>
+	</dl>
+	<a href="/auditlog?table=Orders&id=<%= order.OrderId %>" target=_blank>Audit log</a>
+<% } %>
 	
+<dialog id=shipAlertDialog>
+	<form method=dialog>
+		<p>⚠ Do you want to ship the order?</p>
+		<p>
+			<button id=shipAlertOkButton>Yes, go ahead</button>&emsp;
+			<input type=button formmethod=dialog id=shipAlertCancelButton value="No, cancel" />
+		</p>
+	</form>
+</dialog>
 
-	<script>
+
+<script>
 
 		window.sunprints = {
 			mode: "<%= mode %>"
@@ -1135,8 +1145,27 @@ in which the "edit" in the name doesn't really mean anything either
 				window.open(`/order/jobsheet/${document.getElementById("orderId").value}`)
 			}
 
+function showShipOrderDialog() {
+	var shipAlertDialog = document.getElementById("shipAlertDialog")
+	shipAlertDialog.addEventListener("close", (event) => {
+		if (shipAlertDialog.returnValue == "ok") {
+			shipOrder();
+		}
+	})
 
-			function shipOrder() {
+	document.getElementById("shipAlertCancelButton").addEventListener("click", (e) => {
+		shipAlertDialog.close()
+	})
+	
+	document.getElementById("shipAlertOkButton").addEventListener("click", (event)=> {
+		event.preventDefault()
+		shipAlertDialog.close("ok")
+	})
+
+	shipAlertDialog.showModal()
+}
+
+function shipOrder() {
 			console.log("ship")
 			fetch(`/order/ship/${document.getElementById("orderId").value}`, { method: "PUT" })
 			.then(response => {
