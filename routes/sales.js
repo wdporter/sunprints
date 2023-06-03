@@ -1043,6 +1043,162 @@ router.get("/mediasearch/decoration", (req, res) => {
 }) 
 
 
+
+// GET the jobsheet page
+router.get("/jobsheet/:id", function (req, res) {
+
+	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	try {
+
+		let statement = db.prepare(/*sql*/`
+SELECT Customer.* 
+FROM Customer 
+INNER JOIN SalesTotal USING (CustomerId)
+WHERE OrderId=?`)
+		const customer = statement.get(req.params.id)
+
+		statement = db.prepare(`SELECT * 
+		FROM SalesTotal 
+		WHERE OrderId=?`)
+		const salesTotal = statement.get(req.params.id)
+
+		statement = db.prepare(/*sql*/`SELECT Garment.Code AS Code, Label, Type, Garment.Colour AS Colour, Sales.* 
+	,PrintDesignF.Code || ' ' || IFNULL(PrintDesignF.Notes, '') || ' ' || IFNULL(PrintDesignF.Comments, '') AS FrontPrintDesign
+		,ScreenF1.Number || ' ' || IFNULL(ScreenF1.Name, '') || ' ' || IFNULL(ScreenF1.Colour, '') AS FrontScreen1
+		,ScreenF2.Number || ' ' || IFNULL(ScreenF2.Name, '') || ' ' || IFNULL(ScreenF2.Colour, '') AS FrontScreen2
+		,PrintDesignB.Code || ' ' || IFNULL(PrintDesignB.Notes, '') || ' ' || IFNULL(PrintDesignB.Comments, '') AS BackPrintDesign
+		,ScreenB1.Number || ' ' || IFNULL(ScreenB1.Name, '') || ' ' || IFNULL(ScreenB1.Colour, '') AS BackScreen1
+		,ScreenB2.Number || ' ' || IFNULL(ScreenB2.Name, '') || ' ' || IFNULL(ScreenB2.Colour, '') AS BackScreen2
+		,PrintDesignP.Code || ' ' || IFNULL(PrintDesignP.Notes, '') || ' ' || IFNULL(PrintDesignP.Comments, '') AS PocketPrintDesign
+		,ScreenP1.Number || ' ' || IFNULL(ScreenP1.Name, '') || ' ' || IFNULL(ScreenP1.Colour, '') AS PocketScreen1
+		,ScreenP2.Number || ' ' || IFNULL(ScreenP2.Name, '') || ' ' || IFNULL(ScreenP2.Colour, '') AS PocketScreen2
+		,PrintDesignS.Code || ' ' || IFNULL(PrintDesignS.Notes, '') || ' ' || IFNULL(PrintDesignS.Comments, '') AS SleevePrintDesign
+		,ScreenS1.Number || ' ' || IFNULL(ScreenS1.Name, '') || ' ' || IFNULL(ScreenS1.Colour, '') AS SleeveScreen1
+		,ScreenS2.Number || ' ' || IFNULL(ScreenS2.Name, '') || ' ' || IFNULL(ScreenS2.Colour, '') AS SleeveScreen2
+		,EmbroideryDesignF.Code || ' ' || IFNULL(EmbroideryDesignF.Notes, '') || ' ' || IFNULL(EmbroideryDesignF.Comments, '') AS FrontEmbroideryDesign
+		,UsbF1.Number || ' ' || IFNULL(UsbF1.Notes, '') AS FrontUsb1
+		,UsbF2.Number || ' ' || IFNULL(UsbF2.Notes, '') AS FrontUsb2
+		,EmbroideryDesignB.Code || ' ' || IFNULL(EmbroideryDesignB.Notes, '') || ' ' || IFNULL(EmbroideryDesignB.Comments, '') AS BackEmbroideryDesign
+		,UsbB1.Number || ' ' || IFNULL(UsbB1.Notes, '') AS BackUsb1
+		,UsbB2.Number || ' ' || IFNULL(UsbB2.Notes, '') AS BackUsb2
+		,EmbroideryDesignP.Code || ' ' || IFNULL(EmbroideryDesignP.Notes, '') || ' ' || IFNULL(EmbroideryDesignP.Comments, '') AS PocketEmbroideryDesign
+		,UsbP1.Number || ' ' || IFNULL(UsbP1.Notes, '') AS PocketUsb1
+		,UsbP2.Number || ' ' || IFNULL(UsbP2.Notes, '') AS PocketUsb2
+		,EmbroideryDesignS.Code || ' ' || IFNULL(EmbroideryDesignS.Notes, '') || ' ' || IFNULL(EmbroideryDesignS.Comments, '') AS SleeveEmbroideryDesign
+		,UsbS1.Number || ' ' || IFNULL(UsbS1.Notes, '') AS SleeveUsb1
+		,UsbS2.Number || ' ' || IFNULL(UsbS2.Notes, '') AS SleeveUsb2
+		,TransferDesignF.Code || ' ' || IFNULL(TransferDesignF.Notes, '') AS FrontTransferDesign
+		,TransferNameF1.Name AS FrontTransferName1
+		,TransferNameF2.Name AS FrontTransferName2
+		,TransferDesignB.Code || ' ' || IFNULL(TransferDesignB.Notes, '') AS BackTransferDesign
+		,TransferNameB1.Name AS BackTransferName1
+		,TransferNameB2.Name AS BackTransferName2
+		,TransferDesignP.Code || ' ' || IFNULL(TransferDesignP.Notes, '') PocketTransferDesign
+		,TransferNameP1.Name AS PocketTransferName1
+		,TransferNameP2.Name AS PocketTransferName2
+		,TransferDesignS.Code || ' ' || IFNULL(TransferDesignS.Notes, '') AS SleeveTransferDesign
+		,TransferNameS1.Name AS SleeveTransferName1
+		,TransferNameS2.Name AS SleeveTransferName2
+	FROM Sales
+	INNER JOIN Garment USING (GarmentId)
+	LEFT JOIN PrintDesign AS PrintDesignF ON PrintDesignF.PrintDesignId=FrontPrintDesignId
+  LEFT JOIN Screen AS ScreenF1 ON ScreenF1.ScreenId=FrontScreenId
+  LEFT JOIN Screen AS ScreenF2 ON ScreenF2.ScreenId=FrontScreen2Id
+  LEFT JOIN PrintDesign AS PrintDesignB ON PrintDesignB.PrintDesignId=BackPrintDesignId
+  LEFT JOIN Screen AS ScreenB1 ON ScreenB1.ScreenId=BackScreenId
+  LEFT JOIN Screen AS ScreenB2 ON ScreenB2.ScreenId=BackScreen2Id
+  LEFT JOIN PrintDesign AS PrintDesignP ON PrintDesignP.PrintDesignId=PocketPrintDesignId
+  LEFT JOIN Screen AS ScreenP1 ON ScreenP1.ScreenId=PocketScreenId
+  LEFT JOIN Screen AS ScreenP2 ON ScreenP2.ScreenId=PocketScreen2Id
+  LEFT JOIN PrintDesign AS PrintDesignS ON PrintDesignS.PrintDesignId=SleevePrintDesignId
+  LEFT JOIN Screen AS ScreenS1 ON ScreenS1.ScreenId=SleeveScreenId
+  LEFT JOIN Screen AS ScreenS2 ON ScreenS2.ScreenId=SleeveScreen2Id
+  LEFT JOIN EmbroideryDesign AS EmbroideryDesignF ON EmbroideryDesignF.EmbroideryDesignId=FrontEmbroideryDesignId
+  LEFT JOIN Usb AS UsbF1 ON UsbF1.UsbId=FrontUsbId
+  LEFT JOIN Usb AS UsbF2 ON UsbF2.UsbId=FrontUsb2Id
+  LEFT JOIN EmbroideryDesign AS EmbroideryDesignB ON EmbroideryDesignB.EmbroideryDesignId=BackEmbroideryDesignId
+  LEFT JOIN Usb AS UsbB1 ON UsbB1.UsbId=BackUsbId
+  LEFT JOIN Usb AS UsbB2 ON UsbB2.UsbId=BackUsb2Id
+  LEFT JOIN EmbroideryDesign AS EmbroideryDesignP ON EmbroideryDesignP.EmbroideryDesignId=PocketEmbroideryDesignId
+  LEFT JOIN Usb AS UsbP1 ON UsbP1.UsbId=PocketUsbId
+  LEFT JOIN Usb AS UsbP2 ON UsbP2.UsbId=PocketUsb2Id
+  LEFT JOIN EmbroideryDesign AS EmbroideryDesignS ON EmbroideryDesignS.EmbroideryDesignId=SleeveEmbroideryDesignId
+  LEFT JOIN Usb AS UsbS1 ON UsbS1.UsbId=SleeveUsbId
+  LEFT JOIN Usb AS UsbS2 ON UsbS2.UsbId=SleeveUsb2Id
+  LEFT JOIN TransferDesign AS TransferDesignF ON TransferDesignF.TransferDesignId=FrontTransferDesignId
+  LEFT JOIN TransferName AS TransferNameF1 ON TransferNameF1.TransferNameId=FrontTransferNameId
+  LEFT JOIN TransferName AS TransferNameF2 ON TransferNameF2.TransferNameId=FrontTransferName2Id
+  LEFT JOIN TransferDesign AS TransferDesignB ON TransferDesignB.TransferDesignId=BackTransferDesignId
+  LEFT JOIN TransferName AS TransferNameB1 ON TransferNameB1.TransferNameId=BackTransferNameId
+  LEFT JOIN TransferName AS TransferNameB2 ON TransferNameB2.TransferNameId=BackTransferName2Id
+  LEFT JOIN TransferDesign AS TransferDesignP ON TransferDesignP.TransferDesignId=PocketTransferDesignId
+  LEFT JOIN TransferName AS TransferNameP1 ON TransferNameP1.TransferNameId=PocketTransferNameId
+  LEFT JOIN TransferName AS TransferNameP2 ON TransferNameP2.TransferNameId=PocketTransferName2Id
+  LEFT JOIN TransferDesign AS TransferDesignS ON TransferDesignS.TransferDesignId=SleeveTransferDesignId
+  LEFT JOIN TransferName AS TransferNameS1 ON TransferNameS1.TransferNameId=SleeveTransferNameId
+  LEFT JOIN TransferName AS TransferNameS2 ON TransferNameS2.TransferNameId=SleeveTransferName2Id
+
+		WHERE OrderId=?
+		`)
+		garments = statement.all(req.params.id)
+
+		garments.forEach(g => {
+			g.adultsQuantity = g.AXS + g.ASm + g.AM + g.AL + g.AXL + g.A2XL + g.A3XL + g.A4XL + g.A5XL + g.A6XL + g.A7XL + g.A8XL
+			g.kidsQuantity = g.K0 + g.K1 + g.K2 + g.K4 + g.K6 + g.K8 + g.K10 + g.K12 + g.K14 + g.K16
+			g.womensQuantity = g.W6 + g.W8 + g.W10 + g.W12 + g.W14 + g.W16 + g.W18 + g.W20 + g.W22 + g.W24 + g.W26 + g.W28
+		})
+
+		const designResults = getDesigns(db, req.params.id)
+
+		const screensCount = sz.locations.reduce(function (acc, curr) {
+			return acc + designResults.screens[curr].length
+		}, 0)
+		const usbsCount = sz.locations.reduce(function (acc, curr) {
+			return acc + designResults.usbs[curr].length
+		}, 0)
+		const transfersCount = sz.locations.reduce(function (acc, curr) {
+			return acc + designResults.transfers[curr].length
+		}, 0)
+
+		let stockorder = null
+		if (salesTotal.StockOrderId) {
+			stockorder = db.prepare(/*sql*/`
+SELECT StockOrderId, OrderDate, StockOrder.Notes, Company 
+FROM StockOrder 
+INNER JOIN Supplier USING (SupplierId)
+WHERE StockOrderId=?`).get(salesTotal.StockOrderId)
+			stockorder.OrderDate = new Date(Date.parse(stockorder.OrderDate)).toLocaleDateString()
+		}
+
+		res.render("jobsheet.ejs", {
+			customer,
+			order: salesTotal,
+			garments,
+			screens: designResults.screens,
+			usbs: designResults.usbs,
+			transfers: designResults.transfers,
+			locations: sz.locations,
+			screensCount,
+			usbsCount,
+			transfersCount,
+			stockorder
+		})
+
+	}
+	catch (ex) {
+		res.statusMessage = ex.message
+		res.status(400).end()
+	}
+	finally {
+		if (db != null)
+			db.close()
+	}
+
+})
+
+
+
 /////////////////////////////////////////////////////////
 // PUT
 //////////////////////////////////////////////////////////
@@ -1260,6 +1416,123 @@ router.put("/:orderid", (req, res) => {
 
 })
 
+
+
+function getDesigns(db, orderid) {
+
+	let statement = db.prepare(/*sql*/`SELECT  
+	FrontPrintDesignId, BackPrintDesignId, PocketPrintDesignId, SleevePrintDesignId,
+	 IFNULL(ScreenFront1.Number,  '') AS ScreenFront1Number,  IFNULL(ScreenFront1.Name, '')  AS ScreenFront1Name,  IFNULL(ScreenFront1.Colour, '') AS ScreenFront1Colour
+	,IFNULL(ScreenFront2.Number,  '') AS ScreenFront2Number,  IFNULL(ScreenFront2.Name, '')  AS ScreenFront2Name,  IFNULL(ScreenFront2.Colour, '') AS ScreenFront2Colour
+	,IFNULL(ScreenBack1.Number,   '') AS ScreenBack1Number,   IFNULL(ScreenBack1.Name, '')   AS ScreenBack1Name,   IFNULL(ScreenBack1.Colour, '') AS ScreenBack1Colour
+	,IFNULL(ScreenBack2.Number,   '') AS ScreenBack2Number,   IFNULL(ScreenBack2.Name, '')   AS ScreenBack2Name,   IFNULL(ScreenBack2.Colour, '') AS ScreenBack2Colour
+	,IFNULL(ScreenPocket1.Number, '') AS ScreenPocket1Number, IFNULL(ScreenPocket1.Name, '') AS ScreenPocket1Name, IFNULL(ScreenPocket1.Colour, '') AS ScreenPocket1Colour
+	,IFNULL(ScreenPocket2.Number, '') AS ScreenPocket2Number, IFNULL(ScreenPocket2.Name, '') AS ScreenPocket2Name, IFNULL(ScreenPocket2.Colour, '') AS ScreenPocket2Colour
+	,IFNULL(ScreenSleeve1.Number, '') AS ScreenSleeve1Number, IFNULL(ScreenSleeve1.Name, '') AS ScreenSleeve1Name, IFNULL(ScreenSleeve1.Colour, '') AS ScreenSleeve1Colour
+	,IFNULL(ScreenSleeve2.Number, '') AS ScreenSleeve2Number, IFNULL(ScreenSleeve2.Name, '') AS ScreenSleeve2Name, IFNULL(ScreenSleeve2.Colour, '') AS ScreenSleeve2Colour
+	,IFNULL(UsbFront1.Number, '')  AS UsbFront1Number,  IFNULL(UsbFront1.Notes, '')  AS UsbFront1Notes
+	,IFNULL(UsbFront2.Number, '')  AS UsbFront2Number,  IFNULL(UsbFront2.Notes, '')  AS UsbFront2Notes
+	,IFNULL(UsbBack1.Number, '')   AS UsbBack1Number,   IFNULL(UsbBack1.Notes, '')   AS UsbBack1Notes
+	,IFNULL(UsbBack2.Number, '')   AS UsbBack2Number,   IFNULL(UsbBack2.Notes, '')   AS UsbBack2Notes
+	,IFNULL(UsbPocket1.Number, '') AS UsbPocket1Number, IFNULL(UsbPocket1.Notes, '') AS UsbPocket1Notes
+	,IFNULL(UsbPocket2.Number, '') AS UsbPocket2Number, IFNULL(UsbPocket2.Notes, '') AS UsbPocket2Notes
+	,IFNULL(UsbSleeve1.Number, '') AS UsbSleeve1Number, IFNULL(UsbSleeve1.Notes, '') AS UsbSleeve1Notes
+	,IFNULL(UsbSleeve2.Number, '') AS UsbSleeve2Number, IFNULL(UsbSleeve2.Notes, '') AS UsbSleeve2Notes
+	,IFNULL(TransferNameFront1.Name, '')  AS TransferNameFront1Name
+	,IFNULL(TransferNameFront2.Name, '')  AS TransferNameFront2Name
+	,IFNULL(TransferNameBack1.Name, '')   AS TransferNameBack1Name
+	,IFNULL(TransferNameBack2.Name, '')   AS TransferNameBack2Name
+	,IFNULL(TransferNamePocket1.Name, '') AS TransferNamePocket1Name
+	,IFNULL(TransferNamePocket2.Name, '') AS TransferNamePocket2Name
+	,IFNULL(TransferNameSleeve1.Name, '') AS TransferNameSleeve1Name
+	,IFNULL(TransferNameSleeve2.Name, '') AS TransferNameSleeve2Name,
+	Garment.SizeCategory AS SizeCategory
+	FROM Sales
+	LEFT JOIN Screen AS ScreenFront1  ON  ScreenFront1.ScreenId=FrontScreenId
+	LEFT JOIN Screen AS ScreenFront2  ON  ScreenFront2.ScreenId=FrontScreen2Id
+	LEFT JOIN Screen AS ScreenBack1   ON   ScreenBack1.ScreenId=BackScreenId
+	LEFT JOIN Screen AS ScreenBack2   ON   ScreenBack2.ScreenId=BackScreen2Id
+	LEFT JOIN Screen AS ScreenPocket1 ON ScreenPocket1.ScreenId=PocketScreenId
+	LEFT JOIN Screen AS ScreenPocket2 ON ScreenPocket2.ScreenId=PocketScreen2Id
+	LEFT JOIN Screen AS ScreenSleeve1 ON ScreenSleeve1.ScreenId=SleeveScreenId
+	LEFT JOIN Screen AS ScreenSleeve2 ON ScreenSleeve2.ScreenId=SleeveScreen2Id
+	LEFT JOIN Usb AS UsbFront1  ON UsbFront1.UsbId =FrontUsbId
+	LEFT JOIN Usb AS UsbFront2  ON UsbFront2.UsbId =FrontUsb2Id
+	LEFT JOIN Usb AS UsbBack1   ON UsbBack1.UsbId  =BackUsbId
+	LEFT JOIN Usb AS UsbBack2   ON UsbBack2.UsbId  =BackUsb2Id
+	LEFT JOIN Usb AS UsbPocket1 ON UsbPocket1.UsbId=PocketUsbId
+	LEFT JOIN Usb AS UsbPocket2 ON UsbPocket2.UsbId=PocketUsb2Id
+	LEFT JOIN Usb AS UsbSleeve1 ON UsbSleeve1.UsbId=SleeveUsbId
+	LEFT JOIN Usb AS UsbSleeve2 ON UsbSleeve2.UsbId=SleeveUsb2Id
+	LEFT JOIN TransferName AS TransferNameFront1  ON  TransferNameFront1.TransferNameId=FrontTransferNameId
+	LEFT JOIN TransferName AS TransferNameFront2  ON  TransferNameFront2.TransferNameId=FrontTransferName2Id
+	LEFT JOIN TransferName AS TransferNameBack1   ON   TransferNameBack1.TransferNameId=BackTransferNameId
+	LEFT JOIN TransferName AS TransferNameBack2   ON   TransferNameBack2.TransferNameId=BackTransferName2Id
+	LEFT JOIN TransferName AS TransferNamePocket1 ON TransferNamePocket1.TransferNameId=PocketTransferNameId
+	LEFT JOIN TransferName AS TransferNamePocket2 ON TransferNamePocket2.TransferNameId=PocketTransferName2Id
+	LEFT JOIN TransferName AS TransferNameSleeve1 ON TransferNameSleeve1.TransferNameId=SleeveTransferNameId
+	LEFT JOIN TransferName AS TransferNameSleeve2 ON TransferNameSleeve2.TransferNameId=SleeveTransferName2Id
+	INNER JOIN Garment ON Garment.GarmentId=Sales.GarmentId
+	WHERE OrderId=?
+		`)
+
+	const results = statement.all(orderid)
+	const transfers = {}
+	const usbs = {}
+	const screens = {}
+
+	sz.locations.forEach(loc => {
+		screens[loc] = []
+		usbs[loc] = []
+		transfers[loc] = []
+	})
+
+	results.forEach(r => {
+		sz.locations.forEach(loc => {
+			if (r[loc + "PrintDesignId"]) {
+				// get the standard/unnamed screens for this
+				statement = db.prepare(/*sql*/`SELECT Screen.* FROM Screen
+INNER JOIN ScreenPrintDesign ON ScreenPrintDesign.ScreenId=Screen.ScreenId
+WHERE Name IS NULL
+AND PrintDesignId=?
+AND ${loc}=1`)
+
+				const standardScreens = statement.all(r[loc + "PrintDesignId"])
+
+				standardScreens.forEach(screen => {
+					screens[loc].push(screen)
+				})
+
+			}
+
+			if (r[`Screen${loc}1Number`].length > 0)
+				screens[loc].push({ Number: r[`Screen${loc}1Number`], Colour: r[`Screen${loc}1Colour`], Name: r[`Screen${loc}1Name`] })
+			if (r[`Screen${loc}2Number`].length > 0)
+				screens[loc].push({ Number: r[`Screen${loc}2Number`], Colour: r[`Screen${loc}2Colour`], Name: r[`Screen${loc}2Name`] })
+
+			if (r[`TransferName${loc}1Name`].length > 0)
+				transfers[loc].push(r[`TransferName${loc}1Name`])
+			if (r[`TransferName${loc}2Name`].length > 0)
+				transfers[loc].push(r[`TransferName${loc}2Name`])
+
+			if (r[`Usb${loc}1Number`].length > 0)
+				usbs[loc].push({ Number: r[`Usb${loc}1Number`], Notes: r[`Usb${loc}1Notes`] })
+			if (r[`Usb${loc}2Number`].length > 0)
+				usbs[loc].push({ Number: r[`Usb${loc}2Number`], Notes: r[`Usb${loc}2Notes`] })
+
+
+
+		})
+	})
+
+
+	return {
+		screens,
+		usbs,
+		transfers
+	}
+
+}
 
 
 module.exports = router
