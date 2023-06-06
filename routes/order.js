@@ -27,81 +27,36 @@ router.get("/", function (req, res, next) {
 
 
 /* GET orders in datatables format. */
-router.get("/dt", function (req, res) {
+router.get("/dt", function (req, res, next) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
 
 	try {
 
-		// first query, get total number of records
-		const recordsTotal = db.prepare(/*sql*/`SELECT Count(*) AS count FROM Orders WHERE Deleted=0 AND ProcessedDate IS NULL `).get().count
+		const recordsTotal = db.prepare(`SELECT Count(*) as count 
+FROM Orders  
+WHERE Deleted=0 AND ProcessedDate IS NULL `).get().count
 		let recordsFiltered = recordsTotal
 
-		let query = /*sql*/`SELECT Orders.*, Customer.Company AS CustomerName 
+		let query = `SELECT Orders.*, Customer.Company AS CustomerName 
 FROM Orders 
-INNER JOIN Customer USING (CustomerId) 
-INNER JOIN OrderGarment USING (OrderId)
-LEFT JOIN PrintDesign      fpd ON OrderGarment.FrontPrintDesignId =       fpd.PrintDesignId
-LEFT JOIN EmbroideryDesign fed ON OrderGarment.FrontEmbroideryDesignId =  fed.EmbroideryDesignId
-LEFT JOIN TransferDesign   ftd ON OrderGarment.FrontTransferDesignId =    ftd.TransferDesignId
-LEFT JOIN PrintDesign      bpd ON OrderGarment.BackPrintDesignId =        bpd.PrintDesignId
-LEFT JOIN EmbroideryDesign bed ON OrderGarment.BackEmbroideryDesignId =   bed.EmbroideryDesignId
-LEFT JOIN TransferDesign   btd ON OrderGarment.BackTransferDesignId =     btd.TransferDesignId
-LEFT JOIN PrintDesign      ppd ON OrderGarment.PocketPrintDesignId =      ppd.PrintDesignId
-LEFT JOIN EmbroideryDesign ped ON OrderGarment.PocketEmbroideryDesignId = ped.EmbroideryDesignId
-LEFT JOIN TransferDesign   ptd ON OrderGarment.PocketTransferDesignId =   ptd.TransferDesignId
-LEFT JOIN PrintDesign      spd ON OrderGarment.SleevePrintDesignId =      spd.PrintDesignId
-LEFT JOIN EmbroideryDesign sed ON OrderGarment.SleeveEmbroideryDesignId = sed.EmbroideryDesignId
-LEFT JOIN TransferDesign   std ON OrderGarment.SleeveTransferDesignId =   std.TransferDesignId  
+INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId   
 WHERE Orders.Deleted=0 AND ProcessedDate IS NULL  `
-
 		if (req.query.search.value)
 			req.query.search.value = req.query.search.value.trim()
 
-		// second query, get total number of filtered records
 		if (req.query.search.value) {
-			let whereClause = /*sql*/`
-AND (OrderNumber    LIKE '%${req.query.search.value}%' 
-OR Customer.Company LIKE '%${req.query.search.value}%' 
-OR Orders.Notes     LIKE '%${req.query.search.value}%'
-OR fpd.Code         LIKE '%${req.query.search.value}%' 
-OR fed.Code         LIKE '%${req.query.search.value}%' 
-OR ftd.Code         LIKE '%${req.query.search.value}%' 
-OR bpd.Code         LIKE '%${req.query.search.value}%' 
-OR bed.Code         LIKE '%${req.query.search.value}%' 
-OR btd.Code         LIKE '%${req.query.search.value}%' 
-OR ppd.Code         LIKE '%${req.query.search.value}%' 
-OR ped.Code         LIKE '%${req.query.search.value}%' 
-OR ptd.Code         LIKE '%${req.query.search.value}%' 
-OR spd.Code         LIKE '%${req.query.search.value}%' 
-OR sed.Code         LIKE '%${req.query.search.value}%' 
-OR std.Code         LIKE '%${req.query.search.value}%' 
-)`
-			let statement = db.prepare(/*sql*/`SELECT Count(*) AS count 
+			let whereClause = ` AND (OrderNumber LIKE '%${req.query.search.value}%' 
+				OR Customer.Company LIKE '%${req.query.search.value}%' 
+				OR Orders.Notes LIKE '%${req.query.search.value}%') `
+			recordsFiltered = db.prepare(`SELECT Count(*) AS count 
 FROM Orders 
-INNER JOIN Customer USING (CustomerId) 
-INNER JOIN OrderGarment USING (OrderId) 
-LEFT JOIN PrintDesign      fpd ON OrderGarment.FrontPrintDesignId =       fpd.PrintDesignId
-LEFT JOIN EmbroideryDesign fed ON OrderGarment.FrontEmbroideryDesignId =  fed.EmbroideryDesignId
-LEFT JOIN TransferDesign   ftd ON OrderGarment.FrontTransferDesignId =    ftd.TransferDesignId
-LEFT JOIN PrintDesign      bpd ON OrderGarment.BackPrintDesignId =        bpd.PrintDesignId
-LEFT JOIN EmbroideryDesign bed ON OrderGarment.BackEmbroideryDesignId =   bed.EmbroideryDesignId
-LEFT JOIN TransferDesign   btd ON OrderGarment.BackTransferDesignId =     btd.TransferDesignId
-LEFT JOIN PrintDesign      ppd ON OrderGarment.PocketPrintDesignId =      ppd.PrintDesignId
-LEFT JOIN EmbroideryDesign ped ON OrderGarment.PocketEmbroideryDesignId = ped.EmbroideryDesignId
-LEFT JOIN TransferDesign   ptd ON OrderGarment.PocketTransferDesignId =   ptd.TransferDesignId
-LEFT JOIN PrintDesign      spd ON OrderGarment.SleevePrintDesignId =      spd.PrintDesignId
-LEFT JOIN EmbroideryDesign sed ON OrderGarment.SleeveEmbroideryDesignId = sed.EmbroideryDesignId
-LEFT JOIN TransferDesign   std ON OrderGarment.SleeveTransferDesignId =   std.TransferDesignId  
-
+INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
 WHERE Orders.Deleted=0 AND ProcessedDate IS NULL 
-${whereClause}`)
-			
-			recordsFiltered = statement.get().count
+${whereClause}`).get().count
 			query += whereClause
 		}
 
-		// third query, get the actual data for this page size
 		const columns = ["OrderId", "OrderId", "OrderNumber", "", "Done", "Customer.Company", "CustomerOrderNumber", "OrderDate", "InvoiceDate", "Repeat", "New", "BuyIn", "Done", "Terms", "SalesRep", "Notes", "DeliveryDate", "ProcessedDate"]
 		const orderByClause = req.query.order.map(o => {
 			return ` ${columns[Number(o.column)]} COLLATE NOCASE ${o.dir} `
@@ -109,12 +64,9 @@ ${whereClause}`)
 		query += ` ORDER BY ${orderByClause.join(",")}`
 
 		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
-		let orders = db.prepare(query).all()
-
+		const orders = db.prepare(query).all()
 
 		// we have to get all the designs used on this order
-		// this is harder because of the possibility of multiple designs per garment
-		// so we do this with a separate query for each
 		orders.forEach(o => {
 			o.Designs = new Set()
 
@@ -157,13 +109,10 @@ ${whereClause}`)
 			o.Designs = [...o.Designs]
 		})
 
-
 		orders.forEach(o => {
 			o.DT_RowData = {id: o.OrderId}
 			o.DT_RowAttr = {tabindex: 0}
 		})
-
-
 
 
 		res.send({
@@ -235,7 +184,7 @@ router.get("/new", function (req, res, next) {
 })
 
 
-/* GET edit page, reüsing the new orders view. */
+/* GET edit page, re├╝sing the new orders view. */
 router.get("/edit", function (req, res, next) {
 
 	const db = new Database("sunprints.db", { /* verbose: console.log, */ fileMustExist: true })
