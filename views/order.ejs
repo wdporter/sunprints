@@ -236,7 +236,7 @@
 				{ 
 					data: "CustomerName",
 					render(data, type, row) {
-						return `<a href=/customer/edit?id=${row.CustomerId}>${data}</a>`
+						return `${data} <a href=/customer/edit?id=${row.CustomerId}><span class="fa fa-edit fa-lg" style="margin-top:.5em"></span></a>`
 					}
 				},
 				{ data: "CustomerOrderNumber", visible: false },

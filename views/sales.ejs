@@ -126,6 +126,8 @@
 		</thead>
 	</table>
 
+	<h5 id="customerSalesTotalLabel">Customer Sales Total</h5>
+
 
 
 	
@@ -228,7 +230,7 @@ window.datatable = new DataTable("table#dt", {
 			}, 
 			{ data: "Company",
 				render: function(data, word, row) {
-					return `<a href=/customer/edit?id=${row.CustomerId}>${data}</a>`
+					return `${data} <a href=/customer/edit?id=${row.CustomerId}><span class="fa fa-edit fa-lg" style="margin-top:.5em"></span></a>`
 				}	
 		}, 
 			{ data: "Terms", width: "2em" }, 
@@ -274,19 +276,29 @@ window.datatable = new DataTable("table#dt", {
 
 	window.datatable.on("draw", function() {
 		window.datatable.buttons(0).text("Expand all")
+
+		// if it's a customer and a date range, display a sum of their orders
+		const customerName = document.getElementById("customerName").value
+		const customerCode = document.getElementById("customerCode").value
+		const fromDate = document.getElementById("dateFrom").value
+		const toDate = document.getElementById("dateTo").value
+
+		if ((customerName != "0" || customerCode != "0") && (fromDate || toDate)) {
+			const url = `/sales/customertotal?CustomerName=${customerName}&CustomerCode=${customerCode}&FromDate=${fromDate}&ToDate=${toDate}`
+			fetch(url)
+			.then(response => response.text())
+			.then(data => {
+				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for date range: ${data}`
+			})
+		}
+		else {
+			document.getElementById("customerSalesTotalLabel").textContent = ""
+		}
+
+
 	})
 
-	// don't do this any more because the keyboard nav gives an outline
-	// gives rows a colour when selected
-	// $("tbody").on("click", "tr", function () {
-	// 	if ($(this).hasClass("selected")) {
-	// 		$(this).removeClass("selected")
-	// 	}
-	// 	else {
-	// 		window.datatable.$("tr.selected").removeClass("selected")
-	// 		$(this).addClass("selected")
-	// 	}
-	// })
+
 
 	// navigate with up/down keys
 	$("tbody").on("keydown", "tr", function (event) {
@@ -426,9 +438,17 @@ Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
 
 
 Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
-	s.addEventListener("change", function(input) {
+	s.addEventListener("change", function(event) {
 		// select fields searching is exclusive of order number so reset it
 		document.getElementById("orderNumber").value = "";
+
+		if (event.currentTarget.id == "customerName") {
+			document.getElementById("customerCode").value = 0
+		}
+		if (event.currentTarget.id == "customerCode") {
+			document.getElementById("customerName").value = 0
+		}
+
 		window.datatable.ajax.reload()
 	})
 })

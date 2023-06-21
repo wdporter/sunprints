@@ -1197,6 +1197,43 @@ WHERE StockOrderId=?`).get(salesTotal.StockOrderId)
 
 })
 
+// GET a total of customer sales in a date period
+router.get("/customertotal", (req, res) => {
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	const { CustomerName, CustomerCode, FromDate, ToDate } = req.query
+
+	var sql = /*sql*/`SELECT Price * (${sz.allSizes.map(s=> `${s}`).join("+")}) AS Total FROM SalesTotal
+	INNER JOIN Sales USING (OrderId) 
+	WHERE `
+
+	var whereClauses = [` SalesTotal.CustomerId = ?  `]
+	var parameters = []
+	if (CustomerName != "0") { // one of these two has to have an id
+		parameters.push(CustomerName)
+	}
+	if (CustomerCode != "0") {
+		parameters.push(CustomerCode)
+	}
+	if (FromDate) {
+		whereClauses.push( ` SalesTotal.OrderDate >= ? `)
+		parameters.push(FromDate)
+	}
+	if (ToDate) {
+		whereClauses.push( ` SalesTotal.OrderDate <= ? `)
+		parameters.push(ToDate)
+	}
+	sql += whereClauses.join(" AND ")
+	
+
+	const statement = db.prepare(sql);
+	let resultset = statement.all(parameters)
+	var total = resultset.reduce((acc, curr) => acc + curr.Total, 0)
+
+	res.send(total.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}));
+
+})
+
 
 
 /////////////////////////////////////////////////////////
