@@ -139,7 +139,13 @@ console.log(req.query.customSearch)
 
 		if (req.query.order) {
 			query += " ORDER BY "
-			query += req.query.order.map(o => `${Number(o.column) } COLLATE NOCASE ${o.dir}` ).join(", ")
+
+			if (req.query.order[0].column == 5) { // processed date, show nulls first
+					query += ` CASE WHEN DateProcessed IS NULL THEN 1 ELSE 0 END ${req.query.order[0].dir}, DateProcessed ${req.query.order[0].dir} `
+			}
+			else {
+				query += ` ${req.query.order[0].column} COLLATE NOCASE ${req.query.order[0].dir} `
+			}
 		}
 
 		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start}`
