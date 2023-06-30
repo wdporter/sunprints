@@ -33,85 +33,44 @@ router.get("/dt", function (req, res, next) {
 
 	try {
 
-		const recordsTotal = db.prepare(`SELECT Count(*) as count 
-FROM Orders  
-WHERE Deleted=0 AND ProcessedDate IS NULL `).get().count
+		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM OrderSearch_View").get().Count
 		let recordsFiltered = recordsTotal
 
-		let query = `SELECT Orders.*, Customer.Company AS CustomerName 
-FROM Orders 
-INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId   
-WHERE Orders.Deleted=0 AND ProcessedDate IS NULL  `
+		let query = `SELECT * FROM OrderSearch_View `
 		if (req.query.search.value)
 			req.query.search.value = req.query.search.value.trim()
 
 		if (req.query.search.value) {
-			let whereClause = ` AND (OrderNumber LIKE '%${req.query.search.value}%' 
-				OR Customer.Company LIKE '%${req.query.search.value}%' 
-				OR Orders.Notes LIKE '%${req.query.search.value}%') `
-			recordsFiltered = db.prepare(`SELECT Count(*) AS count 
-FROM Orders 
-INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId 
-WHERE Orders.Deleted=0 AND ProcessedDate IS NULL 
-${whereClause}`).get().count
+			let whereClause = ` WHERE (OrderNumber LIKE '%${req.query.search.value}%' 
+				OR CustomerName LIKE '%${req.query.search.value}%' 
+				OR Notes LIKE '%${req.query.search.value}%' 
+				OR Designs LIKE '%${req.query.search.value}%' ) `
+
+				recordsFiltered = db.prepare(`SELECT COUNT(*) AS Count FROM OrderSearch_View ${whereClause}`)
+				.get().Count
 			query += whereClause
 		}
 
-		const columns = ["OrderId", "OrderId", "OrderNumber", "", "Done", "Customer.Company", "CustomerOrderNumber", "OrderDate", "InvoiceDate", "Repeat", "New", "BuyIn", "Done", "Terms", "SalesRep", "Notes", "DeliveryDate", "ProcessedDate"]
+		const columns = ["OrderId", "OrderId", "OrderNumber", "CustomerName", "OrderDate", "Repeat", "New", "BuyIn", "Done", "Terms", "SalesRep", "Notes", "DeliveryDate"]
 		const orderByClause = req.query.order.map(o => {
 			return ` ${columns[Number(o.column)]} COLLATE NOCASE ${o.dir} `
 		})
-		query += ` ORDER BY ${orderByClause.join(",")}`
+		query += ` ORDER BY ${orderByClause.join(",")} `
 
 		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
 		const orders = db.prepare(query).all()
 
-		// we have to get all the designs used on this order
+		// now massage some of the results, particularly the designs
 		orders.forEach(o => {
-			o.Designs = new Set()
+			o.DT_RowData = {id: o.OrderId} // for datatables
+			o.DT_RowAttr = {tabindex: 0}   // for datatables
 
-			const query = db.prepare(`SELECT 
-			fp.Code || fp.Notes AS fp
-			,bp.Code || bp.Notes AS bp
-			,pp.Code || pp.Notes AS pp
-			,sp.Code || sp.Notes AS sp
-			,fe.Code || fe.Notes AS fe
-			,be.Code || be.Notes AS be
-			,pe.Code || pe.Notes AS pe
-			,se.Code || se.Notes AS se
-			,ft.Code || ft.Notes AS ft
-			,bt.Code || bt.Notes AS bt
-			,pt.Code || pt.Notes AS pt
-			,st.Code || st.Notes AS st
-			FROM OrderGarment
-			LEFT JOIN PrintDesign fp ON fp.PrintDesignId=OrderGarment.FrontPrintDesignId
-			LEFT JOIN PrintDesign bp ON bp.PrintDesignId=OrderGarment.BackPrintDesignId
-			LEFT JOIN PrintDesign pp ON pp.PrintDesignId=OrderGarment.PocketPrintDesignId
-			LEFT JOIN PrintDesign sp ON sp.PrintDesignId=OrderGarment.SleevePrintDesignId
-			LEFT JOIN EmbroideryDesign fe ON fe.EmbroideryDesignId=OrderGarment.FrontEmbroideryDesignId
-			LEFT JOIN EmbroideryDesign be ON be.EmbroideryDesignId=OrderGarment.BackEmbroideryDesignId
-			LEFT JOIN EmbroideryDesign pe ON pe.EmbroideryDesignId=OrderGarment.PocketEmbroideryDesignId
-			LEFT JOIN EmbroideryDesign se ON se.EmbroideryDesignId=OrderGarment.SleeveEmbroideryDesignId
-			LEFT JOIN TransferDesign ft ON ft.TransferDesignId=OrderGarment.FrontTransferDesignId
-			LEFT JOIN TransferDesign bt ON bt.TransferDesignId=OrderGarment.BackTransferDesignId
-			LEFT JOIN TransferDesign pt ON pt.TransferDesignId=OrderGarment.PocketTransferDesignId
-			LEFT JOIN TransferDesign st ON st.TransferDesignId=OrderGarment.SleeveTransferDesignId
-			WHERE OrderGarment.OrderId=?`)
-			const printDesignResults = query.all(o.OrderId)
-			printDesignResults.forEach(pdr => {
-				Object.keys(pdr).forEach(key => {
-					if (pdr[key]) {
-						o.Designs.add(pdr[key])
-					}
+			let parts = o.DesignsDisplay?.split(";") ?? []
+			parts = parts.map(p => p.trim()) // remove whitespace
+			parts = parts.filter(p => p.length > 0) //remove empty strings
+			parts = [...new Set(parts)] // deduplicate
+			o.DesignsDisplay = parts
 
-				})
-			})
-			o.Designs = [...o.Designs]
-		})
-
-		orders.forEach(o => {
-			o.DT_RowData = {id: o.OrderId}
-			o.DT_RowAttr = {tabindex: 0}
 		})
 
 
