@@ -545,6 +545,18 @@ in which the "edit" in the name doesn't really mean anything either
 				Notes: document.getElementById("orderNotes").value.trim() || null,
 				CustomerOrderNumber: document.getElementById("customerOrderNumber").value.trim() || null
 			}
+
+			// this seemed to be saving in UTC, so I'm going to try to fix that
+			if (document.getElementById("orderDate").value != null)
+			{
+				var value = document.getElementById("orderDate").valueAsNumber
+				var d = new Date(value)
+				var localDate = d.toLocaleDateString();
+				var dateToSend = `${localDate.substring(6, 10)}-${localDate.substring(3, 5)}-${localDate.substring(0, 2)}`
+				order.OrderDate = dateToSend
+			}
+
+
 			if (window.sunprints.mode == "new") {
 				order.StockOrderId = document.getElementById("purchaseSelect").value
 			}
