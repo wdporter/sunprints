@@ -100,7 +100,13 @@ in which the "edit" in the name doesn't really mean anything either
 			<p>
 				<label for=orderDate>Order date</label>
 				<input id=orderDate type=date
-					value="<%= order ? new Date(Date.parse(order.OrderDate)).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10) %>" />
+					value="<% if (order) { 
+						myDate = new Date(Date.parse(order.OrderDate)).toISOString().substring(0, 10)
+					} else {
+						now = new Date()
+						now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+						myDate = now.toISOString().substring(0, 10) 
+					}%><%= myDate %>" />
 			</p>
 			<p>
 				<label for=customerOrderNumber>Customer’s order number</label>
@@ -546,22 +552,9 @@ in which the "edit" in the name doesn't really mean anything either
 				CustomerOrderNumber: document.getElementById("customerOrderNumber").value.trim() || null
 			}
 
-			// this seemed to be saving in UTC, so I'm going to try to fix that
-			if (document.getElementById("orderDate").value != null)
-			{
-				var value = document.getElementById("orderDate").valueAsNumber
-				var d = new Date(value)
-				var localDate = d.toLocaleDateString();
-				var dateToSend = `${localDate.substring(6, 10)}-${localDate.substring(3, 5)}-${localDate.substring(0, 2)}`
-				order.OrderDate = dateToSend
-			}
-
-
 			if (window.sunprints.mode == "new") {
 				order.StockOrderId = document.getElementById("purchaseSelect").value
 			}
-
-
 
 			let method = "POST"
 			let url = "/order"
