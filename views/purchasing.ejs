@@ -224,10 +224,16 @@ window.datatable = new DataTable("#garmentTable", {
 <script>
 window.garment = <%- garment %>;
 
+function getCurrentLocalDateISO() {
+	var now = new Date()
+	now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+	return now.toISOString().substring(0, 10) 
+}
+
 window.vueApp = Vue.createApp({
 	data() {
 		return {
-			orderDate: new Date().toISOString().slice(0, 10),
+			orderDate: getCurrentLocalDateISO(),
 			supplierId: "<%= supplierId %>",
 			suppliers: <%- JSON.stringify(suppliers) %>,
 			notes: "<%= orderNumber %>",
@@ -250,7 +256,7 @@ window.vueApp = Vue.createApp({
 				this.$refs.supplierId.focus()
 				this.notes = ""
 				this.supplierId = ""
-				this.orderDate = new Date().toISOString().slice(0, 10)
+				this.orderDate = getCurrentLocalDateISO()
 				this.chosenGarments.Adults = []
 				this.chosenGarments.Womens = []
 				this.chosenGarments.Kids = []
