@@ -31,7 +31,7 @@
 
 			<p>
 				<label for="orderDate">Order Date</label>
-				<input id="orderDate" type="date"d v-model="orderDate" />
+				<input id="orderDate" type=date v-model="orderDate" />
 			</p>
 
 			<p>
@@ -222,18 +222,16 @@ window.datatable = new DataTable("#garmentTable", {
 </script>
 
 <script>
+
 window.garment = <%- garment %>;
 
-function getCurrentLocalDateISO() {
-	var now = new Date()
-	now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-	return now.toISOString().substring(0, 10) 
-}
+document.addEventListener("DOMContentLoaded", function() {
+	
 
 window.vueApp = Vue.createApp({
 	data() {
 		return {
-			orderDate: getCurrentLocalDateISO(),
+			orderDate: new Date().getDateAsIsoLocal(),
 			supplierId: "<%= supplierId %>",
 			suppliers: <%- JSON.stringify(suppliers) %>,
 			notes: "<%= orderNumber %>",
@@ -256,7 +254,7 @@ window.vueApp = Vue.createApp({
 				this.$refs.supplierId.focus()
 				this.notes = ""
 				this.supplierId = ""
-				this.orderDate = getCurrentLocalDateISO()
+				this.orderDate = new Date().getDateAsIsoLocal()
 				this.chosenGarments.Adults = []
 				this.chosenGarments.Womens = []
 				this.chosenGarments.Kids = []
@@ -408,7 +406,7 @@ window.vueApp = Vue.createApp({
 					if ((vue.chosenGarments.Adults.length + vue.chosenGarments.Kids.length + vue.chosenGarments.Womens.length) == 0) {
 						// all garments have been received, the database deleted the stock order, so reset our UI
 						vue.stockOrders = vue.stockOrders.filter(s => s.StockOrderId != vue.stockOrderId)
-						vue.orderDate = new Date().toISOString().slice(0, 10)
+						vue.orderDate = new Date().getDateAsIsoLocal()
 						vue.supplierId = ""
 						vue.notes = ""
 						vue.stockOrderId = ""
@@ -527,7 +525,7 @@ window.vueApp = Vue.createApp({
 	}
 }).mount("#vueApp")
 
-
+})
 	</script>
 
 
