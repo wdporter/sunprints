@@ -5,3 +5,7 @@
 #createNewButton {
 	margin-bottom: 2em;
 }
+
+div#customersTable_filter {
+	width: 22em;
+}

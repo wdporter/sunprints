@@ -56,7 +56,7 @@ window.datatable = new DataTable("table#customersTable", {
 	order: [[2, "asc"]],
 	orderMulti: false,
 	language: {
-		searchPlaceholder: "code, company or name"
+		searchPlaceholder: "code, company, name, locality"
 	},
 	columns: [
 		{ 
@@ -134,7 +134,7 @@ window.datatable = new DataTable("table#customersTable", {
 		{ 
 			data: "AddressLine1", 
 			orderable: false,
-			searchable: false, 
+			searchable: true, 
 			render(data, type, row) { 
 				const items = []
 				if (row.AddressLine1)

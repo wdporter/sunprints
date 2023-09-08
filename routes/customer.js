@@ -58,7 +58,8 @@ router.get("/dt", function (req, res, next) {
 		let whereClause = ""
 		if (req.query.search.value) {
 			const searchables = req.query.columns.filter(c => c.searchable == "true")
-			const cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
+			let cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
+			cols = cols.replace("AddressLine1", "Locality")
 			whereParams = searchables.map(c => `%${req.query.search.value}%`)
 			whereClause += ` AND ( ${cols} ) `
 
