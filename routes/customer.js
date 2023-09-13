@@ -60,6 +60,12 @@ router.get("/dt", function (req, res, next) {
 			const searchables = req.query.columns.filter(c => c.searchable == "true")
 			let cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
 			cols = cols.replace("AddressLine1", "Locality")
+
+			// let them search by postcode also if they give four digits
+			if (req.query.search.value.match(/^\d{4}$/)) {
+				cols = cols.replace("Locality", "Postcode")
+			}
+
 			whereParams = searchables.map(c => `%${req.query.search.value}%`)
 			whereClause += ` AND ( ${cols} ) `
 
