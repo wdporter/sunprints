@@ -44,7 +44,7 @@
 		</p>
 		<p>
 			<label for="newNotes">Notes</label>
-			<textarea id="newNotes"> </textarea>
+			<textarea id="newNotes" rows="8"> </textarea>
 		</p>
 		<div>
 <% if (poweruser) { %>			
@@ -116,7 +116,7 @@
 					<tr>
 						<td>Total:</td>
 						<td>{{ getTotalProductQuantity() }}</td>
-						<td colspan="2"></td>
+						<td style="color: crimson">{{ getTotalProductOnOrder() }}</td>
 					</tr>
 				</tfoot>
 				</table>
@@ -150,7 +150,7 @@
 				</p>
 				<p>
 					<label for="notes">Notes</label>
-					<textarea v-model="garment.Notes"> </textarea>
+					<textarea v-model="garment.Notes" rows="8"> </textarea>
 				</p>
 				<p>
 <% if (poweruser) { %>
@@ -358,6 +358,12 @@
 			getTotalProductQuantity() {
 				const result = this.sizes[this.garment.SizeCategory].reduce((acc, currentSize) => {
 								return acc += Number(this.garment[currentSize])
+							}, 0)
+				return result
+			},
+			getTotalProductOnOrder() {
+				const result = this.sizes[this.garment.SizeCategory].reduce((acc, currentSize) => {
+								return acc += Number(this.garment[`O${currentSize}`])
 							}, 0)
 				return result
 			}

@@ -4,6 +4,7 @@ const Database = require("better-sqlite3")
 const sz = require("../sizes.js");
 const productService = require("../service/productService.js");
 const { json } = require("body-parser");
+const getDB = require ("../integration/dbFactory.js")
 
 // GET the garments page
 router.get("/", function (req, res, next) {
@@ -111,7 +112,6 @@ router.get("/warninglist", function (req, res, next) {
 })
 
 
-
 // GET a list of garments used by the garment datatable in the purchase page
 router.get("/purchase/dt", function (req, res) {
 
@@ -166,7 +166,6 @@ router.get("/purchase/dt", function (req, res) {
 
 
 })
-
 
 
 // GET a list of garments used by the garment datatable in the new order page
@@ -320,7 +319,6 @@ router.get("/deleted", function (req, res, next) {
 })
 
 
-
 // GET
 // returns a product search, used by product pick component
 router.get("/search", function (req, res) {
@@ -342,13 +340,12 @@ router.get("/search", function (req, res) {
 // GET 
 // fetches a single garment by garment id
 router.get("/:id", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB()
 	let query = `SELECT * FROM Garment WHERE GarmentId=?`
 	let statement = db.prepare(query)
 	const product = statement.get(req.params.id)
 
 	// get the "on order" amounts from StockOrderGarment
-	// todo should combine this in one query but I was in a huge hurry because it is a production error
 	query = "SELECT "
 	const sizeItems = []
 	sz.sizes[product.SizeCategory].forEach(s => {
