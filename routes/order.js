@@ -1438,12 +1438,14 @@ router.post("/", function (req, res) {
 
 		let salesTotalCols = columns.filter(c => !auditColumns.includes(c))
 		//change name of delivery date
-		salesTotalCols = salesTotalCols.filter(c => c != "DeliveryDate")
+		salesTotalCols = salesTotalCols.filter(c => c != "DeliveryDate" && c != "InvoiceDate")
 		salesTotalCols.push("Delivery")
 		req.body.Delivery = req.body.DeliveryDate
+		salesTotalCols.push("DateInvoiced")
+		req.body.DateInvoiced = req.body.InvoiceDate
 
 		salesTotalCols.unshift("OrderId")
-		query = `INSERT INTO SalesTotal (
+		query = /*sql*/`INSERT INTO SalesTotal (
 			${salesTotalCols.join(", ")}
 		) VALUES (
 			${salesTotalCols.map(c => `@${c}`).join()}

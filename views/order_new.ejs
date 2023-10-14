@@ -8,6 +8,13 @@ in which the "edit" in the name doesn't really mean anything either
 
 <%- include("partials/head.ejs") %>
 
+<% 
+	getDateAsIsoLocal = function(date) {
+		date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+		return date.toISOString().substring(0, 10) 
+	}
+%>
+
 
 <dialog id=deleteDialog>
 	<form method="dialog">
@@ -91,21 +98,19 @@ in which the "edit" in the name doesn't really mean anything either
 			<p id="invoiceDatePara">
 				<label for=invoiceDate>Invoice Date</label>
 				<input id=invoiceDate type=date
-					value="<%= order && order.InvoiceDate && new Date(Date.parse(order.InvoiceDate)).toISOString().substring(0, 10) %>" />
+					value="<%= order && order.InvoiceDate && getDateAsIsoLocal(new Date(order.InvoiceDate)) %>" />
 			</p>
 			<p>
 				<label for=deliveryDate>Delivery Date</label>
-				<input id=deliveryDate value="<%= order && order.DeliveryDate %>" />
+				<input id=deliveryDate value="<%= order && (order.DeliveryDate || '') %>" />
 			</p>
 			<p>
 				<label for=orderDate>Order date</label>
 				<input id=orderDate type=date
 					value="<% if (order) { 
-						myDate = new Date(Date.parse(order.OrderDate)).toISOString().substring(0, 10)
+						myDate = getDateAsIsoLocal(new Date(order.OrderDate))
 					} else {
-						now = new Date()
-						now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-						myDate = now.toISOString().substring(0, 10) 
+						getDateAsIsoLocal(new Date())
 					}%><%= myDate %>" />
 			</p>
 			<p>
@@ -451,7 +456,6 @@ in which the "edit" in the name doesn't really mean anything either
 		}
 
 		document.getElementById("garmentSection").style.display = window.sunprints.mode == "edit" ? "block" : "none"
-		document.getElementById("invoiceDatePara").style.display = window.sunprints.mode == "edit" ? "block" : "none"
 		document.getElementById("printJobButton").style.display = window.sunprints.mode == "edit" ? "inline" : "none"
 		const shipOrderButton = document.getElementById("shipOrderButton")
 		if (shipOrderButton)
