@@ -98,7 +98,7 @@ in which the "edit" in the name doesn't really mean anything either
 			<p id="invoiceDatePara">
 				<label for=invoiceDate>Invoice Date</label>
 				<input id=invoiceDate type=date
-					value="<%= order && order.InvoiceDate && getDateAsIsoLocal(new Date(order.InvoiceDate)) %>" />
+					value="<%= order && (order.InvoiceDate || '') %>" />
 			</p>
 			<p>
 				<label for=deliveryDate>Delivery Date</label>
@@ -108,9 +108,9 @@ in which the "edit" in the name doesn't really mean anything either
 				<label for=orderDate>Order date</label>
 				<input id=orderDate type=date
 					value="<% if (order) { 
-						myDate = getDateAsIsoLocal(new Date(order.OrderDate))
+						myDate = order.OrderDate
 					} else {
-						getDateAsIsoLocal(new Date())
+						myDate = new Date().toISOString().substring(0, 10)
 					}%><%= myDate %>" />
 			</p>
 			<p>
