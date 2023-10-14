@@ -1,8 +1,9 @@
 const express = require("express")
 const router = express.Router()
-
-const Database = require("better-sqlite3");
+const { json } = require("body-parser")
+const Database = require("better-sqlite3")
 const sz = require("../sizes.js")
+const getDB = require ("../integration/dbFactory.js")
 
 /* GET Sales History page. */
 router.get("/", (req, res) => {
@@ -22,7 +23,6 @@ router.get("/", (req, res) => {
 			]
 		})
 })
-
 
 
 // GET datatable ajax for sales history table
@@ -589,59 +589,6 @@ router.get("/:orderid/history", (req, res) => {
 	finally {
 		db.close()
 	}
-
-
-})
-
-router.get("/csv/", (req, res) => {
-
-	if (!req.query.datefrom || !req.query.dateto) {
-		res.statusMessage("missing date parameters")
-		res.sendStatus(400)
-	}
-
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
-
-	try {
-		let query = /*sql*/`SELECT SalesTotal.OrderNumber, Customer.Company, SalesTotal.SalesRep, SalesTotal.OrderDate,
-		Garment.Code || ' ' || Type || ' ' || Colour AS Product,
-		${sz.allSizes.map(sz => `Sales.${sz}`).join("+")} AS Qty,
-		Price,
-		(${sz.allSizes.map(sz => `Sales.${sz}`).join("+")}) * Price AS Value
-		FROM SalesTotal
-		INNER JOIN Customer ON SalesTotal.CustomerId=Customer.CustomerId
-		LEFT JOIN Sales ON SalesTotal.OrderId=Sales.OrderId
-		LEFT JOIN Garment ON Sales.GarmentId=Garment.GarmentId
-		WHERE SalesTotal.OrderDate >= ? AND SalesTotal.OrderDate <= ?
-		`
-	
-		let statement = db.prepare(query)
-		let results = statement.all(req.query.datefrom, req.query.dateto)
-
-		const lines = [Object.keys(results[0]).join(",")]
-		const data = results.map(r => {
-			const values = Object.keys(r).map(k => `"${r[k]}"` )
-			lines.push(values.join(","))
-		})
-		
-		let csv = lines.join("\n")
-		csv = csv.replace(/\"null\"/g, "")
-	
-		res.header("Content-Type", "text/csv")
-		res.attachment(`sales_${req.query.datefrom}_to_${req.query.dateto}.csv`);
-		res.send(csv)
-
-	}
-	catch(err) {
-		res.statusMessage = err.message
-		res.sendStatus(400)
-
-	}
-	finally {
-		db.close()
-	}
-
-
 })
 
 
@@ -953,7 +900,6 @@ router.get("/mediasearch", (req, res) => {
 }})
 
 
-
 // GET all candidate designs for the given location
 // this one is used when a design is selected, to test if the media selected relate to this design
 //  example /sales/designsearch?location=Front&decoration=Embroidery&Code=asdf&Notes=abc&Comments=asdf
@@ -1047,7 +993,6 @@ router.get("/mediasearch/decoration", (req, res) => {
 		db.close()
 	}
 }) 
-
 
 
 // GET the jobsheet page
@@ -1203,6 +1148,7 @@ WHERE StockOrderId=?`).get(salesTotal.StockOrderId)
 
 })
 
+
 // GET a total of customer sales in a date period
 router.get("/customertotal", (req, res) => {
 	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
@@ -1238,6 +1184,121 @@ router.get("/customertotal", (req, res) => {
 
 	res.send(total.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}));
 
+})
+
+
+////////////////////////////////////////////////////////
+// POST
+////////////////////////////////////////////////////////
+
+router.post("/csv/", (req, res) => {
+
+	query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, SalesTotal.SalesRep, SalesTotal.DateProcessed, 
+	SalesTotal.Delivery, Customer.Code, Customer.Company, Customer.CustomerId, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
+	,SalesTotal.StockOrderId
+	FROM SalesTotal 
+	LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId `
+	
+	const salesJoin = " INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId "
+	let useSalesJoin = false
+
+	const params = {}
+	const where = []
+	if (req.body.Company && req.body.Company != "0") {
+		where.push(` SalesTotal.CustomerId = @Company `)
+		params.Company = req.body.Company
+	}
+	if (req.body.Code && req.body.Code != "0") {
+		where.push(` SalesTotal.CustomerId = @Code `)
+		params.Code = req.body.Code
+	}
+	if (req.body.DateFrom) {
+		where.push(`OrderDate >= @DateFrom`)
+		params.DateFrom = req.body.DateFrom
+	}
+	if (req.body.DateTo) {
+		where.push(`OrderDate <= @DateTo`)
+		params.DateTo = req.body.DateTo
+	}
+	if (req.body.SalesRep && req.body.SalesRep != "0") {
+		where.push(`SalesTotal.SalesRep = @SalesRep`)
+		params.SalesRep = req.body.SalesRep.trimEnd(" (*)")
+	}
+	if (req.body.Print && req.body.Print != "0") {
+			where.push(`(Sales.FrontPrintDesignId=@Print OR Sales.BackPrintDesignId=@Print OR Sales.PocketPrintDesignId=@Print OR Sales.SleevePrintDesignId=@Print)`)
+			params.Print = req.body.Print
+			useSalesJoin = true
+	}
+	if (req.body.Screen && req.body.Screen != "0") {
+		where.push(`(Sales.FrontScreenId=@Screen OR Sales.FrontScreen2Id=@Screen 
+							OR Sales.BackScreenId=@Screen OR Sales.BackScreen2Id=@Screen 
+							OR Sales.PocketScreenId=@Screen OR Sales.PocketScreen2Id=@Screen 
+							OR Sales.SleeveScreenId=@Screen OR Sales.SleeveScreen2Id=@Screen 
+							)`)
+		params.Screen = req.body.Screen
+		useSalesJoin = true
+	}
+	if (req.body.Embroidery && req.body.Embroidery != "0") {
+		where.push(`(Sales.FrontEmbroideryDesignId=@Embroidery OR Sales.BackEmbroideryDesignId=@Embroidery OR Sales.PocketEmbroideryDesignId=@Embroidery OR Sales.SleeveEmbroideryDesignId=@Embroidery)`)
+		params.Embroidery = req.body.Embroidery
+		useSalesJoin = true
+	}
+	if (req.body.Usb && req.body.Usb != "0") {
+		where.push(`(Sales.FrontUsbId=@Usb OR Sales.FrontUsb2Id=@Usb 
+							OR Sales.BackUsbId=@Usb OR Sales.BackUsb2Id=@Usb 
+							OR Sales.PocketUsbId=@Usb OR Sales.PocketUsb2Id=@Usb 
+							OR Sales.SleeveUsbId=@Usb OR Sales.SleeveUsb2Id=@Usb 
+							)`)
+		params.Usb = req.body.Usb
+		useSalesJoin = true
+	}
+	if (req.body.Transfer && req.body.Transfer != "0") {
+		where.push(`(Sales.FrontTransferDesignId =@Transfer 
+							OR Sales.BackTransferDesignId  =@Transfer 
+							OR Sales.PocketTransferDesignId=@Transfer 
+							OR Sales.SleeveTransferDesignId=@Transfer)`)
+		params.Transfer = req.body.Transfer
+		useSalesJoin = true
+	}
+	if (req.body.TransferName && req.body.TransferName != "0") {
+		where.push(`(Sales.FrontTransferNameId =@TransferName OR Sales.FrontTransferName2Id =@TransferName 
+							OR Sales.BackTransferNameId  =@TransferName OR Sales.BackTransferName2Id  =@TransferName 
+							OR Sales.PocketTransferNameId=@TransferName OR Sales.PocketTransferName2Id=@TransferName 
+							OR Sales.SleeveTransferNameId=@TransferName OR Sales.SleeveTransferName2Id=@TransferName 
+							)`)
+		params.TransferName = req.body.TransferName
+		useSalesJoin = true
+	}
+	if (req.body.OrderNumber.trim()) {
+		where.push( ` OrderNumber LIKE @OrderNumber `)
+		params.OrderNumber = `%${req.body.OrderNumber}%`
+	}
+
+	if (useSalesJoin)
+		query += salesJoin
+
+	if (where.length > 0) 
+		query += ` WHERE ${where.join(" AND ")} `
+	else
+		res.end();
+
+	const db = getDB()
+	let statement = db.prepare(query)
+	let results = statement.all(params)
+
+	const lines = [Object.keys(results[0]).join(",")]
+	const data = results.map(r => {
+		const values = Object.keys(r).map(k => `"${r[k]}"` )
+		lines.push(values.join(","))
+	})
+	let csv = lines.join("\n")
+	csv = csv.replace(/\"null\"/g, "")
+
+	res.header("Content-Type", "text/csv")
+	//res.attachment(`sales_${req.query.datefrom}_to_${req.query.dateto}.csv`);
+	res.send(csv)
+
+	db.close()
 })
 
 

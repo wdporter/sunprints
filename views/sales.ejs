@@ -23,7 +23,7 @@
 			<legend>Sales Rep.</legend>
 			<p>
 				<label for=salesRep>Name</label>
-				<select id="salesRep" data-location="salesreps">
+				<select id=salesRep data-location=salesreps>
 					<option value="0">--select--</option>
 				</select>
 			</p>
@@ -31,14 +31,13 @@
 		<fieldset>
 			<legend>Date range</legend>
 			<p>
-				<label for="dateFrom">Date From</label>
+				<label for=dateFrom>Date From</label>
 				<input type=date id="dateFrom" />
 			</p>
 			<p>
-				<label for="dateTo">Date To</label><!-- one year ago -->
+				<label for=dateTo>Date To</label>
 				<input type=date id="dateTo" />
 			</p>
-			<p><a href=# id="dateRangeCsv">Download CSV</a></p>
 		</fieldset>
 		<fieldset>
 			<legend>Order Number</legend>
@@ -52,15 +51,15 @@
 		<fieldset>
 			<legend>Print</legend>
 			<p>
-				<label for="print">Design</label>
-				<select id="print" data-location="prints">
-					<option value="0">--select--</option>
+				<label for=print>Design</label>
+				<select id=print data-location=prints>
+					<option value=0>--select--</option>
 				</select>
 			</p>
 			<p>
-				<label for="screen">Screen</label>
-				<select id="screen" data-location="screens">
-					<option value="0">--select--</option>
+				<label for=screen>Screen</label>
+				<select id=screen data-location=screens>
+					<option value=0>--select--</option>
 				</select>
 			</p>
 		</fieldset>
@@ -128,151 +127,194 @@
 
 	<h5 id="customerSalesTotalLabel">Customer Sales Total</h5>
 
-
+	<button 
+		style="margin-left:2em" 
+		onclick="downloadCsv()">
+		<span class="fa fa-download"></span> Download Excel <span class="fa fa-file-excel"></span></button>
 
 	
 <script>
 
-function cloneOrder(a, event) {
-		event.preventDefault()
-		const tr = a.closest("tr")
-		const api = $("table#dt").dataTable().api()
-		const row = api.row(tr)
-		const data = row.data()
-		const orderid = data.OrderId
-		window.location.href = `/order/new?clone=${orderid}`
-		console.log(orderid)
-	}
+function downloadCsv() {
+	console.log("downloading…")
+	// send a get request
+	fetch("/sales/csv", {
+		method: "POST",
+		headers: new Headers({
+			"Content-Type": "application/json"
+		}),
+		body: JSON.stringify(getCustomSearchObject())
+	})
+	.then(response => {
+		if (response.ok) 
+			return response.text()
+		else
+			throw new Error(response.statusText)
+		}
+	)
+	.then(text => {
+		if (!text)
+			return;
 
+		// create a blob
+		const blob = new Blob([text], {type: "text/csv"})
+		// create a url from blob
+		const url = window.URL.createObjectURL(blob)
+		// create a link
+		const a = document.createElement("a")
+		a.href = url
+		a.download = "sales.csv"
+		// click the link
+		a.click()
+	})
+	.catch(err => {
+		console.error(err)
+	})
+}
+
+function cloneOrder(a, event) {
+	event.preventDefault()
+	const tr = a.closest("tr")
+	const api = $("table#dt").dataTable().api()
+	const row = api.row(tr)
+	const data = row.data()
+	const orderid = data.OrderId
+	window.location.href = `/order/new?clone=${orderid}`
+	console.log(orderid)
+}
+
+function getCustomSearchObject() {
+	return {
+		Company: document.getElementById("customerName").value,
+		Code: document.getElementById("customerCode").value,
+		DateFrom: document.getElementById("dateFrom").value,
+		DateTo: document.getElementById("dateTo").value,
+		Print: document.getElementById("print").value,
+		Screen: document.getElementById("screen").value,
+		Embroidery: document.getElementById("embroidery").value,
+		Usb: document.getElementById("usb").value,
+		Transfer: document.getElementById("transfer").value,
+		TransferName: document.getElementById("transferName").value,
+		SalesRep: document.getElementById("salesRep").value,
+		OrderNumber: document.getElementById("orderNumber").value
+	}
+}
 
 window.datatable = new DataTable("table#dt", {
-		fixedHeader: true,
-		processing: true,
-		serverSide: true,
-		dom: "l<'buttondiv'B>rtip", 
-		tabIndex: 1,
-		pageLength: 50,
-		createdRow: (row, data, dataIndex) => row.setAttribute("tabIndex", 0),
-		ajax: { 
-			url: "/sales/dt",
-			data: function(d) {
-				d.customSearch = {
-					Company: document.getElementById("customerName").value,
-					Code: document.getElementById("customerCode").value,
-					DateFrom: document.getElementById("dateFrom").value,
-					DateTo: document.getElementById("dateTo").value,
-					Print: document.getElementById("print").value,
-					Screen: document.getElementById("screen").value,
-					Embroidery: document.getElementById("embroidery").value,
-					Usb: document.getElementById("usb").value,
-					Transfer: document.getElementById("transfer").value,
-					TransferName: document.getElementById("transferName").value,
-					SalesRep: document.getElementById("salesRep").value,
-					OrderNumber: document.getElementById("orderNumber").value
+	fixedHeader: true,
+	processing: true,
+	serverSide: true,
+	dom: "l<'buttondiv'B>rtip", 
+	tabIndex: 1,
+	pageLength: 50,
+	createdRow: (row, data, dataIndex) => row.setAttribute("tabIndex", 0),
+	ajax: { 
+		url: "/sales/dt",
+		data: function(d) {
+			d.customSearch = getCustomSearchObject()
+		}
+	},
+	order: [[3, "desc"]],
+	columns: [
+		{
+			className: 'dt-control',
+			orderable: false,
+			data: null,
+			title: "Actions",
+			width: "4em",
+			render(data) {
+<% if (!poweruser) { %>
+					return ""
+<% } %>
+				let result = `&ensp;
+				<a href="/${data.DateProcessed ? 'sales' : 'order'}/edit/${data.OrderId}" title="Edit this order">
+					<span class="fa fa-edit fa-lg" style="margin-top:.5em"></span>
+				</a>&ensp;
+				<a href=/${data.DateProcessed ? 'sales' : 'order'}/jobsheet/${data.OrderId} title="Print this order" target=_blank>
+					<span class="fa fa-print fa-lg" style=margin-top:.5em></span>
+				</a>`
+
+				return result
+			}			
+		},
+		{ data: "OrderId",
+			visible: false
+		},
+		{ data: "OrderNumber", width: "3em" }, 
+		{ data: "OrderDate", 
+			width: "3em",
+			render: function(data) {
+				const num = Date.parse(data)
+				if (isNaN(num))
+					return data
+				else
+					return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
+			}
+		},
+		{ data: "SalesRep", width: "3em" }, 
+		{ data: "DateProcessed", 
+			width: "4em",
+			render: function(data) {
+				const ts = Date.parse(data)
+				if (isNaN(ts))
+					return data
+				else
+					return `<strong>${new Date(ts).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")}</strong>`
+				}
+		}, 
+		{ data: "Delivery",
+			width: "4em"
+		},
+		{
+			data: "designItems",
+			render(data) { return data.join("<br>")},
+			orderable: false
+		}, 
+		{ data: "Company",
+			render: function(data, word, row) {
+				return `${data} <a href=/customer/edit?id=${row.CustomerId}><span class="fa fa-edit fa-lg" style="margin-top:.5em"></span></a>`
+			}	
+	}, 
+		{ data: "Terms", width: "2em" }, 
+		{ data: "BuyIn",
+			width: "1em",
+			render: function(data, word, row) {
+				if (row.StockOrderId == null || row.StockOrderId=="0")
+					return ""
+				else
+					return `<a href="/purchasing?stockorderid=${row.StockOrderId}">${row.StockOrderId}</a>`
+			}
+		}, 
+		{ data: "Notes" }, 
+		{ data: "Done",
+			width: "1em",
+			render: function(data) {
+				return data ? "✔️" : ""
+			}
+		}
+	],
+	buttons: [
+		{
+			text: "Expand all",
+			action: (e, dt, node, config) => {
+				if (dt.buttons().text()[0] == "Expand all") {
+					Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
+						if (!td.classList.contains("shown"))
+							$(td).trigger("click")
+					})
+					dt.buttons(0).text("Collapse all")
+				} 
+				else if (dt.buttons().text()[0] == "Collapse all") {
+					Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
+						if (td.classList.contains("shown"))
+							$(td).trigger("click")
+					})
+					dt.buttons(0).text("Expand all")
 				}
 			}
 		},
-		order: [[3, "desc"]],
-		columns: [
-			{
-				className: 'dt-control',
-				orderable: false,
-				data: null,
-				title: "Actions",
-				width: "4em",
-				render(data) {
-<% if (!poweruser) { %>
-						return ""
-<% } %>
-					let result = `&ensp;
-					<a href="/${data.DateProcessed ? 'sales' : 'order'}/edit/${data.OrderId}" title="Edit this order">
-						<span class="fa fa-edit fa-lg" style="margin-top:.5em"></span>
-					</a>&ensp;
-					<a href=/${data.DateProcessed ? 'sales' : 'order'}/jobsheet/${data.OrderId} title="Print this order" target=_blank>
-						<span class="fa fa-print fa-lg" style=margin-top:.5em></span>
-					</a>`
-
-					return result
-				}			
-			},
-			{ data: "OrderId",
-				visible: false
-			},
-			{ data: "OrderNumber", width: "3em" }, 
-			{ data: "OrderDate", 
-				width: "3em",
-				render: function(data) {
-					const num = Date.parse(data)
-					if (isNaN(num))
-						return data
-					else
-						return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
-				}
-			},
-			{ data: "SalesRep", width: "3em" }, 
-			{ data: "DateProcessed", 
-				width: "4em",
-				render: function(data) {
-					const ts = Date.parse(data)
-					if (isNaN(ts))
-						return data
-					else
-						return `<strong>${new Date(ts).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")}</strong>`
-					}
-			}, 
-			{ data: "Delivery",
-				width: "4em"
-			},
-			{
-				data: "designItems",
-				render(data) { return data.join("<br>")},
-				orderable: false
-			}, 
-			{ data: "Company",
-				render: function(data, word, row) {
-					return `${data} <a href=/customer/edit?id=${row.CustomerId}><span class="fa fa-edit fa-lg" style="margin-top:.5em"></span></a>`
-				}	
-		}, 
-			{ data: "Terms", width: "2em" }, 
-			{ data: "BuyIn",
-				width: "1em",
-				render: function(data, word, row) {
-					if (row.StockOrderId == null || row.StockOrderId=="0")
-						return ""
-					else
-						return `<a href="/purchasing?stockorderid=${row.StockOrderId}">${row.StockOrderId}</a>`
-				}
-			}, 
-			{ data: "Notes" }, 
-			{ data: "Done",
-				width: "1em",
-				render: function(data) {
-					return data ? "✔️" : ""
-				}
-			}
-		],
-		buttons: [
-			{
-				text: "Expand all",
-				action: (e, dt, node, config) => {
-					if (dt.buttons().text()[0] == "Expand all") {
-						Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
-							if (!td.classList.contains("shown"))
-								$(td).trigger("click")
-						})
-						dt.buttons(0).text("Collapse all")
-					} 
-					else if (dt.buttons().text()[0] == "Collapse all") {
-						Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
-							if (td.classList.contains("shown"))
-								$(td).trigger("click")
-						})
-						dt.buttons(0).text("Expand all")
-					}
-				}
-			},
-		]
-	})
+	]
+})
 
 	window.datatable.on("draw", function() {
 		window.datatable.buttons(0).text("Expand all")
@@ -469,21 +511,10 @@ Array.from(document.querySelectorAll("fieldset input")).forEach(function(s)  {
 })
 
 
-
-document.getElementById("dateRangeCsv").addEventListener("click", function(event) {
-
-	const dateFrom = document.getElementById("dateFrom").value
-	const dateTo = document.getElementById("dateTo").value
-	if (dateFrom != "" && dateTo != "" && dateFrom <= dateTo) {
-			event.target.setAttribute("href", `/sales/csv?datefrom=${dateFrom}&dateto=${dateTo}` )
-	}
-	else 
-		event.preventDefault()
-})
-
 document.getElementById("dateFrom").addEventListener("input", function() {
 	document.getElementById("dateTo").setAttribute("min", this.value)
 })
+
 
 document.getElementById("dateTo").addEventListener("input", function() {
 	document.getElementById("dateFrom").setAttribute("max", this.value)
