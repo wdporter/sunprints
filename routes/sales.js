@@ -1467,39 +1467,40 @@ router.put("/:orderid", (req, res) => {
 			else { // update existing product
 				// 1. iterate fields to see if anything has changed
 				let original = db.prepare("SELECT * FROM Sales WHERE rowid=?").get(product.salesrowid)
-				changedFields = []
-				salesColumns.forEach(col => {
-					if (col != "OrderId" && col != "OrderGarmentId")
-						if (original[col] != product[col])
-							changedFields.push(col)
-				})
-
-				// 2. update statement for changes
-				if (changedFields.length > 0) {
-					let query = `UPDATE Sales SET ${changedFields.map(f => `${f}=@${f}`).join(", ")} WHERE rowid=@salesrowid`
-					db.prepare(query).run(product)
-					query = "INSERT INTO AuditLog VALUES (null, 'Sales', ?, 'UPD', ?, ?)"
-					auditLogId = db.prepare(query).run(product.salesrowid, req.auth.user, date).lastInsertRowid
-					query = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)"
-					changedFields.forEach(f => {
-						db.prepare(query).run(auditLogId, f, original[f], product[f])
+				if (original) {
+					changedFields = []
+					salesColumns.forEach(col => {
+						if (col != "OrderId" && col != "OrderGarmentId")
+							if (original[col] != product[col])
+								changedFields.push(col)
 					})
 
-					// 3. if quantities are lower, add back into stock, or if quantities are higher, remove from stock
-					changedSizes = sz.allSizes.filter(size => original[size] != product[size])
-					if (changedSizes.length > 0){
-						query = "INSERT INTO AuditLog VALUES (null, 'Garment', ?, 'UPD', ?, ?)"
-						const originalGarment = db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(product.GarmentId)
-						auditLogId = db.prepare(query).run(product.GarmentId, req.auth.user, date).lastInsertRowid
-						query = `UPDATE Garment SET ${changedSizes.map(s => `${s}=${s} + (${original[s]} - @${s})`).join(", ")} WHERE GarmentId=@GarmentId`
+					// 2. update statement for changes
+					if (changedFields.length > 0) {
+						let query = `UPDATE Sales SET ${changedFields.map(f => `${f}=@${f}`).join(", ")} WHERE rowid=@salesrowid`
 						db.prepare(query).run(product)
+						query = "INSERT INTO AuditLog VALUES (null, 'Sales', ?, 'UPD', ?, ?)"
+						auditLogId = db.prepare(query).run(product.salesrowid, req.auth.user, date).lastInsertRowid
 						query = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)"
-						changedSizes.forEach(size => {
-							db.prepare(query).run(auditLogId, size, originalGarment[size], originalGarment[size] + (original[size] - product[size]) )
+						changedFields.forEach(f => {
+							db.prepare(query).run(auditLogId, f, original[f], product[f])
 						})
-					}//~ changedSizes.length
-				}//~ changedFields.length
 
+						// 3. if quantities are lower, add back into stock, or if quantities are higher, remove from stock
+						changedSizes = sz.allSizes.filter(size => original[size] != product[size])
+						if (changedSizes.length > 0){
+							query = "INSERT INTO AuditLog VALUES (null, 'Garment', ?, 'UPD', ?, ?)"
+							const originalGarment = db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(product.GarmentId)
+							auditLogId = db.prepare(query).run(product.GarmentId, req.auth.user, date).lastInsertRowid
+							query = `UPDATE Garment SET ${changedSizes.map(s => `${s}=${s} + (${original[s]} - @${s})`).join(", ")} WHERE GarmentId=@GarmentId`
+							db.prepare(query).run(product)
+							query = "INSERT INTO AuditLogEntry VALUES (null, ?, ?, ?, ?)"
+							changedSizes.forEach(size => {
+								db.prepare(query).run(auditLogId, size, originalGarment[size], originalGarment[size] + (original[size] - product[size]) )
+							})
+						}//~ changedSizes.length
+					}//~ changedFields.length
+				}
 			} //~ end update existing product
 
 		}) //~ Products.forEach
