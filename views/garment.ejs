@@ -108,7 +108,7 @@
 					<tr v-for="size in sizes[garment.SizeCategory]" :key="size">
 						<th>{{ size == "ASm" ? "S" : size.slice(1) }}</th>
 						<td><input type=number v-model="garment[size]" /></td>
-						<td style="text-align:center">{{ garment['O' + size] }}</td>
+						<td style="text-align:center; color: darkred">{{ garment['O' + size] }}</td>
 						<td><input type=number v-model="garment['Min' + size]" min="0" /></td>
 					</tr>
 				</tbody>
@@ -116,7 +116,7 @@
 					<tr>
 						<td>Total:</td>
 						<td>{{ getTotalProductQuantity() }}</td>
-						<td style="color: crimson">{{ getTotalProductOnOrder() }}</td>
+						<td style="color: darkred">{{ getTotalProductOnOrder() }}</td>
 					</tr>
 				</tfoot>
 				</table>
