@@ -144,7 +144,7 @@
 			</div>
 		</td>
 		<td style="vertical-align:text-top">
-			<b>Invoice Date:</b> <%= order.InvoiceDate || "n/a" %><br>
+			<b>Invoice Date:</b> <%= order.InvoiceDate ?  new Date(order.InvoiceDate).toLocaleDateString("en-AU") : "n/a" %><br>
 			<b>Terms:</b>&emsp;&emsp;&emsp;<%= order.Terms %><br>
 			<b>Sales Rep:</b>&emsp;&ensp;<%= order.SalesRep || "n/a" %>
 		</td>
