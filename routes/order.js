@@ -1,11 +1,11 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3");
 const sz = require("../sizes.js");
 const designService = require("../service/designService")
 const mediaService = require("../service/mediaService")
 const { auditColumns } = require("../config/auditColumns.js")
 const getDB = require ("../integration/dbFactory.js")
+const regionService = require("../service/regionService")
 
 /* GET orders page. */
 router.get("/", function (req, res, next) {
@@ -22,7 +22,8 @@ router.get("/", function (req, res, next) {
 		user: req.auth.user,
 		poweruser: res.locals.poweruser,
 		salesrep: res.locals.salesrep,
-		allSizes: JSON.stringify(sz.allSizes)
+		allSizes: JSON.stringify(sz.allSizes),
+		regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }})
 	})
 })
 
@@ -52,7 +53,7 @@ router.get("/dt", function (req, res, next) {
 			query += whereClause
 		}
 
-		const columns = ["OrderId", "OrderId", "OrderNumber", "CustomerName", "OrderDate", "Repeat", "New", "BuyIn", "Done", "Terms", "SalesRep", "Notes", "DeliveryDate"]
+		const columns = ["OrderId", "OrderId", "OrderNumber", "CustomerName", "OrderDate", "Repeat", "New", "BuyIn", "Done", "Terms", "RegionId", "Notes", "DeliveryDate"]
 		const orderByClause = req.query.order.map(o => {
 			return ` ${columns[Number(o.column)]} COLLATE NOCASE ${o.dir} `
 		})
