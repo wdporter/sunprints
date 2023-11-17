@@ -1,6 +1,12 @@
+//todo
+The order save page is expecting there to be 
+a trigger to update/insert/delete the sales history table.
+
+
 CREATE TABLE Region (
 	RegionId INTEGER PRIMARY KEY,
 	Name TEXT NOT NULL,
+	[Order] INTEGER DEFAULT 0,
 	Deleted INTEGER DEFAULT 0,
 	CreatedBy TEXT NOT NULL,
 	CreatedDateTime TEXT NOT NULL,
@@ -8,23 +14,23 @@ CREATE TABLE Region (
 	LastModifiedDateTime TEXT NOT NULL); 
 
 
-INSERT INTO Region VALUES(1, 'CQ', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(2, 'NQ', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(3, 'SEQ', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(4, 'LHI', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(5, 'NSW', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(6, 'CORP', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(7, 'ISLANDS', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(8, 'WA', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(9, 'GC', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(10, 'NT', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(11, 'FNQ', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(12, 'SA', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(13, 'VIC', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(14, 'CROC TENT', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(15, 'ACTIVE', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(16, 'SC', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
-INSERT INTO Region VALUES(17, 'CROC SHOP', 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(1, 'CQ', 2, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(2, 'NQ', 4, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(3, 'SEQ', 7, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(4, 'LHI', 8, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(5, 'NSW', 3, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(6, 'CORP', 1, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(7, 'ISLANDS', 15, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(8, 'WA', 5, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(9, 'GC', 13, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(10, 'NT', 12, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(11, 'FNQ', 11, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(12, 'SA', 6, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(13, 'VIC', 9, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(14, 'CROC TENT', 17, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(15, 'ACTIVE', 10, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(16, 'SC', 14, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
+INSERT INTO Region VALUES(17, 'CROC SHOP', 16, 0, 'init', '03/11/2023, 00:00:00 pm', 'init', '03/11/2023, 00:00:00 pm'); 
 
 ALTER TABLE Customer ADD COLUMN  RegionId INTEGER;
 
@@ -1490,6 +1496,53 @@ UPDATE Customer SET RegionId=6 WHERE CustomerId=8792;
 UPDATE Customer SET RegionId=6 WHERE CustomerId=8793;
 UPDATE Customer SET RegionId=6 WHERE CustomerId=8794;
 
-ALTER TABLE Order ADD COLUMN RegionId INTEGER;
+ALTER TABLE Orders ADD COLUMN RegionId INTEGER;
 
-UPDATE Orders SET RegionId=(SELECT RegionId FROM Customer WHERE Customer.CustomerId=Orders.CustomerId)
+UPDATE Orders SET RegionId=(SELECT RegionId FROM Customer WHERE Customer.CustomerId=Orders.CustomerId);
+
+
+DROP VIEW "main"."OrderSearch_View";
+CREATE VIEW OrderSearch_View AS 
+
+SELECT OrderId, OrderNumber, Customer.CustomerId, Customer.Company AS CustomerName, 
+		OrderDate, Repeat, New, Buyin, Done, Terms, 
+		Orders.SalesRep, Orders.RegionId, Orders.Notes, DeliveryDate,
+		(SELECT IFNULL(fpd.code, '') || ',' || IFNULL(bpd.code, '') || ',' || IFNULL(ppd.code, '') || ',' || IFNULL(spd.code, '')
+			||  IFNULL(fed.code, '') || ',' || IFNULL(bed.code, '') || ',' || IFNULL(ped.code, '') || ',' || IFNULL(sed.code, '')	
+			||  IFNULL(ftd.code, '') || ',' || IFNULL(btd.code, '') || ',' || IFNULL(ptd.code, '') || ',' || IFNULL(std.code, '')	
+			FROM OrderGarment 
+				LEFT JOIN PrintDesign      fpd ON fpd.PrintDesignId     =FrontPrintDesignId
+				LEFT JOIN PrintDesign      bpd ON bpd.PrintDesignId     =BackPrintDesignId
+				LEFT JOIN PrintDesign      ppd ON ppd.PrintDesignId     =PocketPrintDesignId
+				LEFT JOIN PrintDesign      spd ON spd.PrintDesignId     =SleevePrintDesignId
+				LEFT JOIN EmbroideryDesign fed ON fed.EmbroideryDesignId=FrontEmbroideryDesignId
+				LEFT JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=BackEmbroideryDesignId
+				LEFT JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=PocketEmbroideryDesignId
+				LEFT JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=SleeveEmbroideryDesignId
+				LEFT JOIN TransferDesign   ftd ON ftd.TransferDesignId  =FrontTransferDesignId
+				LEFT JOIN TransferDesign   btd ON btd.TransferDesignId  =BackTransferDesignId
+				LEFT JOIN TransferDesign   ptd ON ptd.TransferDesignId  =PocketTransferDesignId
+				LEFT JOIN TransferDesign   std ON std.TransferDesignId  =SleeveTransferDesignId
+				WHERE OrderGarment.OrderId=Orders.OrderId) AS Designs,
+		(SELECT IFNULL(fpd.Code, '') || ' ' || IFNULL(fpd.Notes, '') || '; ' || IFNULL(bpd.Code, '') || ' ' || IFNULL(bpd.Notes, '') || '; ' || IFNULL(ppd.Code, '') || ' ' || IFNULL(ppd.Notes, '') || '; ' || IFNULL(spd.Code, '') || ' ' || IFNULL(spd.Notes, '')
+			 || IFNULL(fed.Code, '') || ' ' || IFNULL(fed.Notes, '') || '; ' || IFNULL(bed.Code, '') || ' ' || IFNULL(bed.Notes, '') || '; ' || IFNULL(ped.Code, '') || ' ' || IFNULL(ped.Notes, '') || '; ' || IFNULL(sed.Code, '') || ' ' || IFNULL(sed.Notes, '')
+			 || IFNULL(ftd.Code, '') || ' ' || IFNULL(ftd.Notes, '') || '; ' || IFNULL(btd.Code, '') || ' ' || IFNULL(btd.Notes, '') || '; ' || IFNULL(ptd.Code, '') || ' ' || IFNULL(ptd.Notes, '') || '; ' || IFNULL(std.Code, '') || ' ' || IFNULL(std.Notes, '')
+			FROM OrderGarment 
+				LEFT JOIN PrintDesign      fpd ON fpd.PrintDesignId     =FrontPrintDesignId
+				LEFT JOIN PrintDesign      bpd ON bpd.PrintDesignId     =BackPrintDesignId
+				LEFT JOIN PrintDesign      ppd ON ppd.PrintDesignId     =PocketPrintDesignId
+				LEFT JOIN PrintDesign      spd ON spd.PrintDesignId     =SleevePrintDesignId
+				LEFT JOIN EmbroideryDesign fed ON fed.EmbroideryDesignId=FrontEmbroideryDesignId
+				LEFT JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=BackEmbroideryDesignId
+				LEFT JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=PocketEmbroideryDesignId
+				LEFT JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=SleeveEmbroideryDesignId
+				LEFT JOIN TransferDesign   ftd ON ftd.TransferDesignId  =FrontTransferDesignId
+				LEFT JOIN TransferDesign   btd ON btd.TransferDesignId  =BackTransferDesignId
+				LEFT JOIN TransferDesign   ptd ON ptd.TransferDesignId  =PocketTransferDesignId
+				LEFT JOIN TransferDesign   std ON std.TransferDesignId  =SleeveTransferDesignId
+				WHERE OrderGarment.OrderId=Orders.OrderId) AS DesignsDisplay
+FROM Orders
+LEFT JOIN Customer USING (CustomerId)
+WHERE Orders.Deleted=0  
+	AND ProcessedDate IS NULL;
+
