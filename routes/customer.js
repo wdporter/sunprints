@@ -1,9 +1,9 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3");
 const { auditColumns } = require("../sizes.js");
 const customerService = require("../service/customerService")
 const getDb = require("../integration/dbFactory")
+const regionService = require("../service/regionService")
 
 /* GET customers page. */
 router.get("/", function (req, res, next) {
@@ -12,7 +12,8 @@ router.get("/", function (req, res, next) {
 		stylesheets: ["/stylesheets/customer-theme.css"],
 		user: req.auth.user,
 		poweruser: res.locals.poweruser,
-		salesrep: res.locals.salesrep
+		salesrep: res.locals.salesrep,
+		regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }})
 	})
 })
 
@@ -20,7 +21,7 @@ router.get("/", function (req, res, next) {
 /* GET deleted customers page. */
 router.get("/deleted", function (req, res) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDb()
 
 	const deleted = db.prepare("SELECT * FROM Customer WHERE DELETED=1 ORDER BY LastModifiedDateTime DESC").all()
 
@@ -36,7 +37,7 @@ router.get("/deleted", function (req, res) {
 
 // GET a listing in DataTables format used by datatables ajax
 router.get("/dt", function (req, res, next) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = getDb()
 	try {
 
 		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM Customer WHERE Deleted=0 ").get().Count
@@ -102,7 +103,7 @@ router.get("/dt", function (req, res, next) {
 
 /* GET the customer edit page, needs ?id=x */
 router.get("/edit", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = getDb()
 	try {
 		let customer = db.prepare("SELECT *, DATE(FollowUpDate, 'unixepoch') AS fudate FROM Customer WHERE CustomerId=?").get(req.query.id)
 
@@ -114,13 +115,16 @@ router.get("/edit", (req, res) => {
 
 		let salesreps = db.prepare("SELECT Name, Deleted FROM SalesRep ").all()
 
+		let regions = regionService.all().map(r => {return { id: r.RegionId, name: r.Name, deleted: r.Deleted }})
+
 		res.render ("customer_edit.ejs", {
 			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
 			customer,
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
 			salesrep: res.locals.salesrep,
-			salesreps
+			salesreps,
+			regions
 		})
 
 	}
@@ -222,7 +226,7 @@ router.post("/", (req, res) => {
 			return
 		}
 
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+		db = getDb()
 
 		let statement = db.prepare(`SELECT COUNT(*) AS count FROM Customer WHERE Code='${req.body.Code}'`)
 		if (statement.get().count > 0) {
@@ -295,7 +299,7 @@ router.post("/", (req, res) => {
 
 // POST the form from the edit page
 router.post("/edit", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = getDb()
 
 	const errors = []
 
@@ -311,13 +315,13 @@ router.post("/edit", (req, res) => {
 			req.body.FollowUpDate = Date.parse(req.body.FollowUpDate) / 1000 // sqlite date functions only use seconds
 	}
 
-	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-
+	// customer code must be unique
 	let count = db.prepare(`SELECT COUNT(*) AS Count FROM Customer WHERE Code=?`).get(req.body.Code).Count
 	if ((req.body.CustomerId == 0 && count > 0) 
 			|| (req.body.CustomerId != 0 && count > 1) )
 		errors.push("We require a unique customer code. Check if the customer already exists.")
 
+	// if there are errors render an edit page with the errors
 	if (errors.length > 0) {
 		let salesreps = db.prepare("SELECT Name, Deleted FROM SalesRep ").all()
 		res.render ("customer_edit.ejs", {
@@ -412,6 +416,7 @@ router.post("/edit", (req, res) => {
 
 		let customer = db.prepare("SELECT *, DATE(FollowUpDate, 'unixepoch') AS fudate FROM Customer WHERE CustomerId=?").get(req.body.CustomerId)
 		let salesreps = db.prepare("SELECT Name, Deleted FROM SalesRep ").all()
+		let regions = regionService.all().map(r => {return { id: r.RegionId, name: r.Name, deleted: r.Deleted }})
 		res.render ("customer_edit.ejs", {
 			title: `${req.query.id == 0 ? "New" : "Edit"} Customer`,
 			customer,
@@ -419,7 +424,8 @@ router.post("/edit", (req, res) => {
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
 			salesrep: res.locals.salesrep,
-			salesreps
+			salesreps,
+			regions
 		})
 
 	}
@@ -454,7 +460,7 @@ router.put("/:id", (req, res) => {
 		if (!req.body.Company)
 			errors.push("We require a company name")
 
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+		db = getDb()
 
 		let statement = db.prepare(`SELECT COUNT(*) AS count FROM Customer WHERE Code='${req.body.Code}' AND CustomerId != ${req.body.CustomerId}`)
 		if (statement.get().count > 0)
@@ -535,7 +541,7 @@ router.put("/:id", (req, res) => {
 
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDb()
 
 	try {
 		const date = new Date().toLocaleString()
@@ -574,7 +580,7 @@ router.put("/restore/:id", (req, res) => {
 router.delete("/:id", (req, res) => {
 
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = getDb()
 	try {
 
 		// now begin the actual save

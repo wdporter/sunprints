@@ -23,8 +23,9 @@
 				<th>Surname</th> <!-- visible:false -->
 				<th>Contact</th>
 				<th>Address</th>
-				<th>Delivery Notes</th>
-				<th>Sales Rep</th>
+				<th>Delivery Notes</th> <!-- visible:false -->
+				<th>Region</th>
+				<th>Sales Rep</th> 
 				<th>Last Order</th>
 			</tr>
 		</thead>
@@ -46,6 +47,8 @@
 
 
 <script>
+
+const regions = <%- JSON.stringify(regions) %>;
 
 // initialise DataTable
 window.datatable = new DataTable("table#customersTable", {
@@ -149,9 +152,14 @@ window.datatable = new DataTable("table#customersTable", {
 		},
 		{
 			data: "Notes",
-			title: "Delivery Notes",
-			searchable: false,
-			orderable: false, 
+			visible: false,
+		},
+		{
+			data: "RegionId",
+			width: "2em",
+			render(data, type, row) {
+				return regions.find(r => r.id == data)?.name ?? ""
+			}
 		},
 		{
 			data: "SalesRep",

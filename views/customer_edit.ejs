@@ -123,7 +123,7 @@ document.getElementById("successDialog").showModal()
 
 <p>
 	<label for="salesrep">Sales Rep:</label>
-	<select id="salesrep" name="salesrep" value="customer.SalesRep">
+	<select id="salesrep" name="SalesRep" value="customer.SalesRep">
 		<option value="">— Select —</option>
 		<% salesreps.filter(sr => sr.Deleted == 0).forEach(function(sr){ %>
 			<option key="<%= sr.Name %>" <%= sr.Name==customer.SalesRep ? 'selected' : '' %>><%= sr.Name %></option>
@@ -139,6 +139,21 @@ document.getElementById("successDialog").showModal()
 	</select>
 </p>
 
+<p>
+	<label for=region>Region:</label>
+	<select id=region name=RegionId>
+		<option value=>— Select —</option>
+		<% regions.filter(r => r.deleted == 0).forEach(function(r) { %> 
+			<option value=<%= r.id %> <%= r.id == customer.RegionId ? 'selected' : '' %> ><%= r.name %>
+		<% }) %>
+		<%# add in a deleted region if this customer is in one %>
+		<% let myDeletedRegion = regions.find(r => r.deleted == 1 && r.id == customer.RegionId) 
+				if (myDeletedRegion) { %>
+			<optgroup label="Deleted region:">
+				<option value=<%= myDeletedRegion.id %> selected><%= myDeletedRegion.name %></option>
+		<% } %>
+	</select>
+</p>
 
 <% if (poweruser || salesrep) { %>
 <input type="submit" value="<%= customer.CustomerId=='0' ? "Create new customer" : "Save customer details" %>" />
