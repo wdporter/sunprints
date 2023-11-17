@@ -9,7 +9,7 @@ const TransferDao = require("../integration/TransferDAO.js")
  * @param {string} location the term to search with Company or Code fields
  * @param {string} decoration the term to search with Company or Code fields
  * @param {object} terms the term to search with Company or Code fields
- * @returns {array} matching customers
+ * @returns {array} matching decorations
  */
 function search(location, decoration, terms) {
 
