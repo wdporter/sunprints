@@ -896,8 +896,17 @@ router.get("/outstanding/print", (req, res) => {
 			r.Qty *= numberOfDesigns
 		})
 
+		r2set.sort(function(a, b) {
+			if (a.OrderDate < b.OrderDate)
+				return -1
+			if (a.OrderDate > b.OrderDate)
+				return 1
+			return 0
+		})
+
 		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
+
 
 		res.render("outstanding/print.ejs", {
 			name: "Print Designs",
@@ -992,6 +1001,14 @@ router.get("/outstanding/embroidery", (req, res) => {
 			if (r2[r].FrontDesign || r2[r].BackDesign || r2[r].PocketDesign || r2[r].SleeveDesign)
 				r2set.push(r2[r])
 		}
+
+		r2set.sort(function(a, b) {
+			if (a.OrderDate < b.OrderDate)
+				return -1
+			if (a.OrderDate > b.OrderDate)
+				return 1
+			return 0
+		})
 
 		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
@@ -1090,6 +1107,14 @@ router.get("/outstanding/transfer", (req, res) => {
 				r2set.push(r2[r])
 		}
 
+		r2set.sort(function(a, b) {
+			if (a.OrderDate < b.OrderDate)
+				return -1
+			if (a.OrderDate > b.OrderDate)
+				return 1
+			return 0
+		})
+
 		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
 
@@ -1185,6 +1210,15 @@ router.get("/outstanding/promo", (req, res) => {
 		for (r in r2)
 			r2set.push(r2[r])
 
+		r2set.sort(function(a, b) {
+			if (a.OrderDate < b.OrderDate)
+				return -1
+			if (a.OrderDate > b.OrderDate)
+				return 1
+			return 0
+		})
+
+			
 		const salesReps = db.prepare(`SELECT DISTINCT SalesRep FROM Orders WHERE Done=0 AND IFNULL(SalesRep, '') <> '' `).all().map(sr => sr.SalesRep)
 		salesReps.push("none")
 
