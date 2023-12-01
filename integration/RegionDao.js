@@ -18,7 +18,7 @@ module.exports = class SalesRepDao {
 	}
 
 
-	
+
 	/**
 	 * Returns an array of regions
 	 * @param {boolean} includeDeleted whether to return to the deleted regions
@@ -35,5 +35,35 @@ module.exports = class SalesRepDao {
 		return retVal
 
 	}
+
+	create(name, order, user) {
+		try	{
+			var date = new Date().toLocaleString()
+			let query = /*sql*/`INSERT INTO Region (Name, [Order], CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime) VALUES (?, ?, ?, ?, ?, ?)`
+			let statement = this.db.prepare(query)
+			let info = statement.run(name, order, user,  date, user, date)
+			return info
+		}
+		catch(err) {
+			throw err;
+		}
+	}
+
+	update(id, name, order, active, user) {
+		try	{
+			var date = new Date().toLocaleString()
+			let query = /*sql*/`UPDATE Region SET Name = ?, [Order] = ?, Deleted=?, LastModifiedBy = ?, LastModifiedDateTime = ? WHERE RegionId = ?`
+			let statement = this.db.prepare(query)
+			let info = statement.run(name, order, active ? 0 : 1, user, date, id)
+			return info
+		}
+		catch(err) {
+			throw err;
+		}
+	}
+
+
+
+
 
 }

@@ -20,9 +20,15 @@
 			</p>
 		</fieldset>
 		<fieldset>
-			<legend>Sales Rep.</legend>
+			<legend>Owner</legend>
 			<p>
-				<label for=salesRep>Name</label>
+				<label for=region>Region</label>
+				<select id=region data-location=regions>
+					<option value="0">--select--</option>
+				</select>
+			</p>
+			<p>
+				<label for=salesRep>Sales Rep.</label>
 				<select id=salesRep data-location=salesreps>
 					<option value="0">--select--</option>
 				</select>
@@ -72,7 +78,7 @@
 				</select>
 			</p>
 			<p>
-				<label for="usb">Usb</label>
+				<label for="usb">USB</label>
 				<select id="usb" data-location="usbs">
 					<option value="0">--select--</option>
 				</select>
@@ -112,7 +118,7 @@
 				<th>Order Id</th>
 				<th>Order Number</th>
 				<th>Order Date</th>
-				<th>Rep.</th>
+				<th>Owner</th>
 				<th>Processed Date</th>
 				<th>Delivery Date</th>
 				<th>Designs</th>
@@ -196,6 +202,7 @@ function getCustomSearchObject() {
 		Transfer: document.getElementById("transfer").value,
 		TransferName: document.getElementById("transferName").value,
 		SalesRep: document.getElementById("salesRep").value,
+		Region: document.getElementById("region").value,
 		OrderNumber: document.getElementById("orderNumber").value
 	}
 }
@@ -226,8 +233,12 @@ window.datatable = new DataTable("table#dt", {
 <% if (!poweruser) { %>
 					return ""
 <% } %>
+				if (data.DateProcessed)
+					var orderUrl = `sales/edit/${data.OrderId}`;
+				else
+					var orderUrl = `order/edit?id=${data.OrderId}`;
 				let result = `&ensp;
-				<a href="/${data.DateProcessed ? 'sales' : 'order'}/edit/${data.OrderId}" title="Edit this order">
+				<a href="/${orderUrl}" title="Edit this order">
 					<span class="fa fa-edit fa-lg" style="margin-top:.5em"></span>
 				</a>&ensp;
 				<a href=/${data.DateProcessed ? 'sales' : 'order'}/jobsheet/${data.OrderId} title="Print this order" target=_blank>
@@ -251,7 +262,12 @@ window.datatable = new DataTable("table#dt", {
 					return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
 			}
 		},
-		{ data: "SalesRep", width: "3em" }, 
+		{ data: "Owner", 
+			width: "3em", 
+			render: function(data) {
+				return data ? data.replace(":", "<br>") : ""
+			}
+		},
 		{ data: "DateProcessed", 
 			width: "4em",
 			render: function(data) {
@@ -259,7 +275,7 @@ window.datatable = new DataTable("table#dt", {
 				if (isNaN(ts))
 					return data
 				else
-					return `<strong>${new Date(ts).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")}</strong>`
+					return /*html*/`<strong>${new Date(ts).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")}</strong>`
 				}
 		}, 
 		{ data: "Delivery",

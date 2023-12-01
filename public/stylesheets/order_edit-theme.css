@@ -16,6 +16,25 @@ dialog {
 product-size-table {
 margin-top:2em;
 }
+
 product-size-table td {
 	padding: .4em;
+}
+
+table.customer-search-table, 
+table.design-search-table
+ {
+	table-layout: auto;
+}
+
+table.customer-search-table button,
+table.design-search-table button
+ {
+	all: revert;
+}
+
+table.customer-search-table tr:hover,
+table.design-search-table tbody tr:hover
+{
+	background-color: beige;
 }

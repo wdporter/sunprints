@@ -120,6 +120,9 @@ router.get("/new", function (req, res, next) {
 
 		const salesReps = db.prepare("SELECT Name, Deleted FROM SalesRep WHERE Deleted=0").all()
 
+		const regions = db.prepare("SELECT RegionId, Name, [Order], Deleted FROM Region").all()
+		regions.sort((a, b) => a.Order - b.Order)
+
 		res.render("order_new.ejs", {
 			title: "New Order",
 			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/order_new-theme.css"],
@@ -132,7 +135,8 @@ router.get("/new", function (req, res, next) {
 			salesReps,
 			locations: sz.locations,
 			poweruser: res.locals.poweruser,
-			salesrep: res.locals.salesrep
+			salesrep: res.locals.salesrep,
+			regions
 		})
 
 	}
@@ -443,6 +447,10 @@ AND TransferDesignId=? `
 			query += ` OR Name='${order.SalesRep}' `
 		const salesReps = db.prepare(query).all()
 
+		const regions = db.prepare("SELECT RegionId, Name, [Order], Deleted FROM Region").all()
+		regions.sort((a, b) => a.Order - b.Order)
+
+
 		res.render("order_new.ejs", {
 			title: "Edit Order",
 			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/order_new-theme.css"],
@@ -454,6 +462,7 @@ AND TransferDesignId=? `
 			garments,
 			user: req.auth.user,
 			salesReps,
+			regions,
 			locations: sz.locations,
 			poweruser: res.locals.poweruser,
 			salesrep: res.locals.salesrep
@@ -1881,6 +1890,8 @@ router.put("/:id", function (req, res) {
 		}
 		if (req.body.Terms == "")
 			req.body.Terms = null
+		if (req.body.RegionId == "")
+			req.body.RegionId = null
 
 		// can't duplicate order numbers
 		if (db.prepare("SELECT COUNT(*) AS Count FROM Orders WHERE OrderNumber=? AND OrderId <> ?").get(req.body.OrderNumber, req.params.id).Count > 0) {

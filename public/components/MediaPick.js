@@ -54,8 +54,8 @@ export default {
 	template: /*html*/`
 <table class=design-search-table>
 	<tbody>
-		<tr v-for="mediaItem in media" :key="mediaItem.id">
-			<td><a href=# @click.prevent="onMediaSelect($event, mediaItem)">Select</a></td>
+		<tr v-for="mediaItem in media" :key="mediaItem.id" @dblclick="onMediaSelect($event, mediaItem)">
+			<td><button @click="onMediaSelect($event, mediaItem)">Select</button></td>
 			<td v-if="medium == 'Screen' || medium == 'TransferName'">{{ mediaItem.Name }} </td>
 			<td v-if="medium == 'Screen' || medium == 'Usb'">{{ mediaItem.Number }} </td>
 			<td v-if="medium == 'Screen'">{{ mediaItem.Colour }} </td>

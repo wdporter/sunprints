@@ -67,9 +67,9 @@ export default {
 		</tr>
 	</thead>
 	<tbody>
-		<tr v-for="design in designs">
-			<td><a href=# @click.prevent="onDesignSelect($event, design)">Select</a></td>
-			<td>{{ design.Code }} </td>
+		<tr v-for="design in designs" @dblclick="onDesignSelect($event, design)">
+			<td><button @click="onDesignSelect($event, design)" title="click to select this design">Select</button></td>
+			<td>{{ design.Code }}</td>
 			<td>{{ design.Notes }} </td>
 			<td v-if="decoration != 'Transfer'">{{ design.Comments }} </td>
 			<td>{{ design.SizeCategory }}</td>

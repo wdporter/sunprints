@@ -1,5 +1,6 @@
 const getDB = require("../integration/dbFactory")
 const CustomerDao = require("../integration/CustomerDAO.js")
+const RegionDao = require("../integration/RegionDAO.js")
 
 
 /**
@@ -25,6 +26,10 @@ function get(id) {
 function search(term) {
 
 	const db = getDB()
+
+	const regionDao = new RegionDao(db)
+	const regions = regionDao.all()
+
 	const dao = new CustomerDao(db)
 	const recordset = dao.search(term)
 
@@ -34,7 +39,10 @@ function search(term) {
 			CustomerId: cust.CustomerId,
 			Code: cust.Code,
 			Company: cust.Company,
-			detailsString: this.getDetailsString(cust)
+			RegionId: cust.RegionId,
+			RegionName: regions.find(r => r.RegionId === cust.RegionId)?.Name ?? "",
+			detailsString: this.getDetailsString(cust),
+			SalesRep: cust.SalesRep
 		}
 	})
 

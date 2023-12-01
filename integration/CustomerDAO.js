@@ -37,12 +37,13 @@ module.exports = class CustomerDao {
 	 */
 	search(term) {
 
-		let statement = this.db.prepare(/*sql*/`SELECT CustomerId, Code, Company, Locality, State, Notes AS DeliveryNotes, CustNotes AS Notes
+		let statement = this.db.prepare(/*sql*/`SELECT CustomerId, Code, Company, Locality, State, Notes AS DeliveryNotes, CustNotes AS Notes, RegionId, SalesRep
 			FROM Customer 
 			WHERE Deleted=0 AND (
 				Code LIKE @term 
 				OR Company LIKE @term
-			)`)
+			)
+			ORDER BY Company`)
 
 		term = `%${term}%`
 		const recordset = statement.all({ term })

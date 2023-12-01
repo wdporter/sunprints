@@ -62,45 +62,45 @@ function getProductsForOrder(orderId, db) {
 			product.removed = false
 		})
 
-		// move our designs from products[0] into "designs" property
-		let designs = {}
-		for (location of locations) {
-			for (design of art) {
-				designs[`${location}${design.decoration}DesignId`] = products[0][`${location}${design.decoration}DesignId`]
-				designs[`${location}${design.decoration}DesignName`] = products[0][`${location}${design.decoration}DesignName`]
-
-				// the order page ignores these
-				products.forEach(product => {
-					delete product[`${location}${design.decoration}DesignId`]
-					delete product[`${location}${design.decoration}DesignName`]
-				})
-
-				// media
-				for (position of [1, 2]) {
-					designs[`${location}${design.medium}${position}Id`] = products[0][`${location}${design.medium}${position}Id`]
-					designs[`${location}${design.medium}${position}Name`] = products[0][`${location}${design.medium}${position}Name`]
+			// move our designs from products[0] into "designs" property
+			let designs = {}
+		if (products.length > 0) {
+			for (location of locations) {
+				for (design of art) {
+					designs[`${location}${design.decoration}DesignId`] = products[0][`${location}${design.decoration}DesignId`]
+					designs[`${location}${design.decoration}DesignName`] = products[0][`${location}${design.decoration}DesignName`]
 
 					// the order page ignores these
 					products.forEach(product => {
-						delete product[`${location}${design.medium}${position}Id`]
-						delete product[`${location}${design.medium}${position}Name`]
+						delete product[`${location}${design.decoration}DesignId`]
+						delete product[`${location}${design.decoration}DesignName`]
 					})
+
+					// media
+					for (position of [1, 2]) {
+						designs[`${location}${design.medium}${position}Id`] = products[0][`${location}${design.medium}${position}Id`]
+						designs[`${location}${design.medium}${position}Name`] = products[0][`${location}${design.medium}${position}Name`]
+
+						// the order page ignores these
+						products.forEach(product => {
+							delete product[`${location}${design.medium}${position}Id`]
+							delete product[`${location}${design.medium}${position}Name`]
+						})
+					}
+				}
+			}
+
+			// trim names and delete if (standard) -- this is an artefact of the db query
+			for (design in designs) {
+				if (typeof designs[design] == "string") {
+					designs[design] = designs[design].trim()
+					if (designs[design] == "(standard)")
+						designs[design] = null
 				}
 			}
 		}
-
-		// trim names and delete if (standard) -- this is an artefact of the db query
-		for (design in designs) {
-			if (typeof designs[design] == "string") {
-				designs[design] = designs[design].trim()
-				if (designs[design] == "(standard)")
-					designs[design] = null
-			}
-		}
-
+		
 		return { products, designs }
-
-
 	}
 	finally {
 		if (mustClose)

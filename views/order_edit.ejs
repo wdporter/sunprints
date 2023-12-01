@@ -1,12 +1,5 @@
 <%- include("partials/head2.ejs") %>
 
-
-<style>
-
-</style>
-
-
-
 <div id="app">
 
 	<fieldset><legend>Order details (Id: {{ order.OrderId }})</legend>
@@ -30,6 +23,13 @@
 					<input id=orderNumber required placeholder=required v-model="order.OrderNumber" :autofocus="order.orderId != 0" ref="orderNumberInput" />
 				</p>
 				<p>
+					<label for="region">Region</label>
+					<select id="region" v-model="order.RegionId">
+						<option value="">—Select—</option>
+						<option v-for="r in regions" :value="r.id">{{ r.name }}</option>
+					</select>
+				</p>
+				<p>
 					<label for="salesRep">Sales Rep.</label>
 					<select id="salesRep" required v-model="order.SalesRep">
 						<option value="">—Select—</option>
@@ -45,7 +45,7 @@
 						<option value="Net 30 days">Net 30 days</option>
 					</select>
 				</p>
-				<p style="margin-top:calc(--unit + --unit-2)">
+				<p style="margin-top: var(--unit-3)">
 					<input id=repeat type=checkbox v-model="order.Repeat" /><label for=repeat>Repeat</label>
 					<input id=newDesign type=checkbox v-model="order.New" /><label for=newDesign>New</label>
 					<input id=buyIn type=checkbox 
@@ -59,14 +59,11 @@
 					<select id="purchaseSelect" v-model="order.StockOrderId" @change="onPurchaseOrderSelect">
 						<option value="">— Select —</option>
 						<option v-for="po in purchaseOrders" :value="po.StockOrderId">{{ po.StockOrderId }} {{ po.OrderDate }} {{ po.Company }}</option>
-
-					</select> <a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${order.StockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View</a></p>
-	 
-				<p style="margin-top:var(--unit-2)">
-					<label for=notes>Order Notes</label>
-					<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
+					</select> 
 				</p>
-	
+				<p v-if="order.OrderId != 0 && order.BuyIn">
+					<a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${order.StockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View purchase order</a>
+				</p>
 			</div>
 			<div>
 				<p id="invoiceDatePara">
@@ -84,6 +81,10 @@
 				<p>
 					<label for=customerOrderNumber>Customer’s order number</label>
 					<input id=customerOrderNumber v-model="order.CustomerOrderNumber" />
+				</p>
+				<p style="margin-top:var(--unit-2)">
+					<label for=notes>Order Notes</label>
+					<textarea id=orderNotes rows=5 v-model="order.Notes"></textarea>
 				</p>
 	
 			</div>
@@ -223,11 +224,14 @@
 	<p>
 <% if (poweruser || salesrep) { %>
 	<p>
-		<button @click="saveOrder">Save Order</button> 
+		<button @click="saveOrder" :disabled="order.products == null || order.products.length == 0">Save Order</button> 
 		<template v-if="order.OrderId != 0">
 			<input type=button id=printJobButton @click="printJobSheet" value="Print Job Sheet" style="margin-left:2em" />
 			<input type=submit id=shipOrderButton class="bottom-button yellow-on-black-buttton" @click="shipOrder" value="Ship Order" title="Sets done to true, will no longer display on orders page." style="margin-left:2em" />
 			<input type=reset value="Delete Order" @click="deleteOrder" v-if="order.OrderId != 0" style="margin-left:2em"  />
+		</template>
+		<template v-if="order.products == null || order.products.length == 0">
+			<span>⚠ We require at least one product</span>
 		</template>
 	</p>
 <% } %>
@@ -367,6 +371,7 @@ createApp ({
 		const order = reactive(<%- JSON.stringify(order) %>)
 		const orderNumberInput = ref(null) // ref(null) is for an element of same name, 
 		const salesReps = ref(<%- JSON.stringify(salesReps) %>)
+		const regions = ref(<%- JSON.stringify(regions) %>)
 		const purchaseOrders = ref(<%- JSON.stringify(purchaseOrders) %>)
 
 		const productChangeId = ref(0)
@@ -377,6 +382,7 @@ createApp ({
 			media,
 			sizes,
 			salesReps,
+			regions,
 			order,
 			designPickDecoration,
 			designPick,
@@ -389,6 +395,8 @@ createApp ({
 		onCustomerSelect(selected) { // callback function when customer is chosen
 			this.order.customer = selected
 			this.order.CustomerId = selected.CustomerId
+			this.order.RegionId = selected.RegionId
+			this.order.SalesRep = selected.SalesRep
 			this.$refs.customerDetails.removeAttribute("open")
 			this.$refs.orderNumberInput.focus()
 			this.$refs.customerInfo.scrollIntoView({behavior:"smooth"})

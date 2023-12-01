@@ -1,5 +1,5 @@
 const getDB = require("../integration/dbFactory")
-const RegionDao = require("../integration/RegionDao")
+const RegionDao = require("../integration/RegionDAO")
 
 /**
  * Returns an array of regions, included deleted
@@ -23,5 +23,32 @@ function all() {
 	}
 }
 
+/* creates a new region */
+function create(name, order, user) {
+	
+	const db = getDB()
+	const dao = new RegionDao(db)
 
-module.exports = { all }
+	try {
+		dao.create(name, order, user)
+	}
+	finally {
+		db.close()
+	}
+}
+
+function update(id, name, order, active, user) {
+	const db = getDB()
+	const dao = new RegionDao(db)
+
+	try {
+		dao.update(id, name, order, active, user)
+	}
+	finally {
+		db.close()
+	}
+
+
+}
+
+module.exports = { all, create, update }

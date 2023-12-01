@@ -33,15 +33,16 @@ router.get("/dt", (req, res) => {
 console.log(req.query.customSearch)
 		let query = `SELECT COUNT(*) AS Count FROM SalesTotal`
 		let statement = db.prepare(query)
-		let recordsTotal = recordsFiltered = statement.all().reduce((acc, curr) => { return acc + curr.Count}, 0)
+		let recordsTotal = recordsFiltered = statement.get().Count;
 
 
-		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, SalesTotal.SalesRep, SalesTotal.DateProcessed, 
+		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, Region.Name || ':' || SalesTotal.SalesRep AS Owner, SalesTotal.DateProcessed, 
 		SalesTotal.Delivery, Customer.Code, Customer.Company, Customer.CustomerId, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
-		,SalesTotal.StockOrderId
+		,SalesTotal.StockOrderId 
 		FROM SalesTotal 
-		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId `
-		
+		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId 
+		INNER JOIN Region USING (RegionId)`
+
 		const salesJoin = ` INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId `
 		let useSalesJoin = false
 
@@ -67,6 +68,10 @@ console.log(req.query.customSearch)
 			if (req.query.customSearch.SalesRep && req.query.customSearch.SalesRep != "0") {
 				where.push(`SalesTotal.SalesRep = @SalesRep`)
 				params.SalesRep = req.query.customSearch.SalesRep.trimEnd(" (*)")
+			}
+			if (req.query.customSearch.Region && req.query.customSearch.Region != "0") {
+				where.push(`SalesTotal.RegionId = @Region`)
+				params.Region = req.query.customSearch.Region.trimEnd(" (*)")
 			}
 			if (req.query.customSearch.Print && req.query.customSearch.Print != "0") {
 					where.push(`(Sales.FrontPrintDesignId=@Print OR Sales.BackPrintDesignId=@Print OR Sales.PocketPrintDesignId=@Print OR Sales.SleevePrintDesignId=@Print)`)
@@ -218,9 +223,6 @@ console.log(req.query.customSearch)
 	finally {
 		db.close()
 	}
-
-
-
 })
 
 
@@ -241,7 +243,6 @@ router.get("/customernames", (req, res) => {
 		db.close()
 	}
 })
-
 
 router.get("/customercodes", (req, res) => {
 	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
@@ -297,6 +298,7 @@ router.get("/salesreps", (req, res) => {
 		const reps = db.prepare("SELECT Name, Deleted FROM SalesRep WHERE Name IN (SELECT Distinct(SalesRep) FROM SalesTotal) ORDER BY 2, 1 ").all()
 		res.send(
 			reps.map(r => {
+				// todo, it would be better to create an optgroup for deleted items, do this for other lists too
 				return {
 					value: r.Name,
 					name: r.Name + (r.Deleted == 1 ? "*" : "")
@@ -311,6 +313,28 @@ router.get("/salesreps", (req, res) => {
 		db.close()
 	}
 })
+
+router.get("/regions", (req, res) => {
+	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	try {
+		const regions = db.prepare("SELECT RegionId, Name, [Order], Deleted FROM Region WHERE RegionId IN (SELECT Distinct(RegionId) FROM SalesTotal) ORDER BY [Order]").all()
+		res.send(
+			regions.map(r => {
+				return {
+					value: r.RegionId,
+					name: r.Name + (r.Deleted == 1 ? "*" : "")
+				}
+			})
+		)
+	}
+	catch(ex) {
+		console.log(ex)
+	}
+	finally{
+		db.close()
+	}
+})
+
 
 router.get("/prints", (req, res) => {
 	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
@@ -600,8 +624,10 @@ router.get("/edit/:id", (req, res) => {
 	try {
 
 		let query = /*sql*/`SELECT 
-		SalesTotal.rowid, SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.CustomerId, SalesTotal.SalesRep, SalesTotal.OrderDate, SalesTotal.Repeat, SalesTotal.New, SalesTotal.BuyIn, SalesTotal.Terms, SalesTotal.Delivery,SalesTotal.Notes, SalesTotal.CustomerOrderNumber, SalesTotal.DateProcessed, SalesTotal.DateInvoiced, 	
-		Sales.rowid AS salesrowid, Sales.GarmentId, Sales.OrderGarmentId, Sales.Price, 
+		SalesTotal.rowid, SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.CustomerId, SalesTotal.SalesRep, 
+		SalesTotal.OrderDate, SalesTotal.Repeat, SalesTotal.New, SalesTotal.BuyIn, SalesTotal.Terms, SalesTotal.Delivery,
+		SalesTotal.Notes, SalesTotal.CustomerOrderNumber, SalesTotal.DateProcessed, SalesTotal.DateInvoiced, 
+		SalesTotal.RegionId, Sales.rowid AS salesrowid, Sales.GarmentId, Sales.OrderGarmentId, Sales.Price, 
 		Garment.Code, Label, Type, Garment.Colour, Garment.SizeCategory, Garment.Notes AS GarmentNotes, Garment.Deleted,
 		${sz.allSizes.map(s => `Sales.${s}`).join(",")},
 		fpd.PrintDesignId AS FrontPrintDesignId,
@@ -726,6 +752,7 @@ router.get("/edit/:id", (req, res) => {
 			OrderNumber: orderDetails[0].OrderNumber, 
 			CustomerId: orderDetails[0].CustomerId, 
 			SalesRep: orderDetails[0].SalesRep, 
+			RegionId: orderDetails[0].RegionId,
 			OrderDate: orderDetails[0].OrderDate, 
 			Repeat: orderDetails[0].Repeat, 
 			New: orderDetails[0].New, 
@@ -784,7 +811,7 @@ router.get("/edit/:id", (req, res) => {
 
 		const customers = db.prepare("SELECT CustomerId, Company || CASE WHEN Deleted=1 THEN ' (deleted)' ELSE '' END AS Company  FROM Customer ORDER BY Company").all()
 		const salesReps = db.prepare("SELECT Name || CASE WHEN Deleted=1 THEN ' (deleted)' ELSE '' END AS Name FROM SalesRep ORDER BY Deleted, Name").all().map(sr => sr.Name)
-
+		const regions = db.prepare("SELECT RegionId, Name || CASE WHEN Deleted=1 THEN ' (deleted)' ELSE '' END AS Name FROM Region ORDER BY Deleted, [Order]").all()
 
 		res.render("sales_edit.ejs", {
 			title: "Edit Sales History",
@@ -792,6 +819,7 @@ router.get("/edit/:id", (req, res) => {
 			order,
 			customers,
 			salesReps,
+			regions,
 			allSizes: sz.allSizes,
 			sizes: sz.sizes	
 		})
@@ -1315,7 +1343,7 @@ router.put("/:orderid", (req, res) => {
 	const { Products } = req.body
 
 	const salesTotalColumns = ["OrderNumber", "CustomerId", "CustomerOrderNumber", "SalesRep",	
-	"OrderDate", "Repeat", "New", "BuyIn", "Terms", "Delivery", "Notes", "DateProcessed", "DateInvoiced"]
+	"OrderDate", "Repeat", "New", "BuyIn", "Terms", "Delivery", "Notes", "DateProcessed", "DateInvoiced", "RegionId"]
 
 	// compile the relevant columns, use the column names from our size table
 	const salesColumns = ["OrderId", "GarmentId", "OrderGarmentId", "Price"]

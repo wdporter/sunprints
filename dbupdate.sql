@@ -1,6 +1,3 @@
-//todo
-The order save page is expecting there to be 
-a trigger to update/insert/delete the sales history table.
 
 
 CREATE TABLE Region (
@@ -1500,6 +1497,11 @@ ALTER TABLE Orders ADD COLUMN RegionId INTEGER;
 
 UPDATE Orders SET RegionId=(SELECT RegionId FROM Customer WHERE Customer.CustomerId=Orders.CustomerId);
 
+ALTER TABLE SalesTotal ADD COLUMN RegionId INTEGER;
+
+UPDATE SalesTotal SET RegionId=(SELECT RegionId FROM Customer WHERE Customer.CustomerId=SalesTotal.CustomerId);
+
+
 
 DROP VIEW "main"."OrderSearch_View";
 CREATE VIEW OrderSearch_View AS 
@@ -1545,4 +1547,152 @@ FROM Orders
 LEFT JOIN Customer USING (CustomerId)
 WHERE Orders.Deleted=0  
 	AND ProcessedDate IS NULL;
+
+
+-- CREATE TRIGGER Order_Insert_Trigger
+-- AFTER INSERT
+-- ON Orders
+-- BEGIN
+-- INSERT INTO SalesTotal 
+-- (OrderId, OrderNumber, CustomerId, SalesRep, OrderDate, Repeat, New, BuyIn, Terms, Delivery, Notes, CustomerOrderNumber, DateProcessed, DateInvoiced, Done, StockOrderId, RegionId)
+-- VALUES 
+-- (NEW.OrderId, NEW.OrderNumber, NEW.CustomerId, NEW.SalesRep, NEW.OrderDate, NEW.Repeat, NEW.New, NEW.BuyIn, NEW.Terms, NEW.DeliveryDate, NEW.Notes, NEW.CustomerOrderNumber, NEW.ProcessedDate, NEW.InvoiceDate, NEW.Done, NEW.StockOrderId, NEW.RegionId);
+-- END;
+
+-- CREATE TRIGGER Order_Update_Trigger
+-- AFTER UPDATE
+-- ON Orders
+-- BEGIN
+-- UPDATE SalesTotal SET
+-- OrderNumber=NEW.OrderNumber, CustomerId=NEW.CustomerId, SalesRep=NEW.SalesRep,
+-- OrderDate=NEW.OrderDate, Repeat=NEW.Repeat, New=NEW.New, BuyIn=NEW.BuyIn, Terms=NEW.Terms, Delivery=NEW.DeliveryDate,
+-- Notes=NEW.Notes, CustomerOrderNumber=NEW.CustomerOrderNumber, DateProcessed=NEW.ProcessedDate, 
+-- DateInvoiced=NEW.InvoiceDate, Done=NEW.Done, StockOrderId=NEW.StockOrderId, RegionId=NEW.RegionId
+-- WHERE  OrderId=NEW.OrderId;
+-- END;
+
+-- CREATE TRIGGER OrderGarment_Insert_Trigger
+-- AFTER INSERT
+-- ON OrderGarment
+-- BEGIN
+-- INSERT INTO Sales
+-- (OrderGarmentId, OrderId, GarmentId, 
+-- FrontPrintDesignId, FrontScreenId, FrontScreen2Id,
+-- BackPrintDesignId,BackScreenId,BackScreen2Id,
+-- PocketPrintDesignId,PocketScreenId,PocketScreen2Id,
+-- SleevePrintDesignId,SleeveScreenId,SleeveScreen2Id,
+-- FrontEmbroideryDesignId,FrontUsbId,FrontUsb2Id,
+-- BackEmbroideryDesignId,BackUsbId,BackUsb2Id,
+-- PocketEmbroideryDesignId,PocketUsbId,PocketUsb2Id,
+-- SleeveEmbroideryDesignId,SleeveUsbId,SleeveUsb2Id,
+-- FrontTransferDesignId,FrontTransferNameId,FrontTransferName2Id,
+-- BackTransferDesignId,BackTransferNameId,BackTransferName2Id,
+-- PocketTransferDesignId,PocketTransferNameId,PocketTransferName2Id,
+-- SleeveTransferDesignId,SleeveTransferNameId,SleeveTransferName2Id,
+-- K0,K1,K2,K4,K6,K8,K10,K12,K14,K16,
+-- W6,W8,W10,W12,W14,W16,W18,W20,W22,W24,W26,W28,
+-- AXS,ASm,AM,AL,AXL,A2XL,A3XL,A4XL,A5XL,A6XL,A7XL,A8XL,
+-- Price)
+-- VALUES (
+-- NEW.OrderGarmentId, NEW.OrderId, NEW.GarmentId,
+-- NEW.FrontPrintDesignId, NEW.FrontScreenId, NEW.FrontScreen2Id,
+-- NEW.BackPrintDesignId, NEW.BackScreenId, NEW.BackScreen2Id,
+-- NEW.PocketPrintDesignId, NEW.PocketScreenId, NEW.PocketScreen2Id,
+-- NEW.SleevePrintDesignId, NEW.SleeveScreenId, NEW.SleeveScreen2Id,
+-- NEW.FrontEmbroideryDesignId, NEW.FrontUsbId, NEW.FrontUsb2Id,
+-- NEW.BackEmbroideryDesignId, NEW.BackUsbId, NEW.BackUsb2Id,
+-- NEW.PocketEmbroideryDesignId, NEW.PocketUsbId, NEW.PocketUsb2Id,
+-- NEW.SleeveEmbroideryDesignId, NEW.SleeveUsbId, NEW.SleeveUsb2Id,
+-- NEW.FrontTransferDesignId, NEW.FrontTransferNameId, NEW.FrontTransferName2Id,
+-- NEW.BackTransferDesignId, NEW.BackTransferNameId, NEW.BackTransferName2Id,
+-- NEW.PocketTransferDesignId, NEW.PocketTransferNameId, NEW.PocketTransferName2Id,
+-- NEW.SleeveTransferDesignId, NEW.SleeveTransferNameId, NEW.SleeveTransferName2Id,
+-- NEW.K0, NEW.K1, NEW.K2, NEW.K4, NEW.K6, NEW.K8, NEW.K10, NEW.K12, NEW.K14, NEW.K16,
+-- NEW.W6, NEW.W8, NEW.W10, NEW.W12, NEW.W14, NEW.W16, NEW.W18, NEW.W20, NEW.W22, NEW.W24, NEW.W26, NEW.W28,
+-- NEW.AXS, NEW.ASm, NEW.AM, NEW.AL, NEW.AXL, NEW.A2XL, NEW.A3XL, NEW.A4XL, NEW.A5XL, NEW.A6XL, NEW.A7XL, NEW.A8XL,
+-- NEW.Price
+-- );
+-- END;
+
+-- CREATE TRIGGER OrderGarment_Update_Trigger
+-- AFTER UPDATE
+-- ON OrderGarment
+-- BEGIN
+-- UPDATE Sales SET
+-- OrderGarmentId=NEW.OrderGarmentId,
+-- OrderId=NEW.OrderId, 
+-- GarmentId=NEW.GarmentId,
+-- FrontPrintDesignId=NEW.FrontPrintDesignId,
+-- FrontScreenId=NEW.FrontScreenId,
+-- FrontScreen2Id=NEW.FrontScreen2Id,
+-- BackPrintDesignId=NEW.BackPrintDesignId,
+-- BackScreenId=NEW.BackScreenId,
+-- BackScreen2Id=NEW.BackScreen2Id,
+-- PocketPrintDesignId=NEW.PocketPrintDesignId,
+-- PocketScreenId=NEW.PocketScreenId,
+-- PocketScreen2Id=NEW.PocketScreen2Id,
+-- SleevePrintDesignId=NEW.SleevePrintDesignId,
+-- SleeveScreenId=NEW.SleeveScreenId,
+-- SleeveScreen2Id=NEW.SleeveScreen2Id,
+-- FrontEmbroideryDesignId=NEW.FrontEmbroideryDesignId,
+-- FrontUsbId=NEW.FrontUsbId,
+-- FrontUsb2Id=NEW.FrontUsb2Id,
+-- BackEmbroideryDesignId=NEW.BackEmbroideryDesignId,
+-- BackUsbId=NEW.BackUsbId,
+-- BackUsb2Id=NEW.BackUsb2Id,
+-- PocketEmbroideryDesignId=NEW.PocketEmbroideryDesignId,
+-- PocketUsbId=NEW.PocketUsbId,
+-- PocketUsb2Id=NEW.PocketUsb2Id,
+-- SleeveEmbroideryDesignId=NEW.SleeveEmbroideryDesignId,
+-- SleeveUsbId=NEW.SleeveUsbId,
+-- SleeveUsb2Id=NEW.SleeveUsb2Id,
+-- FrontTransferDesignId=NEW.FrontTransferDesignId,
+-- FrontTransferNameId=NEW.FrontTransferNameId,
+-- FrontTransferName2Id=NEW.FrontTransferName2Id,
+-- BackTransferDesignId=NEW.BackTransferDesignId,
+-- BackTransferNameId=NEW.BackTransferNameId,
+-- BackTransferName2Id=NEW.BackTransferName2Id,
+-- PocketTransferDesignId=NEW.PocketTransferDesignId,
+-- PocketTransferNameId=NEW.PocketTransferNameId,
+-- PocketTransferName2Id=NEW.PocketTransferName2Id,
+-- SleeveTransferDesignId=NEW.SleeveTransferDesignId,
+-- SleeveTransferNameId=NEW.SleeveTransferNameId,
+-- SleeveTransferName2Id=NEW.SleeveTransferName2Id,
+-- K0=NEW.K0,
+-- K1=NEW.K1,
+-- K2=NEW.K2,
+-- K4=NEW.K4,
+-- K6=NEW.K6,
+-- K8=NEW.K8,
+-- K10=NEW.K10,
+-- K12=NEW.K12,
+-- K14=NEW.K14,
+-- K16=NEW.K16,
+-- W6=NEW.W6,
+-- W8=NEW.W8,
+-- W10=NEW.W10,
+-- W12=NEW.W12,
+-- W14=NEW.W14,
+-- W16=NEW.W16,
+-- W18=NEW.W18,
+-- W20=NEW.W20,
+-- W22=NEW.W22,
+-- W24=NEW.W24,
+-- W26=NEW.W26,
+-- W28=NEW.W28,
+-- AXS=NEW.AXS,
+-- ASm=NEW.ASm,
+-- AM=NEW.AM,
+-- AL=NEW.AL,
+-- AXL=NEW.AXL,
+-- A2XL=NEW.A2XL,
+-- A3XL=NEW.A3XL,
+-- A4XL=NEW.A4XL,
+-- A5XL=NEW.A5XL,
+-- A6XL=NEW.A6XL,
+-- A7XL=NEW.A7XL,
+-- A8XL=NEW.A8XL,
+-- Price=NEW.Price
+-- WHERE OrderGarmentId=NEW.OrderGarmentId;
+-- END;
 

@@ -85,8 +85,8 @@ export default {
 		<tr v-else>
 			<td colspan=6 ><i>Showing {{ totalRecords }} results</i></td>
 		</tr>
-		<tr v-for="product in products">
-			<td><a href=# @click.prevent="onProductSelect($event, product)">Select</a></td>
+		<tr v-for="product in products" @dblclick="onProductSelect($event, product)">
+			<td><button @click="onProductSelect($event, product)">Select</button></td>
 			<td>{{ product.Code }} </td>
 			<td>{{ product.Label }} </td>
 			<td>{{ product.Type }} </td>

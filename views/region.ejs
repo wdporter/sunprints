@@ -1,0 +1,125 @@
+<%- include("partials/head.ejs") %>
+
+<style>
+button {
+	margin-bottom: 0;
+}
+
+
+</style>
+
+<% 
+ var maxOrder = 0;
+ regions.map(r => {
+	maxOrder = Math.max(maxOrder, r.Order);
+ })
+
+ %>
+
+
+<div>
+<table>
+<thead><tr>
+	<th>Order
+	<th>Name
+	<th>Active
+	<th>Edit
+	<tbody>
+
+<% regions.forEach(r => { %>
+ <tr data-id=<%= r.RegionId %>>
+	<td><%= r.Order %></td>
+	<td><%= r.Name %></td>
+	<td><%= r.Deleted ? "❌" : "✅" %></td>
+	<td><button class="edit-button" >Edit</button>
+<% }) %>
+<tfoot>
+<tr>
+	<td><input placeholder=order type=number id=newOrder min=0 value="<%= maxOrder + 1 %>" />
+	<td><input id=name placeholder="new region" />
+	<td>
+	<td><button id=insertButton>Insert</button>
+
+
+</table>
+</div>
+
+<dialog id="editDialog">
+	<h1>Edit Region</h1>
+	<form id="editForm" method="dialog">
+		<input type=hidden id=editId />
+		<p><label for=editOrder>Order</label><input type=number id=editOrder min=1 />
+		<p><label for=editName">Name</label><input id=editName autofocus />
+		<p><input id=editActive type=checkbox /><label for=editActive>Active</label>
+		<p><input type=submit value=Save />
+		<input type=button style="float:right" onclick="dialog.close()" value=Close />
+		</p>
+	</form>
+</dialog>
+
+
+<script>
+// do i even need this? 	var regions = <%- JSON.stringify(regions) %>;
+
+document.getElementById("insertButton").addEventListener("click", async () => {
+	let name = document.getElementById("name").value;
+	let order = document.getElementById("newOrder").value;
+	let response = await fetch("/region", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({ name, order })
+	})
+	if (response.ok) {
+		location.reload();
+	}
+	else {
+		alert("something went wrong: " + response.statusText)
+	}
+})
+
+var dialog = document.getElementById("editDialog")
+
+Array.from(document.querySelectorAll("button.edit-button")).forEach(b => {
+	b.addEventListener("click", () => {
+		let row = b.closest("tr");
+		let id = row.dataset.id;
+		let order = row.querySelector("td:nth-child(1)").textContent;
+		let name = row.querySelector("td:nth-child(2)").textContent;
+		let active = row.querySelector("td:nth-child(3)").textContent.trim() == "✅";
+		document.getElementById("editId").value = id;
+		document.getElementById("editOrder").value = order;
+		document.getElementById("editName").value = name;
+		document.getElementById("editActive").checked = active;
+		dialog.showModal();
+	})
+})
+
+document.getElementById("editForm").addEventListener("submit", async (event) => {
+	event.preventDefault();
+	let id = document.getElementById("editId").value;
+	let order = document.getElementById("editOrder").value;
+	let name = document.getElementById("editName").value;
+	let active = document.getElementById("editActive").checked;
+	let response = await fetch(`/region/${id}`, {
+		method: "PUT",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({ name, order, active })
+	})
+	if (response.ok) {
+		location.reload();
+	}
+	else {
+		alert("something went wrong: " + response.statusText)
+	
+	}
+})
+</script>
+
+
+
+
+<%- include("partials/foot.ejs") %>

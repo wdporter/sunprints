@@ -59,17 +59,36 @@ in which the "edit" in the name doesn't really mean anything either
 				<input id=orderNumber required placeholder=required value="<%= order ? order.OrderNumber : '' %>" />
 			</p>
 			<p>
-				<label for="salesRep">Sales Rep.</label>
-				<select id="salesRep" required>
+				<label for="region">Region</label>
+				<!-- only show deleted regions if they are on the current order-->
+				<select id="region" required>
 					<option value="">&mdash;choose&mdash;</option>
-					<% salesReps.forEach(rep => { %>
-						<option <% if (order && order.SalesRep && order.SalesRep == rep.Name) { %>selected<% } %>><%= rep.Name %> 
+					<% regions.forEach(r => { 
+						var myRegion = order && order.RegionId && order.RegionId == r.RegionId
+						%>
+						<% if (r.Deleted == 0 || (myRegion))  { %>
+						<option value="<%= r.RegionId %>" <% 
+							if (myRegion) { %>selected<% } 
+							%>>
+							<%= r.Name %> 
+						<% } %>
 					<% }) %>
 				</select>
 			</p>
 			<p>
-				<label for=terms>Terms</label>
-				<select id=terms>
+				<label for="salesRep">Sales Rep.</label>
+				<select id="salesRep" required>
+					<option value="">&mdash;choose&mdash;</option>
+					<% salesReps.forEach(rep => { 
+						var myRep = order && order.SalesRep && order.SalesRep == rep.Name
+						%>
+						<option <% if (myRep) { %>selected<% } %>><%= rep.Name %></option> 
+					<% }) %>
+				</select>
+			</p>
+			<p>
+				<label for="terms">Terms</label>
+				<select id="terms">
 					<option value="">—choose—</option>
 					<option value="C.O.D." <%=(order && order.Terms=='C.O.D.' ) ? 'selected' : '' %> >C.O.D.</option>
 					<option value="Net 7 days" <%=(order && order.Terms=='Net 7 days' ) ? 'selected' : '' %> >Net 7 days
@@ -441,6 +460,8 @@ in which the "edit" in the name doesn't really mean anything either
 			mode: "<%= mode %>"
 		}
 
+		regions = <%- JSON.stringify(regions) %>;
+
 		if (window.sunprints.mode == "new") {
 			document.getElementById("deliveryDate").value = window.localStorage.getItem("deliveryDate")
 			const params = new URLSearchParams(window.location.search)
@@ -479,11 +500,13 @@ in which the "edit" in the name doesn't really mean anything either
 						const table = document.getElementById("customerTable")
 						table.innerHTML = json.map(row => {
 							return /*html*/`
-								<tr data-id=${row.CustomerId} class=customer-row>
+								<tr data-id=${row.CustomerId} data-regionid="${row.RegionId}" data-salesrep="${row.SalesRep || ''}" class=customer-row>
 									<td><a href=# onclick='populateCustomer(this, event)'>Select
 									<td>${row.Code}
 									<td>${row.Company}
-									<td>${row.Locality || ""} ${row.State || ""}`
+									<td>${row.Locality || ""} ${row.State || ""}
+									<td>${row.RegionName}
+									<td>${row.SalesRep || ""}`
 						}).join("")
 					})
 			}
@@ -506,7 +529,27 @@ in which the "edit" in the name doesn't really mean anything either
 			document.getElementById("customerTable").innerHTML = ""
 			document.getElementById("chooseCustomerDetails").removeAttribute("open")
 			document.getElementById("orderNumber").focus()
+			let myRegion = regions.find(r => r.RegionId == tr.dataset.regionid)
+			let regionSelect = document.getElementById("region")
+			if (myRegion) {
+				let myOption = Array.from(regionSelect.querySelectorAll("option")).find(o => o.value == myRegion.RegionId)
+				if (myOption)
+					myOption.selected = true
+			}
+			else {
+				regionSelect.selectedIndex = 0
+			}
 
+			let mySalesRep = tr.dataset.salesrep
+			let salesRepSelect = document.getElementById("salesRep")
+			if (mySalesRep) {
+				myOption = Array.from(salesRepSelect.querySelectorAll("option")).find(o => o.textContent == mySalesRep)
+				if (myOption)
+					myOption.selected = true
+			}
+			else {
+				salesRepSelect.selectedIndex = 0
+			}
 		}
 
 
@@ -551,6 +594,7 @@ in which the "edit" in the name doesn't really mean anything either
 				New: document.getElementById("newDesign").checked ? 1 : 0,
 				BuyIn: document.getElementById("buyIn").checked ? 1 : 0,
 				SalesRep: salesRepSelect.value,
+				RegionId: document.getElementById("region").value,
 				Terms: document.getElementById("terms").value,
 				Notes: document.getElementById("orderNotes").value.trim() || null,
 				CustomerOrderNumber: document.getElementById("customerOrderNumber").value.trim() || null

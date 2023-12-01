@@ -18,6 +18,7 @@
 <script id="orderDetails" type="application/json"><%- JSON.stringify(order) %></script>
 <script id="customers" type="application/json"><%- JSON.stringify(customers) %></script>
 <script id="salesReps" type="application/json"><%- JSON.stringify(salesReps) %></script>
+<script id="regions" type="application/json"><%- JSON.stringify(regions) %></script>
 <script id="sizes" type="application/json"><%- JSON.stringify(sizes) %></script>
 <script id="allSizes" type="application/json"><%- JSON.stringify(allSizes) %></script>
 
@@ -40,6 +41,14 @@
 
 <p><label for=CustomerOrderNumber>Customer Order Number:</label><input id=CustomerOrderNumber v-model="order.CustomerOrderNumber" />
 </p>
+
+<p>
+	<label for=region>Region:</label>
+	<select id=region v-model=order.RegionId >
+	<option v-for="r in regions" :value="r.RegionId">{{ r.Name }}</option>
+	</select>
+	</p>
+	
 
 <p>
 <label for=SalesRep>Sales Rep:</label>
@@ -300,6 +309,7 @@
 const order = JSON.parse(document.querySelector("script#orderDetails").textContent)
 const customers = JSON.parse(document.querySelector("script#customers").textContent)
 const salesReps = JSON.parse(document.querySelector("script#salesReps").textContent)
+const regions = JSON.parse(document.querySelector("script#regions").textContent)
 const sizes = JSON.parse(document.querySelector("script#sizes").textContent)
 const allSizes = JSON.parse(document.querySelector("script#allSizes").textContent)
 
@@ -310,6 +320,7 @@ window.vueApp = Vue.createApp({
 			order,
 			customers,
 			salesReps,
+			regions,
 			sizes,
 			allSizes,
 			messageDialog: {
