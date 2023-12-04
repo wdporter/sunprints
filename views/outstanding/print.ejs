@@ -52,13 +52,20 @@ td {
 	<li>Use the Destination/Printer option to save a PDF 
 	<li>Under <i>More settings</i> you can remove the header/footer
 </ul>
-<label for="salesRep">Filter by sales rep.</label>
-<select onchange="window.location.search='?rep=' + this.value">
+<form method="post" action="/order/outstanding/<%= action %>">
+	<p>
+	<label for="salesrep">Sales rep.</label>
+	<select id="salesrep" name="salesrep">
 	<option>All</option>
 	<% salesReps.forEach(rep => { %>
 	 <option <%= chosenRep==rep ? "selected" : "" %>><%= rep %></option>
 	<% }) %>
 </select>
+</p>
+<p><label for=fromDate>From:</label> <input type=date name=fromDate id=fromDate onchange="changeFromDate()" value="<%= fromDate %>" /></p>
+<p><label for=toDate>To:</label> <input type=date name=toDate id=toDate onchange="changeToDate()" value="<%= toDate %>" /></p>
+<input type="submit" value="Filter" />
+</form>
 	<hr>
 </div>
 
@@ -109,4 +116,20 @@ td {
 <p>Total Value: <%= results.reduce((acc, curr) => { return acc + curr.Value}, 0 ).toLocaleString("en-AU", {style: "currency", currency: "AUD"}) %></p>
 <script>
 window.print()
+
+function changeFromDate() {
+	var fromDate = document.getElementById("fromDate").value
+
+	document.getElementById("toDate").min = fromDate
+
+}
+
+function changeToDate() {
+	var toDate = document.getElementById("toDate").value
+
+	document.getElementById("fromDate").max = toDate
+
+
+
+}
 </script>
