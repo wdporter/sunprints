@@ -1192,7 +1192,7 @@ router.all("/outstanding/promo", (req, res) => {
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, 
 		Customer.Company, 
-		${sz.allSizes.join(" + ")} AS Qty,
+		${sz.allSizes.map(s => `OrderGarment.${s}`).join(" + ")} AS Qty,
 		Price,
 		FrontPrintDesignId, BackPrintDesignId, PocketPrintDesignId, SleevePrintDesignId,
 		FrontEmbroideryDesignId, BackEmbroideryDesignId, PocketEmbroideryDesignId, SleeveEmbroideryDesignId,
@@ -1200,7 +1200,19 @@ router.all("/outstanding/promo", (req, res) => {
 		FROM Orders
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
+		INNER JOIN Garment ON Garment.GarmentId=OrderGarment.GarmentId
 		WHERE ProcessedDate IS NULL `
+
+		// todo, we just need to know if any of the garments have "PROMO", but the join is returning a column for each garment
+		if (req.query.n == "Promo")
+			query += " AND Garment.Code = 'PROMO' "
+
+		if (req.query.n == "Sub")
+			query += " AND Garment.Type LIKE 'SJ%' "
+
+		if (req.query.n == "Plain Stock") // todo check %20
+			query += " AND Garment.Type NOT LIKE 'SJ%' AND NOT Garment.Code = 'PROMO' "
+
 
 		var params = []
 		if (req.body.salesrep !== "All") {
@@ -1277,7 +1289,7 @@ router.all("/outstanding/promo", (req, res) => {
 		salesReps.push("none")
 
 		res.render("outstanding/print.ejs", {
-			name: "Promo / Sub / Plain Stock",
+			name: req.query.n,
 			results: r2set,
 			salesReps,
 			chosenRep: req.body?.salesrep ?? "All",
