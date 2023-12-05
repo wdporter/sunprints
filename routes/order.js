@@ -1205,14 +1205,14 @@ router.all("/outstanding/promo", (req, res) => {
 
 		// todo, we just need to know if any of the garments have "PROMO", but the join is returning a column for each garment
 		if (req.query.n == "Promo")
-			query += " AND Garment.Code = 'PROMO' "
+			query += " AND EXISTS (SELECT 1 FROM Garment WHERE Garment.Code='PROMO' AND Garment.GarmentId=OrderGarment.GarmentId) "
 
 		if (req.query.n == "Sub")
-			query += " AND Garment.Type LIKE 'SJ%' "
+			query += " AND EXISTS (SELECT 1 FROM Garment WHERE Garment.Type LIKE 'SJ%' AND Garment.GarmentId=OrderGarment.GarmentId) "
 
 		if (req.query.n == "Plain Stock") // todo check %20
 			query += " AND Garment.Type NOT LIKE 'SJ%' AND NOT Garment.Code = 'PROMO' "
-
+			query += " AND EXISTS (SELECT 1 FROM Garment WHERE NOT Garment.Code='PROMO' AND Garment.Type NOT LIKE 'SJ%' AND Garment.GarmentId=OrderGarment.GarmentId)"
 
 		var params = []
 		if (req.body.salesrep !== "All") {
