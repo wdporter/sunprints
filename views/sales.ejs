@@ -346,13 +346,24 @@ window.datatable = new DataTable("table#dt", {
 			fetch(url)
 			.then(response => response.text())
 			.then(data => {
-				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for date range: ${data}`
+				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for customer in date range: ${data}`
 			})
-		}
-		else {
-			document.getElementById("customerSalesTotalLabel").textContent = ""
+			return
 		}
 
+		// now we'll try to do the same for a region and a date range
+		const regionid = document.getElementById("region").value
+		if ((regionid != "") && (fromDate || toDate)) {
+			const url = `/sales/regiontotal?regionid=${regionid}&from=${fromDate}&to=${toDate}`
+			fetch(url)
+			.then(response => response.text())
+			.then(data => {
+				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for region in date range: ${data}`
+			})
+			return
+		}
+
+			document.getElementById("customerSalesTotalLabel").textContent = ""
 
 	})
 

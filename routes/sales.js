@@ -1215,6 +1215,40 @@ router.get("/customertotal", (req, res) => {
 })
 
 
+// GET a total of region sales in a date period
+router.get("/regiontotal", (req, res) => {
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+
+	const { regionid, from, to } = req.query
+
+	var sql = /*sql*/`SELECT Price * (${sz.allSizes.map(s=> `${s}`).join("+")}) AS Total FROM SalesTotal
+	INNER JOIN Sales USING (OrderId) 
+	WHERE `
+
+	var whereClauses = [` SalesTotal.RegionId = ?  `]
+	var parameters = [regionid]
+	if (from) {
+		whereClauses.push( ` SalesTotal.OrderDate >= ? `)
+		parameters.push(from)
+	}
+	if (to) {
+		whereClauses.push( ` SalesTotal.OrderDate <= ? `)
+		parameters.push(to)
+	}
+	sql += whereClauses.join(" AND ")
+	
+
+	const statement = db.prepare(sql);
+	let resultset = statement.all(parameters)
+	var total = resultset.reduce((acc, curr) => acc + curr.Total, 0)
+
+	res.send(total.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}));
+
+})
+
+
+
+
 ////////////////////////////////////////////////////////
 // POST
 ////////////////////////////////////////////////////////
