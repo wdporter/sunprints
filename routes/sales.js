@@ -41,7 +41,7 @@ console.log(req.query.customSearch)
 		,SalesTotal.StockOrderId 
 		FROM SalesTotal 
 		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId 
-		INNER JOIN Region USING (RegionId)`
+		LEFT JOIN Region USING (RegionId)`
 
 		const salesJoin = ` INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId `
 		let useSalesJoin = false
