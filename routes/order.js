@@ -1211,7 +1211,6 @@ router.all("/outstanding/promo", (req, res) => {
 			query += " AND EXISTS (SELECT 1 FROM Garment WHERE Garment.Type LIKE 'SJ%' AND Garment.GarmentId=OrderGarment.GarmentId) "
 
 		if (req.query.n == "Plain Stock") // todo check %20
-			query += " AND Garment.Type NOT LIKE 'SJ%' AND NOT Garment.Code = 'PROMO' "
 			query += " AND EXISTS (SELECT 1 FROM Garment WHERE NOT Garment.Code='PROMO' AND Garment.Type NOT LIKE 'SJ%' AND Garment.GarmentId=OrderGarment.GarmentId)"
 
 		var params = []
