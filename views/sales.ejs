@@ -1,5 +1,23 @@
 <%- include("partials/head.ejs") %>
 
+<style>
+
+	.sub-table {
+		all: revert !important;
+		width: 100%;
+
+		margin-left: 3em !important;
+	}
+	.sub-table thead .sub-num, .sub-table tbody .sub-num {
+		text-align: right;
+	}
+	.sub-table tfoot .sub-num {
+		text-align: right;
+		border-top: black 1px solid !important;
+	}
+</style>
+
+
 <button id="topClearButton" onclick="clearSearchFields()" style="margin-left:3em;">Clear Search</button>
 
 <section>
@@ -140,6 +158,8 @@
 
 	
 <script>
+
+	var sizes = <%- JSON.stringify(sizes) %>;
 
 function downloadCsv() {
 	console.log("downloading…")
@@ -429,8 +449,9 @@ async function onOpenRowButtonClick(evt) {
 				if (response.ok) {
 					var json = await response.json()
 					let html = "<div style=display:flex>"
-					if (json.length == 0)
-					html += "<span class=nousbs>no sales items<span>"
+					if (json.length == 0) {
+						html += "<span class=nousbs>no sales items<span>"
+					}
 					else {
 						for (var item of json) {
 							html += "<div class=sales-item>"
@@ -457,12 +478,36 @@ async function onOpenRowButtonClick(evt) {
 					}
 					html += "</div>"
 
+					// maybe one day we will use tableHtml instead, but todo headings and values for designs
+					var tableHtml = /*html*/`<table class=sub-table><thead><tr><th>Product<th>Design<th>Sizes<th class=sub-num>Quantity<th class=sub-num>Price<th class=sub-num>Value<tbody>`
+					var qty = 0
+					var value = 0
+					for (var item of json) {
+						tableHtml += "<tr>"
+						tableHtml += `<td>${item.Product} ${item.Product2 ? "<br>" + item.Product2 : ""}`
+						tableHtml += `<td>${item.FrontPrintDesign || ""}`
+						var mySizes = sizes.filter(s => item[s])
+						tableHtml += `<td>${mySizes.map(s => s + ": " + item[s]).join("<br>")}`
+						var numberOfProducts = mySizes.reduce( (acc, curr) => acc + item[curr], 0)
+						qty += numberOfProducts
+						tableHtml += `<td class=sub-num>${numberOfProducts}`
+						tableHtml += `<td class=sub-num>${item.Price.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`
+						var itemValue = item.Price * numberOfProducts
+						tableHtml += `<td class=sub-num>${itemValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`
+						value += itemValue
+						tableHtml += "</tr>"
+					}
+					tableHtml += `<tfoot><tr><td colspan=3><td class=sub-num>${qty}<td><td class=sub-num>${value.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`
+
+					tableHtml += "</table>"
+
 					const totalValue = json.reduce((acc, curr) => {
 						return acc + parseFloat(curr.Value.replace("$", ""))
 					}, 0)
 					const totalQuantity = json.reduce((acc, curr) => {
 						return acc + curr.Total
 					}, 0)
+					
 					html += /*html*/`<div style="font-weight: bold; margin-top:1rem; margin-bottom: 1rem;">Total Quantity: ${totalQuantity}; Total Value: ${totalValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}</div>`
 
 					row.child(html).show()

@@ -12,6 +12,7 @@ router.get("/", (req, res) => {
 			title: "Sales History",
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
+			sizes: sz.allSizes,
 			stylesheets: [
 				"/stylesheets/buttons.dataTables-2.2.3.css", 
 				"/stylesheets/sales-theme.css",
