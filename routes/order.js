@@ -807,14 +807,14 @@ router.get("/dt/garments/:orderId", function (req, res) {
 })
 
 
-router.get("/outstanding/print", (req, res) => {
+router.all("/outstanding/print", (req, res) => {
 
 	const db = getDB()
 
 	try {
 
-		if (req.query.rep == null)
-			req.query.rep = "All"
+		if (req.method == "GET") 
+			req.body.salesrep = "All"
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, Done, 
 		Customer.Company, 
@@ -833,22 +833,32 @@ router.get("/outstanding/print", (req, res) => {
 		LEFT JOIN PrintDesign spd ON spd.PrintDesignId=OrderGarment.SleevePrintDesignId
 		WHERE ProcessedDate IS NULL `
 
-		if (req.query.rep !== "All") {
-			if (req.query.rep == "none")
+		var params = []
+		if (req.body.salesrep !== "All") {
+			// we need a filter on the query
+			if (req.body.salesrep == "none")
 				query += " AND IFNULL(Orders.SalesRep, '')='' "
-			else
+			else {
 				query += " AND Orders.SalesRep = ? "
+				params.push(req.body.salesrep);
+			}
+		}
+		
+		if (req.body.fromDate) {
+			query += " AND OrderDate >= ? "
+			params.push(req.body.fromDate)
+		}
+
+		if (req.body.toDate) {
+			query += " AND OrderDate <= ? "
+			params.push(req.body.toDate)
 		}
 
 		query += "ORDER BY OrderDate "
 
 		const statement = db.prepare(query)
 
-		if (req.query.rep == "All" || req.query.rep == "none")
-			var resultset = statement.all()
-		else
-			var resultset = statement.all(req.query.rep)
-
+		var resultset = statement.all(params)
 
 		const r2 = {}
 
@@ -912,7 +922,10 @@ router.get("/outstanding/print", (req, res) => {
 			name: "Print Designs",
 			results: r2set,
 			salesReps,
-			chosenRep: req.query?.rep ?? "All"
+			chosenRep: req.body?.salesrep ?? "All",
+			action: "print",
+			fromDate: req.body.fromDate,
+			toDate: req.body.toDate
 		})
 
 
@@ -930,14 +943,14 @@ router.get("/outstanding/print", (req, res) => {
 })
 
 
-router.get("/outstanding/embroidery", (req, res) => {
+router.all("/outstanding/embroidery", (req, res) => {
 
 	const db = getDB()
 
 	try {
 
-		if (req.query.rep == null)
-			req.query.rep = "All"
+		if (req.method == "GET") 
+			req.body.salesrep = "All"
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, Done, 
 		Customer.Company, 
@@ -956,20 +969,32 @@ router.get("/outstanding/embroidery", (req, res) => {
 		LEFT JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=OrderGarment.SleeveEmbroideryDesignId
 		WHERE ProcessedDate IS NULL `
 
-		if (req.query.rep !== "All") {
-			if (req.query.rep == "none")
+		var params = []
+		if (req.body.salesrep !== "All") {
+			// we need a filter on the query
+			if (req.body.salesrep == "none")
 				query += " AND IFNULL(Orders.SalesRep, '')='' "
-			else
+			else {
 				query += " AND Orders.SalesRep = ? "
+				params.push(req.body.salesrep);
+			}
+		}
+		
+		if (req.body.fromDate) {
+			query += " AND OrderDate >= ? "
+			params.push(req.body.fromDate)
 		}
 
-		query += " ORDER BY 2 ASC "
+		if (req.body.toDate) {
+			query += " AND OrderDate <= ? "
+			params.push(req.body.toDate)
+		}
+
+		query += "ORDER BY OrderDate "
 
 		const statement = db.prepare(query)
-		if (req.query.rep == "All" || req.query.rep == "none")
-			var resultset = statement.all()
-		else
-			var resultset = statement.all(req.query.rep)
+
+		var resultset = statement.all(params)
 
 		const r2 = {}
 
@@ -1017,7 +1042,10 @@ router.get("/outstanding/embroidery", (req, res) => {
 			name: "Embroidery Designs",
 			results: r2set,
 			salesReps,
-			chosenRep: req.query?.rep ?? "All"
+			chosenRep: req.body?.salesrep ?? "All",
+			action: "embroidery",
+			fromDate: req.body.fromDate,
+			toDate: req.body.toDate
 		})
 
 	}
@@ -1034,14 +1062,14 @@ router.get("/outstanding/embroidery", (req, res) => {
 })
 
 
-router.get("/outstanding/transfer", (req, res) => {
+router.all("/outstanding/transfer", (req, res) => {
 
 	const db = getDB()
 
 	try {
 
-		if (req.query.rep == null)
-			req.query.rep = "All"
+		if (req.method == "GET") 
+			req.body.salesrep = "All"
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Done, 
 		Customer.Company, 
@@ -1060,21 +1088,32 @@ router.get("/outstanding/transfer", (req, res) => {
 		LEFT JOIN TransferDesign std ON std.TransferDesignId=OrderGarment.SleeveTransferDesignId
 		WHERE ProcessedDate IS NULL `
 
-		if (req.query.rep !== "All") {
-			if (req.query.rep == "none")
+		var params = []
+		if (req.body.salesrep !== "All") {
+			// we need a filter on the query
+			if (req.body.salesrep == "none")
 				query += " AND IFNULL(Orders.SalesRep, '')='' "
-			else
+			else {
 				query += " AND Orders.SalesRep = ? "
+				params.push(req.body.salesrep);
+			}
+		}
+		
+		if (req.body.fromDate) {
+			query += " AND OrderDate >= ? "
+			params.push(req.body.fromDate)
 		}
 
-		query += " ORDER BY 2 ASC "
+		if (req.body.toDate) {
+			query += " AND OrderDate <= ? "
+			params.push(req.body.toDate)
+		}
+
+		query += "ORDER BY OrderDate "
 
 		const statement = db.prepare(query)
 
-		if (req.query.rep == "All" || req.query.rep == "none")
-			var resultset = statement.all()
-		else
-			var resultset = statement.all(req.query.rep)
+		var resultset = statement.all(params)
 
 		const r2 = {}
 
@@ -1122,7 +1161,10 @@ router.get("/outstanding/transfer", (req, res) => {
 			name: "Transfer Designs",
 			results: r2set,
 			salesReps,
-			chosenRep: req.query?.rep ?? "All"
+			chosenRep: req.body?.salesrep ?? "All",
+			action: "transfer",
+			fromDate: req.body.fromDate,
+			toDate: req.body.toDate
 		})
 
 	}
@@ -1139,18 +1181,18 @@ router.get("/outstanding/transfer", (req, res) => {
 })
 
 
-router.get("/outstanding/promo", (req, res) => {
+router.all("/outstanding/promo", (req, res) => {
 
 	const db = getDB()
 
 	try {
 
-		if (req.query.rep == null)
-			req.query.rep = "All"
+		if (req.method == "GET") 
+			req.body.salesrep = "All"
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, 
 		Customer.Company, 
-		${sz.allSizes.join(" + ")} AS Qty,
+		${sz.allSizes.map(s => `OrderGarment.${s}`).join(" + ")} AS Qty,
 		Price,
 		FrontPrintDesignId, BackPrintDesignId, PocketPrintDesignId, SleevePrintDesignId,
 		FrontEmbroideryDesignId, BackEmbroideryDesignId, PocketEmbroideryDesignId, SleeveEmbroideryDesignId,
@@ -1158,23 +1200,45 @@ router.get("/outstanding/promo", (req, res) => {
 		FROM Orders
 		INNER JOIN Customer ON Customer.CustomerId=Orders.CustomerId
 		INNER JOIN OrderGarment ON OrderGarment.OrderId=Orders.OrderId
+		INNER JOIN Garment ON Garment.GarmentId=OrderGarment.GarmentId
 		WHERE ProcessedDate IS NULL `
 
-		if (req.query.rep !== "All") {
-			if (req.query.rep == "none")
+		// todo, we just need to know if any of the garments have "PROMO", but the join is returning a column for each garment
+		if (req.query.n == "Promo")
+			query += " AND EXISTS (SELECT 1 FROM Garment WHERE Garment.Code='PROMO' AND Garment.GarmentId=OrderGarment.GarmentId) "
+
+		if (req.query.n == "Sub")
+			query += " AND EXISTS (SELECT 1 FROM Garment WHERE Garment.Type LIKE 'SJ%' AND Garment.GarmentId=OrderGarment.GarmentId) "
+
+		if (req.query.n == "Plain Stock") // todo check %20
+			query += " AND EXISTS (SELECT 1 FROM Garment WHERE NOT Garment.Code='PROMO' AND Garment.Type NOT LIKE 'SJ%' AND Garment.GarmentId=OrderGarment.GarmentId)"
+
+		var params = []
+		if (req.body.salesrep !== "All") {
+			// we need a filter on the query
+			if (req.body.salesrep == "none")
 				query += " AND IFNULL(Orders.SalesRep, '')='' "
-			else
+			else {
 				query += " AND Orders.SalesRep = ? "
+				params.push(req.body.salesrep);
+			}
 		}
-		query += " ORDER BY OrderDate "
+		
+		if (req.body.fromDate) {
+			query += " AND OrderDate >= ? "
+			params.push(req.body.fromDate)
+		}
+
+		if (req.body.toDate) {
+			query += " AND OrderDate <= ? "
+			params.push(req.body.toDate)
+		}
+
+		query += "ORDER BY OrderDate "
 
 		const statement = db.prepare(query)
 
-		if (req.query.rep == "All" || req.query.rep == "none")
-			var resultset = statement.all()
-		else
-			var resultset = statement.all(req.query.rep)
-
+		var resultset = statement.all(params)
 
 		const r2 = {}
 		const rejected = new Set()
@@ -1186,6 +1250,7 @@ router.get("/outstanding/promo", (req, res) => {
 				// if we don't already have it in r2, it's the first time we found it
 				if (!r2[r.OrderNumber]) {
 					// we only keep it if it has no designs on it
+					// todo we could iterate our media types and construct string keys from them
 					if (r.FrontPrintDesignId == null && r.BackPrintDesignId == null && r.PocketPrintDesignId == null && r.SleevePrintDesignId == null
 						&& r.FrontEmbroideryDesignId == null && r.BackEmbroideryDesignId == null && r.PocketEmbroideryDesignId == null && r.SleeveEmbroideryDesignId == null
 						&& r.FrontTransferDesignId == null && r.BackTransferDesignId == null && r.PocketTransferDesignId == null && r.SleeveTransferDesignId == null) {
@@ -1223,12 +1288,14 @@ router.get("/outstanding/promo", (req, res) => {
 		salesReps.push("none")
 
 		res.render("outstanding/print.ejs", {
-			name: "Promo / Sub / Plain Stock",
+			name: req.query.n,
 			results: r2set,
 			salesReps,
-			chosenRep: req.query?.rep ?? "All"
+			chosenRep: req.body?.salesrep ?? "All",
+			action: "promo",
+			fromDate: req.body.fromDate,
+			toDate: req.body.toDate
 		})
-
 
 	}
 	catch (ex) {
