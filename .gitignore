@@ -1,3 +1,3 @@
 node_modules
 sunprints.db
-sunprints.db-journal
+*.db-journal
