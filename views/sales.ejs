@@ -1,23 +1,5 @@
 <%- include("partials/head.ejs") %>
 
-<style>
-
-	.sub-table {
-		all: revert !important;
-		width: 100%;
-
-		margin-left: 3em !important;
-	}
-	.sub-table thead .sub-num, .sub-table tbody .sub-num {
-		text-align: right;
-	}
-	.sub-table tfoot .sub-num {
-		text-align: right;
-		border-top: black 1px solid !important;
-	}
-</style>
-
-
 <button id="topClearButton" onclick="clearSearchFields()" style="margin-left:3em;">Clear Search</button>
 
 <section>
@@ -139,7 +121,7 @@
 				<th>Owner</th>
 				<th>Processed Date</th>
 				<th>Delivery Date</th>
-				<th>Designs</th>
+				<th>Design</th>
 				<th>Customer name</th>
 				<th>Terms</th>
 				<th>Buy In</th>
@@ -159,7 +141,9 @@
 	
 <script>
 
-	var sizes = <%- JSON.stringify(sizes) %>;
+var sizes = <%- JSON.stringify(sizes) %>;
+var locations = <%- JSON.stringify(locations) %>;
+var art = <%- JSON.stringify(art) %>;
 
 function downloadCsv() {
 	console.log("downloading…")
@@ -285,7 +269,10 @@ window.datatable = new DataTable("table#dt", {
 		{ data: "Owner", 
 			width: "3em", 
 			render: function(data) {
-				return data ? data.replace(":", "<br>") : ""
+				if (data[0] == ":")
+					return data.substring(1);
+				else
+					return data.replace(":", "<br>")
 			}
 		},
 		{ data: "DateProcessed", 
@@ -303,7 +290,14 @@ window.datatable = new DataTable("table#dt", {
 		},
 		{
 			data: "designItems",
-			render(data) { return data.join("<br>")},
+			render(data) { 
+				if (data.length === 2 && data[0].Design === data[1].Design) {
+					return data[0];
+				}
+				else {
+					return data.join("<br>");
+				}
+			},
 			orderable: false
 		}, 
 		{ data: "Company",
@@ -490,43 +484,64 @@ async function onOpenRowButtonClick(evt) {
 					html += "</div>"
 
 					// maybe one day we will use tableHtml instead, but todo headings and values for designs
-					var tableHtml = /*html*/`<table class=sub-table><thead><tr><th>Product<th>Design<th>Sizes<th class=sub-num>Quantity<th class=sub-num>Price<th class=sub-num>Value<tbody>`
-					var qty = 0
-					var value = 0
+					var tableHtml = /*html*/`<table class=sub-table><thead><tr><th>Product<th>Design<th>Sizes<th class=sub-num>Quantity<th class=sub-num>Price<th class=sub-num>Value<tbody>`;
+					var qty = 0;
+					var value = 0;
 					for (var item of json) {
-						tableHtml += "<tr>"
-						tableHtml += `<td>${item.Product} ${item.Product2 ? "<br>" + item.Product2 : ""}`
-						tableHtml += `<td>${item.FrontPrintDesign || ""}`
-						var mySizes = sizes.filter(s => item[s])
-						tableHtml += `<td>${mySizes.map(s => s + ": " + item[s]).join("<br>")}`
-						var numberOfProducts = mySizes.reduce( (acc, curr) => acc + item[curr], 0)
-						qty += numberOfProducts
-						tableHtml += `<td class=sub-num>${numberOfProducts}`
-						tableHtml += `<td class=sub-num>${item.Price.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`
-						var itemValue = item.Price * numberOfProducts
-						tableHtml += `<td class=sub-num>${itemValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`
-						value += itemValue
-						tableHtml += "</tr>"
+						tableHtml += "<tr>";
+						// products
+						tableHtml += `<td>${item.Product}<br>${item.Product2}`;
+						// designs
+						tableHtml += "<td>";
+						let designMarkup = [];
+						locations.forEach(location => {
+							art.forEach(a => {
+								// e.g. FrontPrintDesign
+								if (item[`${location}${a.decoration}Design`] !== null && item[`${location}${a.decoration}Design`] !== "") {
+									designMarkup.push(`<span class=nowrap><span class=subtable-head>${location} ${a.decoration} Design</span>: ` + item[`${location}${a.decoration}Design`] + "</span>");
+								}
+								// e.g. FrontScreen
+								if (item[`${location}${a.medium}`] !== null && item[`${location}${a.medium}`] !== "") {
+									designMarkup.push(`<span class=nowrap><span class=subtable-head>${location} ${a.medium}</span>: ` + item[`${location}${a.medium}`] + "</span>");
+								}
+								// e.g. FrontScreen2
+								if (item[`${location}${a.medium}2`] !== null && item[`${location}${a.medium}2`] !== "") {
+									designMarkup.push(`<span class=nowrap><span class=subtable-head>${location} ${a.medium} 2</span>: ` + item[`${location}${a.medium}2`] + "</span><br>");
+								}
+							});
+						});
+						tableHtml += designMarkup.join("<br>");
+						// sizes, first get the ones that are not zero, and show them
+						var mySizes = sizes.filter(s => item[s] !== 0);
+						tableHtml += "<td>" + mySizes.map(s => `<span class=subtable-head>${s == "ASm" ? "AS" : s}</span>:${item[s]}`).join(", ");
+						var numberOfProducts = mySizes.reduce( (acc, curr) => acc + item[curr], 0);
+						qty += numberOfProducts;
+						tableHtml += `<td class=sub-num>${numberOfProducts}`;
+						tableHtml += `<td class=sub-num>${item.Price.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+						var itemValue = item.Price * numberOfProducts;
+						tableHtml += `<td class=sub-num>${itemValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+						value += itemValue;
+						tableHtml += "</tr>";
 					}
-					tableHtml += `<tfoot><tr><td colspan=3><td class=sub-num>${qty}<td><td class=sub-num>${value.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`
+					tableHtml += `<tfoot><tr><td colspan=3><td class=sub-num>${qty}<td><td class=sub-num>${value.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
 
-					tableHtml += "</table>"
+					tableHtml += "</table>";
 
 					const totalValue = json.reduce((acc, curr) => {
-						return acc + parseFloat(curr.Value.replace("$", ""))
-					}, 0)
+						return acc + parseFloat(curr.Value.replace("$", ""));
+					}, 0);
 					const totalQuantity = json.reduce((acc, curr) => {
-						return acc + curr.Total
-					}, 0)
+						return acc + curr.Total;
+					}, 0);
 					
-					html += /*html*/`<div style="font-weight: bold; margin-top:1rem; margin-bottom: 1rem;">Total Quantity: ${totalQuantity}; Total Value: ${totalValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}</div>`
+					html += /*html*/`<div style="font-weight: bold; margin-top:1rem; margin-bottom: 1rem;">Total Quantity: ${totalQuantity}; Total Value: ${totalValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}</div>`;
 
-					row.child(html).show()
+					row.child(tableHtml).show();
 					evt.target.classList.add("shown");
 
 				}
 				else 
-					throw new Error(response.statusText)
+					throw new Error(response.statusText);
 		}
 	}
 

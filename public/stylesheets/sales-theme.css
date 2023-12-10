@@ -39,3 +39,24 @@ div#dt_wrapper {
 		text-align: center;
 	}
 
+	.sub-table {
+		all: revert !important;
+		width: 100%;
+		margin-left: 3em !important;
+		border-right: 1px solid #aaa !important;
+		border-bottom: 1px solid #aaa !important;
+		border-left: 1px solid #aaa !important;
+	}
+	.sub-table thead .sub-num, .sub-table tbody .sub-num {
+		text-align: right;
+	}
+	table.sub-table tfoot td.sub-num {
+		text-align: right;
+		border-top: black 1px solid !important;
+		font-weight: bold;
+	}
+	.subtable-head {
+		font-weight: 550;
+	}
+
+

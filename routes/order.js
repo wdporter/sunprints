@@ -1,11 +1,11 @@
-const express = require("express")
-const router = express.Router()
-const sz = require("../sizes.js");
-const designService = require("../service/designService")
-const mediaService = require("../service/mediaService")
-const { auditColumns } = require("../config/auditColumns.js")
-const getDB = require ("../integration/dbFactory.js")
-const regionService = require("../service/regionService")
+const express = require("express");
+const router = express.Router();
+const sz = require("../sizes.js");;
+const designService = require("../service/designService");
+const mediaService = require("../service/mediaService");
+const { auditColumns } = require("../config/auditColumns.js");
+const getDB = require ("../integration/dbFactory.js");
+const regionService = require("../service/regionService");
 
 /* GET orders page. */
 router.get("/", function (req, res, next) {
@@ -23,9 +23,12 @@ router.get("/", function (req, res, next) {
 		poweruser: res.locals.poweruser,
 		salesrep: res.locals.salesrep,
 		allSizes: JSON.stringify(sz.allSizes),
-		regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }})
-	})
-})
+		regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}),
+		locations: sz.locations,
+		art: sz.art,
+
+	});
+});
 
 
 /* GET orders in datatables format. */
@@ -685,7 +688,7 @@ router.get("/printdesigns/:id", function (req, res) {
 
 
 /* GET the garments on an order, used when you click a datatables row on the Order list page. */
-router.get("/dt/garments/:orderId", function (req, res) {
+router.get("/dt/products/:orderId", function (req, res) {
 
 	const db = getDB()
 
@@ -695,7 +698,7 @@ router.get("/dt/garments/:orderId", function (req, res) {
 		let statement = db.prepare(/*sql*/`
 		SELECT Garment.Code || ' ' || Type AS Product,
 		Garment.Colour || ' ' || Label AS Product2, 
-		Price, OrderGarment.K0, OrderGarment.K1, OrderGarment.K2, OrderGarment.K4, OrderGarment.K6, OrderGarment.K8, OrderGarment.K10,	OrderGarment.K12, OrderGarment.K14, OrderGarment.K16,
+		CAST(Price AS NUMERIC) AS Price, OrderGarment.K0, OrderGarment.K1, OrderGarment.K2, OrderGarment.K4, OrderGarment.K6, OrderGarment.K8, OrderGarment.K10,	OrderGarment.K12, OrderGarment.K14, OrderGarment.K16,
   OrderGarment.W6, OrderGarment.W8, OrderGarment.W10, OrderGarment.W12, OrderGarment.W14, OrderGarment.W16, OrderGarment.W18, OrderGarment.W20, OrderGarment.W22, OrderGarment.W24, OrderGarment.W26, OrderGarment.W28, 
   OrderGarment.AXS, OrderGarment.ASm, OrderGarment.AM, OrderGarment.AL, OrderGarment.AXL, OrderGarment.A2XL, OrderGarment.A3XL, OrderGarment.A4XL, OrderGarment.A5XL, OrderGarment.A6XL, OrderGarment.A7XL, OrderGarment.A8XL
   ,PrintDesignF.Code || ' ' || IFNULL(PrintDesignF.Notes, '') AS FrontPrintDesign
@@ -776,22 +779,6 @@ router.get("/dt/garments/:orderId", function (req, res) {
   WHERE Orders.OrderId  = ?  `)
 
 		const records = statement.all(req.params.orderId)
-
-
-		// delete any sizes or other values that return 0 or null
-		records.forEach(record => {
-			try {
-				record.Price = Number(record.Price).toFixed(2)
-			}
-			catch (ex) { /* do nothing */ }
-
-			const keys = Object.keys(record)
-			keys.forEach(k => {
-				if (!record[k]) {
-					delete record[k]
-				}
-			})
-		})
 
 		res.send(records)
 	}

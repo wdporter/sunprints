@@ -13,6 +13,8 @@ router.get("/", (req, res) => {
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
 			sizes: sz.allSizes,
+			locations: sz.locations,
+			art: sz.art,
 			stylesheets: [
 				"/stylesheets/buttons.dataTables-2.2.3.css", 
 				"/stylesheets/sales-theme.css",
@@ -37,7 +39,7 @@ console.log(req.query.customSearch)
 		let recordsTotal = recordsFiltered = statement.get().Count;
 
 
-		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, Region.Name || ':' || SalesTotal.SalesRep AS Owner, SalesTotal.DateProcessed, 
+		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, IFNULL(Region.Name, '') || ':' || SalesTotal.SalesRep AS Owner, SalesTotal.DateProcessed, 
 		SalesTotal.Delivery, Customer.Code, Customer.Company, Customer.CustomerId, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
 		,SalesTotal.StockOrderId 
 		FROM SalesTotal 
@@ -516,34 +518,34 @@ router.get("/:orderid/history", (req, res) => {
 		let query = /*sql*/`SELECT 
 		 Garment.Code || ' ' || Garment.Type AS Product
 		,Garment.Colour || ' ' || Garment.Label  AS Product2 
-		,fpd.Code || ' | ' || fpd.Notes AS FrontPrintDesign
-		,bpd.Code || ' | ' || bpd.Notes AS BackPrintDesign
-		,ppd.Code || ' | ' || ppd.Notes AS PocketPrintDesign
-		,spd.Code || ' | ' || spd.Notes AS SleevePrintDesign
-		,fs.Number || ' | ' || fs.Colour || ' | ' || fs.Name AS FrontScreen
-		,fs2.Number || ' | ' || fs2.Colour || ' | ' || fs2.Name AS FrontScreen2
-		,bs.Number || ' | ' || bs.Colour || ' | ' || bs.Name AS BackScreen
-		,bs2.Number || ' | ' || bs2.Colour || ' | ' || bs2.Name AS BackScreen2
-		,ps.Number || ' | ' || ps.Colour || ' | ' || ps.Name AS PocketScreen
-		,ps2.Number || ' | ' || ps2.Colour || ' | ' || ps2.Name AS PocketScreen2
-		,ss.Number || ' | ' || ss.Colour || ' | ' || ss.Name AS SleeveScreen
-		,ss2.Number || ' | ' || ss2.Colour || ' | ' || ss2.Name AS SleeveScreen2
-		,fed.Code || ' | ' || fed.Notes AS FrontEmbroideryDesign
-		,bed.Code || ' | ' || bed.Notes AS BackEmbroideryDesign
-		,ped.Code || ' | ' || ped.Notes AS PocketEmbroideryDesign
-		,sed.Code || ' | ' || sed.Notes AS SleeveEmbroideryDesign
-		,fu.Number || ' | ' || fu.Notes AS FrontUsb
-		,fu2.Number || ' | ' || fu2.Notes AS FrontUsb2
-		,bu.Number || ' | ' || bu.Notes AS BackUsb
-		,bu2.Number || ' | ' || bu2.Notes AS BackUsb2
-		,pu.Number || ' | ' || pu.Notes AS PocketUsb
-		,pu2.Number || ' | ' || pu2.Notes AS PocketUsb2
-		,su.Number || ' | ' || su.Notes AS SleeveUsb
-		,su2.Number || ' | ' || su2.Notes AS SleeveUsb2
-		,ftd.Code || ' | ' || ftd.Notes AS FrontTransferDesign
-		,btd.Code || ' | ' || btd.Notes AS BackTransferDesign
-		,ptd.Code || ' | ' || ptd.Notes AS PocketTransferDesign
-		,std.Code || ' | ' || std.Notes AS SleeveTransferDesign
+		,fpd.Code || ' ; ' || IFNULL(fpd.Notes, '') AS FrontPrintDesign
+		,bpd.Code || ' ; ' || IFNULL(bpd.Notes, '') AS BackPrintDesign
+		,ppd.Code || ' ; ' || IFNULL(ppd.Notes, '') AS PocketPrintDesign
+		,spd.Code || ' ; ' || IFNULL(spd.Notes, '') AS SleevePrintDesign
+		,fs.Number ||  ' ; ' || IFNULL(fs.Colour, '')  || ' ; ' || IFNULL(fs.Name, '') AS FrontScreen
+		,fs2.Number || ' ; ' || IFNULL(fs2.Colour, '') || ' ; ' || IFNULL(fs2.Name, '') AS FrontScreen2
+		,bs.Number ||  ' ; ' || IFNULL(bs.Colour, '')  || ' ; ' || IFNULL(bs.Name, '') AS BackScreen
+		,bs2.Number || ' ; ' || IFNULL(bs2.Colour, '') || ' ; ' || IFNULL(bs2.Name, '') AS BackScreen2
+		,ps.Number ||  ' ; ' || IFNULL(ps.Colour, '')  || ' ; ' || IFNULL(ps.Name, '') AS PocketScreen
+		,ps2.Number || ' ; ' || IFNULL(ps2.Colour, '') || ' ; ' || IFNULL(ps2.Name, '') AS PocketScreen2
+		,ss.Number ||  ' ; ' || IFNULL(ss.Colour, '')  || ' ; ' || IFNULL(ss.Name, '') AS SleeveScreen
+		,ss2.Number || ' ; ' || IFNULL(ss2.Colour, '') || ' ; ' || IFNULL(ss2.Name, '') AS SleeveScreen2
+		,fed.Code ||   ' ; ' || IFNULL(fed.Notes, '') AS FrontEmbroideryDesign
+		,bed.Code ||   ' ; ' || IFNULL(bed.Notes, '') AS BackEmbroideryDesign
+		,ped.Code ||   ' ; ' || IFNULL(ped.Notes, '') AS PocketEmbroideryDesign
+		,sed.Code ||   ' ; ' || IFNULL(sed.Notes, '') AS SleeveEmbroideryDesign
+		,fu.Number ||  ' ; ' ||  IFNULL(fu.Notes, '') AS FrontUsb
+		,fu2.Number || ' ; ' || IFNULL(fu2.Notes, '') AS FrontUsb2
+		,bu.Number ||  ' ; ' ||  IFNULL(bu.Notes, '') AS BackUsb
+		,bu2.Number || ' ; ' || IFNULL(bu2.Notes, '') AS BackUsb2
+		,pu.Number ||  ' ; ' ||  IFNULL(pu.Notes, '') AS PocketUsb
+		,pu2.Number || ' ; ' || IFNULL(pu2.Notes, '') AS PocketUsb2
+		,su.Number ||  ' ; ' ||  IFNULL(su.Notes, '') AS SleeveUsb
+		,su2.Number || ' ; ' || IFNULL(su2.Notes, '') AS SleeveUsb2
+		,ftd.Code ||   ' ; ' || IFNULL(ftd.Notes, '') AS FrontTransferDesign
+		,btd.Code ||   ' ; ' || IFNULL(btd.Notes, '') AS BackTransferDesign
+		,ptd.Code ||   ' ; ' || IFNULL(ptd.Notes, '') AS PocketTransferDesign
+		,std.Code ||   ' ; ' || IFNULL(std.Notes, '') AS SleeveTransferDesign
 		,fn.Name AS FrontTransferName
 		,fn2.Name AS FrontTransferName2
 		,bn.Name AS BackTransferName
@@ -594,16 +596,20 @@ router.get("/:orderid/history", (req, res) => {
 			LEFT OUTER JOIN TransferName pn2 ON pn2.TransferNameId=Sales.PocketTransferName2Id
 			LEFT OUTER JOIN TransferName sn ON sn.TransferNameId=Sales.SleeveTransferNameId
 			LEFT OUTER JOIN TransferName sn2 ON sn2.TransferNameId=Sales.SleeveTransferName2Id
-			WHERE OrderId=?`
-		let sales = db.prepare(query).all(req.params.orderid)
+			WHERE OrderId=?`;
+		let sales = db.prepare(query).all(req.params.orderid);
 
-		// sales = sales.map(s => {
-		// 	return {
-		// 		Garment: s.Garment
-		// 	}
-		// } )
+		// remove hanging spaces and pipes
+		sales.forEach(s => {
+			Object.keys(s).forEach(key => {
+				if (typeof s[key] === "string") {
+					s[key] = s[key].replace(/[;\s]*$/, ""); // trailing
+					s[key] = s[key].replace(/^[;\s]*/, ""); // leading
+				}
+			});
+		});
 
-		res.send(sales)
+		res.send(sales);
 
 	}
 	catch(ex) {

@@ -1,6 +1,5 @@
 <%- include("partials/head.ejs") %>
 
-
 <h3>Showing currently outstanding orders</h3>
 
 <ul>
@@ -53,59 +52,99 @@
 
 <script>
 
-		var sizes = <%- allSizes %>
+var sizes = <%- allSizes %>;
+var locations = <%- JSON.stringify(locations) %>;
+var art = <%- JSON.stringify(art) %>;
+var regions = <%- JSON.stringify(regions) %>
 
-		var regions = <%- JSON.stringify(regions) %>
+function format(d) {
+	const ret = fetch(`/order/dt/products/${d.OrderId}`)
+		.then(response => {
+			if (response.ok)
+				return response.json()
+			else
+				throw new Error(response.statusText)
+		})
+		.then(data => {
+			let totalValue = 0;
+			let totalQuantity = 0
+			var ret = "<div style=display:flex>"
+			if (data.length == 0) {
+				ret += "<div class=garmentDiv>&emsp;no products on order&emsp;</div>"
+			}
+			else {
+				for (var item of data) {
+					let productValue = 0;
+					let productQuantity = 0;
+					ret += "<div class=garmentDiv>"
+					for (var d in item) {
+						if (d == "Product")
+							ret += /*html*/`<span class=nowrap><b>Product:</b> ${item[d]}</span><br>`
+						else if (d == "Product2")
+							ret += /*html*/`<span class=nowrap>${item[d]}</span><br>`
+						else if (d == "AS")
+							ret += /*html*/`<b>ASm:</b>${item[d]}<br>`
+						else
+							ret += /*html*/`<b>${d}:</b> ${item[d]}<br>`
 
-		function format(d) {
-			const ret = fetch(`/order/dt/garments/${d.OrderId}`)
-				.then(response => {
-					if (response.ok)
-						return response.json()
-					else
-						throw new Error(response.statusText)
-				})
-				.then(data => {
-					let totalValue = 0;
-					let totalQuantity = 0
-					var ret = "<div style=display:flex>"
-					if (data.length == 0) {
-						ret += "<div class=garmentDiv>&emsp;no products on order&emsp;</div>"
-					}
-					else {
-						for (var item of data) {
-							let productValue = 0;
-							let productQuantity = 0;
-							ret += "<div class=garmentDiv>"
-							for (var d in item) {
-								if (d == "Product")
-									ret += /*html*/`<span class=nowrap><b>Product:</b> ${item[d]}</span><br>`
-								else if (d == "Product2")
-									ret += /*html*/`<span class=nowrap>${item[d]}</span><br>`
-								else if (d == "AS")
-									ret += /*html*/`<b>ASm:</b>${item[d]}<br>`
-								else
-									ret += /*html*/`<b>${d}:</b> ${item[d]}<br>`
-
-								if (sizes.includes(d)) {
-									productValue += item[d] * parseFloat(item.Price)
-									productQuantity += item[d]
-								}
-							}
-							ret += /*html*/`<b>Quantity:</b> ${productQuantity}<br /><b>Value:</b> ${productValue.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}`
-							ret += "</div>"
-							totalValue += productValue
-							totalQuantity += productQuantity
+						if (sizes.includes(d)) {
+							productValue += item[d] * parseFloat(item.Price)
+							productQuantity += item[d]
 						}
 					}
+					ret += /*html*/`<b>Quantity:</b> ${productQuantity}<br /><b>Value:</b> ${productValue.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}`
 					ret += "</div>"
-					ret += /*html*/`<div class=garment-total-value>Total Quantity: ${totalQuantity}; Total Value: ${totalValue.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}</div>`
-					return ret
-				})
-				.catch(err => window.alert(`We enountered an error: ${error}`))
-			return ret
-		}
+					totalValue += productValue
+					totalQuantity += productQuantity
+				}
+			}
+			ret += "</div>"
+			ret += /*html*/`<div class=garment-total-value>Total Quantity: ${totalQuantity}; Total Value: ${totalValue.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})}</div>`
 
+			// from here we will begin to add a table instead
+			var tableHtml = /*html*/`<table class=sub-table><thead><tr><th>Product<th>Design<th>Sizes<th class=sub-num>Quantity<th class=sub-num>Price<th class=sub-num>Value<tbody>`;
+			totalQuantity = 0;
+			totalValue = 0;
+			for (var item of data) {
+				tableHtml += "<tr>";
+				// products
+				tableHtml += `<td>${item.Product} ${item.Product2 === null ? "<br>" + item.Product2 : ""}`;
+				// designs
+				tableHtml += "<td>";
+				let designMarkup = [];
+				locations.forEach(location => {
+					art.forEach(a => {
+						var properties = [`${location} ${a.decoration} Design`, `${location} ${a.medium} 1`, `${location} ${a.medium} 2`]
+						// e.g. [Front Print Design, Front Screen 1, Front Screen 2]
+						properties.forEach((property, i) => {
+							var prop = property.replace(/\s/g, ""); // the keys have no spaces
+							if (item[prop] !== null && item[prop] !== "") {
+								designMarkup.push(`<span class=nowrap><span class=subtable-head>${properties[i]}</span>: ` + item[prop] + "</span>");
+							}
+						});
+					});
+				});
+				tableHtml += designMarkup.join("<br>");
+				// sizes
+				var mySizes = sizes.filter(s => item[s] !== 0);
+				tableHtml += "<td>" + mySizes.map(s => `<span class=subtable-head>${s == "ASm" ? "AS" : s}</span>:${item[s]}`).join(", ");
+				var numberOfProducts = mySizes.reduce( (acc, curr) => acc + item[curr], 0);
+				totalQuantity += numberOfProducts;
+				tableHtml += `<td class=sub-num>${numberOfProducts}`;
+				tableHtml += `<td class=sub-num>${item.Price.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+				var itemValue = item.Price * numberOfProducts;
+				tableHtml += `<td class=sub-num>${itemValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+				totalValue += itemValue;
+				tableHtml += "</tr>";
+			}
+			tableHtml += `<tfoot><tr><td colspan=3><td class=sub-num>${totalQuantity}<td><td class=sub-num>${totalValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+			tableHtml += "</table>";
+
+			return /*ret + "<p>" +*/ tableHtml;
+		})
+		.catch(err => window.alert(`We enountered an error: ${err}`))
+	return ret
+}
 
 		window.datatable = new DataTable("#orderTable", {
 			dom: "lf<'buttondiv'B>rtip",
