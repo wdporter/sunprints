@@ -453,47 +453,19 @@ async function onOpenRowButtonClick(evt) {
 				var response = await fetch(`/sales/${data.OrderId}/history`)
 				if (response.ok) {
 					var json = await response.json()
-					let html = "<div style=display:flex>"
 					if (json.length == 0) {
-						html += "<span class=nousbs>no sales items<span>"
+						return "<span class=nousbs>no sales items<span>"
 					}
-					else {
-						for (var item of json) {
-							html += "<div class=sales-item>"
-							const items = []
-							for (key in item) {
-								if (item[key]) {
-									if (key == "Product")
-										items.push(/*html*/`<span class=nowrap><b>Product:</b> ${item[key]}</span>`)
-									else if (key == "Product2")
-										items.push(/*html*/`<span class=nowrap>${item[key]}</span>`)
-									else if (key == "ASm")	
-										items.push(/*html*/`<b>AS</b>: ${item[key]}`)
-									else if (key == "Price") 
-										items.push(/*html*/`<b>Price:</b> ${item[key].toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`)
-									else if (key == "Total") 
-										items.push(/*html*/`<b>Product Qty:</b> ${item[key]}`)
-									else 
-										items.push(/*html*/`<b>${key}</b>: ${item[key]}`)
-								}
-							}
-							html += items.join("<br>")
-							html += "</div>"
-						}
-					}
-					html += "</div>"
 
-					// maybe one day we will use tableHtml instead, but todo headings and values for designs
-					var tableHtml = /*html*/`<table class=sub-table><thead><tr><th>Product<th>Design<th>Sizes<th class=sub-num>Quantity<th class=sub-num>Price<th class=sub-num>Value<tbody>`;
-					var qty = 0;
+					let tableHtml = /*html*/`<table class=sub-table><thead><tr><th>Design<th>Product<th>Sizes<th class=sub-num>Quantity<th class=sub-num>Price<th class=sub-num>Value<tbody>`;
+					let quantity = 0;
 					var value = 0;
 					for (var item of json) {
 						tableHtml += "<tr>";
-						// products
-						tableHtml += `<td>${item.Product}<br>${item.Product2}`;
 						// designs
 						tableHtml += "<td>";
 						let designMarkup = [];
+						// designs
 						locations.forEach(location => {
 							art.forEach(a => {
 								// e.g. FrontPrintDesign
@@ -511,11 +483,13 @@ async function onOpenRowButtonClick(evt) {
 							});
 						});
 						tableHtml += designMarkup.join("<br>");
+						// products
+						tableHtml += `<td>${item.Product}<br>${item.Product2}`;
 						// sizes, first get the ones that are not zero, and show them
 						var mySizes = sizes.filter(s => item[s] !== 0);
 						tableHtml += "<td>" + mySizes.map(s => `<span class=subtable-head>${s == "ASm" ? "AS" : s}</span>:${item[s]}`).join(", ");
 						var numberOfProducts = mySizes.reduce( (acc, curr) => acc + item[curr], 0);
-						qty += numberOfProducts;
+						quantity += numberOfProducts;
 						tableHtml += `<td class=sub-num>${numberOfProducts}`;
 						tableHtml += `<td class=sub-num>${item.Price.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
 						var itemValue = item.Price * numberOfProducts;
@@ -523,7 +497,7 @@ async function onOpenRowButtonClick(evt) {
 						value += itemValue;
 						tableHtml += "</tr>";
 					}
-					tableHtml += `<tfoot><tr><td colspan=3><td class=sub-num>${qty}<td><td class=sub-num>${value.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+					tableHtml += `<tfoot><tr><td colspan=3><td class=sub-num>${quantity}<td><td class=sub-num>${value.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
 
 					tableHtml += "</table>";
 
@@ -533,15 +507,14 @@ async function onOpenRowButtonClick(evt) {
 					const totalQuantity = json.reduce((acc, curr) => {
 						return acc + curr.Total;
 					}, 0);
-					
-					html += /*html*/`<div style="font-weight: bold; margin-top:1rem; margin-bottom: 1rem;">Total Quantity: ${totalQuantity}; Total Value: ${totalValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}</div>`;
 
 					row.child(tableHtml).show();
 					evt.target.classList.add("shown");
 
 				}
-				else 
+				else {
 					throw new Error(response.statusText);
+				}
 		}
 	}
 

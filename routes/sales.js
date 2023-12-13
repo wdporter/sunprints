@@ -39,7 +39,7 @@ console.log(req.query.customSearch)
 		let recordsTotal = recordsFiltered = statement.get().Count;
 
 
-		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, IFNULL(Region.Name, '') || ':' || SalesTotal.SalesRep AS Owner, SalesTotal.DateProcessed, 
+		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, IFNULL(Region.Name, '') || ':' || IFNULL(SalesTotal.SalesRep, '') AS Owner, SalesTotal.DateProcessed, 
 		SalesTotal.Delivery, Customer.Code, Customer.Company, Customer.CustomerId, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
 		,SalesTotal.StockOrderId 
 		FROM SalesTotal 
@@ -554,7 +554,7 @@ router.get("/:orderid/history", (req, res) => {
 		,pn2.Name AS PocketTransferName2
 		,sn.Name AS SleeveTransferName
 		,sn2.Name AS SleeveTransferName2
-		,Price
+		,IFNULL(CAST(Price AS NUMERIC), '') AS Price
 		,${sz.allSizes.map(s => `Sales.${s}`).join(", ")}
 		,${sz.allSizes.map(s=> `Sales.${s}`).join("+")} AS Total
 		,'$' || printf('%.2f', (${sz.allSizes.map(s => `Sales.${s}`).join(" + ")}) * Price) AS Value
