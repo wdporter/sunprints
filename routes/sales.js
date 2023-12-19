@@ -1224,25 +1224,37 @@ router.get("/customertotal", (req, res) => {
 
 // GET a total of region sales in a date period
 router.get("/regiontotal", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = 	getDB();
 
-	const { regionid, from, to } = req.query
+
+	const { regionid, salesrep, from, to } = req.query
 
 	var sql = /*sql*/`SELECT Price * (${sz.allSizes.map(s=> `${s}`).join("+")}) AS Total FROM SalesTotal
 	INNER JOIN Sales USING (OrderId) 
-	WHERE `
+	WHERE `;
 
-	var whereClauses = [` SalesTotal.RegionId = ?  `]
-	var parameters = [regionid]
-	if (from) {
-		whereClauses.push( ` SalesTotal.OrderDate >= ? `)
-		parameters.push(from)
+	var whereClauses = [];
+	var parameters = [];
+
+	if (regionid !== "0") {
+		whereClauses.push(/*sql*/" SalesTotal.RegionId = ? ");
+		parameters.push(regionid);
 	}
-	if (to) {
-		whereClauses.push( ` SalesTotal.OrderDate <= ? `)
-		parameters.push(to)
+
+	if (salesrep !== "0") {
+		whereClauses.push(/*sql*/" SalesTotal.SalesRep = ? ");
+		parameters.push(salesrep);
 	}
-	sql += whereClauses.join(" AND ")
+
+	if (from !== "") {
+		whereClauses.push(/*sql*/" SalesTotal.OrderDate >= ? ");
+		parameters.push(from);
+	}
+	if (to !== "") {
+		whereClauses.push(/*sql*/" SalesTotal.OrderDate <= ? ");
+		parameters.push(to);
+	}
+	sql += whereClauses.join(/*sql*/" AND ");
 	
 
 	const statement = db.prepare(sql);

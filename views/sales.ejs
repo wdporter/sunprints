@@ -347,34 +347,70 @@ window.datatable = new DataTable("table#dt", {
 })
 
 	window.datatable.on("draw", function() {
-		window.datatable.buttons(0).text("Expand all")
+		window.datatable.buttons(0).text("Expand all");
+
+		// reset our summary label
+		document.getElementById("customerSalesTotalLabel").textContent = "";
 
 		// if it's a customer and a date range, display a sum of their orders
-		const customerName = document.getElementById("customerName").value
-		const customerCode = document.getElementById("customerCode").value
-		const fromDate = document.getElementById("dateFrom").value
-		const toDate = document.getElementById("dateTo").value
+		let customerName = document.getElementById("customerName").value;
+		let customerCode = document.getElementById("customerCode").value;
+		const fromDate = document.getElementById("dateFrom").value;
+		const toDate = document.getElementById("dateTo").value;
 
-		if ((customerName != "0" || customerCode != "0") && (fromDate || toDate)) {
-			const url = `/sales/customertotal?CustomerName=${customerName}&CustomerCode=${customerCode}&FromDate=${fromDate}&ToDate=${toDate}`
+			// must have at least one date to show the summary
+		if (fromDate === "" && toDate === "") {
+			return;
+		}
+
+		if (customerName != "0" || customerCode != "0") {
+			const url = `/sales/customertotal?CustomerName=${customerName}&CustomerCode=${customerCode}&FromDate=${fromDate}&ToDate=${toDate}`;
 			fetch(url)
 			.then(response => response.text())
 			.then(data => {
-				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for customer in date range: ${data}`
+				let customerDisplayValue = "";
+				customerName = document.getElementById("customerName").selectedOptions[0].textContent;
+				if (customerName[0] !== "-") {
+					customerDisplayValue = customerName;
+				}
+				else 
+				{
+					customerDisplayValue = document.getElementById("customerCode").selectedOptions[0].textContent; // has to be one or the other, right?
+				}
+				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for ${customerDisplayValue} in date range: ${data}`;
 			})
-			return
+			return;
 		}
 
 		// now we'll try to do the same for a region and a date range
-		const regionid = document.getElementById("region").value
-		if ((regionid != "") && (fromDate || toDate)) {
-			const url = `/sales/regiontotal?regionid=${regionid}&from=${fromDate}&to=${toDate}`
+		const regionSelect = document.getElementById("region");
+		const salesrepSelect = document.getElementById("salesRep");
+		if (regionSelect.value != "0" || salesrepSelect.value != "0") {
+			const url = `/sales/regiontotal?regionid=${regionSelect.value}&salesrep=${salesrepSelect.value}&from=${fromDate}&to=${toDate}`;
 			fetch(url)
 			.then(response => response.text())
 			.then(data => {
-				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for region in date range: ${data}`
+				var owners = [];
+				if (regionSelect.selectedOptions[0].textContent[0] !== "-")
+					owners.push(regionSelect.selectedOptions[0].textContent);
+				if (salesrepSelect.selectedOptions[0].textContent[0] !== "-")
+					owners.push(salesrepSelect.selectedOptions[0].textContent);
+
+				var fromDate = document.getElementById("dateFrom").valueAsDate;
+				if (fromDate === null)
+					fromDate = "year dot"; 
+				else
+					fromDate = fromDate.toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/");
+				
+				var toDate = document.getElementById("dateTo").valueAsDate;
+				if (toDate === null)
+					toDate = "now"; // em dash
+				else
+					toDate = toDate.toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/");
+
+				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for ${owners.join("/")} from ${fromDate} to ${toDate}: ${data}`;
 			})
-			return
+			return;
 		}
 
 			document.getElementById("customerSalesTotalLabel").textContent = ""
