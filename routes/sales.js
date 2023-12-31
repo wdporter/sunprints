@@ -8,7 +8,7 @@ const getDB = require ("../integration/dbFactory.js")
 /* GET Sales History page. */
 router.get("/", (req, res) => {
 
-		res.render("sales.ejs", {
+		res.render("sales2.ejs", {
 			title: "Sales History",
 			user: req.auth.user,
 			poweruser: res.locals.poweruser,
@@ -1304,6 +1304,10 @@ router.post("/csv/", (req, res) => {
 	if (req.body.SalesRep && req.body.SalesRep != "0") {
 		where.push(`SalesTotal.SalesRep = @SalesRep`)
 		params.SalesRep = req.body.SalesRep.trimEnd(" (*)")
+	}
+	if (req.body.Region && req.body.Region != "0") {
+		where.push(`SalesTotal.RegionId = @Region`)
+		params.Region = req.body.Region.trimEnd(" (*)")
 	}
 	if (req.body.Print && req.body.Print != "0") {
 			where.push(`(Sales.FrontPrintDesignId=@Print OR Sales.BackPrintDesignId=@Print OR Sales.PocketPrintDesignId=@Print OR Sales.SleevePrintDesignId=@Print)`)
