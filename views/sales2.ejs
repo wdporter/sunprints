@@ -1,0 +1,642 @@
+<%- include("partials/head.ejs") %>
+
+<button id="topClearButton" onclick="clearSearchFields()" style="margin-left:3em;">Clear Search</button>
+
+<section>
+	<div>
+		<fieldset>
+			<legend>Customer details</legend>
+			<p>
+				<label for="customerCode">Customer code</label>
+				<select id="customerCode" data-location="customercodes">
+					<option value="0">--select--</option>
+				</select>
+			</p>
+			<p>
+				<label for=customerName>Customer name</label>
+				<input type=search id=customerName data-location=customernames list=customerData autocomplete=off placeholder="start typing" />
+				<datalist id=customerData>
+					<option value="0">--select--</option>
+				</datalist>
+				<!-- </select> -->
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Owner</legend>
+			<p>
+				<label for=region>Region</label>
+				<select id=region data-location=regions>
+					<option value="0">--select--</option>
+				</select>
+			</p>
+			<p>
+				<label for=salesRep>Sales Rep.</label>
+				<select id=salesRep data-location=salesreps>
+					<option value="0">--select--</option>
+				</select>
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Date range</legend>
+			<p>
+				<label for=dateFrom>Date From</label>
+				<input type=date id="dateFrom" />
+			</p>
+			<p>
+				<label for=dateTo>Date To</label>
+				<input type=date id="dateTo" />
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Order Number</legend>
+			<p>
+				<label for=orderNumber>Order Number</label>
+				<input type=search id=orderNumber />
+			</p>
+		</fieldset>
+	</div>
+	<div>
+		<fieldset>
+			<legend>Print</legend>
+			<p>
+				<label for=print>Design</label>
+				<select id=print data-location=prints>
+					<option value=0>--select--</option>
+				</select>
+			</p>
+			<p>
+				<label for=screen>Screen</label>
+				<select id=screen data-location=screens>
+					<option value=0>--select--</option>
+				</select>
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Embroidery</legend>
+			<p>
+				<label for="embroidery">Design</label>
+				<select id="embroidery" data-location="embroideries">
+					<option value="0">--select--</option>
+				</select>
+			</p>
+			<p>
+				<label for="usb">USB</label>
+				<select id="usb" data-location="usbs">
+					<option value="0">--select--</option>
+				</select>
+			</p>
+		</fieldset>
+		<fieldset>
+			<legend>Transfer</legend>
+			<p>
+				<label for="transfer">Design</label>
+				<select id="transfer" data-location="transfers">
+					<option value="0">--select--</option>
+				</select>
+			</p>
+			<p>
+				<label for="transferName">Name</label>
+				<select id="transferName" data-location="transfernames">
+					<option value="0">--select--</option>
+				</select>
+			</p>
+	</fieldset>
+	<div>
+		<button onclick="clearSearchFields()">Clear Search</button>
+	</div>
+	</div>
+</section>
+
+
+
+</main>
+
+<main class="wider">
+
+	<table id="dt" class="display compact">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Order Id</th>
+				<th>Order Number</th>
+				<th>Order Date</th>
+				<th>Owner</th>
+				<th>Processed Date</th>
+				<th>Delivery Date</th>
+				<th>Design</th>
+				<th>Customer name</th>
+				<th>Terms</th>
+				<th>Buy In</th>
+				<th>Notes</th>
+				<th>Done</th>
+			</tr>
+		</thead>
+	</table>
+
+	<h5 id="customerSalesTotalLabel">Customer Sales Total</h5>
+
+	<button 
+		style="margin-left:2em" 
+		onclick="downloadCsv()">
+		<span class="fa fa-download"></span> Download Excel <span class="fa fa-file-excel"></span></button>
+
+	
+<script>
+
+var sizes = <%- JSON.stringify(sizes) %>;
+var locations = <%- JSON.stringify(locations) %>;
+var art = <%- JSON.stringify(art) %>;
+
+function downloadCsv() {
+	console.log("downloading…")
+	// send a get request
+	fetch("/sales/csv", {
+		method: "POST",
+		headers: new Headers({
+			"Content-Type": "application/json"
+		}),
+		body: JSON.stringify(getCustomSearchObject())
+	})
+	.then(response => {
+		if (response.ok) 
+			return response.text()
+		else
+			throw new Error(response.statusText)
+		}
+	)
+	.then(text => {
+		if (!text)
+			return;
+
+		// create a blob
+		const blob = new Blob([text], {type: "text/csv"})
+		// create a url from blob
+		const url = window.URL.createObjectURL(blob)
+		// create a link
+		const a = document.createElement("a")
+		a.href = url
+		a.download = "sales.csv"
+		// click the link
+		a.click()
+	})
+	.catch(err => {
+		console.error(err)
+	})
+}
+
+function cloneOrder(a, event) {
+	event.preventDefault()
+	const tr = a.closest("tr")
+	const api = $("table#dt").dataTable().api()
+	const row = api.row(tr)
+	const data = row.data()
+	const orderid = data.OrderId
+	window.location.href = `/order/new?clone=${orderid}`
+	console.log(orderid)
+}
+
+function getCustomSearchObject() {
+	
+	let customerName = "";
+	if (chosenCustomerId !== "") {
+		customerName = chosenCustomerId;
+		chosenCustomerId = "";
+	}
+
+
+	return {
+		Company: customerName,
+		Code: document.getElementById("customerCode").value,
+		DateFrom: document.getElementById("dateFrom").value,
+		DateTo: document.getElementById("dateTo").value,
+		Print: document.getElementById("print").value,
+		Screen: document.getElementById("screen").value,
+		Embroidery: document.getElementById("embroidery").value,
+		Usb: document.getElementById("usb").value,
+		Transfer: document.getElementById("transfer").value,
+		TransferName: document.getElementById("transferName").value,
+		SalesRep: document.getElementById("salesRep").value,
+		Region: document.getElementById("region").value,
+		OrderNumber: document.getElementById("orderNumber").value
+	}
+}
+
+window.datatable = new DataTable("table#dt", {
+	fixedHeader: true,
+	processing: true,
+	serverSide: true,
+	dom: "l<'buttondiv'B>rtip", 
+	tabIndex: 1,
+	pageLength: 50,
+	createdRow: (row, data, dataIndex) => row.setAttribute("tabIndex", 0),
+	ajax: { 
+		url: "/sales/dt",
+		data: function(d) {
+			d.customSearch = getCustomSearchObject()
+		}
+	},
+	order: [[3, "desc"]],
+	columns: [
+		{
+			className: 'dt-control',
+			orderable: false,
+			data: null,
+			title: "Actions",
+			width: "4em",
+			render(data) {
+<% if (!poweruser) { %>
+					return ""
+<% } %>
+				if (data.DateProcessed)
+					var orderUrl = `sales/edit/${data.OrderId}`;
+				else
+					var orderUrl = `order/edit?id=${data.OrderId}`;
+				let result = `&ensp;
+				<a href="/${orderUrl}" title="Edit this order">
+					<span class="fa fa-edit fa-lg" style="margin-top:.5em"></span>
+				</a>&ensp;
+				<a href=/${data.DateProcessed ? 'sales' : 'order'}/jobsheet/${data.OrderId} title="Print this order" target=_blank>
+					<span class="fa fa-print fa-lg" style=margin-top:.5em></span>
+				</a>`
+
+				return result
+			}			
+		},
+		{ data: "OrderId",
+			visible: false
+		},
+		{ data: "OrderNumber", width: "3em" }, 
+		{ data: "OrderDate", 
+			width: "3em",
+			render: function(data) {
+				const num = Date.parse(data)
+				if (isNaN(num))
+					return data
+				else
+					return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
+			}
+		},
+		{ data: "Owner", 
+			width: "3em", 
+			render: function(data) {
+				if (data[0] == ":")
+					return data.substring(1);
+				else
+					return data.replace(":", "<br>")
+			}
+		},
+		{ data: "DateProcessed", 
+			width: "4em",
+			render: function(data) {
+				const ts = Date.parse(data)
+				if (isNaN(ts))
+					return data
+				else
+					return /*html*/`<strong>${new Date(ts).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")}</strong>`
+				}
+		}, 
+		{ data: "Delivery",
+			width: "4em"
+		},
+		{
+			data: "designItems",
+			render(data) { 
+				if (data.length === 2 && data[0].Design === data[1].Design) {
+					return data[0];
+				}
+				else {
+					return data.join("<br>");
+				}
+			},
+			orderable: false
+		}, 
+		{ data: "Company",
+			render: function(data, word, row) {
+				return `${data} <a href=/customer/edit?id=${row.CustomerId}><span class="fa fa-edit fa-lg" style="margin-top:.5em"></span></a>`
+			}	
+	}, 
+		{ data: "Terms", width: "2em" }, 
+		{ data: "BuyIn",
+			width: "1em",
+			render: function(data, word, row) {
+				if (row.StockOrderId == null || row.StockOrderId=="0")
+					return ""
+				else
+					return `<a href="/purchasing?stockorderid=${row.StockOrderId}">${row.StockOrderId}</a>`
+			}
+		}, 
+		{ data: "Notes" }, 
+		{ data: "Done",
+			width: "1em",
+			render: function(data) {
+				return data ? "✔️" : ""
+			}
+		}
+	],
+	buttons: [
+		{
+			text: "Expand all",
+			action: (e, dt, node, config) => {
+				if (dt.buttons().text()[0] == "Expand all") {
+					Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
+						if (!td.classList.contains("shown"))
+							$(td).trigger("click")
+					})
+					dt.buttons(0).text("Collapse all")
+				} 
+				else if (dt.buttons().text()[0] == "Collapse all") {
+					Array.from(document.querySelectorAll("td.dt-control")).forEach(function(td) {
+						if (td.classList.contains("shown"))
+							$(td).trigger("click")
+					})
+					dt.buttons(0).text("Expand all")
+				}
+			}
+		},
+	]
+})
+
+	window.datatable.on("draw", function() {
+		window.datatable.buttons(0).text("Expand all")
+
+		// if it's a customer and a date range, display a sum of their orders
+		let customerName = "0";
+		if (chosenCustomerId !== "") {
+			customerName = chosenCustomerId;
+			chosenCustomerId = "";
+		}
+		const customerCode = document.getElementById("customerCode").value
+		const fromDate = document.getElementById("dateFrom").value
+		const toDate = document.getElementById("dateTo").value
+
+		if ((customerName != "0" || customerCode != "0") && (fromDate || toDate)) {
+			const url = `/sales/customertotal?CustomerName=${customerName}&CustomerCode=${customerCode}&FromDate=${fromDate}&ToDate=${toDate}`
+			fetch(url)
+			.then(response => response.text())
+			.then(data => {
+				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for customer in date range: ${data}`
+			})
+			return
+		}
+
+		// now we'll try to do the same for a region and a date range
+		const regionid = document.getElementById("region").value
+		if ((regionid != "") && (fromDate || toDate)) {
+			const url = `/sales/regiontotal?regionid=${regionid}&from=${fromDate}&to=${toDate}`
+			fetch(url)
+			.then(response => response.text())
+			.then(data => {
+				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for region in date range: ${data}`
+			})
+			return
+		}
+
+			document.getElementById("customerSalesTotalLabel").textContent = ""
+
+	})
+
+
+
+	// navigate with up/down keys
+	$("tbody").on("keydown", "tr", function (event) {
+
+		const row = window.datatable.row(this)
+		console.log(event)
+		let td = null
+
+		switch (event.originalEvent.key) {
+
+			case "ArrowDown": 
+				let next = this.nextElementSibling
+				if (next != null) {
+					if (this.classList.contains("dt-hasChild"))
+						next = next.nextElementSibling			
+					next.focus()
+					//next.classList.add("selected")
+					//this.classList.remove("selected")
+				}
+				break;
+			
+			case "ArrowUp":
+				let previous = this.previousElementSibling
+				if (previous != null) {
+					if (previous.getAttribute("tabindex") == null)
+						previous = previous.previousElementSibling			
+					previous.focus()
+					//previous.classList.add("selected")
+					//this.classList.remove("selected")
+				}
+				break;
+
+			case "ArrowLeft":
+				if (row.child.isShown())
+					onOpenRowButtonClick(event)
+				break;
+
+			case "ArrowRight":
+				if (! row.child.isShown()) {
+					onOpenRowButtonClick(event)
+				}
+				break
+
+			case "Enter":
+				window.location.href = `/order/edit?id=${$(this).data("id")}`
+
+		}
+})
+
+
+function format(data) {
+		if (!data) return // happens when you click the clone button
+
+//		const retVal = 
+//			return retVal
+
+	}
+
+async function onOpenRowButtonClick(evt) {
+		const row = window.datatable.row(evt.target)
+		const data = row.data()
+
+		if (row.child.isShown()) {
+				// This row is already open - close it
+				row.child.hide();
+				evt.target.classList.remove('shown');
+		} else {
+				// Open this row
+				var response = await fetch(`/sales/${data.OrderId}/history`)
+				if (response.ok) {
+					var json = await response.json()
+					if (json.length == 0) {
+						return "<span class=nousbs>no sales items<span>"
+					}
+
+					let tableHtml = /*html*/`<table class=sub-table><thead><tr><th>Design<th>Product<th>Sizes<th class=sub-num>Quantity<th class=sub-num>Price<th class=sub-num>Value<tbody>`;
+					let quantity = 0;
+					var value = 0;
+					for (var item of json) {
+						tableHtml += "<tr>";
+						// designs
+						tableHtml += "<td>";
+						let designMarkup = [];
+						// designs
+						locations.forEach(location => {
+							art.forEach(a => {
+								// e.g. FrontPrintDesign
+								if (item[`${location}${a.decoration}Design`] !== null && item[`${location}${a.decoration}Design`] !== "") {
+									designMarkup.push(`<span class=nowrap><span class=subtable-head>${location} ${a.decoration} Design</span>: ` + item[`${location}${a.decoration}Design`] + "</span>");
+								}
+								// e.g. FrontScreen
+								if (item[`${location}${a.medium}`] !== null && item[`${location}${a.medium}`] !== "") {
+									designMarkup.push(`<span class=nowrap><span class=subtable-head>${location} ${a.medium}</span>: ` + item[`${location}${a.medium}`] + "</span>");
+								}
+								// e.g. FrontScreen2
+								if (item[`${location}${a.medium}2`] !== null && item[`${location}${a.medium}2`] !== "") {
+									designMarkup.push(`<span class=nowrap><span class=subtable-head>${location} ${a.medium} 2</span>: ` + item[`${location}${a.medium}2`] + "</span><br>");
+								}
+							});
+						});
+						tableHtml += designMarkup.join("<br>");
+						// products
+						tableHtml += `<td>${item.Product}<br>${item.Product2}`;
+						// sizes, first get the ones that are not zero, and show them
+						var mySizes = sizes.filter(s => item[s] !== 0);
+						tableHtml += "<td>" + mySizes.map(s => `<span class=subtable-head>${s == "ASm" ? "AS" : s}</span>:${item[s]}`).join(", ");
+						var numberOfProducts = mySizes.reduce( (acc, curr) => acc + item[curr], 0);
+						quantity += numberOfProducts;
+						tableHtml += `<td class=sub-num>${numberOfProducts}`;
+						tableHtml += `<td class=sub-num>${item.Price.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+						var itemValue = item.Price * numberOfProducts;
+						tableHtml += `<td class=sub-num>${itemValue.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+						value += itemValue;
+						tableHtml += "</tr>";
+					}
+					tableHtml += `<tfoot><tr><td colspan=3><td class=sub-num>${quantity}<td><td class=sub-num>${value.toLocaleString("en-AU", {style: "currency", currency: "AUD"})}`;
+
+					tableHtml += "</table>";
+
+					const totalValue = json.reduce((acc, curr) => {
+						return acc + parseFloat(curr.Value.replace("$", ""));
+					}, 0);
+					const totalQuantity = json.reduce((acc, curr) => {
+						return acc + curr.Total;
+					}, 0);
+
+					row.child(tableHtml).show();
+					evt.target.classList.add("shown");
+
+				}
+				else {
+					throw new Error(response.statusText);
+				}
+		}
+	}
+
+
+// Add event listener for opening and closing details
+document.querySelector("table#dt tbody").addEventListener("click", onOpenRowButtonClick)
+
+
+Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
+	
+	if (s.getAttribute("id") == "customerName")
+		return;
+
+	// when focus happens first time, load options via ajax
+	s.addEventListener("focus", function() {
+		if (this.childElementCount == 1) {
+			fetch(`/sales/${this.dataset.location}`)
+			.then(response => response.json() )
+			.then(json => {
+				for(item of json) {
+					this.insertAdjacentHTML("beforeend", `<option value="${item.value}">${item.name}`)
+				}
+			})
+		}
+	})
+})
+
+document.getElementById("customerName").addEventListener("focus", function() {
+	var datalist = document.getElementById("customerData");
+	if (datalist.options.length === 1) {
+		fetch(`/sales/customernames`)
+		.then(response => response.json() )
+		.then(json => {
+			for(item of json) {
+				datalist.insertAdjacentHTML("beforeend", `<option data-value="${item.value}" value="${item.name}">`);
+			}
+		})
+	}
+});
+
+Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
+	s.addEventListener("change", function(event) {
+		// select fields searching is exclusive of order number so reset it
+		document.getElementById("orderNumber").value = "";
+
+		if (event.currentTarget.id == "customerName") {
+			document.getElementById("customerCode").value = 0
+		}
+		if (event.currentTarget.id == "customerCode") {
+			document.getElementById("customerName").value = 0
+		}
+
+		window.datatable.ajax.reload()
+	})
+})
+
+var chosenCustomerId = "";
+
+Array.from(document.querySelectorAll("fieldset input")).forEach(function(s) {
+	s.addEventListener("input", function(event) {
+		console.log(event.inputType);
+		if (!(event instanceof InputEvent) || event.inputType === "insertReplacementText") {
+			// do the customer fetch
+			var customerOption = Array.from(document.querySelectorAll("#customerData option")).find(option => option.value === document.getElementById("customerName").value);
+			console.log(customerOption.dataset.value);
+			chosenCustomerId = customerOption.dataset.value;
+		}
+		else if (s.id == "orderNumber") {
+			// if it's the ordernumber field, reset all selects and date fields
+			Array.from(document.querySelectorAll("fieldset select")).forEach(select => select.value = "0")
+			Array.from(document.querySelectorAll("fieldset input[type=date]")).forEach(date => date.value = "")
+		}
+		else {
+			// it was the date fields, reset our order number
+			document.getElementById("orderNumber").value = "";
+		}
+		window.datatable.ajax.reload()
+	})
+})
+
+
+document.getElementById("dateFrom").addEventListener("input", function() {
+	document.getElementById("dateTo").setAttribute("min", this.value)
+})
+
+
+document.getElementById("dateTo").addEventListener("input", function() {
+	document.getElementById("dateFrom").setAttribute("max", this.value)
+})
+
+
+function clearSearchFields() {
+
+	Array.from(document.querySelectorAll("input[type=date]")).forEach(i => i.value = "")
+
+	Array.from(document.querySelectorAll("fieldset select")).forEach(s => s.value = 0)
+
+	document.querySelector("fieldset input[type=search]").value = ""
+
+
+	datatable.ajax.reload()
+}
+
+var button = document.getElementById("topClearButton")
+document.querySelector("main>h1").appendChild(button)
+
+</script>
+
+
+
+	<%- include("partials/foot.ejs") %>
