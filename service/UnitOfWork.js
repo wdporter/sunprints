@@ -11,7 +11,7 @@ module.exports = class UnitOfWork
 	/**
 	 * user must always call this in order to close the connection
 	 */
-	cleanup() {
+	close() {
 		if (this.db.inTransaction) {
 			this.commit();
 		}
@@ -24,7 +24,8 @@ module.exports = class UnitOfWork
 	}
 
 	commit() {
-		
+		this.db.prepare("COMMIT").run();
+
 	}
 
 	rollback() {

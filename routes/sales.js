@@ -72,17 +72,15 @@ router.get("/dt", (req, res) => {
 			draw: Number(req.query.draw),
 		}).end()
 
-
 	}
 	catch (ex) {
 		res.statusMessage = ex.message
 		res.status(400)
 		res.render("error.ejs", { message: ex.message, error: { status: ex.name, stack: null } }).end()
 		console.log(ex)
-
 	}
 	finally {
-		db.close()
+		uw.close();
 	}
 })
 
