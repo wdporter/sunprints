@@ -111,19 +111,9 @@
 	<table id="dt" class="display compact">
 		<thead>
 			<tr>
-				<th></th>
-				<th>Order Id</th>
-				<th>Order Number</th>
-				<th>Order Date</th>
-				<th>Owner</th>
-				<th>Processed Date</th>
-				<th>Delivery Date</th>
-				<th>Design</th>
-				<th>Customer name</th>
-				<th>Terms</th>
-				<th>Buy In</th>
-				<th>Notes</th>
-				<th>Done</th>
+				<% columnNames.forEach(col => { %>
+				 <th><%= col %></th>
+				<% }) %>
 			</tr>
 		</thead>
 	</table>
@@ -267,7 +257,10 @@ window.datatable = new DataTable("table#dt", {
 		{ data: "Owner", 
 			width: "3em", 
 			render: function(data) {
-				if (data[0] == ":")
+				if (data === null || data.length === 0) {
+					return "";
+				}
+				else if (data[0] === ":")
 					return data.substring(1);
 				else
 					return data.replace(":", "<br>")

@@ -1,102 +1,37 @@
 const SalesHistoryDao = require("../integration/SalesHistoryDAO.js");
-const { auditColumns } = require("../config/auditColumns.js");
-const getDB = require("../integration/dbFactory");
+//const { auditColumns } = require("../config/auditColumns.js");
+//const getDB = require("../integration/dbFactory.js");
 
-/**
- * 
- * @param {Database} db  a Database connection because this is probably part of a transaction
- * @param {object} order the order that gets inserted into the SalesTotal table
- */
-function insertOrder (db, order) {
+module.exports = class SalesHistoryService {
 
-	const dao = new SalesHistoryDao(db)
-	
-	// there are variations in the column names, so fix those
-	// note: update also fixes InvoiceDate→DateInvoiced, but new items are always null for this one (same is true for processed date)
-	let keys = Object.keys(order).filter(k => ! auditColumns.includes(k))
-	const salesTotal = {}
-	Object.keys(order).forEach (k => {
-		if (auditColumns.includes(k))
-			return // ignore audit columns
-
-		if (k == "DeliveryDate") {
-			salesTotal.Delivery = order[k] // DeliveryDate becomes Delivery
-		}
-		else 
-			salesTotal[k] = order[k]
-	})
-
-	dao.insertSalesTotal(salesTotal)
-
-
-}
-
-/**
- * 
- * @param {Database} Db a Database connection because this is probably part of a transaction
- * @param {object} product a product to insert 
- */
-function insertProduct(db, product,) {
-
-	const dao = new SalesHistoryDao(db)
-	dao.insertSales (product)
-
-
-}
-
+	constructor(db) {
+		// this.db = db;
+		this.dao = new SalesHistoryDao(db);
+	}
 
 
 /**
- * For the given order, updates the corresponding sales history table item
+ * gets items satisfying the given search object
+ * @param {Object} searchObject an object where keys are fields to be searched on
+ * @param {String} sortBy the name of the column to sort by
+ * @param {String} sortDirection the direction of the sort, expected values are "asc" or "desc"
+ * @param {Number} start the index of the first record to retrieve, used top determine what page we are on
+ * @param {Number} length number of results to return, corresponds to the page size
  * 
- * @param {Database} db  a Database connection because this is probably part of a transaction
- * @param {object} order the order that gets updated in the SalesTotal table
+ * @return {Object} data: the list of sales items, totalRecords: how many records in the database, recordsFiltered: how many records are in the filtered recordset
  */
-function updateOrder (db, order) {
+	getSearchResults(searchObject, sortBy, sortDirection, start, length) {
 
-	const dao = new SalesHistoryDao(db)
-	
-	// there are variations in the column names, so fix those
-	let keys = Object.keys(order).filter(k => ! auditColumns.includes(k))
-	const salesTotal = {}
-	Object.keys(order).forEach (k => {
-		if (auditColumns.includes(k))
-			return // ignore audit columns
-		if (k == "Deleted")
-			return // ignore, does not exist in SalesTotal
-
-		if (k == "DeliveryDate") {
-			salesTotal.Delivery = order[k] // DeliveryDate becomes Delivery
-		}
-		else if (k == "InvoiceDate") {
-			salesTotal.DateInvoiced = order[k] // InvoiceDate becomes DateInvoiced (this is not needed on the inserts)
-		}
-		else if (k == "ProcessedDate") {
-			salesTotal.DateProcessed = order[k]
-		}
-		else 
-			salesTotal[k] = order[k]
-	})
-
-	dao.updateSalesTotal(salesTotal)
+		const result = this.dao.getSearchResults(searchObject, sortBy, sortDirection, start, length);
 
 
+		// fix the design items from a semi-colon separated string into an array of non-empty string
+		result.data.forEach(d => {
+			d.designItems = d.Designs?.split(";").map(x => x.trim()).filter(x => x !== "") ?? [];
+			delete d.Designs;
+		})
+
+		return result
+	}
 }
 
-/**
- * gets the count of records in the sales history table
- * 
- * @param {Database} db 
- * @return {Array} the list of items 
- */
-function getCount() 
-{
-	const db = getDB()
-	const dao = new SalesHistoryDao(db)
-	return dao.getCount()
-}
-
-
-
-
-module.exports = { insertOrder, insertProduct, updateOrder, getCount }

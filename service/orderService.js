@@ -8,7 +8,7 @@ const OrderModel = require("../models/order.js")
 const productService = require("./productService.js")
 const customerService = require("./customerService.js")
 const auditLogService = require("./auditLogService.js")
-const salesHistoryService = require("./salesHistoryService.js")
+const salesHistoryService = require("./SalesHistoryService.js")
 
 const { art, locations, decorations, media } = require("../config/art.js")
 

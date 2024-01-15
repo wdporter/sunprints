@@ -4,7 +4,22 @@ const { json } = require("body-parser");
 const sz = require("../sizes.js");
 const getDB = require ("../integration/dbFactory.js"); // todo refactor so we don't need this here
 const regionService = require("../service/regionService.js");
-const { getCount } = require("../service/salesHistoryService.js");
+const UnitOfWork = require("../service/UnitOfWork.js");
+
+const dtColumnNames = [
+	{dt: "", db: ""},
+	{dt: "Order Id", db: "OrderId"},
+	{dt: "Order Number", db: "OrderNumber"},
+	{dt: "Order Date", db: "OrderDate"},
+	{dt: "Owner", db: "Owner"},
+	{dt: "Processed Date", db: "DateProcessed"},
+	{dt: "Delivery Date", db: "Delivery"},
+	{dt: "Design", db: "Designs"}, 
+	{dt: "Customer", db: "Company"}, 
+	{dt: "Terms", db: "Terms"},
+	{dt: "Buy In", db: "Buyin"},
+	{dt: "Notes", db: "Notes"},
+	{dt: "Done", db: "Done"}];
 
 /* GET Sales History page. */
 router.get("/", (req, res) => {
@@ -18,6 +33,7 @@ router.get("/", (req, res) => {
 			art: sz.art,
 			regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}),
 			salesreps: getDB().prepare("SELECT Name, Deleted FROM SalesRep ").all(),
+			columnNames: dtColumnNames.map(c => c.dt),
 			stylesheets: [
 				"/stylesheets/buttons.dataTables-2.2.3.css", 
 				"/stylesheets/sales-theme.css",
@@ -33,179 +49,26 @@ router.get("/", (req, res) => {
 
 // GET datatable ajax for sales history table
 router.get("/dt", (req, res) => {
-	const db = getDB();
+	
+	const uw = new UnitOfWork();
 
 	try {
 		console.log(req.query.customSearch)
-		let recordsTotal = recordsFiltered = getCount();
 
+		const salesHistoryService = uw.getSalesHistoryService();
+		const searchResults = uw.salesHistoryService.getSearchResults(
+			req.query.customSearch, 
+			dtColumnNames[req.query.order[0].column].db, 
+			req.query.order[0].dir,
+			req.query.start, 
+			req.query.length);
 
-		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, IFNULL(Region.Name, '') || ':' || IFNULL(SalesTotal.SalesRep, '') AS Owner, SalesTotal.DateProcessed, 
-		SalesTotal.Delivery, Customer.Code, Customer.Company, Customer.CustomerId, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
-		,SalesTotal.StockOrderId 
-		FROM SalesTotal 
-		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId 
-		LEFT JOIN Region USING (RegionId)`
-
-		const salesJoin = ` INNER JOIN Sales ON Sales.OrderId=SalesTotal.OrderId `
-		let useSalesJoin = false
-
-		const params = {}
-		const where = []
-
-		if (req.query.customSearch.Company != "") {
-			where.push(` SalesTotal.CustomerId = @Company `)
-			params.Company = req.query.customSearch.Company
-		}
-		if (req.query.customSearch.DateFrom !== "") {
-			where.push(`OrderDate >= @DateFrom`)
-			params.DateFrom = req.query.customSearch.DateFrom
-		}
-		if (req.query.customSearch.DateTo !== "") {
-			where.push(`OrderDate <= @DateTo`)
-			params.DateTo = req.query.customSearch.DateTo
-		}
-		if (req.query.customSearch.SalesRep !== "") {
-			where.push(`SalesTotal.SalesRep = @SalesRep`)
-			params.SalesRep = req.query.customSearch.SalesRep.trimEnd(" (*)")
-		}
-		if (req.query.customSearch.Region !== "") {
-			where.push(`SalesTotal.RegionId = @Region`)
-			params.Region = req.query.customSearch.Region.trimEnd(" (*)")
-		}
-		if (req.query.customSearch.Print != "") {
-				where.push(`(Sales.FrontPrintDesignId=@Print OR Sales.BackPrintDesignId=@Print OR Sales.PocketPrintDesignId=@Print OR Sales.SleevePrintDesignId=@Print)`)
-				params.Print = req.query.customSearch.Print
-				useSalesJoin = true
-		}
-		if (req.query.customSearch.Screen !== "") {
-			where.push(`(Sales.FrontScreenId=@Screen OR Sales.FrontScreen2Id=@Screen 
-								OR Sales.BackScreenId=@Screen OR Sales.BackScreen2Id=@Screen 
-								OR Sales.PocketScreenId=@Screen OR Sales.PocketScreen2Id=@Screen 
-								OR Sales.SleeveScreenId=@Screen OR Sales.SleeveScreen2Id=@Screen 
-								)`)
-			params.Screen = req.query.customSearch.Screen
-			useSalesJoin = true
-		}
-		if (req.query.customSearch.Embroidery !== "") {
-			where.push(`(Sales.FrontEmbroideryDesignId=@Embroidery OR Sales.BackEmbroideryDesignId=@Embroidery OR Sales.PocketEmbroideryDesignId=@Embroidery OR Sales.SleeveEmbroideryDesignId=@Embroidery)`)
-			params.Embroidery = req.query.customSearch.Embroidery
-			useSalesJoin = true
-		}
-		if (req.query.customSearch.Usb !== "") {
-			where.push(`(Sales.FrontUsbId=@Usb OR Sales.FrontUsb2Id=@Usb 
-								OR Sales.BackUsbId=@Usb OR Sales.BackUsb2Id=@Usb 
-								OR Sales.PocketUsbId=@Usb OR Sales.PocketUsb2Id=@Usb 
-								OR Sales.SleeveUsbId=@Usb OR Sales.SleeveUsb2Id=@Usb 
-								)`)
-			params.Usb = req.query.customSearch.Usb
-			useSalesJoin = true
-		}
-		if (req.query.customSearch.Transfer !== "") {
-			where.push(`(Sales.FrontTransferDesignId =@Transfer 
-								OR Sales.BackTransferDesignId  =@Transfer 
-								OR Sales.PocketTransferDesignId=@Transfer 
-								OR Sales.SleeveTransferDesignId=@Transfer)`)
-			params.Transfer = req.query.customSearch.Transfer
-			useSalesJoin = true
-		}
-		if (req.query.customSearch.TransferName !== "") {
-			where.push(`(Sales.FrontTransferNameId =@TransferName OR Sales.FrontTransferName2Id =@TransferName 
-								OR Sales.BackTransferNameId  =@TransferName OR Sales.BackTransferName2Id  =@TransferName 
-								OR Sales.PocketTransferNameId=@TransferName OR Sales.PocketTransferName2Id=@TransferName 
-								OR Sales.SleeveTransferNameId=@TransferName OR Sales.SleeveTransferName2Id=@TransferName 
-								)`)
-			params.TransferName = req.query.customSearch.TransferName
-			useSalesJoin = true
-		}
-		if (req.query.customSearch.OrderNumber.trim()) {
-			where.push( ` OrderNumber LIKE @OrderNumber `)
-			params.OrderNumber = `%${req.query.customSearch.OrderNumber}%`
-		}
-
-
-		let recordsFilteredQuery = `SELECT COUNT(*) AS Count FROM SalesTotal
-		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId  `
-		if (useSalesJoin)
-			recordsFilteredQuery += salesJoin
-		if (where.length > 0) {
-			recordsFilteredQuery += ` WHERE ${where.join(" AND ")} `
-		}
-		recordsFiltered = db.prepare(recordsFilteredQuery).get(params).Count
-
-		if (useSalesJoin)
-			query += salesJoin
-
-		if (where.length > 0) 
-			query += ` WHERE ${where.join(" AND ")} `
-
-
-		if (req.query.order) {
-			query += " ORDER BY "
-
-			if (req.query.order[0].column == 5) { // processed date, show nulls first
-					query += ` CASE WHEN DateProcessed IS NULL THEN 1 ELSE 0 END ${req.query.order[0].dir}, DateProcessed ${req.query.order[0].dir} `
-			}
-			else {
-				query += ` ${req.query.order[0].column} COLLATE NOCASE ${req.query.order[0].dir} `
-			}
-		}
-
-		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start}`
-
-		data = db.prepare(query).all(params)
-
-		data.forEach(d => d.DT_RowData = {id: d.OrderId})
-
-
-		// now we have to get the designs used for each sale
-		const query2 = db.prepare(/*sql*/`SELECT 
-		fpd.Code || ' ' || fpd.Notes AS FrontPrintDesign
-		,bpd.Code || ' ' || bpd.Notes AS BackPrintDesign 
-		,ppd.Code || ' ' || ppd.Notes AS PocketPrintDesign
-		,spd.Code || ' ' || spd.Notes AS SleevePrintDesign 
-		,fed.Code || ' ' || fed.Notes AS FrontEmbroideryDesign
-		,bed.Code || ' ' || bed.Notes AS BackEmbroideryDesign 
-		,ped.Code || ' ' || ped.Notes AS PocketEmbroideryDesign
-		,sed.Code || ' ' || sed.Notes AS SleeveEmbroideryDesign 
-		,ftd.Code || ' ' || ftd.Notes AS FrontTransferDesign
-		,btd.Code || ' ' || btd.Notes AS BackTransferDesign 
-		,ptd.Code || ' ' || ptd.Notes AS PocketTransferDesign
-		,std.Code || ' ' || std.Notes AS SleeveTransferDesign 
-		FROM Sales
-		LEFT OUTER JOIN PrintDesign fpd ON fpd.PrintDesignId=Sales.FrontPrintDesignId
-		LEFT OUTER JOIN PrintDesign bpd ON bpd.PrintDesignId=Sales.BackPrintDesignId
-		LEFT OUTER JOIN PrintDesign ppd ON ppd.PrintDesignId=Sales.PocketPrintDesignId
-		LEFT OUTER JOIN PrintDesign spd ON spd.PrintDesignId=Sales.SleevePrintDesignId
-		LEFT OUTER JOIN EmbroideryDesign fed ON fed.EmbroideryDesignId=Sales.FrontEmbroideryDesignId
-		LEFT OUTER JOIN EmbroideryDesign bed ON bed.EmbroideryDesignId=Sales.BackEmbroideryDesignId
-		LEFT OUTER JOIN EmbroideryDesign ped ON ped.EmbroideryDesignId=Sales.PocketEmbroideryDesignId
-		LEFT OUTER JOIN EmbroideryDesign sed ON sed.EmbroideryDesignId=Sales.SleeveEmbroideryDesignId
-		LEFT OUTER JOIN TransferDesign ftd ON ftd.TransferDesignId=Sales.FrontTransferDesignId
-		LEFT OUTER JOIN TransferDesign btd ON btd.TransferDesignId=Sales.BackTransferDesignId
-		LEFT OUTER JOIN TransferDesign ptd ON ptd.TransferDesignId=Sales.PocketTransferDesignId
-		LEFT OUTER JOIN TransferDesign std ON std.TransferDesignId=Sales.SleeveTransferDesignId
-		WHERE 
-		OrderId=?
-		AND NOT (FrontPrintDesign IS NULL AND BackPrintDesign IS NULL AND PocketPrintDesign IS NULL AND SleevePrintDesign IS NULL
-		AND FrontEmbroideryDesign IS NULL AND BackEmbroideryDesign IS NULL AND PocketEmbroideryDesign IS NULL AND SleeveEmbroideryDesign IS NULL
-		AND FrontTransferDesign IS NULL AND BackTransferDesign IS NULL AND PocketTransferDesign IS NULL AND SleeveTransferDesign IS NULL)
-		`)
-		data.forEach(d => {
-			const designs = query2.all(d.OrderId)
-			d.designItems = []
-			designs.forEach(design => {
-				Object.keys(design).forEach(k => {
-					if (design[k]) 
-						d.designItems.push(design[k])
-				})
-			})
-		})
+		searchResults.data.forEach(d => d.DT_RowData = {id: d.OrderId})
 
 		res.send({
-			data,
-			recordsTotal,
-			recordsFiltered,
+			data: searchResults.data,
+			recordsTotal: searchResults.recordsTotal,
+			recordsFiltered: searchResults.recordsFiltered,
 			draw: Number(req.query.draw),
 		}).end()
 
