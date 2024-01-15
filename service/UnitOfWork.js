@@ -1,6 +1,7 @@
 const getDB = require("../integration/dbFactory");
 const SalesHistoryService = require("./SalesHistoryService.js");
 const RegionService = require("./RegionService.js");
+const SalesRepService = require("./SalesRepService.js")
 
 module.exports = class UnitOfWork
 {
@@ -47,6 +48,13 @@ module.exports = class UnitOfWork
 			this.regionService = new RegionService(this.db);
 		}
 		return this.regionService;
+	}
+
+	getSalesRepService() {
+		if (typeof this.salesRepService === "undefined") {
+			this.salesRepService = new SalesRepService(this.db);
+		}
+		return this.salesRepService;
 	}
 
 }

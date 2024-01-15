@@ -1,18 +1,20 @@
-const getDB = require("../integration/dbFactory")
-const SalesRepDao = require("../integration/SalesRepDAO.js")
+const SalesRepDao = require("../integration/SalesRepDAO.js");
 
-function getCurrentSalesRepNames () {
+/**
+ * service methods to fetch region information
+ */
+class SalesRepService {
 
-	const db = getDB()
-	try {
-		const dao = new SalesRepDao(db)
+	constructor(db) {
+		this.dao = new SalesRepDao(db);
+	}
 	
-		return dao.all().map(sr => sr.Name)
+	getNames() {
+		return this.dao.all(true).map(s => {return { Name: s.Name, Deleted: s.Deleted }});
 	}
-	finally {
-		db.close()
-	}
+
 }
 
 
-module.exports = { getCurrentSalesRepNames }
+
+module.exports = SalesRepService;

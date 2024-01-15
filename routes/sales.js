@@ -24,8 +24,7 @@ const dtColumnNames = [
 /* GET Sales History page. */
 router.get("/", (req, res) => {
 
-	var uw = new UnitOfWork();
-	var regionNames = uw.getRegionService().getNames();
+	const uw = new UnitOfWork();
 
 	res.render("sales2.ejs", {
 		title: "Sales History",
@@ -34,8 +33,8 @@ router.get("/", (req, res) => {
 		sizes: sz.allSizes,
 		locations: sz.locations,
 		art: sz.art,
-		regions: regionNames, 
-		salesreps: getDB().prepare("SELECT Name, Deleted FROM SalesRep ").all(), // todo fix, get from uw
+		regions: uw.getRegionService().getNames(), 
+		salesreps: uw.getSalesRepService().getNames(), 
 		columnNames: dtColumnNames.map(c => c.dt),
 		stylesheets: [
 			"/stylesheets/buttons.dataTables-2.2.3.css", 

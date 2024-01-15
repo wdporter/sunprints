@@ -17,8 +17,6 @@ module.exports = class SalesRepDao {
 		this.db = db
 	}
 
-
-
 	/**
 	 * Returns an array of sales rep names
 	 * @param {boolean} includeDeleted whether to return to the deleted sales reps also
@@ -26,9 +24,9 @@ module.exports = class SalesRepDao {
 	 */
 	all(includeDeleted = false) {
 
-		let query = "SELECT * FROM SalesRep "
+		let query = /*sql*/`SELECT * FROM SalesRep `
 		if (!includeDeleted)
-			query += " WHERE Deleted=0"
+			query += /*sql*/` WHERE Deleted=0`
 
 		const retVal = this.db.prepare(query).all()
 		return retVal

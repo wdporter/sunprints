@@ -3,7 +3,7 @@
 const express = require("express")
 const router = express.Router()
 
-const salesRepService = require("../service/salesRepService.js")
+const salesRepService = require("../service/salesRepServiceDeprecated.js")
 const orderService = require("../service/orderService.js")
 const productService = require("../service/productService.js")
 const customerService = require("../service/customerService.js")
