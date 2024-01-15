@@ -25,7 +25,7 @@ module.exports = class SalesHistoryDao {
 		const where = []
 
 		if (searchObject.Company != "") {
-			where.push(` CustomerId = @Company `)
+			where.push(` SalesSearch_View.CustomerId = @Company `)
 			params.Company = searchObject.Company
 		}
 		if (searchObject.DateFrom !== "") {

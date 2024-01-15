@@ -42,5 +42,11 @@ module.exports = class UnitOfWork
 		return this.salesHistoryService;
 	}
 
+	getCustomerService() {
+		if (typeof this.customerService === "undefined") {
+			this.customerService = new CustomerService(this.db);
+		}
+		return this.customerService;
+	}
 
 }

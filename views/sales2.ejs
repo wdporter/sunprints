@@ -337,42 +337,37 @@ window.datatable = new DataTable("table#dt", {
 	]
 })
 
-window.datatable.on("draw", function() {
-		// window.datatable.buttons(0).text("Expand all")
+window.datatable.on("draw", async function() {
+		window.datatable.buttons(0).text("Expand all")
 
-		// // if it's a customer and a date range, display a sum of their orders
-		// let customerName = "0";
-		// if (chosenCustomerId !== "") {
-		// 	customerName = chosenCustomerId;
-		// 	chosenCustomerId = "";
+		// if it's a customer and a date range, display a sum of their orders
+		let customerId = dataSearchObject.Company;
+		// let customerName = "";
+		// if (dataSearchObject.Company !== null) {
+		// 	customerName = document.getElementById("customerName").value;
 		// }
-		// const customerCode = "0"
-		// const fromDate = document.getElementById("dateFrom").value
-		// const toDate = document.getElementById("dateTo").value
+		const fromDate = document.getElementById("dateFrom").value;
+		const toDate = document.getElementById("dateTo").value;
 
-		// if ((customerName != "0" || customerCode != "0") && (fromDate || toDate)) {
-		// 	const url = `/sales/customertotal?CustomerName=${customerName}&CustomerCode=${customerCode}&FromDate=${fromDate}&ToDate=${toDate}`
-		// 	fetch(url)
-		// 	.then(response => response.text())
-		// 	.then(data => {
-		// 		document.getElementById("customerSalesTotalLabel").textContent = `Total sales for customer in date range: ${data}`
-		// 	})
-		// 	return
-		// }
+		if (customerId !== null && (fromDate !== "" || toDate !== "")) {
+			const url = `/sales/customertotal?CustomerId=${customerId}&FromDate=${fromDate}&ToDate=${toDate}`;
+			const response = await fetch(url);
+			const text = await response.text();
+			document.getElementById("customerSalesTotalLabel").textContent = `Total sales for customer in date range (excl. freight): ${text}`
+			return;
+		}
 
-		// // now we'll try to do the same for a region and a date range
-		// const regionid = document.getElementById("region").value
-		// if ((regionid != "") && (fromDate || toDate)) {
-		// 	const url = `/sales/regiontotal?regionid=${regionid}&from=${fromDate}&to=${toDate}`
-		// 	fetch(url)
-		// 	.then(response => response.text())
-		// 	.then(data => {
-		// 		document.getElementById("customerSalesTotalLabel").textContent = `Total sales for region in date range: ${data}`
-		// 	})
-		// 	return
-		// }
+		// now we'll try to do the same for a region and a date range
+		const regionid = document.getElementById("region").value
+		if (regionid !== "" && (fromDate !== "" || toDate !== "")) {
+			const url = `/sales/regiontotal?regionid=${regionid}&from=${fromDate}&to=${toDate}`;
+			const response = await fetch(url);
+			const text = await response.text();
+			document.getElementById("customerSalesTotalLabel").textContent = `Total sales for region in date range (excl. freight): ${text}`;
+			return;
+		}
 
-		// 	document.getElementById("customerSalesTotalLabel").textContent = ""
+		document.getElementById("customerSalesTotalLabel").textContent = ""
 
 	})
 
@@ -595,7 +590,11 @@ const orderNumberInput = document.getElementById("orderNumber");
 function onOrderNumberInputChange() {
 	dataSearchObject[orderNumberInput.name] = orderNumberInput.value;
 	window.datatable.ajax.reload();
-	// todo reset input[type=search]
+
+	//reset input[type=search]
+	Array.from(document.querySelectorAll("input[type=search]")).forEach(function(input) {
+		input.value = "";
+	});
 }
 orderNumberInput.addEventListener("blur", onOrderNumberInputChange);
 orderNumberInput.addEventListener("keyup", function(event) {

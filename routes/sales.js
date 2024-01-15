@@ -31,8 +31,8 @@ router.get("/", (req, res) => {
 			sizes: sz.allSizes,
 			locations: sz.locations,
 			art: sz.art,
-			regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}),
-			salesreps: getDB().prepare("SELECT Name, Deleted FROM SalesRep ").all(),
+			regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}), // todo fix, get from uw
+			salesreps: getDB().prepare("SELECT Name, Deleted FROM SalesRep ").all(), // todo fix, get from uw
 			columnNames: dtColumnNames.map(c => c.dt),
 			stylesheets: [
 				"/stylesheets/buttons.dataTables-2.2.3.css", 
@@ -86,9 +86,14 @@ router.get("/dt", (req, res) => {
 
 
 router.get("/customernames", (req, res) => {
-	const db = getDB();
+
+	const uw = new UnitOfWork();
+
 	try {
-		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
+		// const customerService = uw.getCustomerService();
+
+		// todo, this was hack must refactor properly
+		const customers = uw.db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
 		res.send(
 			customers.map(c => {
 				return {
@@ -1044,20 +1049,14 @@ WHERE StockOrderId=?`).get(salesTotal.StockOrderId)
 router.get("/customertotal", (req, res) => {
 	const db = getDB();
 
-	const { CustomerName, CustomerCode, FromDate, ToDate } = req.query
+	const { CustomerId, FromDate, ToDate } = req.query
 
 	var sql = /*sql*/`SELECT Price * (${sz.allSizes.map(s=> `${s}`).join("+")}) AS Total FROM SalesTotal
 	INNER JOIN Sales USING (OrderId) 
 	WHERE `
 
 	var whereClauses = [` SalesTotal.CustomerId = ?  `]
-	var parameters = []
-	if (CustomerName != "0") { // one of these two has to have an id
-		parameters.push(CustomerName)
-	}
-	if (CustomerCode != "0") {
-		parameters.push(CustomerCode)
-	}
+	var parameters = [CustomerId]
 	if (FromDate) {
 		whereClauses.push( ` SalesTotal.OrderDate >= ? `)
 		parameters.push(FromDate)
@@ -1067,7 +1066,8 @@ router.get("/customertotal", (req, res) => {
 		parameters.push(ToDate)
 	}
 	sql += whereClauses.join(" AND ")
-	
+
+	sql += " AND Sales.GarmentId NOT IN (11279, 16866, 24778, 25278) "
 
 	const statement = db.prepare(sql);
 	let resultset = statement.all(parameters)
@@ -1111,7 +1111,8 @@ router.get("/regiontotal", (req, res) => {
 		parameters.push(to);
 	}
 	sql += whereClauses.join(/*sql*/" AND ");
-	
+
+	sql += " AND Sales.GarmentId NOT IN (11279, 16866, 24778, 25278) "
 
 	const statement = db.prepare(sql);
 	let resultset = statement.all(parameters)
