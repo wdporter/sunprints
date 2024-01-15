@@ -5,7 +5,7 @@ const designService = require("../service/designService");
 const mediaService = require("../service/mediaService");
 const { auditColumns } = require("../config/auditColumns.js");
 const getDB = require ("../integration/dbFactory.js");
-const regionService = require("../service/regionService");
+const regionService = require("../service/regionServiceDeprecated.js");
 
 /* GET orders page. */
 router.get("/", function (req, res, next) {

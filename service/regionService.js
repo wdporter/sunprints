@@ -1,54 +1,21 @@
-const getDB = require("../integration/dbFactory")
-const RegionDao = require("../integration/RegionDAO")
+const RegionDao = require("../integration/RegionDAO.js");
+
 
 /**
- * Returns an array of regions, included deleted
- *
- * @returns {array} regions
+ * service methods to fetch region information
  */
-function all() {
+class RegionService {
 
-	const db = getDB()
-	const dao = new RegionDao(db)
-
-	try {
-		const result = dao.all(true)
-
-		result.sort((a, b) => a.Order - b.Order)
-
-		return result
+	constructor(db) {
+		this.dao = new RegionDao(db);
 	}
-	finally {
-		db.close()
-	}
-}
-
-/* creates a new region */
-function create(name, order, user) {
 	
-	const db = getDB()
-	const dao = new RegionDao(db)
-
-	try {
-		dao.create(name, order, user)
+	getNames() {
+		return this.dao.all().map(r => {return { id: r.RegionId, name: r.Name }});
 	}
-	finally {
-		db.close()
-	}
-}
-
-function update(id, name, order, active, user) {
-	const db = getDB()
-	const dao = new RegionDao(db)
-
-	try {
-		dao.update(id, name, order, active, user)
-	}
-	finally {
-		db.close()
-	}
-
 
 }
 
-module.exports = { all, create, update }
+
+
+module.exports = RegionService;

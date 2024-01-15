@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 
-const regionService = require("../service/regionService.js")
+const regionService = require("../service/regionServiceDeprecated.js")
 
 router.get("/", (req, res) => {
 	try {

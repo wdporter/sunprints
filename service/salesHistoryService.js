@@ -1,11 +1,8 @@
 const SalesHistoryDao = require("../integration/SalesHistoryDAO.js");
-//const { auditColumns } = require("../config/auditColumns.js");
-//const getDB = require("../integration/dbFactory.js");
 
 module.exports = class SalesHistoryService {
 
 	constructor(db) {
-		// this.db = db;
 		this.dao = new SalesHistoryDao(db);
 	}
 

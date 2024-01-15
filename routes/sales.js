@@ -24,26 +24,29 @@ const dtColumnNames = [
 /* GET Sales History page. */
 router.get("/", (req, res) => {
 
-		res.render("sales2.ejs", {
-			title: "Sales History",
-			user: req.auth.user,
-			poweruser: res.locals.poweruser,
-			sizes: sz.allSizes,
-			locations: sz.locations,
-			art: sz.art,
-			regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}), // todo fix, get from uw
-			salesreps: getDB().prepare("SELECT Name, Deleted FROM SalesRep ").all(), // todo fix, get from uw
-			columnNames: dtColumnNames.map(c => c.dt),
-			stylesheets: [
-				"/stylesheets/buttons.dataTables-2.2.3.css", 
-				"/stylesheets/sales-theme.css",
-				"/stylesheets/fixedHeader.dataTables.min.css"
-			],
-			javascripts:  [
-				"/javascripts/dataTables.buttons-2.2.3.js",
-				"/javascripts/dataTables.fixedHeader.min.js",
-			]
-		})
+	var uw = new UnitOfWork();
+	var regionNames = uw.getRegionService().getNames();
+
+	res.render("sales2.ejs", {
+		title: "Sales History",
+		user: req.auth.user,
+		poweruser: res.locals.poweruser,
+		sizes: sz.allSizes,
+		locations: sz.locations,
+		art: sz.art,
+		regions: regionNames, 
+		salesreps: getDB().prepare("SELECT Name, Deleted FROM SalesRep ").all(), // todo fix, get from uw
+		columnNames: dtColumnNames.map(c => c.dt),
+		stylesheets: [
+			"/stylesheets/buttons.dataTables-2.2.3.css", 
+			"/stylesheets/sales-theme.css",
+			"/stylesheets/fixedHeader.dataTables.min.css"
+		],
+		javascripts:  [
+			"/javascripts/dataTables.buttons-2.2.3.js",
+			"/javascripts/dataTables.fixedHeader.min.js",
+		]
+	})
 })
 
 

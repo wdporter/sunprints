@@ -3,7 +3,7 @@ const router = express.Router()
 const { auditColumns } = require("../sizes.js");
 const customerService = require("../service/customerService")
 const getDb = require("../integration/dbFactory")
-const regionService = require("../service/regionService")
+const regionService = require("../service/regionServiceDeprecated.js")
 
 /* GET customers page. */
 router.get("/", function (req, res, next) {

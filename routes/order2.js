@@ -6,7 +6,7 @@ const orderService = require("../service/orderService.js")
 const productService = require("../service/productService.js")
 const purchaseOrderService = require("../service/purchaseOrderService.js")
 const customerService = require("../service/customerService")
-const regionService = require("../service/regionService")
+const regionService = require("../service/regionServiceDeprecated.js")
 
 const art = require("../config/art.js")
 const { sizeCategories, sizes, auditColumns } = require("../sizes.js")
