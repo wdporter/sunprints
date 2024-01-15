@@ -4,104 +4,99 @@
 
 <section>
 	<div>
-		<fieldset>
-			<legend>Customer details</legend>
+	<h3>Terms</h3>
+		<details open>
+			<summary>Customer</summary>
 			<p>
-				<label for="customerCode">Customer code</label>
-				<select id="customerCode" data-location="customercodes">
-					<option value="0">--select--</option>
-				</select>
+				<label for=customerName>Name</label>
+				<input id=customerName type=search list=customerData autocomplete=off placeholder="type name or code" name=Company />
+				<datalist id=customerData data-fetchurl="/sales/customernames"></datalist>
 			</p>
+		</details>
+		<details>
+			<summary>Order</summary>
 			<p>
-				<label for=customerName>Customer name</label>
-				<input type=search id=customerName data-location=customernames list=customerData autocomplete=off placeholder="start typing" />
-				<datalist id=customerData>
-					<option value="0">--select--</option>
-				</datalist>
-				<!-- </select> -->
+				<label for=orderNumber>Number</label>
+				<input type=text id=orderNumber name="OrderNumber" placeholder="type order number and press enter" />
 			</p>
-		</fieldset>
-		<fieldset>
-			<legend>Owner</legend>
-			<p>
-				<label for=region>Region</label>
-				<select id=region data-location=regions>
-					<option value="0">--select--</option>
-				</select>
-			</p>
-			<p>
-				<label for=salesRep>Sales Rep.</label>
-				<select id=salesRep data-location=salesreps>
-					<option value="0">--select--</option>
-				</select>
-			</p>
-		</fieldset>
-		<fieldset>
-			<legend>Date range</legend>
-			<p>
-				<label for=dateFrom>Date From</label>
-				<input type=date id="dateFrom" />
-			</p>
-			<p>
-				<label for=dateTo>Date To</label>
-				<input type=date id="dateTo" />
-			</p>
-		</fieldset>
-		<fieldset>
-			<legend>Order Number</legend>
-			<p>
-				<label for=orderNumber>Order Number</label>
-				<input type=search id=orderNumber />
-			</p>
-		</fieldset>
-	</div>
-	<div>
-		<fieldset>
-			<legend>Print</legend>
+		</details>
+		<details>
+			<summary>Print</summary>
 			<p>
 				<label for=print>Design</label>
-				<select id=print data-location=prints>
-					<option value=0>--select--</option>
-				</select>
+				<input id=print type=search list=printData autocomplete=off placeholder="type print design" name=Print />
+				<datalist id=printData data-fetchurl="/sales/prints"></datalist>
 			</p>
 			<p>
 				<label for=screen>Screen</label>
-				<select id=screen data-location=screens>
-					<option value=0>--select--</option>
-				</select>
+				<input id=screen type=search list=screenData autocomplete=off placeholder="type screen" name=Screen />
+				<datalist id=screenData data-fetchurl="/sales/screens"></datalist>
 			</p>
-		</fieldset>
-		<fieldset>
-			<legend>Embroidery</legend>
+		</details>
+		<details>
+			<summary>Embroidery</summary>
 			<p>
-				<label for="embroidery">Design</label>
-				<select id="embroidery" data-location="embroideries">
-					<option value="0">--select--</option>
-				</select>
+				<label for=embroidery>Design</label>
+				<input id=embroidery type=search list=embroideryData autocomplete=off placeholder="type embroidery design" name=Embroidery />
+				<datalist id=embroideryData data-fetchurl="/sales/embroideries"></datalist>
 			</p>
 			<p>
 				<label for="usb">USB</label>
-				<select id="usb" data-location="usbs">
-					<option value="0">--select--</option>
-				</select>
+				<input id=usb type=search list=usbData autocomplete=off placeholder="type usb" name=Usb />
+				<datalist id=usbData data-fetchurl="/sales/usbs"></datalist>
 			</p>
-		</fieldset>
-		<fieldset>
-			<legend>Transfer</legend>
+		</details>
+		<details>
+			<summary>Transfer</summary>
 			<p>
 				<label for="transfer">Design</label>
-				<select id="transfer" data-location="transfers">
-					<option value="0">--select--</option>
-				</select>
+				<input id=transfer type=search list=transferData autocomplete=off placeholder="type transfer design" name=Transfer />
+				<datalist id=transferData data-fetchurl="/sales/transfers"></datalist>
 			</p>
 			<p>
 				<label for="transferName">Name</label>
-				<select id="transferName" data-location="transfernames">
-					<option value="0">--select--</option>
+				<input id=transferName type=search list=transferNameData autocomplete=off placeholder="type transfer name" name=TransferName />
+				<datalist id=transferNameData data-fetchurl="/sales/transfernames"></datalist>
+			</p>
+		</details>
+
+	</div>
+	<div>
+		<h3>Filters</h3>
+		<details>
+			<summary>Owner</summary>
+			<p>
+				<label for=region>Region</label>
+				<select id=region name=Region>
+					<option value=>-- select --</option>
+					<% regions.forEach(r => { %>
+						<option value="<%= r.id %>"><%= r.name %></option>
+					 <% }) %>
+				 </select>
+			</p>
+			<p>
+				<label for=salesRep>Sales Rep.</label>
+				<select id=salesRep name=SalesRep>
+					<option value=>-- select --</option>
+					<% salesreps.forEach(s => { %>
+						<option value="<%= s.Name %>"><%= s.Name %></option>
+					<% }) %>	
 				</select>
 			</p>
-	</fieldset>
-	<div>
+		</details>
+
+		<details>
+			<summary>Date range</summary>
+			<p>
+				<label for=dateFrom>Date From</label>
+				<input type=date id="dateFrom" name="DateFrom" />
+			</p>
+			<p>
+				<label for=dateTo>Date To</label>
+				<input type=date id="dateTo" name="DateTo" />
+			</p>
+		</details>
+	<div style="margin-top: var(--unit-3)">
 		<button onclick="clearSearchFields()">Clear Search</button>
 	</div>
 	</div>
@@ -143,9 +138,27 @@
 	
 <script>
 
-var sizes = <%- JSON.stringify(sizes) %>;
-var locations = <%- JSON.stringify(locations) %>;
-var art = <%- JSON.stringify(art) %>;
+// these are for the sub-item display in the grid
+const sizes = <%- JSON.stringify(sizes) %>;
+const locations = <%- JSON.stringify(locations) %>;
+const art = <%- JSON.stringify(art) %>;
+
+
+const dataSearchObject = {
+	Company: null,
+	Print: null,
+	Screen: null,
+	Embroidery: null,
+	Usb: null,
+	Transfer: null,
+	TransferName: null,
+	SalesRep: null,
+	Region: null,
+	OrderNumber: null,
+	DateFrom: null,
+	DateTo: null,
+};
+
 
 function downloadCsv() {
 	console.log("downloading…")
@@ -155,7 +168,7 @@ function downloadCsv() {
 		headers: new Headers({
 			"Content-Type": "application/json"
 		}),
-		body: JSON.stringify(getCustomSearchObject())
+		body: JSON.stringify(dataSearchObject)
 	})
 	.then(response => {
 		if (response.ok) 
@@ -195,31 +208,6 @@ function cloneOrder(a, event) {
 	console.log(orderid)
 }
 
-function getCustomSearchObject() {
-	
-	let customerName = "";
-	if (chosenCustomerId !== "") {
-		customerName = chosenCustomerId;
-		chosenCustomerId = "";
-	}
-
-
-	return {
-		Company: customerName,
-		Code: document.getElementById("customerCode").value,
-		DateFrom: document.getElementById("dateFrom").value,
-		DateTo: document.getElementById("dateTo").value,
-		Print: document.getElementById("print").value,
-		Screen: document.getElementById("screen").value,
-		Embroidery: document.getElementById("embroidery").value,
-		Usb: document.getElementById("usb").value,
-		Transfer: document.getElementById("transfer").value,
-		TransferName: document.getElementById("transferName").value,
-		SalesRep: document.getElementById("salesRep").value,
-		Region: document.getElementById("region").value,
-		OrderNumber: document.getElementById("orderNumber").value
-	}
-}
 
 window.datatable = new DataTable("table#dt", {
 	fixedHeader: true,
@@ -232,7 +220,7 @@ window.datatable = new DataTable("table#dt", {
 	ajax: { 
 		url: "/sales/dt",
 		data: function(d) {
-			d.customSearch = getCustomSearchObject()
+			d.customSearch = dataSearchObject
 		}
 	},
 	order: [[3, "desc"]],
@@ -356,49 +344,49 @@ window.datatable = new DataTable("table#dt", {
 	]
 })
 
-	window.datatable.on("draw", function() {
-		window.datatable.buttons(0).text("Expand all")
+window.datatable.on("draw", function() {
+		// window.datatable.buttons(0).text("Expand all")
 
-		// if it's a customer and a date range, display a sum of their orders
-		let customerName = "0";
-		if (chosenCustomerId !== "") {
-			customerName = chosenCustomerId;
-			chosenCustomerId = "";
-		}
-		const customerCode = document.getElementById("customerCode").value
-		const fromDate = document.getElementById("dateFrom").value
-		const toDate = document.getElementById("dateTo").value
+		// // if it's a customer and a date range, display a sum of their orders
+		// let customerName = "0";
+		// if (chosenCustomerId !== "") {
+		// 	customerName = chosenCustomerId;
+		// 	chosenCustomerId = "";
+		// }
+		// const customerCode = "0"
+		// const fromDate = document.getElementById("dateFrom").value
+		// const toDate = document.getElementById("dateTo").value
 
-		if ((customerName != "0" || customerCode != "0") && (fromDate || toDate)) {
-			const url = `/sales/customertotal?CustomerName=${customerName}&CustomerCode=${customerCode}&FromDate=${fromDate}&ToDate=${toDate}`
-			fetch(url)
-			.then(response => response.text())
-			.then(data => {
-				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for customer in date range: ${data}`
-			})
-			return
-		}
+		// if ((customerName != "0" || customerCode != "0") && (fromDate || toDate)) {
+		// 	const url = `/sales/customertotal?CustomerName=${customerName}&CustomerCode=${customerCode}&FromDate=${fromDate}&ToDate=${toDate}`
+		// 	fetch(url)
+		// 	.then(response => response.text())
+		// 	.then(data => {
+		// 		document.getElementById("customerSalesTotalLabel").textContent = `Total sales for customer in date range: ${data}`
+		// 	})
+		// 	return
+		// }
 
-		// now we'll try to do the same for a region and a date range
-		const regionid = document.getElementById("region").value
-		if ((regionid != "") && (fromDate || toDate)) {
-			const url = `/sales/regiontotal?regionid=${regionid}&from=${fromDate}&to=${toDate}`
-			fetch(url)
-			.then(response => response.text())
-			.then(data => {
-				document.getElementById("customerSalesTotalLabel").textContent = `Total sales for region in date range: ${data}`
-			})
-			return
-		}
+		// // now we'll try to do the same for a region and a date range
+		// const regionid = document.getElementById("region").value
+		// if ((regionid != "") && (fromDate || toDate)) {
+		// 	const url = `/sales/regiontotal?regionid=${regionid}&from=${fromDate}&to=${toDate}`
+		// 	fetch(url)
+		// 	.then(response => response.text())
+		// 	.then(data => {
+		// 		document.getElementById("customerSalesTotalLabel").textContent = `Total sales for region in date range: ${data}`
+		// 	})
+		// 	return
+		// }
 
-			document.getElementById("customerSalesTotalLabel").textContent = ""
+		// 	document.getElementById("customerSalesTotalLabel").textContent = ""
 
 	})
 
 
 
-	// navigate with up/down keys
-	$("tbody").on("keydown", "tr", function (event) {
+// navigate with up/down keys
+$("tbody").on("keydown", "tr", function (event) {
 
 		const row = window.datatable.row(this)
 		console.log(event)
@@ -537,97 +525,114 @@ async function onOpenRowButtonClick(evt) {
 document.querySelector("table#dt tbody").addEventListener("click", onOpenRowButtonClick)
 
 
-Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
-	
-	if (s.getAttribute("id") == "customerName")
-		return;
-
-	// when focus happens first time, load options via ajax
-	s.addEventListener("focus", function() {
-		if (this.childElementCount == 1) {
-			fetch(`/sales/${this.dataset.location}`)
-			.then(response => response.json() )
-			.then(json => {
-				for(item of json) {
-					this.insertAdjacentHTML("beforeend", `<option value="${item.value}">${item.name}`)
-				}
-			})
-		}
-	})
-})
-
-document.getElementById("customerName").addEventListener("focus", function() {
-	var datalist = document.getElementById("customerData");
-	if (datalist.options.length === 1) {
-		fetch(`/sales/customernames`)
-		.then(response => response.json() )
-		.then(json => {
-			for(item of json) {
+// load up our datalist elements first time the input control is focussed
+Array.from(document.querySelectorAll("input[type=search]")).forEach(function(input) {
+	input.addEventListener("focus", async function() {
+		const datalist = document.getElementById(input.getAttribute("list"));
+		if (datalist.options.length === 0) {
+			// not loaded before, so load it up
+			const response = await fetch(datalist.dataset.fetchurl);
+			const json = await response.json();
+			for (item of json) {
 				datalist.insertAdjacentHTML("beforeend", `<option data-value="${item.value}" value="${item.name}">`);
 			}
-		})
+		}
+	})
+});
+
+
+// handle data list selection
+Array.from(document.querySelectorAll("input[type=search]")).forEach(function(input) {
+	input.addEventListener("input", function(event) {
+		//console.log(event.inputType);
+		if (event instanceof InputEvent && this.value === "") {
+			// user has set the input to empty
+			dataSearchObject[input.name] = null;
+			input.value = "";
+			window.datatable.ajax.reload()
+			return;
+		} 
+
+		if (!(event instanceof InputEvent) || event.inputType === "insertReplacementText") {
+			const inputValue = input.value
+
+			if (inputValue === "") {
+				// user has clicked the cross that resets the search input
+				dataSearchObject[input.name] = null;
+				window.datatable.ajax.reload();
+				return;
+			}
+
+			// user has chosen a value from the list
+			const datalist = document.getElementById(input.getAttribute("list"));
+			const options = Array.from(datalist.querySelectorAll("option"));
+			var chosenOption = options.find(option => option.value === inputValue);
+			console.log("chosenOption", chosenOption);
+			dataSearchObject[input.name] = chosenOption.dataset.value;
+
+			// null all other search boxes
+			Array.from(document.querySelectorAll("input[type=search], input[type=text]")).forEach(function(otherInput) {
+				if (otherInput !== input) {
+					dataSearchObject[otherInput.name] = null;
+					otherInput.value = "";
+				}
+			});
+
+			window.datatable.ajax.reload();
+		}
+	});
+});
+
+// handle select box change, which is owner and sales rep
+Array.from(document.querySelectorAll("details select")).forEach(function(select) {
+	select.addEventListener("change", function(event) {
+		dataSearchObject[select.name] = select.value;
+		window.datatable.ajax.reload();
+	});
+});
+
+Array.from(document.querySelectorAll("input[type=date]")).forEach(function(input) {
+	input.addEventListener("change", function(event) {
+		dataSearchObject[input.name] = input.value;
+		window.datatable.ajax.reload();
+	});
+});
+
+const orderNumberInput = document.getElementById("orderNumber");
+function onOrderNumberInputChange() {
+	dataSearchObject[orderNumberInput.name] = orderNumberInput.value;
+	window.datatable.ajax.reload();
+	// todo reset input[type=search]
+}
+orderNumberInput.addEventListener("blur", onOrderNumberInputChange);
+orderNumberInput.addEventListener("keyup", function(event) {
+	if (event.key == "Enter") {
+		onOrderNumberInputChange();
 	}
 });
 
-Array.from(document.querySelectorAll("fieldset select")).forEach(s => {
-	s.addEventListener("change", function(event) {
-		// select fields searching is exclusive of order number so reset it
-		document.getElementById("orderNumber").value = "";
 
-		if (event.currentTarget.id == "customerName") {
-			document.getElementById("customerCode").value = 0
-		}
-		if (event.currentTarget.id == "customerCode") {
-			document.getElementById("customerName").value = 0
-		}
-
-		window.datatable.ajax.reload()
-	})
-})
-
-var chosenCustomerId = "";
-
-Array.from(document.querySelectorAll("fieldset input")).forEach(function(s) {
-	s.addEventListener("input", function(event) {
-		console.log(event.inputType);
-		if (!(event instanceof InputEvent) || event.inputType === "insertReplacementText") {
-			// do the customer fetch
-			var customerOption = Array.from(document.querySelectorAll("#customerData option")).find(option => option.value === document.getElementById("customerName").value);
-			console.log(customerOption.dataset.value);
-			chosenCustomerId = customerOption.dataset.value;
-		}
-		else if (s.id == "orderNumber") {
-			// if it's the ordernumber field, reset all selects and date fields
-			Array.from(document.querySelectorAll("fieldset select")).forEach(select => select.value = "0")
-			Array.from(document.querySelectorAll("fieldset input[type=date]")).forEach(date => date.value = "")
-		}
-		else {
-			// it was the date fields, reset our order number
-			document.getElementById("orderNumber").value = "";
-		}
-		window.datatable.ajax.reload()
-	})
-})
-
-
+// minimum to date is the from date
 document.getElementById("dateFrom").addEventListener("input", function() {
 	document.getElementById("dateTo").setAttribute("min", this.value)
-})
+});
 
-
+// maximum from date is the to date
 document.getElementById("dateTo").addEventListener("input", function() {
 	document.getElementById("dateFrom").setAttribute("max", this.value)
 })
 
 
 function clearSearchFields() {
+	Array.from(document.querySelectorAll("input[type=date]")).forEach(i => i.value = "");
 
-	Array.from(document.querySelectorAll("input[type=date]")).forEach(i => i.value = "")
+	Array.from(document.querySelectorAll("details select")).forEach(s => s.value = "");
 
-	Array.from(document.querySelectorAll("fieldset select")).forEach(s => s.value = 0)
+	Array.from(document.querySelector("input[type=search]")).forEach(s => s.value = "");
 
-	document.querySelector("fieldset input[type=search]").value = ""
-
+	for(key in dataSearchObject) {
+		dataSearchObject[key] = null;
+	}
 
 	datatable.ajax.reload()
 }
@@ -639,4 +644,4 @@ document.querySelector("main>h1").appendChild(button)
 
 
 
-	<%- include("partials/foot.ejs") %>
+<%- include("partials/foot.ejs") %>

@@ -1,9 +1,10 @@
-const express = require("express")
-const router = express.Router()
-const { json } = require("body-parser")
-const Database = require("better-sqlite3")
-const sz = require("../sizes.js")
-const getDB = require ("../integration/dbFactory.js")
+const express = require("express");
+const router = express.Router();
+const { json } = require("body-parser");
+const sz = require("../sizes.js");
+const getDB = require ("../integration/dbFactory.js"); // todo refactor so we don't need this here
+const regionService = require("../service/regionService.js");
+const { getCount } = require("../service/salesHistoryService.js");
 
 /* GET Sales History page. */
 router.get("/", (req, res) => {
@@ -15,6 +16,8 @@ router.get("/", (req, res) => {
 			sizes: sz.allSizes,
 			locations: sz.locations,
 			art: sz.art,
+			regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}),
+			salesreps: getDB().prepare("SELECT Name, Deleted FROM SalesRep ").all(),
 			stylesheets: [
 				"/stylesheets/buttons.dataTables-2.2.3.css", 
 				"/stylesheets/sales-theme.css",
@@ -30,13 +33,11 @@ router.get("/", (req, res) => {
 
 // GET datatable ajax for sales history table
 router.get("/dt", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 
 	try {
-console.log(req.query.customSearch)
-		let query = `SELECT COUNT(*) AS Count FROM SalesTotal`
-		let statement = db.prepare(query)
-		let recordsTotal = recordsFiltered = statement.get().Count;
+		console.log(req.query.customSearch)
+		let recordsTotal = recordsFiltered = getCount();
 
 
 		query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, IFNULL(Region.Name, '') || ':' || IFNULL(SalesTotal.SalesRep, '') AS Owner, SalesTotal.DateProcessed, 
@@ -51,92 +52,86 @@ console.log(req.query.customSearch)
 
 		const params = {}
 		const where = []
-		if (req.query.customSearch) {
-			if (req.query.customSearch.Company && req.query.customSearch.Company != "0") {
-				where.push(` SalesTotal.CustomerId = @Company `)
-				params.Company = req.query.customSearch.Company
-			}
-			if (req.query.customSearch.Code && req.query.customSearch.Code != "0") {
-				where.push(` SalesTotal.CustomerId = @Code `)
-				params.Code = req.query.customSearch.Code
-			}
-			if (req.query.customSearch.DateFrom) {
-				where.push(`OrderDate >= @DateFrom`)
-				params.DateFrom = req.query.customSearch.DateFrom
-			}
-			if (req.query.customSearch.DateTo) {
-				where.push(`OrderDate <= @DateTo`)
-				params.DateTo = req.query.customSearch.DateTo
-			}
-			if (req.query.customSearch.SalesRep && req.query.customSearch.SalesRep != "0") {
-				where.push(`SalesTotal.SalesRep = @SalesRep`)
-				params.SalesRep = req.query.customSearch.SalesRep.trimEnd(" (*)")
-			}
-			if (req.query.customSearch.Region && req.query.customSearch.Region != "0") {
-				where.push(`SalesTotal.RegionId = @Region`)
-				params.Region = req.query.customSearch.Region.trimEnd(" (*)")
-			}
-			if (req.query.customSearch.Print && req.query.customSearch.Print != "0") {
-					where.push(`(Sales.FrontPrintDesignId=@Print OR Sales.BackPrintDesignId=@Print OR Sales.PocketPrintDesignId=@Print OR Sales.SleevePrintDesignId=@Print)`)
-					params.Print = req.query.customSearch.Print
-					useSalesJoin = true
-			}
-			if (req.query.customSearch.Screen && req.query.customSearch.Screen != "0") {
-				where.push(`(Sales.FrontScreenId=@Screen OR Sales.FrontScreen2Id=@Screen 
-									OR Sales.BackScreenId=@Screen OR Sales.BackScreen2Id=@Screen 
-									OR Sales.PocketScreenId=@Screen OR Sales.PocketScreen2Id=@Screen 
-									OR Sales.SleeveScreenId=@Screen OR Sales.SleeveScreen2Id=@Screen 
-									)`)
-				params.Screen = req.query.customSearch.Screen
-				useSalesJoin = true
-			}
-			if (req.query.customSearch.Embroidery && req.query.customSearch.Embroidery != "0") {
-				where.push(`(Sales.FrontEmbroideryDesignId=@Embroidery OR Sales.BackEmbroideryDesignId=@Embroidery OR Sales.PocketEmbroideryDesignId=@Embroidery OR Sales.SleeveEmbroideryDesignId=@Embroidery)`)
-				params.Embroidery = req.query.customSearch.Embroidery
-				useSalesJoin = true
-			}
-			if (req.query.customSearch.Usb && req.query.customSearch.Usb != "0") {
-				where.push(`(Sales.FrontUsbId=@Usb OR Sales.FrontUsb2Id=@Usb 
-									OR Sales.BackUsbId=@Usb OR Sales.BackUsb2Id=@Usb 
-									OR Sales.PocketUsbId=@Usb OR Sales.PocketUsb2Id=@Usb 
-									OR Sales.SleeveUsbId=@Usb OR Sales.SleeveUsb2Id=@Usb 
-									)`)
-				params.Usb = req.query.customSearch.Usb
-				useSalesJoin = true
-			}
-			if (req.query.customSearch.Transfer && req.query.customSearch.Transfer != "0") {
-				where.push(`(Sales.FrontTransferDesignId =@Transfer 
-									OR Sales.BackTransferDesignId  =@Transfer 
-									OR Sales.PocketTransferDesignId=@Transfer 
-									OR Sales.SleeveTransferDesignId=@Transfer)`)
-				params.Transfer = req.query.customSearch.Transfer
-				useSalesJoin = true
-			}
-			if (req.query.customSearch.TransferName && req.query.customSearch.TransferName != "0") {
-				where.push(`(Sales.FrontTransferNameId =@TransferName OR Sales.FrontTransferName2Id =@TransferName 
-									OR Sales.BackTransferNameId  =@TransferName OR Sales.BackTransferName2Id  =@TransferName 
-									OR Sales.PocketTransferNameId=@TransferName OR Sales.PocketTransferName2Id=@TransferName 
-									OR Sales.SleeveTransferNameId=@TransferName OR Sales.SleeveTransferName2Id=@TransferName 
-									)`)
-				params.TransferName = req.query.customSearch.TransferName
-				useSalesJoin = true
-			}
-			if (req.query.customSearch.OrderNumber.trim()) {
-				where.push( ` OrderNumber LIKE @OrderNumber `)
-				params.OrderNumber = `%${req.query.customSearch.OrderNumber}%`
-			}
 
-
-			let recordsFilteredQuery = `SELECT COUNT(*) AS Count FROM SalesTotal
-			LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId  `
-			if (useSalesJoin)
-				recordsFilteredQuery += salesJoin
-			if (where.length > 0) {
-				recordsFilteredQuery += ` WHERE ${where.join(" AND ")} `
-			}
-			recordsFiltered = db.prepare(recordsFilteredQuery).get(params).Count
-
+		if (req.query.customSearch.Company != "") {
+			where.push(` SalesTotal.CustomerId = @Company `)
+			params.Company = req.query.customSearch.Company
 		}
+		if (req.query.customSearch.DateFrom !== "") {
+			where.push(`OrderDate >= @DateFrom`)
+			params.DateFrom = req.query.customSearch.DateFrom
+		}
+		if (req.query.customSearch.DateTo !== "") {
+			where.push(`OrderDate <= @DateTo`)
+			params.DateTo = req.query.customSearch.DateTo
+		}
+		if (req.query.customSearch.SalesRep !== "") {
+			where.push(`SalesTotal.SalesRep = @SalesRep`)
+			params.SalesRep = req.query.customSearch.SalesRep.trimEnd(" (*)")
+		}
+		if (req.query.customSearch.Region !== "") {
+			where.push(`SalesTotal.RegionId = @Region`)
+			params.Region = req.query.customSearch.Region.trimEnd(" (*)")
+		}
+		if (req.query.customSearch.Print != "") {
+				where.push(`(Sales.FrontPrintDesignId=@Print OR Sales.BackPrintDesignId=@Print OR Sales.PocketPrintDesignId=@Print OR Sales.SleevePrintDesignId=@Print)`)
+				params.Print = req.query.customSearch.Print
+				useSalesJoin = true
+		}
+		if (req.query.customSearch.Screen !== "") {
+			where.push(`(Sales.FrontScreenId=@Screen OR Sales.FrontScreen2Id=@Screen 
+								OR Sales.BackScreenId=@Screen OR Sales.BackScreen2Id=@Screen 
+								OR Sales.PocketScreenId=@Screen OR Sales.PocketScreen2Id=@Screen 
+								OR Sales.SleeveScreenId=@Screen OR Sales.SleeveScreen2Id=@Screen 
+								)`)
+			params.Screen = req.query.customSearch.Screen
+			useSalesJoin = true
+		}
+		if (req.query.customSearch.Embroidery !== "") {
+			where.push(`(Sales.FrontEmbroideryDesignId=@Embroidery OR Sales.BackEmbroideryDesignId=@Embroidery OR Sales.PocketEmbroideryDesignId=@Embroidery OR Sales.SleeveEmbroideryDesignId=@Embroidery)`)
+			params.Embroidery = req.query.customSearch.Embroidery
+			useSalesJoin = true
+		}
+		if (req.query.customSearch.Usb !== "") {
+			where.push(`(Sales.FrontUsbId=@Usb OR Sales.FrontUsb2Id=@Usb 
+								OR Sales.BackUsbId=@Usb OR Sales.BackUsb2Id=@Usb 
+								OR Sales.PocketUsbId=@Usb OR Sales.PocketUsb2Id=@Usb 
+								OR Sales.SleeveUsbId=@Usb OR Sales.SleeveUsb2Id=@Usb 
+								)`)
+			params.Usb = req.query.customSearch.Usb
+			useSalesJoin = true
+		}
+		if (req.query.customSearch.Transfer !== "") {
+			where.push(`(Sales.FrontTransferDesignId =@Transfer 
+								OR Sales.BackTransferDesignId  =@Transfer 
+								OR Sales.PocketTransferDesignId=@Transfer 
+								OR Sales.SleeveTransferDesignId=@Transfer)`)
+			params.Transfer = req.query.customSearch.Transfer
+			useSalesJoin = true
+		}
+		if (req.query.customSearch.TransferName !== "") {
+			where.push(`(Sales.FrontTransferNameId =@TransferName OR Sales.FrontTransferName2Id =@TransferName 
+								OR Sales.BackTransferNameId  =@TransferName OR Sales.BackTransferName2Id  =@TransferName 
+								OR Sales.PocketTransferNameId=@TransferName OR Sales.PocketTransferName2Id=@TransferName 
+								OR Sales.SleeveTransferNameId=@TransferName OR Sales.SleeveTransferName2Id=@TransferName 
+								)`)
+			params.TransferName = req.query.customSearch.TransferName
+			useSalesJoin = true
+		}
+		if (req.query.customSearch.OrderNumber.trim()) {
+			where.push( ` OrderNumber LIKE @OrderNumber `)
+			params.OrderNumber = `%${req.query.customSearch.OrderNumber}%`
+		}
+
+
+		let recordsFilteredQuery = `SELECT COUNT(*) AS Count FROM SalesTotal
+		LEFT OUTER JOIN Customer ON Customer.CustomerId = SalesTotal.CustomerId  `
+		if (useSalesJoin)
+			recordsFilteredQuery += salesJoin
+		if (where.length > 0) {
+			recordsFilteredQuery += ` WHERE ${where.join(" AND ")} `
+		}
+		recordsFiltered = db.prepare(recordsFilteredQuery).get(params).Count
 
 		if (useSalesJoin)
 			query += salesJoin
@@ -230,7 +225,7 @@ console.log(req.query.customSearch)
 
 
 router.get("/customernames", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
 		res.send(
@@ -248,7 +243,7 @@ router.get("/customernames", (req, res) => {
 })
 
 router.get("/customercodes", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 3 COLLATE NOCASE").all()
 
@@ -296,7 +291,7 @@ router.get("/customercodes", (req, res) => {
 })
 
 router.get("/salesreps", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const reps = db.prepare("SELECT Name, Deleted FROM SalesRep WHERE Name IN (SELECT Distinct(SalesRep) FROM SalesTotal) ORDER BY 2, 1 ").all()
 		res.send(
@@ -318,7 +313,7 @@ router.get("/salesreps", (req, res) => {
 })
 
 router.get("/regions", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const regions = db.prepare("SELECT RegionId, Name, [Order], Deleted FROM Region WHERE RegionId IN (SELECT Distinct(RegionId) FROM SalesTotal) ORDER BY [Order]").all()
 		res.send(
@@ -340,7 +335,7 @@ router.get("/regions", (req, res) => {
 
 
 router.get("/prints", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const prints = db.prepare(`SELECT PrintDesignId, Code || ' | ' || IFNULL(Notes, '') AS CodeNotes FROM PrintDesign 
 		WHERE PrintDesignId IN 
@@ -361,7 +356,7 @@ router.get("/prints", (req, res) => {
 })
 
 router.get("/screens", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const screens = db.prepare(`SELECT ScreenId, Number, Colour, Name FROM Screen 
 		WHERE ScreenId IN (
@@ -394,7 +389,7 @@ router.get("/screens", (req, res) => {
 
 
 router.get("/embroideries", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const embroideries = db.prepare(`SELECT EmbroideryDesignId, Code || ' | ' || Notes AS CodeNotes FROM EmbroideryDesign 
 		WHERE EmbroideryDesignId IN (
@@ -419,7 +414,7 @@ router.get("/embroideries", (req, res) => {
 
 
 router.get("/usbs", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const usbs = db.prepare(`SELECT UsbId, Number || ' | ' || IFNULL(Notes, '') AS NumberNotes FROM Usb 
 		WHERE UsbId IN (
@@ -450,7 +445,7 @@ router.get("/usbs", (req, res) => {
 })
 
 router.get("/transfers", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const transfers = db.prepare(`SELECT TransferDesignId, Code || ' | ' || IFNULL(Notes, '') AS CodeNotes FROM TransferDesign 
 		WHERE TransferDesignId IN (
@@ -478,7 +473,7 @@ router.get("/transfers", (req, res) => {
 
 
 router.get("/transfernames", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	try {
 		const names = db.prepare(`SELECT TransferNameId, IFNULL(Name, 'no name') AS Name 
 		FROM TransferName
@@ -512,7 +507,7 @@ router.get("/transfernames", (req, res) => {
 
 router.get("/:orderid/history", (req, res) => {
 
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 
 	try {
 		let query = /*sql*/`SELECT 
@@ -626,7 +621,7 @@ router.get("/:orderid/history", (req, res) => {
 // GET edit page for a sales history item
 router.get("/edit/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -848,7 +843,7 @@ router.get("/edit/:id", (req, res) => {
 
 router.get("/productsearch", (req, res) => {
 
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -886,7 +881,7 @@ router.get("/productsearch", (req, res) => {
 //  example /sales/mediasearch?media=Usb&location=Front&decoration=Embroidery&design=n
 router.get("/mediasearch", (req, res) => {
 
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 
 	const { media, location, decoration, design} = req.query
 
@@ -940,7 +935,7 @@ router.get("/mediasearch", (req, res) => {
 //  example /sales/designsearch?location=Front&decoration=Embroidery&Code=asdf&Notes=abc&Comments=asdf
 router.get("/designsearch", (req, res) => {
 
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 
 	const { location, decoration } = req.query
 
@@ -997,7 +992,7 @@ AND `
 // GET all media for the given decoration design id
 // for example, /sales/mediasearch/decoration?decoration=?&location=?&id=?
 router.get("/mediasearch/decoration", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 	const { location, decoration, id } = req.query	
 
 	const media = sz.media[sz.decorations.indexOf(decoration)]
@@ -1033,7 +1028,7 @@ router.get("/mediasearch/decoration", (req, res) => {
 // GET the jobsheet page
 router.get("/jobsheet/:id", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	let db = getDB();
 
 	try {
 
@@ -1186,7 +1181,7 @@ WHERE StockOrderId=?`).get(salesTotal.StockOrderId)
 
 // GET a total of customer sales in a date period
 router.get("/customertotal", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	const { CustomerName, CustomerCode, FromDate, ToDate } = req.query
 
@@ -1395,7 +1390,7 @@ router.post("/csv/", (req, res) => {
 
 // called by a fetch, saves a salestotal/sales item
 router.put("/:orderid", (req, res) => {
-	const db = new Database("sunprints.db", { /*verbose: console.log,*/ fileMustExist: true })
+	const db = getDB();
 
 	const { Products } = req.body
 

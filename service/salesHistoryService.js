@@ -1,6 +1,6 @@
-//const getDB = require("../integration/dbFactory")
-const SalesHistoryDao = require("../integration/SalesHistoryDAO.js")
-const { auditColumns } = require("../config/auditColumns.js")
+const SalesHistoryDao = require("../integration/SalesHistoryDAO.js");
+const { auditColumns } = require("../config/auditColumns.js");
+const getDB = require("../integration/dbFactory");
 
 /**
  * 
@@ -47,6 +47,7 @@ function insertProduct(db, product,) {
 
 
 /**
+ * For the given order, updates the corresponding sales history table item
  * 
  * @param {Database} db  a Database connection because this is probably part of a transaction
  * @param {object} order the order that gets updated in the SalesTotal table
@@ -82,6 +83,20 @@ function updateOrder (db, order) {
 
 }
 
+/**
+ * gets the count of records in the sales history table
+ * 
+ * @param {Database} db 
+ * @return {Array} the list of items 
+ */
+function getCount() 
+{
+	const db = getDB()
+	const dao = new SalesHistoryDao(db)
+	return dao.getCount()
+}
 
 
-module.exports = { insertOrder, insertProduct, updateOrder }
+
+
+module.exports = { insertOrder, insertProduct, updateOrder, getCount }

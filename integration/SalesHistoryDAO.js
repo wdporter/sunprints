@@ -51,5 +51,12 @@ VALUES
 		statement.run(salesTotal)
 	}
 
+	getCount() {
+		const query = /*sql*/`SELECT COUNT(*) AS Count FROM SalesTotal`;
+		const statement = this.db.prepare(query);
+		const recordsTotal = statement.get().Count;
+
+		return recordsTotal;
+	}
 
 }
