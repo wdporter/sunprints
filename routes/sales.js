@@ -3,7 +3,6 @@ const router = express.Router();
 const { json } = require("body-parser");
 const sz = require("../sizes.js");
 const getDB = require ("../integration/dbFactory.js"); // todo refactor so we don't need this here
-const regionService = require("../service/regionService.js");
 const UnitOfWork = require("../service/UnitOfWork.js");
 
 const dtColumnNames = [
@@ -11,7 +10,7 @@ const dtColumnNames = [
 	{dt: "Order Id", db: "OrderId"},
 	{dt: "Order Number", db: "OrderNumber"},
 	{dt: "Order Date", db: "OrderDate"},
-	{dt: "Owner", db: "Owner"},
+	{dt: "Region Rep", db: "Owner"},
 	{dt: "Processed Date", db: "DateProcessed"},
 	{dt: "Delivery Date", db: "Delivery"},
 	{dt: "Design", db: "Designs"}, 
@@ -19,7 +18,8 @@ const dtColumnNames = [
 	{dt: "Terms", db: "Terms"},
 	{dt: "Buy In", db: "Buyin"},
 	{dt: "Notes", db: "Notes"},
-	{dt: "Done", db: "Done"}];
+	{dt: "Done", db: "Done"}
+];
 
 /* GET Sales History page. */
 router.get("/", (req, res) => {
@@ -94,7 +94,7 @@ router.get("/customernames", (req, res) => {
 	try {
 		const customerService = uw.getCustomerService();
 
-		const customers = customerService.getSalesHistoryCustomers()
+		const customers = customerService.getSalesHistoryCustomers();
 		
 		res.send(
 			customers
@@ -109,113 +109,25 @@ router.get("/customernames", (req, res) => {
 	}
 })
 
-router.get("/customercodes", (req, res) => {
-	const db = getDB();
-	try {
-		const customers = db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 3 COLLATE NOCASE").all()
-
-		customers.sort(function(a, b) {
-			if (!isNaN(a.Code) && !isNaN(b.Code) ) {
-				return Number(a.Code) - Number(b.Code) 
-			}
-			if (!isNaN(a.Code) && isNaN(b.Code) ) {
-				return Number(a.Code.split(" ")[0])  -  Number(b.Code)
-			}
-			if (isNaN(a.Code) && !isNaN(b.Code) ) {
-				return Number(a.Code.split(" ")[0]) - Number(b.Code)
-			}
-			
-			if (isNaN(a.Code) && isNaN(b.Code) )
-			{
-				let aparts = a.Code.split(" ")
-				let bparts = b.Code.split(" ")
-				aparts[0] = Number(aparts[0])
-				bparts[0] = Number(bparts[0])
-				if (aparts[0] != bparts[0])
-					return aparts[0] - bparts[0]
-				
-				a2 = Number(aparts[1].replace(/\(|\)/g, ""))
-				b2 = Number(bparts[1].replace(/\(|\)/g, ""))
-				return a2 - b2
-			}
-		})
-
-		res.send(
-			customers.map(c => {
-				return {
-					value: c.CustomerId,
-					name: `${c.Code} — ${c.Company}`
-				}
-			})
-		)
-	}
-	catch(err) {
-		console.log (err.message)
-	}
-	finally{
-		db.close()
-	}
-})
-
-router.get("/salesreps", (req, res) => {
-	const db = getDB();
-	try {
-		const reps = db.prepare("SELECT Name, Deleted FROM SalesRep WHERE Name IN (SELECT Distinct(SalesRep) FROM SalesTotal) ORDER BY 2, 1 ").all()
-		res.send(
-			reps.map(r => {
-				// todo, it would be better to create an optgroup for deleted items, do this for other lists too
-				return {
-					value: r.Name,
-					name: r.Name + (r.Deleted == 1 ? "*" : "")
-				}
-			})
-		)
-	}
-	catch(ex) {
-		console.log(ex)
-	}
-	finally{
-		db.close()
-	}
-})
-
-router.get("/regions", (req, res) => {
-	const db = getDB();
-	try {
-		const regions = db.prepare("SELECT RegionId, Name, [Order], Deleted FROM Region WHERE RegionId IN (SELECT Distinct(RegionId) FROM SalesTotal) ORDER BY [Order]").all()
-		res.send(
-			regions.map(r => {
-				return {
-					value: r.RegionId,
-					name: r.Name + (r.Deleted == 1 ? "*" : "")
-				}
-			})
-		)
-	}
-	catch(ex) {
-		console.log(ex)
-	}
-	finally{
-		db.close()
-	}
-})
-
 
 router.get("/prints", (req, res) => {
-	const db = getDB();
+	const uw = new UnitOfWork();
+
 	try {
-		const prints = db.prepare(`SELECT PrintDesignId, Code || ' | ' || IFNULL(Notes, '') AS CodeNotes FROM PrintDesign 
-		WHERE PrintDesignId IN 
-			(SELECT FrontPrintDesignId FROM Sales UNION SELECT BackPrintDesignId FROM Sales UNION SELECT PocketPrintDesignId FROM Sales UNION SELECT SleevePrintDesignId FROM Sales) 
-		ORDER BY 2`).all()
+		const prints = uw.getPrintService().getPrintsFromSalesHistory();
+
 		res.send(
 			prints.map(p => {
 				return {
 					value: p.PrintDesignId,
-					name: p.CodeNotes
+					name: `${p.Code} | ${p.Notes}`
 				}
 			})
-		)
+		).end();
+	}
+	catch(err)
+	{
+		console.log(err);
 	}
 	finally{
 		db.close()

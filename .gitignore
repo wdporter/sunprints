@@ -1,3 +1,4 @@
 node_modules
 sunprints.db
 *.db-journal
+*.db-wal

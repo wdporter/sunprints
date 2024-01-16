@@ -29,7 +29,7 @@ module.exports = class SalesRepDao {
 		let query = "SELECT * FROM Region "
 		if (!includeDeleted)
 			query += " WHERE Deleted=0 "
-		query += "GROUP BY RegionId ORDER BY COUNT(RegionId) DESC"
+		query += "GROUP BY RegionId ORDER BY [Order]"
 
 		const retVal = this.db.prepare(query).all()
 		return retVal

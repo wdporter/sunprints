@@ -25,7 +25,7 @@ module.exports = class SalesHistoryDao {
 		const where = []
 
 		if (searchObject.Company != "") {
-			where.push(` SalesSearch_View.CustomerId = @Company `)
+			where.push(` CustomerId = @Company `)
 			params.Company = searchObject.Company
 		}
 		if (searchObject.DateFrom !== "") {
@@ -37,11 +37,11 @@ module.exports = class SalesHistoryDao {
 			params.DateTo = searchObject.DateTo
 		}
 		if (searchObject.SalesRep !== "") {
-			where.push(`SalesTotal.SalesRep = @SalesRep`)
+			where.push(`SalesSearch_View.SalesRep = @SalesRep`)
 			params.SalesRep = searchObject.SalesRep.trimEnd(" (*)")
 		}
 		if (searchObject.Region !== "") {
-			where.push(`SalesTotal.RegionId = @Region`)
+			where.push(`SalesSearch_View.RegionId = @Region`)
 			params.Region = searchObject.Region.trimEnd(" (*)")
 		}
 		if (searchObject.Print != "") {

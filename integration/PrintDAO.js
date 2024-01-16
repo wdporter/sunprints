@@ -69,4 +69,22 @@ AND Deleted=0`
 
 	}
 
+	/**
+	 * 
+	 * @returns list of prints, each has PrintDesignId, Notes and Code - can later add comments if needed
+	 */
+	getPrintsFromSalesHistory() {
+		const prints = this.db.prepare(/*sql*/`SELECT PrintDesignId, TRIM(Code, '	') AS Code, IFNULL(Notes, '') AS Notes 
+		FROM PrintDesign 
+		WHERE PrintDesignId IN 
+			(SELECT FrontPrintDesignId FROM Sales 
+			UNION SELECT BackPrintDesignId FROM Sales 
+			UNION SELECT PocketPrintDesignId FROM Sales 
+			UNION SELECT SleevePrintDesignId FROM Sales) 
+		ORDER BY Code COLLATE NOCASE`).all();
+
+		return prints;
+
+	}
+
 }

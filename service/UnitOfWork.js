@@ -3,6 +3,7 @@ const SalesHistoryService = require("./SalesHistoryService.js");
 const RegionService = require("./RegionService.js");
 const SalesRepService = require("./SalesRepService.js");
 const CustomerService = require("./CustomerService.js");
+const PrintService = require("./PrintService.js")
 
 module.exports = class UnitOfWork
 {
@@ -63,6 +64,13 @@ module.exports = class UnitOfWork
 			this.customerService = new CustomerService(this.db);
 		}
 		return this.customerService;
+	}
+
+	getPrintService() {
+		if (typeof this.printService === "undefined") {
+			this.printService = new PrintService(this.db);
+		}
+		return this.printService;
 	}
 
 

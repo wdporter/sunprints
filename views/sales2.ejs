@@ -78,9 +78,18 @@
 				<label for=salesRep>Sales Rep.</label>
 				<select id=salesRep name=SalesRep>
 					<option value=>-- select --</option>
-					<% salesreps.forEach(s => { %>
+					<% salesreps.filter(sr => !sr.Deleted).forEach(s => { %>
 						<option value="<%= s.Name %>"><%= s.Name %></option>
 					<% }) %>	
+					<% const deleted = salesreps.filter(sr => sr.Deleted);
+					if (deleted.length > 0) { %>
+					 <optgroup label="Deleted">
+						<% deleted.forEach(s => { %>
+							<option value="<%= s.Name %>"><%= s.Name %></option>
+						<% }) %>
+						</optgroup>
+					<% } %>
+
 				</select>
 			</p>
 		</details>

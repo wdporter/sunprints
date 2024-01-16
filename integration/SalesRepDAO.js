@@ -25,8 +25,11 @@ module.exports = class SalesRepDao {
 	all(includeDeleted = false) {
 
 		let query = /*sql*/`SELECT * FROM SalesRep `
-		if (!includeDeleted)
+		if (!includeDeleted) {
 			query += /*sql*/` WHERE Deleted=0`
+		}
+
+		query += /*sql*/` ORDER BY Deleted, Name`;
 
 		const retVal = this.db.prepare(query).all()
 		return retVal
