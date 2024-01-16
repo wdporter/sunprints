@@ -52,5 +52,22 @@ AND Deleted = 0`
 		return recordset
 	}
 
+	/**
+	 * 
+	 * @returns list of embroidery designs, each has ScreenId, Number, Colour and Name
+	 */
+	getEmbroideriesFromSalesHistory() {
+		const embroideries = this.db.prepare(/*sql*/`SELECT EmbroideryDesignId, Code, Notes, Comments 
+		FROM EmbroideryDesign 
+		WHERE EmbroideryDesignId IN (
+			SELECT FrontEmbroideryDesignId FROM Sales 
+			UNION SELECT BackEmbroideryDesignId FROM Sales 
+			UNION SELECT PocketEmbroideryDesignId FROM Sales 
+			UNION SELECT SleeveEmbroideryDesignId FROM Sales) 
+		ORDER BY 2 COLLATE NOCASE`).all();
+
+		return embroideries;
+	}
 
 }
+

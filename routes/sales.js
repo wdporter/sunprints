@@ -135,20 +135,9 @@ router.get("/prints", (req, res) => {
 })
 
 router.get("/screens", (req, res) => {
-	const db = getDB();
+	const uw = new UnitOfWork();
 	try {
-		const screens = db.prepare(`SELECT ScreenId, Number, Colour, Name FROM Screen 
-		WHERE ScreenId IN (
-			SELECT FrontScreenId FROM Sales 
-			UNION SELECT FrontScreen2Id FROM Sales 
-			UNION SELECT BackScreenId FROM Sales 
-			UNION SELECT BackScreen2Id FROM Sales 
-			UNION SELECT SleeveScreenId FROM Sales
-			UNION SELECT SleeveScreen2Id FROM Sales
-			UNION SELECT PocketScreenId FROM Sales
-			UNION SELECT PocketScreen2Id FROM Sales
-		)
-		ORDER BY 2 COLLATE NOCASE`).all()
+		const screens = uw.getScreenService().getScreensFromSalesHistory();
 		res.send(
 			screens.map(s => {
 				return {
@@ -168,23 +157,21 @@ router.get("/screens", (req, res) => {
 
 
 router.get("/embroideries", (req, res) => {
-	const db = getDB();
+	const uw = new UnitOfWork();
 	try {
-		const embroideries = db.prepare(`SELECT EmbroideryDesignId, Code || ' | ' || Notes AS CodeNotes FROM EmbroideryDesign 
-		WHERE EmbroideryDesignId IN (
-			SELECT FrontEmbroideryDesignId FROM Sales 
-			UNION SELECT BackEmbroideryDesignId FROM Sales 
-			UNION SELECT PocketEmbroideryDesignId FROM Sales 
-			UNION SELECT SleeveEmbroideryDesignId FROM Sales) 
-		ORDER BY 2 COLLATE NOCASE`).all()
+		const embroideries = uw.getEmbroideryService().getEmbroideriesFromSalesHistory();
 		res.send(
 			embroideries.map(e => {
 				return {
 					value: e.EmbroideryDesignId,
-					name: e.CodeNotes
+					name: `${e.Code} | ${e.Notes}`
 				}
 			})
 		)
+	}
+	catch(err) {
+		uw.rollback();
+		console.log(err);
 	}
 	finally{
 		db.close()

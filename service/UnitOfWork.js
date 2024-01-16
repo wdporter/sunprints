@@ -3,7 +3,9 @@ const SalesHistoryService = require("./SalesHistoryService.js");
 const RegionService = require("./RegionService.js");
 const SalesRepService = require("./SalesRepService.js");
 const CustomerService = require("./CustomerService.js");
-const PrintService = require("./PrintService.js")
+const PrintService = require("./PrintService.js");
+const ScreenService = require("./ScreenService.js");
+const EmbroideryService = require("./EmbroideryService.js")
 
 module.exports = class UnitOfWork
 {
@@ -71,6 +73,20 @@ module.exports = class UnitOfWork
 			this.printService = new PrintService(this.db);
 		}
 		return this.printService;
+	}
+
+	getScreenService() {
+		if (typeof this.screenService === "undefined") {
+			this.screenService = new ScreenService(this.db);
+		}
+		return this.screenService;
+	}
+
+	getEmbroideryService() {
+		if (typeof this.embroideryService === "undefined") {
+			this.embroideryService = new EmbroideryService(this.db);
+		}
+		return this.embroideryService;
 	}
 
 
