@@ -92,21 +92,20 @@ router.get("/customernames", (req, res) => {
 	const uw = new UnitOfWork();
 
 	try {
-		// const customerService = uw.getCustomerService();
+		const customerService = uw.getCustomerService();
 
-		// todo, this was hack must refactor properly
-		const customers = uw.db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE").all()
+		const customers = customerService.getSalesHistoryCustomers()
+		
 		res.send(
-			customers.map(c => {
-				return {
-					value: c.CustomerId,
-					name: `${c.Company} (${c.Code})`
-				}
-			})
+			customers
 		)
 	}
+	catch (err)
+	{
+		console.log(err);
+	}
 	finally{
-		db.close()
+		uw.close()
 	}
 })
 

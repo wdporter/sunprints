@@ -1,4 +1,4 @@
-const { allSizes } = require("../config/sizes.js")
+const { allSizes } = require("../config/sizes.js") // todo, do we need this here ?
 
 /**
  * Customer Data Access Object
@@ -10,11 +10,24 @@ module.exports = class CustomerDao {
 	/**
 	 * Create the Customer Data Access Object
 	 * @constructor
-	 * @param {object} db a db object created by dbFactory, supports "get", "all" and "run"
+	 * @param {object} db a db object created by dbFactory
 	 */
 	constructor(db) {
 		this.db = db
 	}
+
+
+	/**
+	 * gets the customers that have entries in the Sales History table
+	 * 
+	 * @returns {Array} a list of customers with their id, company and code
+	 */
+	getSalesHistoryCustomers() {
+		const statement = this.db.prepare("SELECT Customer.CustomerId, Customer.Company, Code FROM Customer INNER JOIN SalesTotal ON SalesTotal.CustomerId=Customer.CustomerId GROUP BY Customer.CustomerId ORDER BY 2 COLLATE NOCASE")
+		const customers = statement.all();
+		return customers;
+	}
+
 
 	/**
 	 * 

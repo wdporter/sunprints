@@ -6,7 +6,7 @@ const OrderProductDao = require("../integration/OrderProductDAO.js")
 const OrderModel = require("../models/order.js")
 
 const productService = require("./productService.js")
-const customerService = require("./customerService.js")
+const customerService = require("./customerServiceDeprecated.js")
 const auditLogService = require("./auditLogService.js")
 const salesHistoryService = require("./SalesHistoryService.js")
 

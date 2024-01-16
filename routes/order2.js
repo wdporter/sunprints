@@ -5,7 +5,7 @@ const salesRepService = require("../service/salesRepServiceDeprecated.js")
 const orderService = require("../service/orderService.js")
 const productService = require("../service/productService.js")
 const purchaseOrderService = require("../service/purchaseOrderService.js")
-const customerService = require("../service/customerService")
+const customerService = require("../service/customerServiceDeprecated.js")
 const regionService = require("../service/regionServiceDeprecated.js")
 
 const art = require("../config/art.js")

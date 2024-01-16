@@ -6,7 +6,7 @@ const router = express.Router()
 const salesRepService = require("../service/salesRepServiceDeprecated.js")
 const orderService = require("../service/orderService.js")
 const productService = require("../service/productService.js")
-const customerService = require("../service/customerService.js")
+const customerService = require("../service/customerServiceDeprecated.js")
 
 const art = require("../config/art.js")
 const { sizeCategories, sizes, auditColumns } = require("../sizes.js")
