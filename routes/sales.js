@@ -130,7 +130,7 @@ router.get("/prints", (req, res) => {
 		console.log(err);
 	}
 	finally{
-		db.close()
+		uw.close()
 	}
 })
 
@@ -151,7 +151,7 @@ router.get("/screens", (req, res) => {
 		console.log(ex)
 	}
 	finally{
-		db.close()
+		uw.close()
 	}
 })
 
@@ -174,57 +174,43 @@ router.get("/embroideries", (req, res) => {
 		console.log(err);
 	}
 	finally{
-		db.close()
+		uw.close()
 	}
 })
 
 
 router.get("/usbs", (req, res) => {
-	const db = getDB();
+	const uw = new UnitOfWork();
 	try {
-		const usbs = db.prepare(`SELECT UsbId, Number || ' | ' || IFNULL(Notes, '') AS NumberNotes FROM Usb 
-		WHERE UsbId IN (
-			SELECT FrontUsbId FROM Sales 
-			UNION SELECT FrontUsb2Id FROM Sales 
-			UNION SELECT BackUsbId FROM Sales 
-			UNION SELECT BackUsb2Id FROM Sales 
-			UNION SELECT SleeveUsbId FROM Sales
-			UNION SELECT SleeveUsb2Id FROM Sales
-			UNION SELECT PocketUsbId FROM Sales
-			UNION SELECT PocketUsb2Id FROM Sales)
-		ORDER BY 2 COLLATE NOCASE`).all()
-		res.send(
-			usbs.map(u => {
-				return {
-					value: u.UsbId,
-					name: u.NumberNotes
-				}
-			})
-		)
+		const usbs = uw.getUsbService().getUsbsFromSalesHistory();
+		const data = usbs.map(u => {
+			return {
+				value: u.UsbId,
+				name: `${u.Number} ${u.Notes}`
+			}
+		});
+
+		res.send(data);
+
 	}
 	catch(ex) {
 		console.log(ex)
 	}
 	finally{
-		db.close()
+		uw.close()
 	}
 })
 
 router.get("/transfers", (req, res) => {
-	const db = getDB();
+	const uw = new UnitOfWork();
 	try {
-		const transfers = db.prepare(`SELECT TransferDesignId, Code || ' | ' || IFNULL(Notes, '') AS CodeNotes FROM TransferDesign 
-		WHERE TransferDesignId IN (
-			SELECT FrontTransferDesignId FROM Sales 
-			UNION SELECT BackTransferDesignId FROM Sales 
-			UNION SELECT PocketTransferDesignId FROM Sales 
-			UNION SELECT SleeveTransferDesignId FROM Sales) 
-		ORDER BY 2 COLLATE NOCASE`).all()
+
+		const transfers = uw.getTransferService().getTransfersFromSalesHistory() 
 		res.send(
 			transfers.map(t => {
 				return {
 					value: t.TransferDesignId,
-					name: t.CodeNotes
+					name: `${t.Code} | ${t.Notes}`
 				}
 			})
 		)
@@ -233,31 +219,20 @@ router.get("/transfers", (req, res) => {
 		console.log(ex)
 	}
 	finally{
-		db.close()
+		uw.close()
 	}
 })
 
 
 router.get("/transfernames", (req, res) => {
-	const db = getDB();
+	const uw = new UnitOfWork();
 	try {
-		const names = db.prepare(`SELECT TransferNameId, IFNULL(Name, 'no name') AS Name 
-		FROM TransferName
-		WHERE TransferNameId IN (
-			SELECT FrontTransferNameId FROM Sales 
-			UNION SELECT FrontTransferName2Id FROM Sales 
-			UNION SELECT BackTransferNameId FROM Sales 
-			UNION SELECT BackTransferName2Id FROM Sales 
-			UNION SELECT SleeveTransferNameId FROM Sales
-			UNION SELECT SleeveTransferName2Id FROM Sales
-			UNION SELECT PocketTransferNameId FROM Sales
-			UNION SELECT PocketTransferName2Id FROM Sales)
-		 ORDER BY 2 COLLATE NOCASE`).all()
+		const names = uw.getTransferNameService().getTransferNamesFromSalesHistory();
 		res.send(
 			names.map(n => {
 				return {
 					value: n.TransferNameId,
-					name: n.Name
+					name: n.Name ?? "(no name)"
 				}
 			})
 		)

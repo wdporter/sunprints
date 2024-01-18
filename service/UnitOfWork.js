@@ -5,7 +5,10 @@ const SalesRepService = require("./SalesRepService.js");
 const CustomerService = require("./CustomerService.js");
 const PrintService = require("./PrintService.js");
 const ScreenService = require("./ScreenService.js");
-const EmbroideryService = require("./EmbroideryService.js")
+const EmbroideryService = require("./EmbroideryService.js");
+const UsbService = require("./UsbService.js");
+const TransferService = require("./TransferService.js");
+const TransferNameService = require("./TransferNameService.js")
 
 module.exports = class UnitOfWork
 {
@@ -89,5 +92,25 @@ module.exports = class UnitOfWork
 		return this.embroideryService;
 	}
 
+	getUsbService() {
+		if (typeof this.usbService === "undefined") {
+			this.usbService = new UsbService(this.db);
+		}
+		return this.usbService;
+	}
+
+	getTransferService() {
+		if (typeof this.transferService === "undefined") {
+			this.transferService = new TransferService(this.db);
+		}
+		return this.transferService;
+	}
+
+	getTransferNameService() {
+		if (typeof this.transferNameService === "undefined") {
+			this.transferNameService = new TransferNameService(this.db);
+		}
+		return this.transferNameService;
+	}
 
 }

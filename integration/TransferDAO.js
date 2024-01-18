@@ -1,6 +1,6 @@
 const { locations } = require("../config/art.js")
 
-module.exports = class TransferDao {
+class TransferDao {
 
 	constructor(db) {
 		this.db = db
@@ -53,4 +53,21 @@ AND Deleted = 0`
 		return recordset
 	}
 
+	getTransfersFromSalesHistory() {
+		const statement = this.db.prepare(/*sql*/`SELECT TransferDesignId, Code, Notes 
+		FROM TransferDesign 
+		WHERE TransferDesignId IN (
+			SELECT FrontTransferDesignId FROM Sales 
+			UNION SELECT BackTransferDesignId FROM Sales 
+			UNION SELECT PocketTransferDesignId FROM Sales 
+			UNION SELECT SleeveTransferDesignId FROM Sales) 
+		ORDER BY 2 COLLATE NOCASE`)
+		
+		const transfers = statement.all();
+
+		return transfers;
+
+	}
 }
+
+module.exports = TransferDao;
