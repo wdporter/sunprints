@@ -32,6 +32,37 @@ module.exports = class SalesHistoryService {
 		return result
 	}
 
+	/**
+ * gets items satisfying the given search object in csv form
+ * @param {Object} searchObject an object where keys are fields to be searched on
+ * @param {String} sortBy the name of the column to sort by
+ * @param {String} sortDirection the direction of the sort, expected values are "asc" or "desc"
+ * 
+ * @return {Object} data: the list of sales items, totalRecords: how many records in the database, recordsFiltered: how many records are in the filtered recordset
+ */
+	getCsv (searchObject) {
+		// todo, should have pulled apart the search object in the route method, only he is supposed to know about frontend, he should have made an instance of a model class to pass through
+
+		// searchObject fields can be null, but db layer wants empty strings
+		for (let key in searchObject) {
+			if (searchObject[key] === null) {
+				searchObject[key] = "";
+			}
+		}
+
+		const result = this.dao.getSearchResults(searchObject, "OrderDate", "ASC", 0, -1);
+
+		// fix the design items from a semi-colon separated string into an array of non-empty string
+		result.data.forEach(d => {
+			d.designItems = d.Designs?.split(";").map(x => x.trim()).filter(x => x !== "") ?? [];
+			delete d.Designs;
+		})
+
+		return result
+
+
+	}
+
 	getFilterTotals(customerid, fromdate, todate, regionid, salesrep) {
 
 		const result = this.dao.getFilterTotals(customerid, fromdate, todate, regionid, salesrep);

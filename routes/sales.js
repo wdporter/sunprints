@@ -26,7 +26,7 @@ router.get("/", (req, res) => {
 
 	const uw = new UnitOfWork();
 
-	res.render("sales2.ejs", {
+	res.render("sales.ejs", {
 		title: "Sales History",
 		user: req.auth.user,
 		poweruser: res.locals.poweruser,
@@ -946,6 +946,36 @@ router.get("/filtertotal", (req, res) => {
 ////////////////////////////////////////////////////////
 
 router.post("/csv/", (req, res) => {
+
+	const uw = new UnitOfWork();
+
+	try {
+		console.log(req.query.customSearch)
+
+		const salesHistoryService = uw.getSalesHistoryService();
+		const results = uw.salesHistoryService.getCsv(req.body);
+
+		const lines = [Object.keys(results.data[0]).join(",")]
+		const data = results.data.map(r => {
+			const values = Object.keys(r).map(k => `"${r[k]}"` )
+			lines.push(values.join(","))
+		})
+		let csv = lines.join("\n")
+		csv = csv.replace(/\"null\"/g, "")
+	
+		res.header("Content-Type", "text/csv")
+		res.send(csv)
+	}
+	catch(err)
+	{
+		console.log(err);
+	}
+	finally
+	{
+		uw.close();
+	}
+
+	return;
 
 	query = /*sql*/`SELECT SalesTotal.OrderId, SalesTotal.OrderNumber, SalesTotal.OrderDate, SalesTotal.SalesRep, SalesTotal.DateProcessed, 
 	SalesTotal.Delivery, Customer.Code, Customer.Company, Customer.CustomerId, SalesTotal.Terms, SalesTotal.BuyIn, SalesTotal.Notes, SalesTotal.Done
