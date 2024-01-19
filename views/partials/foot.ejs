@@ -22,6 +22,8 @@ logged in as: <%= user %>
 
 <script>
 
+// todo, some of this needs to be in separate script file
+
 // useful date function
 Date.prototype.getDateAsIsoLocal = function() {
 	var localDate = new Date(this.valueOf())
@@ -31,8 +33,17 @@ Date.prototype.getDateAsIsoLocal = function() {
 
 
 	// show h2 heading on local host
-	if (window.location.hostname == "localhost")
-		document.getElementById("localh2").style.display="block"
+	const noticeLabel = document.getElementById("localh2");
+	if (window.location.port === "3002") {
+		noticeLabel.style.display = "block";
+		noticeLabel.innerHTML = "Testing Environment – <i>Not Live Data</i>"
+		document.querySelector("header nav img").src = "";
+	}
+	else if (window.location.hostname == "localhost") {
+		noticeLabel.style.display = "block";
+		noticeLabel.innerHTML = "Running on local server – <i>Not Live Data</i>"
+		document.querySelector("header nav img").src = "";
+	}
 
 	// scroll to top
 	const showOnPx = 100;
@@ -49,8 +60,6 @@ Date.prototype.getDateAsIsoLocal = function() {
 	};
 
 document.addEventListener("scroll", () => {
-	//console.log("Scroll Height: ", scrollContainer().scrollHeight);
-	//console.log("Client Height: ", scrollContainer().clientHeight);
 
 	const scrolledPercentage =
 		(scrollContainer().scrollTop /

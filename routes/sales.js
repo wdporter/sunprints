@@ -241,7 +241,7 @@ router.get("/transfernames", (req, res) => {
 		console.log(ex)
 	}
 	finally{
-		db.close()
+		uw.close()
 	}
 })
 
@@ -921,80 +921,21 @@ WHERE StockOrderId=?`).get(salesTotal.StockOrderId)
 
 
 // GET a total of customer sales in a date period
-router.get("/customertotal", (req, res) => {
-	const db = getDB();
+router.get("/filtertotal", (req, res) => {
+	const uw = new UnitOfWork();
+	try {
+		const { customerid, fromdate, todate, regionid, salesrep } = req.query
 
-	const { CustomerId, FromDate, ToDate } = req.query
+		const total = uw.getSalesHistoryService().getFilterTotals(customerid, fromdate, todate, regionid, salesrep);
 
-	var sql = /*sql*/`SELECT Price * (${sz.allSizes.map(s=> `${s}`).join("+")}) AS Total FROM SalesTotal
-	INNER JOIN Sales USING (OrderId) 
-	WHERE `
-
-	var whereClauses = [` SalesTotal.CustomerId = ?  `]
-	var parameters = [CustomerId]
-	if (FromDate) {
-		whereClauses.push( ` SalesTotal.OrderDate >= ? `)
-		parameters.push(FromDate)
+		res.send(total.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'})).end();
 	}
-	if (ToDate) {
-		whereClauses.push( ` SalesTotal.OrderDate <= ? `)
-		parameters.push(ToDate)
+	catch(ex) {
+		console.log(ex)
 	}
-	sql += whereClauses.join(" AND ")
-
-	sql += " AND Sales.GarmentId NOT IN (11279, 16866, 24778, 25278) "
-
-	const statement = db.prepare(sql);
-	let resultset = statement.all(parameters)
-	var total = resultset.reduce((acc, curr) => acc + curr.Total, 0)
-
-	res.send(total.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}));
-
-})
-
-
-// GET a total of region sales in a date period
-router.get("/regiontotal", (req, res) => {
-	const db = 	getDB();
-
-
-	const { regionid, salesrep, from, to } = req.query
-
-	var sql = /*sql*/`SELECT Price * (${sz.allSizes.map(s=> `${s}`).join("+")}) AS Total FROM SalesTotal
-	INNER JOIN Sales USING (OrderId) 
-	WHERE `;
-
-	var whereClauses = [];
-	var parameters = [];
-
-	if (regionid !== "0") {
-		whereClauses.push(/*sql*/" SalesTotal.RegionId = ? ");
-		parameters.push(regionid);
+	finally{
+		uw.close()
 	}
-
-	if (salesrep !== "0") {
-		whereClauses.push(/*sql*/" SalesTotal.SalesRep = ? ");
-		parameters.push(salesrep);
-	}
-
-	if (from !== "") {
-		whereClauses.push(/*sql*/" SalesTotal.OrderDate >= ? ");
-		parameters.push(from);
-	}
-	if (to !== "") {
-		whereClauses.push(/*sql*/" SalesTotal.OrderDate <= ? ");
-		parameters.push(to);
-	}
-	sql += whereClauses.join(/*sql*/" AND ");
-
-	sql += " AND Sales.GarmentId NOT IN (11279, 16866, 24778, 25278) "
-
-	const statement = db.prepare(sql);
-	let resultset = statement.all(parameters)
-	var total = resultset.reduce((acc, curr) => acc + curr.Total, 0)
-
-	res.send(total.toLocaleString('en-AU', {style: 'currency', currency: 'AUD'}));
-
 })
 
 

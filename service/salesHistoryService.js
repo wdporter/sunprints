@@ -19,6 +19,7 @@ module.exports = class SalesHistoryService {
  */
 	getSearchResults(searchObject, sortBy, sortDirection, start, length) {
 
+		// todo, should have pulled apart the search object in the route method, only he is supposed to know about frontend, he should have made an instance of a model class to pass through
 		const result = this.dao.getSearchResults(searchObject, sortBy, sortDirection, start, length);
 
 
@@ -29,6 +30,16 @@ module.exports = class SalesHistoryService {
 		})
 
 		return result
+	}
+
+	getFilterTotals(customerid, fromdate, todate, regionid, salesrep) {
+
+		const result = this.dao.getFilterTotals(customerid, fromdate, todate, regionid, salesrep);
+
+		var total = result.reduce((acc, curr) => acc + curr.Total, 0);
+
+		return total;
+	
 	}
 }
 

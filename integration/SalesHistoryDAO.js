@@ -1,3 +1,5 @@
+const { allSizes } = require("../config/sizes.js");
+
 module.exports = class SalesHistoryDao {
 
 	constructor(db) {
@@ -25,7 +27,7 @@ module.exports = class SalesHistoryDao {
 		const where = []
 
 		if (searchObject.Company != "") {
-			where.push(` CustomerId = @Company `)
+			where.push(` SalesSearch_View.CustomerId = @Company `)
 			params.Company = searchObject.Company
 		}
 		if (searchObject.DateFrom !== "") {
@@ -126,6 +128,46 @@ module.exports = class SalesHistoryDao {
 		result.data = this.db.prepare(query).all(params);
 
 		return result;
+
+	}
+
+	getFilterTotals(customerid, fromdate, todate, regionid, salesrep) {
+
+		var sql = /*sql*/`SELECT Price * (${allSizes.map(s=> `${s}`).join("+")}) AS Total FROM SalesTotal
+		INNER JOIN Sales USING (OrderId) 
+		WHERE `
+	
+		var whereClauses = [];
+		var parameters = [];
+
+		if (customerid !== "") {
+			whereClauses.push(" SalesTotal.CustomerId = ?  ");
+			parameters.push(customerid)
+		}
+		if (regionid !== "") {
+			whereClauses.push(" SalesTotal.RegionId = ?  ");
+			parameters.push(regionid)
+		}
+		if (salesrep !== "") {
+			whereClauses.push(" SalesTotal.SalesRep = ?  ");
+			parameters.push(salesrep)
+		}
+		if (fromdate !== "") {
+			whereClauses.push( ` SalesTotal.OrderDate >= ? `)
+			parameters.push(fromdate)
+		}
+		if (todate) {
+			whereClauses.push( ` SalesTotal.OrderDate <= ? `)
+			parameters.push(todate)
+		}
+		sql += whereClauses.join(" AND ");
+	
+		sql += " AND Sales.GarmentId NOT IN (11279, 16866, 24778, 25278) "
+	
+		const statement = this.db.prepare(sql);
+		let resultset = statement.all(parameters)
+
+		return resultset;
 
 	}
 

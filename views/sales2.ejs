@@ -291,7 +291,7 @@ window.datatable = new DataTable("table#dt", {
 		{
 			data: "designItems",
 			render(data) { 
-				if (data.length === 2 && data[0].Design === data[1].Design) {
+				if (data.length === 2 && data[0] === data[1]) {
 					return data[0];
 				}
 				else {
@@ -347,38 +347,39 @@ window.datatable = new DataTable("table#dt", {
 })
 
 window.datatable.on("draw", async function() {
-		window.datatable.buttons(0).text("Expand all")
+	window.datatable.buttons(0).text("Expand all");
 
-		// if it's a customer and a date range, display a sum of their orders
-		let customerId = dataSearchObject.Company;
-		// let customerName = "";
-		// if (dataSearchObject.Company !== null) {
-		// 	customerName = document.getElementById("customerName").value;
-		// }
-		const fromDate = document.getElementById("dateFrom").value;
-		const toDate = document.getElementById("dateTo").value;
+	// if it's a customer and a date range, display a sum of their orders
 
-		if (customerId !== null && (fromDate !== "" || toDate !== "")) {
-			const url = `/sales/customertotal?CustomerId=${customerId}&FromDate=${fromDate}&ToDate=${toDate}`;
-			const response = await fetch(url);
-			const text = await response.text();
-			document.getElementById("customerSalesTotalLabel").textContent = `Total sales for customer in date range (excl. freight): ${text}`
-			return;
-		}
-
-		// now we'll try to do the same for a region and a date range
-		const regionid = document.getElementById("region").value
-		if (regionid !== "" && (fromDate !== "" || toDate !== "")) {
-			const url = `/sales/regiontotal?regionid=${regionid}&from=${fromDate}&to=${toDate}`;
-			const response = await fetch(url);
-			const text = await response.text();
-			document.getElementById("customerSalesTotalLabel").textContent = `Total sales for region in date range (excl. freight): ${text}`;
-			return;
-		}
-
+	if (dataSearchObject.Embroidery != null || dataSearchObject.OrderNumber !== null || dataSearchObject.Print !== null
+			|| dataSearchObject.Screen !== null || dataSearchObject.Transfer !== null || dataSearchObject.TransferName !== null
+			|| dataSearchObject.Usb !== null) {
+				// if one of these are set, we don't do a sum
 		document.getElementById("customerSalesTotalLabel").textContent = ""
+		return;
+	}
 
-	})
+	if (dataSearchObject.DateFrom === null && dataSearchObject.DateTo === null) {
+		// don't do a sum if there is no date range
+		document.getElementById("customerSalesTotalLabel").textContent = ""
+		return;
+	}
+
+
+	const url = `/sales/filtertotal?customerid=${dataSearchObject.Company || ""}&fromdate=${dataSearchObject.DateFrom || ""}&todate=${dataSearchObject.DateTo || ""}&regionid=${dataSearchObject.Region || ""}&salesrep=${dataSearchObject.SalesRep || ""}`;
+	const response = await fetch(url);
+	const text = await response.text();
+
+	const who = [];
+	if (dataSearchObject.Company !== null)
+		who.push("Customer")
+	if (dataSearchObject.Region !== null)
+		who.push("Region")
+	if (dataSearchObject.SalesRep !== null)
+		who.push("Rep")
+	document.getElementById("customerSalesTotalLabel").textContent = `Total sales ${who.length > 0 ? "for" : ""} ${who.join("/")} in date range (excl. freight): ${text}`
+
+});
 
 
 
@@ -603,6 +604,7 @@ function onOrderNumberInputChange() {
 	//reset input[type=search]
 	Array.from(document.querySelectorAll("input[type=search]")).forEach(function(input) {
 		input.value = "";
+		dataSearchObject[input.name] = "";
 	});
 }
 orderNumberInput.addEventListener("blur", onOrderNumberInputChange);
