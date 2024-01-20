@@ -7,6 +7,7 @@ const productService = require("../service/productService.js")
 const purchaseOrderService = require("../service/purchaseOrderService.js")
 const customerService = require("../service/customerServiceDeprecated.js")
 const regionService = require("../service/regionServiceDeprecated.js")
+const config = require("../config/config.js")
 
 const art = require("../config/art.js")
 const { sizeCategories, sizes, auditColumns } = require("../sizes.js")
@@ -60,7 +61,8 @@ router.get("/edit", function (req, res) {
 			salesReps,
 			purchaseOrders,
 			poweruser: res.locals.poweruser,
-			regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }})
+			regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}),
+			useNewHeader: true
 		})
 
 	}

@@ -25,8 +25,7 @@ router.get("/", function (req, res, next) {
 		allSizes: JSON.stringify(sz.allSizes),
 		regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}),
 		locations: sz.locations,
-		art: sz.art,
-
+		art: sz.art
 	});
 });
 
