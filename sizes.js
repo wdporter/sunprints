@@ -1,3 +1,11 @@
+// this is now deprecated
+
+// get size information from ../config/sizes.js
+
+// get art information from ../config/art.js
+
+// get audit column information from ../config/auditColumns.js
+
 
 const sizeCategories = ["Adults", "Womens", "Kids"]
 
@@ -10,17 +18,21 @@ const sizes = {
 
 let allSizes = []
 sizeCategories.forEach(cat => allSizes = allSizes.concat(sizes[cat]))
-//sizes.Kids.concat(sizes.Womens).concat(sizes.Adults)
+
+
+//================
 
 const locations = ["Front", "Back", "Pocket", "Sleeve"]
-
 const decorations = ["Print", "Embroidery", "Transfer"]
-
 const media = ["Screen", "Usb", "TransferName"]
-
 const art = []
 decorations.forEach((d, i) => art.push({decoration: d, medium: media[i]}))
 
+
+//================
 const auditColumns = ["CreatedBy", "CreatedDateTime", "LastModifiedBy", "LastModifiedDateTime"]
+
+
+//================
 
 module.exports = {sizes, allSizes, locations, sizeCategories, auditColumns, decorations, media, art }

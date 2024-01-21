@@ -319,7 +319,7 @@
 
 <hr>
 
-<p><input type="button" class="bottom-button" onclick="window.location.href='/order2/edit'" value="New Order" title="start a new order"></p>
+<p><input type="button" class="bottom-button" onclick="window.location.href='/order/edit'" value="New Order" title="start a new order"></p>
 
 
 
@@ -560,7 +560,7 @@ createApp ({
 		}, //~ onPurchaseOrderSelect
 		saveOrder() {
 			let method = "POST"
-			let url = "/order2"
+			let url = "/order"
 			if (this.order.OrderId > 0) {
 				method = "PUT"
 				url += `/${this.order.OrderId}`
@@ -600,7 +600,7 @@ createApp ({
 				document.getElementById("successDialog").showModal()
 
 				// refetch products
-				fetch(`/order2/products/${this.order.OrderId}`)
+				fetch(`/order/products/${this.order.OrderId}`)
 				.then(r => r.json())
 				.then(json => {
 					this.order.products = json
@@ -626,7 +626,7 @@ createApp ({
 					.then(response => {
 						if (response.ok) {
 							const deleteDialog = document.getElementById("deleteDialog")
-							deleteDialog.addEventListener("close", () => window.location="/order2/edit") 
+							deleteDialog.addEventListener("close", () => window.location="/order/edit") 
 							deleteDialog.showModal()
 						}
 

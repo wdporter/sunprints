@@ -1,4 +1,4 @@
-const getDB = require("../integration/dbFactory")
+const getDB = require("../integration/dbFactory.js")
 const OrderDao = require("../integration/OrderDAO.js")
 const CustomerDao = require("../integration/CustomerDAO.js")
 const OrderProductDao = require("../integration/OrderProductDAO.js")

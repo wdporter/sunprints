@@ -1,23 +1,23 @@
+// todo delete this whole file
+
 const express = require("express")
 const router = express.Router()
 
-const salesRepService = require("../service/salesRepServiceDeprecated.js")
+const salesRepServiceOld = require("../service/salesRepServiceDeprecated.js")
 const orderService = require("../service/orderService.js")
 const productService = require("../service/productService.js")
 const purchaseOrderService = require("../service/purchaseOrderService.js")
-const customerService = require("../service/customerServiceDeprecated.js")
-const regionService = require("../service/regionServiceDeprecated.js")
-const config = require("../config/config.js")
+const customerServiceOld = require("../service/customerServiceDeprecated.js")
+const regionServiceOld = require("../service/regionServiceDeprecated.js")
 
 const art = require("../config/art.js")
-const { sizeCategories, sizes, auditColumns } = require("../sizes.js")
-
+const sz = require("../config/sizes.js");
 
 /* GET the main order editing page */
 router.get("/edit", function (req, res) {
 
 	try {
-		const salesReps = salesRepService.getCurrentSalesRepNames()
+		const salesReps = salesRepServiceOld.getCurrentSalesRepNames()
 
 		let purchaseOrders = null
 		let order = null
@@ -36,11 +36,11 @@ router.get("/edit", function (req, res) {
 
 		if (req.query.customerid) {
 			order.CustomerId = req.query.customerid
-			const myCustomer = customerService.get(req.query.customerid)
+			const myCustomer = customerServiceOld.get(req.query.customerid)
 			order.customer = {
 				Code: myCustomer.Code,
 				Company: myCustomer.Company,
-				detailsString: customerService.getDetailsString(myCustomer)
+				detailsString: customerServiceOld.getDetailsString(myCustomer)
 			}
 		}
 
@@ -55,14 +55,13 @@ router.get("/edit", function (req, res) {
 			user: req.auth.user,
 			locations: art.locations,
 			decorations: art.decorations,
-			sizes,
+			sizes: sz.sizes,
 			media: art.media,
 			order,
 			salesReps,
 			purchaseOrders,
 			poweruser: res.locals.poweruser,
-			regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}),
-			useNewHeader: true
+			regions: regionServiceOld.all().map(r => {return { id: r.RegionId, name: r.Name }})
 		})
 
 	}
