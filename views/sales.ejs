@@ -631,7 +631,7 @@ function clearSearchFields() {
 
 	Array.from(document.querySelectorAll("details select")).forEach(s => s.value = "");
 
-	Array.from(document.querySelector("input[type=search]")).forEach(s => s.value = "");
+	Array.from(document.querySelectorAll("input[type=search]")).forEach(s => s.value = "");
 
 	for(key in dataSearchObject) {
 		dataSearchObject[key] = null;
