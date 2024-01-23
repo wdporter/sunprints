@@ -54,14 +54,14 @@
 					<label for=buyIn>Buy In</label>
 				</p>
 	
-				<p v-if="order.OrderId==0 && order.BuyIn">
+				<p v-if="order.BuyIn">
 					<label for="purchaseSelect">Buy In — choose an existing purchase order to set the products</label>
 					<select id="purchaseSelect" v-model="order.StockOrderId" @change="onPurchaseOrderSelect">
 						<option value="">— Select —</option>
 						<option v-for="po in purchaseOrders" :value="po.StockOrderId">{{ po.StockOrderId }} {{ po.OrderDate }} {{ po.Company }}</option>
 					</select> 
 				</p>
-				<p v-if="order.OrderId != 0 && order.BuyIn">
+				<p v-if="order.BuyIn">
 					<a id="viewSelectedPurchaseOrder" :href="`/purchasing?id=${order.StockOrderId}`" title="open the selected purchase order in a new window" target="_blank">View purchase order</a>
 				</p>
 			</div>
@@ -146,7 +146,7 @@
 	<div v-for="(product, i) in order.products" :key="product.GarmentId">
 		<template v-if="!product.removed">
 			<fieldset>
-				<legend>Product (Id:{{ product.GarmentId }}) <span v-if="product.Deleted==1">(deleted)</span></legend>
+				<legend>Product (Id:{{ product.GarmentId }})</legend>
 				<table style="margin-top:1em">
 					<tr><th style="width:4em">Code<th>Label<th>Type<th>Colour<th>Notes<th style="width:4em">Sizes
 					<tr>
@@ -549,10 +549,15 @@ createApp ({
 			return false
 		},
 		async onPurchaseOrderSelect() {
+			// while buy-in is active, the user has selected a purchase order to pre-fill the products
 			console.log("stockorderid", this.order.StockOrderId)
 			try {
-				this.order.products = await (await fetch(`/stockorder/${this.order.StockOrderId}/products`)).json()
-				this.order.products.forEach(p => p.added = true)
+				this.order.products.forEach(p => p.removed = true);
+				const response = await fetch(`/stockorder/${this.order.StockOrderId}/products`);
+				let newProducts = await response.json();
+				newProducts.forEach(p => p.added = true);
+				this.order.products = this.order.products.concat(newProducts);
+
 			}
 			catch(err) {
 				console.error(err)

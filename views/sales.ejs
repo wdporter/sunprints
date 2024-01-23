@@ -196,18 +196,6 @@ function downloadCsv() {
 	})
 }
 
-function cloneOrder(a, event) {
-	event.preventDefault()
-	const tr = a.closest("tr")
-	const api = $("table#dt").dataTable().api()
-	const row = api.row(tr)
-	const data = row.data()
-	const orderid = data.OrderId
-	window.location.href = `/order/new?clone=${orderid}`
-	console.log(orderid)
-}
-
-
 window.datatable = new DataTable("table#dt", {
 	fixedHeader: true,
 	processing: true,

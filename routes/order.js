@@ -105,69 +105,13 @@ router.get("/dt", function (req, res, next) {
 })
 
 
-/* GET new orders page. */
-// todo is it still needed?
-router.get("/new", function (req, res, next) {
-
-	const db = getDB()
-
-	let customer = null
-	let garments = []
-	let order = null
-
-	try {
-		if (req.query.customerid) {
-			statement = db.prepare(`SELECT * FROM Customer WHERE Deleted=0 AND CustomerId=?`)
-			customer = statement.get(req.query.customerid)
-		}
-
-		if (req.query.clone) {
-			order = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(req.query.clone)
-			order.OrderId = 0
-			order.OrderDate = new Date().toISOString()
-			order.DeliverDate = ""
-			customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(order.CustomerId)
-		}
-
-		const salesReps = db.prepare("SELECT Name, Deleted FROM SalesRep WHERE Deleted=0").all()
-
-		const regions = db.prepare("SELECT RegionId, Name, [Order], Deleted FROM Region").all()
-		regions.sort((a, b) => a.Order - b.Order)
-
-		res.render("order_new.ejs", {
-			title: "New Order",
-			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/order_new-theme.css"],
-			javascripts: ["/javascripts/dataTables.fixedHeader.min.js"],
-			mode: "new",
-			customer,
-			order,
-			garments,
-			user: req.auth.user,
-			salesReps,
-			locations: art.locations,
-			poweruser: res.locals.poweruser,
-			salesrep: res.locals.salesrep,
-			regions
-		})
-
-	}
-	catch (ex) {
-		//ignore, customer/garment can stay as null
-		console.log(ex.message)
-	}
-	finally {
-		db.close()
-	}
-})
-
-
 /* GET the main order editing page, is also used for new orders */
 router.get("/edit", function (req, res) {
-	const uw = new OrderOfWork();
+	const uw = new UnitOfWork();
 
 	try {
 		const salesReps = uw.getSalesRepService().getCurrentNames();
-		uw.close() // todo , use this everywhere in this function;
+		uw.close() // todo , use uw everywhere in this function;
 
 		let order = null
 
@@ -1253,7 +1197,7 @@ router.post("/", (req, res) => {
 		}
 		else {
 			const retVal = { OrderId: savedOrder.OrderId}
-			auditColumns.forEach(c => retVal[c] = savedOrder[c])
+			auditing.auditColumns.forEach(c => retVal[c] = savedOrder[c])
 			res.json(retVal).end()
 		}
 	}

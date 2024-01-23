@@ -18,7 +18,7 @@ module.exports = class OrderProductDao {
 			let query = /*sql*/`
 INSERT INTO OrderGarment ( ${Object.keys(product).join(" , ")} )
 VALUES (${Object.keys(product).map(k => `@${k}`).join(" , ")})`
-			let statement = this.db.prepare(query) // note, there is a trigger to insert into Sales
+			let statement = this.db.prepare(query) 
 			let info = statement.run(product)
 			console.log("insert product", info)
 
