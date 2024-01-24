@@ -29,7 +29,7 @@ module.exports = class SalesHistoryDao {
 		}
 		if (searchObject.OrderNumber.trim() !== "") {
 			where.push( " OrderNumber = @OrderNumber ")
-			params.OrderNumber = "searchObject.OrderNumber"
+			params.OrderNumber = searchObject.OrderNumber
 		}
 		if (searchObject.Print != "") {
 			where.push(" PrintDesignIds LIKE @Print ")

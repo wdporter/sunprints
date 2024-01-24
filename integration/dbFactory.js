@@ -8,8 +8,6 @@ module.exports = function getDB() {
 		verbose: console.log  
 	});
 
-	db.pragma('journal_mode = WAL');
-
 	return db;
 
 }
