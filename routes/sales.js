@@ -13,10 +13,10 @@ const dtColumnNames = [
 	{dt: "Region Rep", db: "Owner"},
 	{dt: "Processed Date", db: "DateProcessed"},
 	{dt: "Delivery Date", db: "Delivery"},
-	{dt: "Design", db: "Designs"}, 
+	{dt: "Design", db: "DesignNames"}, 
 	{dt: "Customer", db: "Company"}, 
 	{dt: "Terms", db: "Terms"},
-	{dt: "Buy In", db: "Buyin"},
+	{dt: "Buy In", db: "BuyIn"},
 	{dt: "Notes", db: "Notes"},
 	{dt: "Done", db: "Done"}
 ];

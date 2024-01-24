@@ -263,8 +263,9 @@ window.datatable = new DataTable("table#dt", {
 					return new Date(num).toLocaleDateString("en-AU").split("/").map(d => d.replace(/^0/, "")).join("/")
 			}
 		},
-		{ data: "Owner", 
+		{ data: "Region", 
 			width: "3em", 
+<<<<<<< HEAD
 			render: function(data) {
 				if (data === null || data.length === 0) {
 					return "";
@@ -273,6 +274,18 @@ window.datatable = new DataTable("table#dt", {
 					return data.substring(1);
 				else
 					return data.replace(":", "<br>")
+=======
+			orderable: false,
+			render: function(data, word, row) {
+				const fields = [];
+				if (data !== null && data !== "") {
+					fields.push(data);
+				}
+				if (row.SalesRep !== null && row.SalesRep !== "") {
+					fields.push(row.SalesRep);
+				}
+				return fields.join("<br>");
+>>>>>>> sales-histoyry-data-list
 			}
 		},
 		{ data: "DateProcessed", 
@@ -289,7 +302,7 @@ window.datatable = new DataTable("table#dt", {
 			width: "4em"
 		},
 		{
-			data: "designItems",
+			data: "DesignNames",
 			render(data) { 
 				if (data.length === 2 && data[0] === data[1]) {
 					return data[0];
@@ -309,8 +322,10 @@ window.datatable = new DataTable("table#dt", {
 		{ data: "BuyIn",
 			width: "1em",
 			render: function(data, word, row) {
-				if (row.StockOrderId == null || row.StockOrderId=="0")
+				if (row.StockOrderId === null || row.StockOrderId === "0")
 					return ""
+				else if (!row.StockOrderId)
+					return "✔️";
 				else
 					return `<a href="/purchasing?stockorderid=${row.StockOrderId}">${row.StockOrderId}</a>`
 			}
@@ -631,7 +646,11 @@ function clearSearchFields() {
 
 	Array.from(document.querySelectorAll("details select")).forEach(s => s.value = "");
 
+<<<<<<< HEAD
 	Array.from(document.querySelector("input[type=search]")).forEach(s => s.value = "");
+=======
+	Array.from(document.querySelectorAll("input[type=search]")).forEach(s => s.value = "");
+>>>>>>> sales-histoyry-data-list
 
 	for(key in dataSearchObject) {
 		dataSearchObject[key] = null;

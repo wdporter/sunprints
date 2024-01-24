@@ -48,20 +48,31 @@ app.use(basicAuth({
 	authorizer: myAuthorizer,
 	challenge: true,
 	realm: 'sprealm',
-}))
+}));
 function myAuthorizer(username, password) {
-	const Database = require("better-sqlite3")
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-	const user = db.prepare("SELECT * FROM User WHERE Name=?").get(username)
+	const Database = require("better-sqlite3");
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true });
+	const user = db.prepare("SELECT * FROM User WHERE Name=? COLLATE NOCASE").get(username);
 	db.close()
-	return require('crypto').createHash('md5').update(password).digest("hex") == user.Password
+	if (typeof user === "undefined") {
+		const message = `We could not find the user name: ${username}`;
+		console.log(message);
+		res.status(403).render("error", { message });
+	}
+	var hash = require('crypto').createHash('md5').update(password).digest("hex");
+	return hash === user.Password;
 }
 
 app.use((req, res, next) => {
-	const Database = require("better-sqlite3")
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-	const user = db.prepare("SELECT * FROM User WHERE Name=?").get(req.auth.user)
-	db.close()
+	const Database = require("better-sqlite3");
+	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true });
+	const user = db.prepare("SELECT * FROM User WHERE Name=? COLLATE NOCASE").get(req.auth.user);
+	db.close();
+	if (typeof user === "undefined") {
+		const message = `We could not find the user name: ${username}`;
+		console.log(message);
+		res.status(403).render("error", { message });
+	}
 	res.locals.poweruser = user.PowerUser == 1
 	res.locals.salesrep = user.SalesRep == 1
 	res.locals.admin = user.Admin == 1

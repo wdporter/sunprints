@@ -25,8 +25,7 @@ module.exports = class SalesHistoryService {
 
 		// fix the design items from a semi-colon separated string into an array of non-empty string
 		result.data.forEach(d => {
-			d.designItems = d.Designs?.split(";").map(x => x.trim()).filter(x => x !== "") ?? [];
-			delete d.Designs;
+			d.DesignNames = d.DesignNames?.split("|").map(x => x.trim()).filter(x => x !== "") ?? [];
 		})
 
 		return result
