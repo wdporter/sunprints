@@ -265,16 +265,6 @@ window.datatable = new DataTable("table#dt", {
 		},
 		{ data: "Region", 
 			width: "3em", 
-<<<<<<< HEAD
-			render: function(data) {
-				if (data === null || data.length === 0) {
-					return "";
-				}
-				else if (data[0] === ":")
-					return data.substring(1);
-				else
-					return data.replace(":", "<br>")
-=======
 			orderable: false,
 			render: function(data, word, row) {
 				const fields = [];
@@ -285,7 +275,6 @@ window.datatable = new DataTable("table#dt", {
 					fields.push(row.SalesRep);
 				}
 				return fields.join("<br>");
->>>>>>> sales-histoyry-data-list
 			}
 		},
 		{ data: "DateProcessed", 
@@ -646,11 +635,7 @@ function clearSearchFields() {
 
 	Array.from(document.querySelectorAll("details select")).forEach(s => s.value = "");
 
-<<<<<<< HEAD
-	Array.from(document.querySelector("input[type=search]")).forEach(s => s.value = "");
-=======
 	Array.from(document.querySelectorAll("input[type=search]")).forEach(s => s.value = "");
->>>>>>> sales-histoyry-data-list
 
 	for(key in dataSearchObject) {
 		dataSearchObject[key] = null;
