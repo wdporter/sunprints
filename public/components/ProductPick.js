@@ -61,11 +61,6 @@ export default {
 						@input="getProducts(this)" />
 			</th>
 			<th>
-				<input type=search placeholder="Label" class=filter-dropdown-input 
-						v-model="label" 
-						@input="getProducts(this)" />
-			</th>
-			<th>
 				<input type=search placeholder="Type" class=filter-dropdown-input 
 						v-model="type" 
 						@input="getProducts(this)" />
@@ -73,6 +68,11 @@ export default {
 			<th>
 				<input type=search placeholder="Colour" class=filter-dropdown-input 
 						v-model="colour" 
+						@input="getProducts(this)" />
+			</th>
+			<th>
+				<input type=search placeholder="Label" class=filter-dropdown-input 
+						v-model="label" 
 						@input="getProducts(this)" />
 			</th>
 			<th style="width:4em"></th>
@@ -88,9 +88,9 @@ export default {
 		<tr v-for="product in products" @dblclick="onProductSelect($event, product)">
 			<td><button @click="onProductSelect($event, product)">Select</button></td>
 			<td>{{ product.Code }} </td>
-			<td>{{ product.Label }} </td>
 			<td>{{ product.Type }} </td>
 			<td>{{ product.Colour }} </td>
+			<td>{{ product.Label }} </td>
 			<td>{{ product.SizeCategory }}</td>
 		</tr>
 	</tbody>
