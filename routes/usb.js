@@ -1,7 +1,6 @@
 const express = require("express")
 const router = express.Router()
-
-const Database = require("better-sqlite3")
+const getDB = require("../integration/dbFactory");
 
 
 
@@ -19,10 +18,9 @@ router.get("/", function (req, res, next) {
 /* get usbs, filtered by term, used on Print Design page */
 router.get("/filter/:term", function(req, res) {
 
-	let db = null
+	const db = getDB();
 	try {
 		const term = `%${req.params.term}%`
-		db = db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 		const statement = db.prepare(`SELECT * FROM Usb WHERE Deleted=0 AND Number LIKE @term OR Notes LIKE @term `)
 		const usbs = statement.all({term})
 
@@ -50,10 +48,8 @@ router.get("/filter/:term", function(req, res) {
 /* get usbs for data tables server side processing */
 router.get("/dt", function(req, res) {
 
-	let db = null
-
+	const db = getDB();
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 		
 		// first get count of all records
 		let statement = db.prepare("SELECT COUNT(*) as Count FROM Usb WHERE Deleted=0 ")
@@ -106,7 +102,7 @@ router.get("/dt", function(req, res) {
 // GET page of deleted usbs
 router.get("/deleted", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	const deleted = db.prepare("SELECT * FROM Usb WHERE DELETED=1 ORDER BY LastModifiedDateTime DESC").all()
 
@@ -125,7 +121,7 @@ router.get("/deleted", (req, res) => {
 // GET details of a usb
 router.get("/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		const query = `SELECT * FROM Usb WHERE UsbId=?`
 		const statement = db.prepare(query)
@@ -145,7 +141,7 @@ router.get("/:id", (req, res) => {
 // get list of embroidery designs, used by fetch on the usbs page
 router.get("/embroideries/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 	const embroideryDesigns = db.prepare(`SELECT Code, Notes, Comments, SizeCategory, Front, Back, Pocket, Sleeve 
 	FROM EmbroideryDesign 
@@ -167,7 +163,7 @@ router.get("/embroideries/:id", (req, res) => {
 /// POST to create a new usb
 router.post("/", function(req, res) {
 	
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -243,7 +239,7 @@ ${columns.map(c => `@${c}`).join(", ")}
 
 // GET data for datatables for deleted Usb
 router.post("/deleted/dt", function(req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -290,7 +286,7 @@ router.post("/deleted/dt", function(req, res) {
 // PUT to edit an existing usb
 router.put("/:id", function(req, res) {
 	
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	req.body.UsbId = Number(req.params.id)
 
@@ -358,7 +354,7 @@ router.put("/:id", function(req, res) {
 // PUT edit by setting deleted to 0
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		const date = new Date().toLocaleString()
@@ -401,7 +397,7 @@ router.put("/restore/:id", (req, res) => {
 // DELETE  an existing usb
 router.delete("/:id", function(req, res) {
 	
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()

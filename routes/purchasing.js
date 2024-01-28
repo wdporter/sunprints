@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3");
+const getDB = require("../integration/dbFactory");
 const sz = require("../sizes.js")
 
 
@@ -12,9 +12,8 @@ router.get("/", function (req, res) {
 	let orderNumber = ""
 	let stockOrderId = req.query.stockorderid || ""
 
-	let db = null
+	const db = getDB();
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 
 		if (req.query.orderid) {
@@ -79,7 +78,7 @@ router.get("/", function (req, res) {
 
 router.get("/purchaseorder/:id", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 

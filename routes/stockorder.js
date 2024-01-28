@@ -1,19 +1,15 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3");
+const getDB = require("../integration/dbFactory");
 const sz = require("../sizes.js")
-
 const productService = require("../service/productService.js")
-
-
 
 
 // GET returns stock order details for given id,
 // used by the purchasing page
 router.get("/:id", function (req, res) {
-	let db = null
+	const db = getDB();
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		let statement = db.prepare(`SELECT * FROM StockOrder WHERE StockOrderId=?`)
 		const stockOrder = statement.get(req.params.id)
@@ -44,15 +40,15 @@ router.get("/:id", function (req, res) {
 // Get a list of unprocessed stockorders in json
 router.get("/", (req, res) => {
 
-	let db = null
+	const db = getDB();
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
+		const statement = db.prepare(/*sql*/`
+			SELECT StockOrderId, Supplier.Company AS Company, OrderDate, StockOrder.Notes 
+			FROM StockOrder 
+			INNER JOIN Supplier ON Supplier.SupplierId = StockOrder.SupplierId 
+			WHERE StockOrder.Deleted = 0 AND StockOrder.ReceiveDate IS NULL`)
 
-		const statement = db.prepare(`SELECT StockOrderId, Supplier.Company AS Company, OrderDate, StockOrder.Notes 
-FROM StockOrder 
-INNER JOIN Supplier ON Supplier.SupplierId = StockOrder.SupplierId 
-WHERE StockOrder.Deleted = 0 AND StockOrder.ReceiveDate IS NULL`)
 		stockOrders = statement.all()
 
 		res.json(stockOrders)
@@ -94,7 +90,7 @@ router.get("/:id/products", (req, res) => {
 // POST is insert new stock order
 router.post("/", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 
@@ -209,7 +205,7 @@ router.post("/", function (req, res) {
 
 // POST to receive a garment, garment details in body and stock order id in param
 router.post("/receivegarment/:id", function (req, res) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		const now = new Date()
@@ -319,7 +315,7 @@ router.post("/receivegarment/:id", function (req, res) {
 // PUT to save changes
 router.put("/:id", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		db.prepare("BEGIN TRANSACTION").run()
@@ -422,7 +418,7 @@ router.put("/:id", function (req, res) {
 
 
 router.put("/removegarment/:stockorderid/:garmentid", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
 		const myStockOrderGarment = db.prepare("SELECT * FROM StockOrderGarment WHERE StockOrderId=? AND GarmentId=?").get(req.params.stockorderid, req.params.garmentid)
@@ -467,7 +463,7 @@ router.put("/removegarment/:stockorderid/:garmentid", (req, res) => {
 
 // PUT to receive a whole order
 router.put("/receiveorder/:stockorderid", function (req, res) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		req.body.LastModifiedBy = req.auth.user
@@ -561,7 +557,7 @@ router.put("/receiveorder/:stockorderid", function (req, res) {
 // DELETE delete a purchase order
 router.delete("/:id", (req, res) => {
 	const date = new Date().toLocaleString()
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {	
 		
 		let statement = db.prepare(`SELECT StockOrderGarmentId, StockOrderId, GarmentId, 

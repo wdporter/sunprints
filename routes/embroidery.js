@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3")
+const getDB = require("../integration/dbFactory");
 const sz = require("../sizes")
 
 
@@ -19,7 +19,7 @@ router.get("/", function (req, res, next) {
 // GET a list of embroidery, used on the new order page
 router.get("/ordersearch", function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const getDB = require("../integration/dbFactory");
 	try {
 		// note that "Womens" returns same result as "Adults"
 		const statement = db.prepare(`SELECT DISTINCT EmbroideryDesign.EmbroideryDesignId, Code, EmbroideryDesign.Notes, Comments 
@@ -54,9 +54,8 @@ ORDER BY EmbroideryDesign.Notes `)
 
 // GET a list of usbs for a embroidery design, used on the new order page
 router.get("/usb/ordersearch", function (req, res, next) {
-	let db = null
+	const db = getDB();
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		// "Womens" and "Adults" are the same
 		const statement = db.prepare(`SELECT UsbEmbroideryDesignId, UsbEmbroideryDesign.UsbId, Front, Back, Pocket, Sleeve, Number, Notes
@@ -90,10 +89,9 @@ AND Usb.Notes IS NOT NULL
 // GET list of embroidery designs in DataTables format
 router.get("/dt", function (req, res, next) {
 
-	let db = null
+	const db = getDB();
 
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		// first get count of all records
 		let statement = db.prepare("SELECT COUNT(*) as Count FROM EmbroideryDesign WHERE Deleted=0 ")
@@ -144,7 +142,7 @@ router.get("/dt", function (req, res, next) {
 // used by the datatables format function when you click to expand a row
 router.get("/usbs/:id", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		const statement = db.prepare(`SELECT UsbEmbroideryDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Usb.UsbId AS UsbId ,Number as UsbNumber, Notes as UsbNotes 
@@ -169,7 +167,7 @@ router.get("/usbs/:id", function (req, res) {
 // GET page of deleted designs
 router.get("/deleted", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	const deleted = db.prepare("SELECT * FROM EmbroideryDesign WHERE DELETED=1 ORDER BY LastModifiedDateTime DESC").all()
 
@@ -184,7 +182,7 @@ router.get("/deleted", (req, res) => {
 
 // POST create a new embroidery design
 router.post("/", function (req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	if (req.body.Code == "") {
 		res.statusMessage = "We require a code."
@@ -258,7 +256,7 @@ router.post("/", function (req, res) {
 
 // POST create a new UsbEmbroideryDesign 
 router.post("/usb", function (req, res) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -346,7 +344,7 @@ router.post("/usb", function (req, res) {
 
 // GET data for datatables for deleted EmbroideryDesigns
 router.post("/deleted/dt", function(req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -390,9 +388,7 @@ router.post("/deleted/dt", function(req, res) {
 
 // PUT update/edit existing embroidery design
 router.put("/:id", function (req, res) {
-
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-
+	const db = getDB();
 	try {
 
 		if (req.body.Code == "") {
@@ -471,7 +467,7 @@ router.put("/:id", function (req, res) {
 // PUT edit by setting deleted to 0
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		const date = new Date().toLocaleString()
@@ -507,7 +503,7 @@ router.put("/restore/:id", (req, res) => {
 
 // DELETE an existing embroidery design
 router.delete("/:id", function (req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		const date = new Date().toLocaleString()
 		let statement = db.prepare("UPDATE EmbroideryDesign SET Deleted=1, LastModifiedBy=?, LastModifiedDateTime=? WHERE EmbroideryDesignId=?")
@@ -542,7 +538,7 @@ router.delete("/:id", function (req, res) {
 
 
 router.delete("/removeusb/:id", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		const oldEntry = db.prepare("SELECT * FROM UsbEmbroideryDesign WHERE UsbEmbroideryDesignId=?").get(req.params.id)
 

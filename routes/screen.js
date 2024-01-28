@@ -1,7 +1,6 @@
 const express = require("express")
 const router = express.Router()
-
-const Database = require("better-sqlite3")
+const getDB = require("../integration/dbFactory");
 
 
 /* GET Screens page. */
@@ -25,9 +24,8 @@ router.get("/2", function (req, res, next) {
 
 // GET screens for the New Order page
 router.get("/ordersearch", function (req, res, next) {
-	let db = null
+	const db = getDB();
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		//note Womens and Adults are the same, ie Adult screens are for womens garments also
 		const statement = db.prepare(`SELECT ScreenPrintDesignId, Screen.ScreenId, Front, Back, Pocket, Sleeve, Number, Colour, Screen.Name 
@@ -58,7 +56,7 @@ ORDER BY Name COLLATE NOCASE, Number COLLATE NOCASE, Colour COLLATE NOCASE`)
 /* get screens, filtered by term, used on Print Design page */
 router.get("/filter/:term", function(request, response) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		const term = `%${request.params.term}%`
 		
@@ -89,7 +87,7 @@ router.get("/filter/:term", function(request, response) {
 /* get screens for data tables server side processing */
 router.get("/dt", function(req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -189,7 +187,7 @@ router.get("/dt", function(req, res) {
 /* get screens for data tables server side processing */
 router.get("/dt2", function(req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		
@@ -249,7 +247,7 @@ router.get("/dt2", function(req, res) {
 // GET page of deleted screens
 router.get("/deleted", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	const deleted = db.prepare("SELECT * FROM Screen WHERE DELETED=1 ORDER BY LastModifiedDateTime DESC").all()
 
@@ -266,7 +264,7 @@ router.get("/deleted", (req, res) => {
 // GET details of a screen
 router.get("/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		const query = `SELECT * FROM Screen WHERE ScreenId=?`
 		const statement = db.prepare(query)
@@ -286,14 +284,15 @@ router.get("/:id", (req, res) => {
 // get list of print designs, used by fetch on the screens page
 router.get("/prints/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
-	const printDesigns = db.prepare(`SELECT Code, Notes, Comments, SizeCategory, Front, Back, Pocket, Sleeve 
-	FROM PrintDesign 
-	INNER JOIN ScreenPrintDesign ON PrintDesign.PrintDesignId = ScreenPrintDesign.PrintDesignId
-	WHERE ScreenId=?`).all(req.params.id)
+		const printDesigns = db.prepare(/*sql*/`
+			SELECT Code, Notes, Comments, SizeCategory, Front, Back, Pocket, Sleeve 
+			FROM PrintDesign 
+			INNER JOIN ScreenPrintDesign ON PrintDesign.PrintDesignId = ScreenPrintDesign.PrintDesignId
+			WHERE ScreenId=?`).all(req.params.id)
 
-	res.json(printDesigns).end()
+		res.json(printDesigns).end()
 	}
 	finally {
 		db.close()
@@ -306,7 +305,7 @@ router.get("/prints/:id", (req, res) => {
 /// POST to create a new screen
 router.post("/", function(req, res) {
 	
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -385,7 +384,7 @@ router.post("/", function(req, res) {
 
 // GET data for datatables for deleted Screens
 router.post("/deleted/dt", function(req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -429,7 +428,7 @@ router.post("/deleted/dt", function(req, res) {
 // POST get screens in vue data table format
 router.post("/vt", (req, res) => {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -527,7 +526,7 @@ router.post("/vt", (req, res) => {
 // PUT to edit an existing screen
 router.put("/:id", function(req, res) {
 	
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	req.body.ScreenId = req.params.id
 	delete req.body.LastUsed
@@ -605,7 +604,7 @@ router.put("/:id", function(req, res) {
 // PUT edit by setting deleted to 0
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		const date = new Date().toLocaleString()
@@ -650,7 +649,7 @@ router.put("/restore/:id", (req, res) => {
 // PUT to edit an existing screen
 router.delete("/:id", function(req, res) {
 	
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		let date = new Date().toLocaleString()

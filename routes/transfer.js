@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3")
+const getDB = require("../integration/dbFactory");
 const sz = require("../sizes.js")
 
 /* GET Basic transfer design page. */
@@ -17,7 +17,7 @@ router.get("/", function (req, res, next) {
 // GET  get rows from TransferDesign in DataTables format
 router.get("/dt", function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -66,9 +66,9 @@ router.get("/dt", function (req, res, next) {
 
 // GET transfer names for a given TransferDesign Id
 router.get("/names/:id", function (req, res, next) {
-	let db = null
+	const db = getDB();
+
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		const statement = db.prepare(`SELECT TransferNameTransferDesignId, SizeCategory, Front, Back, Pocket, Sleeve, Name 
 		FROM TransferNameTransferDesign 
@@ -94,10 +94,8 @@ router.get("/names/:id", function (req, res, next) {
 
 // GET transfer designs that match a clause on Code or Notes field
 router.get("/design/ordersearch", function (req, res, next) {
-	let db = null
+	const db = getDB();
 	try {
-
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		// Note Womens and Adults are the same
 		const statement = db.prepare(`SELECT DISTINCT TransferDesign.TransferDesignId, Code, Notes
@@ -130,7 +128,7 @@ ORDER BY Code, Notes `)
 
 // GET transfer names for a given transfer design and size category
 router.get("/name/ordersearch", function (req, res, next) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		// note Womens and Adults are the same
@@ -172,9 +170,8 @@ router.get("/name", function (req, res, next) {
 
 // GET a list of Transfer Names that match the given text
 router.get("/namelist/:text", function (req, res) {
-	let db = null
+	const db = getDB();
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 		const statement = db.prepare(`SELECT * FROM TransferName WHERE Name LIKE ? AND Deleted=0 LIMIT 20`)
 		const records = statement.all(`%${req.params.text}%`)
 		res.send(records)
@@ -193,10 +190,9 @@ router.get("/namelist/:text", function (req, res) {
 
 // GET rows from TransferName in DataTables format
 router.get("/name/dt", function (req, res, next) {
-	let db = null
+	const db = getDB();
 
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		// first get count of all records
 		let statement = db.prepare("SELECT COUNT(*) as Count FROM TransferName WHERE Deleted=0 ")
@@ -268,7 +264,7 @@ router.get("/name/deleted", function(req, res) {
 // get list of transfer designs, used by fetch on the transfer name page
 router.get("/designs/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 	const transferDesigns = db.prepare(`SELECT Code, Notes, SizeCategory, Front, Back, Pocket, Sleeve 
 	FROM TransferDesign 
@@ -290,7 +286,7 @@ router.get("/designs/:id", (req, res) => {
 
 // GET data for datatables for deleted transfer designs
 router.post("/deleted/dt", function(req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -331,7 +327,7 @@ router.post("/deleted/dt", function(req, res) {
 
 // GET data for datatables for deleted transfer names
 router.post("/deleted/name/dt", function(req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -380,8 +376,7 @@ router.post("/namedesign", function (req, res) {
 		return
 	}
 	
-	
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		const date = new Date().toLocaleString()
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
@@ -432,7 +427,7 @@ router.post("/", function (req, res) {
 		return;
 	}
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
 		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
@@ -477,7 +472,7 @@ router.post("/", function (req, res) {
 
 // POST create a new name
 router.post("/name", function(req, res) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	const date = new Date().toLocaleString()
 	try {
 		
@@ -528,7 +523,7 @@ router.put("/:id", function (req, res) {
 		return;
 	}
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		// get the existing item so we can find out what changed
@@ -597,7 +592,7 @@ router.put("/:id", function (req, res) {
 // PUT update a transfer name
 router.put("/name/:id", function(req, res) {
 	
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	const date = new Date().toLocaleString()
 
 	try {
@@ -643,7 +638,7 @@ router.put("/name/:id", function(req, res) {
 // PUT restore a deleted transfer design
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		const date = new Date().toLocaleString()
@@ -684,7 +679,7 @@ router.put("/restore/:id", (req, res) => {
 // PUT restore a deleted transfer name
 router.put("/restore/name/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		const date = new Date().toLocaleString()
@@ -727,7 +722,7 @@ router.put("/restore/name/:id", (req, res) => {
 
 // DELETE an entry from TransferNameTransferDesign for the id of a TransferNameTransferDesign row
 router.delete("/name/:id", function (req, res, next) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
 		const date = new Date().toLocaleString()
@@ -771,7 +766,7 @@ router.delete("/name/:id", function (req, res, next) {
 
 // DELETE an entry from TransferName
 router.delete("/transfername/:id", (req, res) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	const date = new Date().toLocaleString()
 
 	try {
@@ -806,7 +801,7 @@ router.delete("/transfername/:id", (req, res) => {
 
 // DELETE from the TransferDesign table (and all matching items in TransferNameTransferDesign)
 router.delete("/design/:id", function (req, res) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		let info = null

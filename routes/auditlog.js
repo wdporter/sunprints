@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3");
+const getDB = require("../integration/dbFactory");
 
 
 /* GET audit log page. */
@@ -15,7 +15,7 @@ router.get("/", function (req, res, next) {
 
 // GET return a listing in DataTables format
 router.get("/dt", function (req, res) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM AuditLogEntry").get().Count
 		let recordsFiltered = recordsTotal
@@ -78,7 +78,7 @@ router.get("/dt", function (req, res) {
 
 
 router.get("/:id/entries", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		const entries = db.prepare("SELECT * FROM AuditLogEntry WHERE AuditLogId=?").all(req.params.id)
 

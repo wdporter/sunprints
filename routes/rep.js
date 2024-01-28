@@ -1,11 +1,10 @@
 const express = require("express")
 const router = express.Router()
-
-const Database = require("better-sqlite3")
+const getDB = require("../integration/dbFactory");
 
 router.get("/", (req, res)=> {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		reps = db.prepare("SELECT SalesRepId, Name, Deleted FROM SalesRep ORDER BY Deleted, Name").all()
@@ -38,7 +37,7 @@ router.get("/", (req, res)=> {
 // POST create a new sales rep
 router.post("/", (req, res)=> {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	const date = new Date().toLocaleString()
 
 	if (req.body.Name.length == 0) {
@@ -101,7 +100,7 @@ router.post("/", (req, res)=> {
 // PUT edit an existing sales rep
 router.put("/:id", (req, res)=> {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	const date = new Date().toLocaleString()
 
 	if (req.body.Name.length == 0) {

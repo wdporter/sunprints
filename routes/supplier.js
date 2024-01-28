@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3");
+const getDB = require("../integration/dbFactory");
 const { auditColumns } = require("../sizes.js");
 
 /* GET Suppliers page. */
@@ -15,7 +15,8 @@ router.get("/", function (req, res, next) {
 
 // GET a listing in DataTables format used by datatables ajax
 router.get("/dt", function (req, res, next) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
+
 	try {
 
 		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM Supplier WHERE Deleted=0 ").get().Count
@@ -71,7 +72,7 @@ router.get("/dt", function (req, res, next) {
 
 // GET the supplier edit page, needs ?id=x
 router.get("/edit", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		let supplier = db.prepare("SELECT * FROM Supplier WHERE SupplierId=?").get(req.query.id)
 
@@ -99,7 +100,7 @@ router.get("/edit", (req, res) => {
 /* GET deleted Suppliers page. */
 router.get("/deleted", function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	const deleted = db.prepare("SELECT * FROM Supplier WHERE DELETED=1 ORDER BY LastModifiedDateTime DESC").all()
 
@@ -117,7 +118,7 @@ router.get("/deleted", function (req, res, next) {
 
 /* POST the form from the edit page */
 router.post("/edit", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	const errors = []
 
@@ -127,8 +128,6 @@ router.post("/edit", (req, res) => {
 	if (!req.body.Company) {
 		errors.push("We require a supplier name.")
 	}
-
-	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	let count = db.prepare(`SELECT COUNT(*) AS Count FROM Supplier WHERE Code=?`).get(req.body.Code).Count
 	if ((req.body.SupplierId == 0 && count > 0) 
@@ -265,7 +264,7 @@ router.post("/", function(req, res) {
 		return
 	}
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -348,7 +347,7 @@ router.put("/:id", function(req, res) {
 		return
 	}
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -421,7 +420,7 @@ router.put("/:id", function(req, res) {
 // PUT to undelete a supplier
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
@@ -460,7 +459,7 @@ router.put("/restore/:id", (req, res) => {
 // DELETE an existing supplier
 router.delete("/:id", function(req, res) {
 	const errors = []
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		
 		const deleteDate = new Date().toLocaleString()

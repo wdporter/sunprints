@@ -1,14 +1,13 @@
 
 var express = require('express');
 var router = express.Router();
-var fs = require("fs")
-const Database = require("better-sqlite3")
+const getDB = require("../integration/dbFactory");
 
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	if (res.locals.admin) {
 
@@ -33,7 +32,7 @@ router.get('/', function (req, res, next) {
 /* GET users edit  page. */
 router.get('/edit/:name', function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		if (res.locals.admin) {
@@ -90,7 +89,7 @@ router.get('/edit/', function (req, res, next) {
 router.post('/edit/', function (req, res) {
 	if (res.locals.admin) {
 		
-		const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+		const db = getDB();
 
 		try {
 
@@ -169,7 +168,7 @@ router.post('/edit/', function (req, res) {
 
 router.delete("/:name", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 		if (res.locals.admin) {
 			db.prepare("BEGIN TRANSACTION").run()

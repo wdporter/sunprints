@@ -29,6 +29,8 @@ const userRouter = require("./routes/user")
 const req = require("express/lib/request")
 const app = express()
 
+const getDB = require("./integration/dbFactory");
+
 // view engine setup
 app.set("views", path.join(__dirname, "views"))
 app.set("view engine", "ejs")
@@ -48,8 +50,7 @@ app.use(basicAuth({
 	realm: 'sprealm',
 }));
 function myAuthorizer(username, password) {
-	const Database = require("better-sqlite3");
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true });
+	const db = getDB();
 	const user = db.prepare("SELECT * FROM User WHERE Name=? COLLATE NOCASE").get(username);
 	db.close()
 	if (typeof user === "undefined") {
@@ -62,8 +63,7 @@ function myAuthorizer(username, password) {
 }
 
 app.use((req, res, next) => {
-	const Database = require("better-sqlite3");
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true });
+	const db = getDB();
 	const user = db.prepare("SELECT * FROM User WHERE Name=? COLLATE NOCASE").get(req.auth.user);
 	db.close();
 	if (typeof user === "undefined") {

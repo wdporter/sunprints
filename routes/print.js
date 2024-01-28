@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3")
+const getDB = require("../integration/dbFactory");
 const { auditColumns, locations } = require("../sizes.js")
 const {standardScreens} = require("../service/printDesignService")
 
@@ -20,7 +20,8 @@ router.get("/2", function (req, res, next) {
 // GET a listing in DataTables format used by datatables ajax
 //experimental 
 router.get("/dt2", function (req, res, next) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
+
 	try {
 
 		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM PrintDesign WHERE Deleted=0 ").get().Count
@@ -71,7 +72,8 @@ router.get("/dt2", function (req, res, next) {
 // GET print design edit page, needs ?id=[0|n]
 //experimental 
 router.get("/edit", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
+
 	try {
 		let printdesign = db.prepare("SELECT * FROM PrintDesign WHERE PrintDesignId=?").get(req.query.id)
 
@@ -114,7 +116,7 @@ router.get("/", function (req, res, next) {
 // GET datatables server side processing on Print Design page
 router.get("/dt", function (req, res, next) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -177,8 +179,7 @@ router.get("/dt", function (req, res, next) {
 // GET a list of relevant screens on the Print Design page
 router.get("/screens/:id", function (req, res) {
 
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
-
+	const db = getDB();
 
 	try {
 
@@ -206,10 +207,7 @@ router.get("/screens/:id", function (req, res) {
 // GET a list of print designs for the new orders page
 router.get("/ordersearch", function (req, res, next) {
 
-	const db = new Database("sunprints.db", {
-		verbose: console.log,
-		fileMustExist: true
-	})
+	const db = getDB();
 
 	try {
 		// note that "Womens" and "Adults" return the same
@@ -271,15 +269,13 @@ router.get("/:printdesignid/standardscreens", (req, res) => {
 
 // POST the form from the edit page
 router.post("/edit", (req, res) => {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	const errors = []
 
 	if (!req.body.Code) {
 		errors.push("We require a code.")
 	}
-
-	db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 	if (errors.length > 0) {
 		res.render ("printdesign_edit.ejs", {
@@ -403,7 +399,7 @@ router.post("/edit", (req, res) => {
 
 // POST data for datatables for deleted PrintDesigns
 router.post("/deleted/dt", function(req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -452,7 +448,7 @@ router.post("/", function (req, res) {
 		return
 	}
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -519,7 +515,7 @@ router.post("/", function (req, res) {
 
 // POST Insert/Create an intem in ScreenPrintDesign, used by the list of print designs
 router.post("/screen/add", (request, response) => {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		let query = `SELECT COUNT(*) AS Count 
@@ -608,9 +604,7 @@ router.post("/screen/add", (request, response) => {
 // PUT edit a print design,
 router.put("/:id", function (req, res) {
 
-
-
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	if (req.body.Code == "") {
 		res.statusMessage = `We require a code.`
@@ -685,7 +679,7 @@ router.put("/:id", function (req, res) {
 // PUT edit by setting deleted to 0
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
@@ -721,7 +715,7 @@ router.put("/restore/:id", (req, res) => {
 
 // DELETE, soft delete, set Deleted to 0
 router.delete("/:id", function (req, res) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		const deleteDate = new Date().toLocaleString()
@@ -753,7 +747,7 @@ router.delete("/:id", function (req, res) {
 // DELETE remove a ScreenPrintDesign entry
 router.delete("/removescreen/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		const myScreenPrintDesign = db.prepare("SELECT * FROM ScreenPrintDesign WHERE ScreenPrintDesignId=?").get(req.params.id)

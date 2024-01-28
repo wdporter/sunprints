@@ -1,6 +1,5 @@
 const express = require("express")
 const router = express.Router()
-const Database = require("better-sqlite3")
 const sz = require("../sizes.js");
 const productService = require("../service/productService.js");
 const { json } = require("body-parser");
@@ -20,7 +19,7 @@ router.get("/", function (req, res, next) {
 
 // GET the warning list for garments
 router.get("/warninglist", function (req, res, next) {
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		const statement = db.prepare(`SELECT Garment.*, ${sz.allSizes.map(sz => `sum(StockOrderGarment.${sz}) AS sog${sz}`).join(",")} FROM Garment 
@@ -115,7 +114,7 @@ router.get("/warninglist", function (req, res, next) {
 // GET a list of garments used by the garment datatable in the purchase page
 router.get("/purchase/dt", function (req, res) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -173,7 +172,7 @@ router.get("/ordersearch", function (req, res, next) {
 	let db = null
 	try {
 
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+		const db = getDB();
 
 
 		const recordsTotal = db.prepare(`SELECT Count(*) AS count FROM Garment WHERE Deleted=0 `).get().count
@@ -232,7 +231,7 @@ router.get("/ordersearch", function (req, res, next) {
 // GET a list of garments used by the garment datatable in the main garment page
 router.get("/dt", function (req, res) {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 
@@ -373,7 +372,7 @@ router.get("/:id", (req, res) => {
 
 // PUT save changes to an existing item
 router.put("/:id", function (req, res) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		req.body.LastModifiedBy = req.auth.user
@@ -449,7 +448,7 @@ router.put("/:id", function (req, res) {
 // PUT to undelete a garment
 router.put("/restore/:id", (req, res) => {
 
-	const db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 
 	try {
 		db.prepare("BEGIN TRANSACTION").run()
@@ -488,7 +487,7 @@ router.put("/restore/:id", (req, res) => {
 
 // POST create a new item
 router.post("/", function (req, res) {
-	let db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
+	const db = getDB();
 	try {
 
 		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
@@ -555,9 +554,9 @@ router.post("/", function (req, res) {
 
 // DELETE set the item deleted flag to 1
 router.delete("/:id", function (req, res) {
-	let db = null
+	const db = getDB();
+
 	try {
-		db = new Database("sunprints.db", { verbose: console.log, fileMustExist: true })
 
 		const date =  new Date().toLocaleString()
 
