@@ -1,4 +1,4 @@
-const getDB = require("../integration/dbFactory")
+const getDB = require("../integration/dbFactory.js")
 const OrderDao = require("../integration/OrderDAO.js")
 const CustomerDao = require("../integration/CustomerDAO.js")
 const OrderProductDao = require("../integration/OrderProductDAO.js")
@@ -8,7 +8,7 @@ const OrderModel = require("../models/order.js")
 const productService = require("./productService.js")
 const customerService = require("./customerServiceDeprecated.js")
 const auditLogService = require("./auditLogService.js")
-const salesHistoryService = require("./SalesHistoryService.js")
+const SalesHistoryService = require("./SalesHistoryService.js")
 
 const { art, locations, decorations, media } = require("../config/art.js")
 
@@ -116,7 +116,6 @@ function validate(order, db) {
  * 1. INSERT Orders
  * 2. AuditLog Orders INSERT  
  * 3. INSERT Sales History
- * 		after a change of heart, we quit at this point 
  * 4. filter out any products that have both added:true and removed:true
  * 5. put designs into first product 
  * for each product
@@ -155,16 +154,16 @@ function createNew(order, designs, user) {
 		// 1. INSERT Orders
 		for (let key in order) {
 			// remove default values, no point saving them
-			if (order[key] == null)
-				delete order[key]
+			if (order[key] === null)
+				delete order[key];
 			if (order[key] === 0)
-				delete order[key]
+				delete order[key];
 			if (order[key] === "")
-				delete order[key]
+				delete order[key];
 			if (order[key] === false)
-				delete order[key]
+				delete order[key];
 			if (order[key] === true)
-				order[key] = 1
+				order[key] = 1;
 		}
 
 		let savedOrder = orderDao.insert(order)
@@ -172,8 +171,9 @@ function createNew(order, designs, user) {
 		// 2. AuditLog Orders INSERT
 		// this is done by the DAO
 
-		// 3. INSERT Sales History 
-		// this will be done with a a trigger salesHistoryService.insertOrder(db, savedOrder)
+		// 3. INSERT Sales History tables
+		const salesHistoryService = new SalesHistoryService(db);
+		salesHistoryService.saveOrder(savedOrder);
 
 		// 4. filter out any products that have both added:true and removed:true
 		order.products = order.products.filter(p => !(p.added && p.removed))
@@ -222,18 +222,17 @@ function createNew(order, designs, user) {
 			const sizeCategory = product.SizeCategory //might need this
 			delete product.SizeCategory
 
-			//6. INSERT product , note a trigger side effect to insert into Sales
+			//6. INSERT product , 
 			const orderProductDao = new OrderProductDao(db)
 			product.OrderGarmentId = orderProductDao.insert(product)
 
 			// 7. AuditLog OrderGarment INSERT 
-			// do this from dao
+			// this is done from DAO
 
 			// 8. INSERT Sales History
-			// do this with a trigger
-			// salesHistoryService.insertProduct(db, product)
+			salesHistoryService.saveProduct(product)
 
-			// 9. UPDATE Garment (reduce stock level)
+			// 9. UPDATE Garment (that is, by reducing the stock level)
 			product.SizeCategory = sizeCategory
 			productService.reduceStockLevels(db, product, user, now)
 
@@ -303,6 +302,13 @@ function createNew(order, designs, user) {
 // 11. update last modified by, last modified date time
 // 12. return savedOrder
 
+/**
+ * updates an existing order
+ * @param {*} order the order with the new values
+ * @param {*} designs the designs that are on the order
+ * @param {*} user the user name who made the save
+ * @returns 
+ */
 function edit(order, designs, user) {
 
 	const db = getDB()
@@ -325,7 +331,13 @@ function edit(order, designs, user) {
 
 		db.prepare("BEGIN TRANSACTION").run()
 
-		const updatedOrder = orderDao.update(order, user) // note, there is a trigger to update SalesTotal table
+		const updatedOrder = orderDao.update(order, user) // 
+
+		//******************** 2A. update SalesTotal table for sales history */
+		const salesHistoryService = new SalesHistoryService(db);
+		if (updatedOrder !== null) {
+			salesHistoryService.updateOrder(updatedOrder ?? order);
+		}
 
 
 		//******** 3. add our designs to our first non-removed product 
@@ -389,14 +401,14 @@ function edit(order, designs, user) {
 				}
 				delete product.added
 
-				// **** 6a. INSERT OrderGarment, note: there is a trigger side effect to insert into Sales
+				// **** 6a. INSERT OrderGarment, 
 				product.OrderGarmentId = orderProductDao.insert(product)
 
 				// **** 6b. AuditLog OrderGarment INSERT 
-				// do this from dao
+				// this is done by orderProductDao.insert, but maybe there's a better way
 
 				// **** 6c  INSERT Sales History (Sales table)
-				// done with a trigger salesHistoryService.insertProduct(db, product)
+				salesHistoryService.saveProduct(product);
 
 				// **** 6d. UPDATE Garment (reduce stock level)
 				product.SizeCategory = sizeCategory
@@ -415,7 +427,9 @@ function edit(order, designs, user) {
 				orderProductDao.delete(product)
 
 				// **** 7b. AuditLog OrderGarment DELETE, done by DAO
-				// **** 7c. DELETE Sales, done by trigger
+				// **** 7c. DELETE from Sales for sales history
+				salesHistoryService.deleteOrderProduct(product);
+				
 				// **** 7d. UPDATE Garment (increase stock level)
 				product.SizeCategory = sizeCategory
 				productService.increaseStockLevels(db, product, user, product.LastModifiedDateTime)
@@ -435,6 +449,9 @@ function edit(order, designs, user) {
 
 				// save updated details
 				orderProductDao.update(product)
+
+				// save updated product to sales history
+				salesHistoryService.updateOrderProduct(product);
 
 				//update stock levels in Garment (Product) table
 				productService.adjustStockLevels(db, originalOrderProduct, product)

@@ -18,21 +18,28 @@ module.exports = class UnitOfWork
 
 	/**
 	 * user must always call this in order to close the connection
+	 * if a transaction is active it will be rolled back, 
+	 * so make sure you explicitly commit your transactions first
 	 */
-	close() {
-		if (this.db.inTransaction) {
-			this.commit();
+	close(doRollback = true) {
+		if (this.db.inTransaction && doRollback) {
+			this.rollback();
 		}
 
 		this.db.close();
 	}
 
 	begin() {
+		if (!this.db.inTransaction) {
+			this.db.prepare("BEGIN TRANSCATION").run();
+		}
 
 	}
 
 	commit() {
-		this.db.prepare("COMMIT").run();
+		if (this.db.inTransaction) {
+			this.db.prepare("COMMIT").run();
+		}
 
 	}
 

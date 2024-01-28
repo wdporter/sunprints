@@ -1,11 +1,18 @@
-const express = require("express");
-const router = express.Router();
-const sz = require("../sizes.js");;
+const router = require("express").Router();
+
+const auditing = require("../config/auditColumns.js");
+const art = require("../config/art.js")
+const customerServiceOld = require("../service/customerServiceDeprecated.js")
 const designService = require("../service/designService");
-const mediaService = require("../service/mediaService");
-const { auditColumns } = require("../config/auditColumns.js");
 const getDB = require ("../integration/dbFactory.js");
+const mediaService = require("../service/mediaService");
+const orderServiceOld = require("../service/orderServiceDeprecated.js")
+const productService = require("../service/productService.js")
+const purchaseOrderService = require("../service/purchaseOrderService.js")
 const regionService = require("../service/regionServiceDeprecated.js");
+const regionServiceOld = require("../service/regionServiceDeprecated.js")
+const sz = require("../config/sizes.js");
+const UnitOfWork = require("../service/UnitOfWork.js");
 
 /* GET orders page. */
 router.get("/", function (req, res, next) {
@@ -24,8 +31,8 @@ router.get("/", function (req, res, next) {
 		salesrep: res.locals.salesrep,
 		allSizes: JSON.stringify(sz.allSizes),
 		regions: regionService.all().map(r => {return { id: r.RegionId, name: r.Name }}),
-		locations: sz.locations,
-		art: sz.art,
+		locations: art.locations,
+		art: art.art,
 
 	});
 });
@@ -98,392 +105,69 @@ router.get("/dt", function (req, res, next) {
 })
 
 
-/* GET new orders page. */
-router.get("/new", function (req, res, next) {
-
-	const db = getDB()
-
-	let customer = null
-	let garments = []
-	let order = null
+/* GET the main order editing page, is also used for new orders */
+router.get("/edit", function (req, res) {
+	const uw = new UnitOfWork();
 
 	try {
-		if (req.query.customerid) {
-			statement = db.prepare(`SELECT * FROM Customer WHERE Deleted=0 AND CustomerId=?`)
-			customer = statement.get(req.query.customerid)
+		const salesReps = uw.getSalesRepService().getCurrentNames();
+		uw.close() // todo , use uw everywhere in this function;
+
+		let order = null
+
+		// query parameter id is orderid
+		if (typeof req.query.id == "undefined" ) {
+			// create
+			order = orderServiceOld.getNew()
+		}
+		else {
+			// editing
+			order = orderServiceOld.get(req.query.id)
 		}
 
-		if (req.query.clone) {
-			order = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(req.query.clone)
-			order.OrderId = 0
-			order.OrderDate = new Date().toISOString()
-			order.DeliverDate = ""
-			customer = db.prepare("SELECT * FROM Customer WHERE CustomerId=?").get(order.CustomerId)
+		// purchase orders needed in case of buyin
+		let purchaseOrders = purchaseOrderService.getOutstanding()
+
+		if (typeof req.query.customerid !== "undefined") {
+			order.CustomerId = req.query.customerid
+			const myCustomer = customerServiceOld.get(req.query.customerid)
+			order.customer = {
+				Code: myCustomer.Code,
+				Company: myCustomer.Company,
+				detailsString: customerServiceOld.getDetailsString(myCustomer)
+			}
 		}
 
-		const salesReps = db.prepare("SELECT Name, Deleted FROM SalesRep WHERE Deleted=0").all()
+		if (typeof req.query.salesrep !== "undefined") {
+			order.SalesRep = req.query.salesrep
+		}
 
-		const regions = db.prepare("SELECT RegionId, Name, [Order], Deleted FROM Region").all()
-		regions.sort((a, b) => a.Order - b.Order)
 
-		res.render("order_new.ejs", {
-			title: "New Order",
-			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/order_new-theme.css"],
-			javascripts: ["/javascripts/dataTables.fixedHeader.min.js"],
-			mode: "new",
-			customer,
-			order,
-			garments,
+		res.render("order_edit.ejs", {
+			title: req.query.id ? "Edit Order" : "New Order",
+			stylesheets: ["/stylesheets/order_edit-theme.css"],
 			user: req.auth.user,
-			salesReps,
-			locations: sz.locations,
-			poweruser: res.locals.poweruser,
-			salesrep: res.locals.salesrep,
-			regions
-		})
-
-	}
-	catch (ex) {
-		//ignore, customer/garment can stay as null
-		console.log(ex.message)
-	}
-	finally {
-		db.close()
-	}
-})
-
-
-/* GET edit page, reusing the new orders view. */
-router.get("/edit", function (req, res, next) {
-
-	const db = getDB()
-
-	var customerInfo
-	try {
-
-		var query = `SELECT Customer.CustomerId, Code, Customer.Company FROM Customer INNER JOIN Orders ON Orders.CustomerId = Customer.CustomerId WHERE Orders.OrderId=?`
-		var customer = db.prepare(query).get(req.query.id)
-
-		query = `SELECT * FROM Orders WHERE OrderId=?`
-		var order = db.prepare(query).get(req.query.id)
-
-		query = `SELECT OrderGarmentId, OrderGarment.GarmentId, Type, 
-		FrontPrintDesignId, FrontScreenId, FrontScreen2Id,
-		BackPrintDesignId, BackScreenId, BackScreen2Id,
-		SleevePrintDesignId, SleeveScreenId, SleeveScreen2Id,
-		PocketPrintDesignId, PocketScreenId, PocketScreen2Id, 
-		FrontEmbroideryDesignId, FrontUsbId, FrontUsb2Id,
-		BackEmbroideryDesignId, BackUsbId, BackUsb2Id,
-		SleeveEmbroideryDesignId, SleeveUsbId, SleeveUsb2Id,
-		PocketEmbroideryDesignId, PocketUsbId, PocketUsb2Id, 
-		FrontTransferDesignId, FrontTransferNameId, FrontTransferName2Id,
-		BackTransferDesignId, BackTransferNameId, BackTransferName2Id,
-		SleeveTransferDesignId, SleeveTransferNameId, SleeveTransferName2Id,
-		PocketTransferDesignId, PocketTransferNameId, PocketTransferName2Id, 
-		Code, Type, Colour, Label, Price,  
-		${sz.sizes.Kids.map(s => `OrderGarment.${s}`).join(" , ")}, 
-		${sz.sizes.Womens.map(s => `OrderGarment.${s}`).join(" , ")}, 
-		${sz.sizes.Adults.map(s => `OrderGarment.${s}`).join(" , ")}, 
-		${sz.sizes.Kids.map(s => `Min${s}`).join(" , ")}, 
-		${sz.sizes.Womens.map(s => `Min${s}`).join(" , ")}, 
-		${sz.sizes.Adults.map(s => `Min${s}`).join(" , ")}, 
-		${sz.sizes.Kids.map(s => ` Garment.${s} AS Qty${s} `).join(" , ")}, 
-		${sz.sizes.Womens.map(s => ` Garment.${s} AS Qty${s} `).join(" , ")}, 
-		${sz.sizes.Adults.map(s => ` Garment.${s} AS Qty${s} `).join(" , ")} 
-		FROM OrderGarment INNER JOIN Garment ON Garment.GarmentId=OrderGarment.GarmentId WHERE OrderId=?`
-		var garments = db.prepare(query).all(req.query.id)
-		garments.forEach((g, i) => {
-
-			// stock warnings
-			if (order.BuyIn) {
-				const warnings = []
-				for (const size of sz.allSizes) {
-					if (g[`Qty${size}`] - g[`Min${size}`] < 0) {
-						warnings.push({
-							size,
-							min: g[`Min${size}`],
-							current: g[`Qty${size}`]
-						})
-					}
-				}
-				g.stockWarning = warnings
-			}
-
-			g.Quantities = {}
-			const kidsTotal = sz.sizes.Kids.reduce((acc, curr) => {
-				return acc += g[curr]
-			}, 0)
-			if (kidsTotal) {
-				g.SizeCategory = "Kids"
-				g.Quantities[g.SizeCategory] = {}
-				sz.sizes.Kids.forEach(k => {
-					g.Quantities[g.SizeCategory][k.slice(1)] = g[k]
-				})
-			}
-			else {
-				const womensTotal = sz.sizes.Womens.reduce((acc, curr) => { return acc += g[curr] }, 0)
-				if (womensTotal) {
-					g.SizeCategory = "Womens"
-					g.Quantities[g.SizeCategory] = {}
-					sz.sizes.Womens.forEach(w => {
-						g.Quantities[g.SizeCategory][w.slice(1)] = g[w]
-					})
-				}
-				else {
-					g.SizeCategory = "Adults"
-					g.Quantities[g.SizeCategory] = {}
-					sz.sizes.Adults.forEach(a => {
-						g.Quantities[g.SizeCategory][a.replace(/"/g, "").slice(1)] = g[a.replace(/"/g, "")]
-					})
-				}
-			}
-			sz.sizes.Adults.forEach(s => delete g[s.replace(/"/g, "")])
-			sz.sizes.Womens.forEach(s => delete g[s])
-			sz.sizes.Kids.forEach(s => delete g[s])
-
-			// designs on first product only
-			if (i == 0) {
-				// populate print design id
-				const printDesignIds = []
-				if (g.FrontPrintDesignId != null)
-					printDesignIds.push(g.FrontPrintDesignId)
-				if (g.BackPrintDesignId != null)
-					printDesignIds.push(g.BackPrintDesignId)
-				if (g.PocketPrintDesignId != null)
-					printDesignIds.push(g.PocketPrintDesignId)
-				if (g.SleevePrintDesignId != null)
-					printDesignIds.push(g.SleevePrintDesignId)
-				if (printDesignIds.length) {
-					query = `SELECT * FROM PrintDesign WHERE Deleted=0 AND PrintDesignId IN (${printDesignIds.join(",")}) `
-					const printDesign = db.prepare(query).get()
-					g.selectedPrintDesign = {
-						Code: printDesign.Code,
-						Notes: printDesign.Notes,
-						Comments: printDesign.Comments,
-						PrintDesignId: printDesign.PrintDesignId
-					}
-				}
-				delete g.FrontPrintDesignId
-				delete g.BackPrintDesignId
-				delete g.PocketPrintDesignId
-				delete g.SleevePrintDesignId
-
-				// populate embroidery design id
-				const embroideryDesignIds = []
-				if (g.FrontEmbroideryDesignId != null)
-					embroideryDesignIds.push(g.FrontEmbroideryDesignId)
-				if (g.BackEmbroideryDesignId != null)
-					embroideryDesignIds.push(g.BackEmbroideryDesignId)
-				if (g.PocketEmbroideryDesignId != null)
-					embroideryDesignIds.push(g.PocketEmbroideryDesignId)
-				if (g.SleeveEmbroideryDesignId != null)
-					embroideryDesignIds.push(g.SleeveEmbroideryDesignId)
-				if (embroideryDesignIds.length) {
-					query = `SELECT * FROM EmbroideryDesign WHERE Deleted=0 AND EmbroideryDesignId IN (${embroideryDesignIds.join(",")}) `
-					const embroideryDesign = db.prepare(query).get()
-					g.selectedEmbroideryDesign = {
-						Code: embroideryDesign.Code,
-						Notes: embroideryDesign.Notes,
-						Comments: embroideryDesign.Comments,
-						EmbroideryDesignId: embroideryDesign.EmbroideryDesignId
-					}
-				}
-				delete g.FrontEmbroideryDesignId
-				delete g.BackEmbroideryDesignId
-				delete g.PocketEmbroideryDesignId
-				delete g.SleeveEmbroideryDesignId
-
-				// populate transfer design id
-				const transferDesignIds = []
-				if (g.FrontTransferDesignId != null)
-					transferDesignIds.push(g.FrontTransferDesignId)
-				if (g.BackTransferDesignId != null)
-					transferDesignIds.push(g.BackTransferDesignId)
-				if (g.PocketTransferDesignId != null)
-					transferDesignIds.push(g.PocketTransferDesignId)
-				if (g.SleeveTransferDesignId != null)
-					transferDesignIds.push(g.SleeveTransferDesignId)
-				if (transferDesignIds.length) {
-					query = `SELECT * FROM TransferDesign WHERE TransferDesignId IN (${transferDesignIds.join(",")}) `
-					const transferDesign = db.prepare(query).get()
-					g.selectedTransferDesign = {
-						Code: transferDesign.Code,
-						Notes: transferDesign.Notes,
-						TransferDesignId: transferDesign.TransferDesignId
-					}
-				}
-				delete g.FrontTransferDesignId
-				delete g.BackTransferDesignId
-				delete g.PocketTransferDesignId
-				delete g.SleeveTransferDesignId
-
-
-
-				// now set available print locations for the selected print design
-				if (g.selectedPrintDesign) {
-					g.printLocations = {}
-					query = /*sql*/`
-SELECT ${sz.locations.join(",")}, ScreenPrintDesignId, Screen.ScreenId, Colour, Screen.Name, Number 
-FROM ScreenPrintDesign 
-INNER JOIN Screen ON Screen.ScreenId = ScreenPrintDesign.ScreenId
-AND PrintDesignId=? `
-					const screenPrintDesigns = db.prepare(query).all(g.selectedPrintDesign.PrintDesignId)
-					screenPrintDesigns.forEach(sp => {
-						sz.locations.forEach(l => {
-							if (sp[l]) {
-								if (!g.printLocations[l]) {
-									g.printLocations[l] = []
-								}
-								const obj = {}
-								sz.locations.forEach(loc => obj[loc] = 0)
-								obj.ScreenPrintDesignId = sp.ScreenPrintDesignId
-								obj.ScreenId = sp.ScreenId
-								obj[l] = 1
-								obj.Colour = sp.Colour
-								obj.Name = sp.Name
-								obj.Number = sp.Number
-								g.printLocations[l].push(obj)
-							}
-						})
-					})
-
-					g.checkedScreens = {}
-					for (var loc of sz.locations) {
-						g.checkedScreens[loc] = []
-						if (g[`${loc}ScreenId`])
-							g.checkedScreens[loc].push(g[`${loc}ScreenId`])
-						if (g[`${loc}Screen2Id`])
-							g.checkedScreens[loc].push(g[`${loc}Screen2Id`])
-
-						delete g[loc + "ScreenId"]
-						delete g[loc + "Screen2Id"]
-					}
-				}
-
-				// now set available embroidery locations
-				if (g.selectedEmbroideryDesign) {
-					g.embroideryLocations = {}
-					query = /*sql*/`SELECT ${sz.locations.join(",")}, UsbEmbroideryDesignId, Usb.UsbId, Number, Notes
-FROM UsbEmbroideryDesign 
-INNER JOIN Usb ON Usb.UsbId = UsbEmbroideryDesign.UsbId
-AND EmbroideryDesignId=? `
-					const usbEmbroideryDesigns = db.prepare(query).all(g.selectedEmbroideryDesign.EmbroideryDesignId)
-					usbEmbroideryDesigns.forEach(de => {
-						sz.locations.forEach(l => {
-							if (de[l]) {
-								if (!g.embroideryLocations[l]) {
-									g.embroideryLocations[l] = []
-								}
-								const obj = {}
-								sz.locations.forEach(loc => obj[loc] = 0)
-								obj.usbEmbroideryDesignId = de.usbEmbroideryDesignId
-								obj.UsbId = de.UsbId
-								obj[l] = 1
-								obj.Notes = de.Notes
-								obj.Number = de.Number
-								g.embroideryLocations[l].push(obj)
-							}
-						})
-					})
-
-
-					g.checkedUsbs = {}
-					for (var loc of sz.locations) {
-						g.checkedUsbs[loc] = []
-
-						for (var usb of usbEmbroideryDesigns) {
-							if (usb[loc] == 1)
-								g.checkedUsbs[loc].push(usb.UsbId)
-						}
-
-						delete g[loc + "UsbId"]
-						delete g[loc + "Usb2Id"]
-					}
-
-				}
-
-
-				// now set available transfers
-				if (g.selectedTransferDesign) {
-					g.transferLocations = {}
-					query = /*sql*/`SELECT ${sz.locations.join(",")}, TransferNameTransferDesignId, TransferName.TransferNameId, Name
-FROM TransferNameTransferDesign 
-INNER JOIN TransferName ON TransferName.TransferNameId = TransferNameTransferDesign.TransferNameId
-AND TransferDesignId=? `
-					const transferNameTransferDesigns = db.prepare(query).all(g.selectedTransferDesign.TransferDesignId)
-					transferNameTransferDesigns.forEach(t => {
-						sz.locations.forEach(l => {
-							if (t[l]) {
-								if (!g.transferLocations[l]) {
-									g.transferLocations[l] = []
-								}
-								const obj = {}
-								sz.locations.forEach(loc => obj[loc] = 0)
-								obj.TransferNameTransferDesignId = t.TransferNameTransferDesignId
-								obj.TransferNameId = t.TransferNameId
-								obj[l] = 1
-								obj.Name = t.Name
-								g.transferLocations[l].push(obj)
-							}
-						})
-					})
-
-
-					g.checkedTransferNames = {}
-					for (var loc of sz.locations) {
-						g.checkedTransferNames[loc] = []
-
-						for (var t of transferNameTransferDesigns) {
-							if (t[loc] == 1)
-								g.checkedTransferNames[loc].push(t.TransferNameId)
-						}
-
-						delete g[loc + "TransferNameId"]
-						delete g[loc + "TransferName2Id"]
-					}
-				}
-			}
-		})
-
-		query = `SELECT Name, Deleted FROM SalesRep WHERE Deleted=0 `
-		if (order && order.SalesRep)
-			query += ` OR Name='${order.SalesRep}' `
-		const salesReps = db.prepare(query).all()
-
-		const regions = db.prepare("SELECT RegionId, Name, [Order], Deleted FROM Region").all()
-		regions.sort((a, b) => a.Order - b.Order)
-
-
-		res.render("order_new.ejs", {
-			title: "Edit Order",
-			stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/order_new-theme.css"],
-			javascripts: ["/javascripts/dataTables.fixedHeader.min.js"],
-			mode: "edit",
-			orderid: req.query.id,
-			customer,
+			locations: art.locations,
+			decorations: art.decorations,
+			sizes: sz.sizes,
+			media: art.media,
 			order,
-			garments,
-			user: req.auth.user,
 			salesReps,
-			regions,
-			locations: sz.locations,
+			purchaseOrders,
 			poweruser: res.locals.poweruser,
-			salesrep: res.locals.salesrep
+			regions: regionServiceOld.all().map(r => {return { id: r.RegionId, name: r.Name }}),
+			useNewHeader: true
+
 		})
 
 	}
-	catch (ex) {
-		res.statusMessage = ex.message
+	catch (err) {
+		console.log(err)
+		res.statusMessage = err.message
 		res.status(400)
-		res.render("error.ejs", { message: ex.message, error: { status: ex.name, stack: null } })
 	}
-	finally {
-		db.close()
-	}
-
-
-
-})
+}
+) //~ end get
 
 
 // GET the jobsheet page
@@ -593,13 +277,13 @@ router.get("/jobsheet/:id", function (req, res) {
 
 		const designResults = getDesigns(db, req.params.id)
 
-		const screensCount = sz.locations.reduce(function (acc, curr) {
+		const screensCount = art.locations.reduce(function (acc, curr) {
 			return acc + designResults.screens[curr].length
 		}, 0)
-		const usbsCount = sz.locations.reduce(function (acc, curr) {
+		const usbsCount = art.locations.reduce(function (acc, curr) {
 			return acc + designResults.usbs[curr].length
 		}, 0)
-		const transfersCount = sz.locations.reduce(function (acc, curr) {
+		const transfersCount = art.locations.reduce(function (acc, curr) {
 			return acc + designResults.transfers[curr].length
 		}, 0)
 
@@ -620,7 +304,7 @@ WHERE StockOrderId=?`).get(order.StockOrderId)
 			screens: designResults.screens,
 			usbs: designResults.usbs,
 			transfers: designResults.transfers,
-			locations: sz.locations,
+			locations: art.locations,
 			screensCount,
 			usbsCount,
 			transfersCount,
@@ -669,7 +353,7 @@ router.get("/printdesigns/:id", function (req, res) {
 		let statement = db.prepare(`SELECT OrderNumber FROM Orders WHERE OrderId=?`)
 		results.orderNumber = statement.get(req.params.id).OrderNumber
 
-		results.locations = sz.locations
+		results.locations = art.locations
 
 		res.render("printdesigns.ejs", results)
 
@@ -1477,171 +1161,61 @@ router.get("/media", (req, res) => {
 })
 
 
+// todo, who uses this, is it still needed?
+router.get("/products/:orderid", (req, res) => {
+	try {
+		let { products } = productService.getProductsForOrder(req.params.orderid)
+		res.json(products).end()
+	}
+	catch(err) {
+		console.log(err)
+		res.statusMessage = err
+		res.status(400).end()
+	}
+
+})
+
+
 
 /****************************************************************************** */
 
 
-// POST for saving a new order
-router.post("/", function (req, res) {
 
-	const db = getDB()
-
+/* POST for saving a new order
+* returns a json with new order id and audit columns
+* client will refetch the products
+*/
+router.post("/", (req, res) => {
 	try {
-		if (!req.body.OrderNumber) {
-			res.statusMessage = "We require an order number"
-			res.status(400).end()
-			return
+
+		const {order, designs} = req.body
+
+		const { savedOrder, errors } = orderServiceOld.createNew(order, designs, req.auth.user)
+
+		if (errors.length > 0) {
+			res.json({errors}).end()
 		}
-
-		// can't duplicate order numbers
-		if (db.prepare("SELECT COUNT(*) AS Count FROM Orders WHERE OrderNumber=?").get(req.body.OrderNumber).Count > 0) {
-			res.statusMessage = "We already have that order number"
-			res.status(400).end()
-			return
+		else {
+			const retVal = { OrderId: savedOrder.OrderId}
+			auditing.auditColumns.forEach(c => retVal[c] = savedOrder[c])
+			res.json(retVal).end()
 		}
-
-
-
-		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
-		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
-		req.body.Done = 0
-
-		let stockOrderId = null
-		if (typeof req.body.StockOrderId != "undefined") {
-			stockOrderId = req.body.StockOrderId
-		}
-
-
-		db.prepare("BEGIN TRANSACTION").run()
-
-		let query = "INSERT INTO Orders (  "
-		let columns = []
-		for (let column in req.body) {
-			if (req.body[column])
-				columns.push(column)
-		}
-		columns.push("Done") // was missed by the "if(req.body[column])", database should have had a default 0 on this column
-		query += columns.join(", ")
-		query += " ) VALUES ( "
-		const values = []
-		for (let column of columns)
-			values.push(`@${column}`)
-
-		query += values.join(", ")
-		query += " ) "
-		let statement = db.prepare(query)
-		let info = statement.run(req.body)
-		console.log(info)
-		req.body.OrderId = info.lastInsertRowid
-
-		let salesTotalCols = columns.filter(c => !auditColumns.includes(c))
-		//change name of delivery date
-		salesTotalCols = salesTotalCols.filter(c => c != "DeliveryDate" && c != "InvoiceDate")
-		salesTotalCols.push("Delivery")
-		req.body.Delivery = req.body.DeliveryDate
-		salesTotalCols.push("DateInvoiced")
-		req.body.DateInvoiced = req.body.InvoiceDate
-
-		salesTotalCols.unshift("OrderId")
-		query = /*sql*/`INSERT INTO SalesTotal (
-			${salesTotalCols.join(", ")}
-		) VALUES (
-			${salesTotalCols.map(c => `@${c}`).join()}
-		)`
-		info = db.prepare(query).run(req.body)
-
-
-		// now also save the order's garments, if a purchase order was selected
-		if (stockOrderId) {
-			const products = db.prepare(/*sql*/`SELECT * FROM StockOrderGarment WHERE StockOrderId=?`).all(stockOrderId)
-			let insertStatement = db.prepare(/*sql*/`INSERT INTO OrderGarment 
-				(OrderId, GarmentId, ${sz.allSizes.join(", ")}, CreatedBy, CreatedDateTime, LastModifiedBy, LastModifiedDateTime )
-			VALUES ( ?, ?, ${sz.allSizes.map(s => "?").join(", ")}, ?, ?, ?, ? )`)
-			products.forEach(p => {
-				const sizeValues = sz.allSizes.map(function (s) {
-					return p[s]
-				})
-				info = insertStatement.run(req.body.OrderId, p.GarmentId,
-					...sizeValues,
-					req.body.CreatedBy, req.body.CreatedDateTime, req.body.LastModifiedBy, req.body.LastModifiedDateTime)
-				p.OrderGarmentId = info.lastInsertRowid
-			})
-			// it also goes into sales table
-			insertStatement = db.prepare(/*sql*/`INSERT INTO Sales
-			(OrderId, GarmentId, ${sz.allSizes.join(", ")}, OrderGarmentId)
-			VALUES (?, ?, ${sz.allSizes.map(s => "?").join(", ")}, ?)
-			`)
-			products.forEach(p => {
-				const sizeValues = sz.allSizes.map(function (s) {
-					return p[s]
-				})
-				insertStatement.run(req.body.OrderId, p.GarmentId, ...sizeValues, p.OrderGarmentId)
-			})
-			// update the garment table that has the quantity of each size
-			// in theory this could send the balances negative because the purchase order might not be received yet
-			let updateStatement = /*sql*/db.prepare(`UPDATE Garment SET 
-			${sz.allSizes.map(size => `${size}=${size}-?`).join(", ")}
-			WHERE GarmentId=?`)
-			products.forEach(p => {
-				const sizeValues = sz.allSizes.map(function (s) {
-					return p[s]
-				})
-				info = updateStatement.run(...sizeValues, p.GarmentId)
-				console.log(info)
-			})
-			// todo also into AuditLogEntry for Garment
-
-
-		}
-
-		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-		info = statement.run("Orders", req.body.OrderId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
-
-		// now add it to AuditLogEntry
-		for (col of columns) {
-			if (col.startsWith("Created") || col.startsWith("LastM"))
-				continue
-			statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
-			statement.run(info.lastInsertRowid, col, req.body[col])
-		}
-
-		// if products were added from a selected stock order, add them to audit logs
-		const orderProducts = db.prepare("SELECT * FROM OrderGarment WHERE OrderId=?").all(req.body.OrderId)
-		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-		orderProducts.forEach(op => {
-			info = statement.run("OrderGarment", op.OrderGarmentId, "INS", req.body.CreatedBy, req.body.CreatedDateTime)
-			const s2 = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, NewValue) VALUES(?, ?, ?)")
-			s2.run(info.lastInsertRowid, "OrderId", req.body.OrderId)
-			s2.run(info.lastInsertRowid, "GarmentId", op.GarmentId)
-			sz.allSizes.forEach(size => {
-				if (op[size])
-					s2.run(info.lastInsertRowid, size, op[size])
-			})
-		})
-
-		db.prepare("COMMIT").run()
-
-		res.json({
-			message: "success",
-			id: req.body.OrderId
-		}).end()
-
 	}
-	catch (ex) {
 
-		db.prepare(`ROLLBACK;`).run()
 
+	catch(ex) {
 		res.statusMessage = ex.message
-		res.sendStatus(400).end();
+		res.sendStatus(400).end()
+		console.log(ex.message)
 	}
-	finally {
-		db.close()
-	}
+
 })
+
 
 
 // POST garment details for the order id
 // if it is already in the table, it's an update, otherwise it's an insert
+// todo is this still needed ?
 router.post("/:id/garment", function (req, res) {
 	const db = getDB()
 
@@ -1822,7 +1396,7 @@ router.post("/:id/garment", function (req, res) {
 			}
 
 			// in each locations, if we have a checked screen for it, add it into the table
-			for (loc of sz.locations) {
+			for (loc of art.locations) {
 				// print/screen
 				if (req.body.checkedScreens) {
 					if (req.body.checkedScreens[loc].length > 0) {
@@ -1959,112 +1533,31 @@ WHERE GarmentId = @GarmentId `
 /*************************************************************************** */
 
 
-// PUT for saving changes to an order
-router.put("/:id", function (req, res) {
-
-	const db = getDB()
-
+/* PUT update order , save changes to an order
+returns the saved item from the Orders table
+client should refetch the products (items from OrderGarment table)
+*/
+router.put("/:id", (req, res) => {
 
 	try {
-		if (!req.body.OrderNumber) {
-			res.statusMessage = "We require an order number"
-			res.status(400).end()
-			return
+
+		const {order, designs} = req.body
+
+		const { savedOrder, errors } = orderServiceOld.edit(order, designs, req.auth.user)
+
+		if (errors.length > 0) {
+			res.json({errors}).end()
 		}
-		if (!req.body.SalesRep) {
-			res.statusMessage = "We require a sales rep"
-			res.status(400).end()
-			return
+		else {
+			res.json(savedOrder).end()
 		}
-		if (req.body.Terms == "")
-			req.body.Terms = null
-		if (req.body.RegionId == "")
-			req.body.RegionId = null
-
-		// can't duplicate order numbers
-		if (db.prepare("SELECT COUNT(*) AS Count FROM Orders WHERE OrderNumber=? AND OrderId <> ?").get(req.body.OrderNumber, req.params.id).Count > 0) {
-			res.statusMessage = `We already have that order number (${req.body.OrderNumber})`
-			res.status(400).end()
-			return
-		}
-
-
-		req.body.OrderId = req.params.id
-
-		req.body.LastModifiedBy = req.auth.user
-		req.body.LastModifiedDateTime = new Date().toLocaleString()
-
-		db.prepare("BEGIN TRANSACTION").run()
-
-		const myOrder = db.prepare("SELECT * FROM Orders WHERE OrderId=?").get(req.params.id)
-
-		let query = "UPDATE Orders SET "
-		let changedColumns = []
-		for (const col in req.body)
-			if (req.body[col] != myOrder[col])
-				changedColumns.push(col)
-
-		query += changedColumns.map(c => ` ${c}=@${c} `).join(", ")
-		query += " WHERE OrderId=@OrderId "
-
-		let statement = db.prepare(query)
-		let info = statement.run(req.body)
-		console.log(info)
-
-
-		// now add it to audit logs
-
-		// insert into AuditLog
-		statement = db.prepare("INSERT INTO AuditLog (ObjectName, Identifier, AuditAction, CreatedBy, CreatedDateTime) VALUES(?, ?, ?, ?, ?)")
-		info = statement.run("Orders", req.params.id, "UPD", req.body.LastModifiedBy, req.body.LastModifiedDateTime)
-
-		// insert into AuditLogEntry
-		for (var col of changedColumns) {
-			if (col.startsWith("LastM")) {
-				continue
-			}
-			statement = db.prepare("INSERT INTO AuditLogEntry (AuditLogId, PropertyName, OldValue, NewValue) VALUES(?, ?, ?, ?)")
-			statement.run(info.lastInsertRowid, col, myOrder[col], req.body[col])
-		}
-
-		// we now must also update the SalesTotal table -- no audit columns or logs
-		// rename InvoiceDate
-		if (changedColumns.includes("InvoiceDate")) {
-			req.body.DateInvoiced = req.body.InvoiceDate
-			changedColumns.push("DateInvoiced")
-			changedColumns = changedColumns.filter(c => c != "InvoiceDate")
-		}
-		// rename DeliveryDAte
-		if (changedColumns.includes("DeliveryDate")) {
-			changedColumns = changedColumns.filter(c => c != "DeliveryDate")
-			changedColumns.push("Delivery")
-			req.body.Delivery = req.body.DeliveryDate
-		}
-
-		changedColumns = changedColumns.filter(c => c != "LastModifiedBy" && c != "LastModifiedDateTime")
-		if (changedColumns.length > 0) { // which could happen if DeliveryDate is the only thing that changed
-			query = `UPDATE SalesTotal SET ${changedColumns.map(c => ` ${c}=@${c} `).join(", ")} WHERE OrderId=@OrderId `
-			info = db.prepare(query).run(req.body)
-		}
-		console.log(info)
-
-
-		db.prepare("COMMIT").run()
-
-
-		res.json({
-			message: "success",
-		}).end()
-
-
 	}
-	catch (err) {
-		res.statusMessage = err.message
+
+
+	catch(ex) {
+		res.statusMessage = ex.message
 		res.sendStatus(400).end()
-		db.prepare("ROLLBACK").run()
-	}
-	finally {
-		db.close()
+		console.log(ex.message)
 	}
 
 
@@ -2583,14 +2076,14 @@ function getDesigns(db, orderid) {
 	const usbs = {}
 	const screens = {}
 
-	sz.locations.forEach(loc => {
+	art.locations.forEach(loc => {
 		screens[loc] = []
 		usbs[loc] = []
 		transfers[loc] = []
 	})
 
 	results.forEach(r => {
-		sz.locations.forEach(loc => {
+		art.locations.forEach(loc => {
 			if (r[loc + "PrintDesignId"]) {
 				// get the standard/unnamed screens for this
 				statement = db.prepare(/*sql*/`SELECT Screen.* FROM Screen

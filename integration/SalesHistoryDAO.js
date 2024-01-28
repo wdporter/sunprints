@@ -1,4 +1,5 @@
 const { allSizes } = require("../config/sizes.js");
+const { auditColumns } = require("../config/auditColumns.js");
 
 module.exports = class SalesHistoryDao {
 
@@ -140,5 +141,100 @@ module.exports = class SalesHistoryDao {
 		return resultset;
 
 	}
+
+	/**
+	 * insert a new order into the SalesTotal tabel for sales history 
+	 * 
+	 * @param {*} order 
+	 */
+	insert(order) {
+		const sql = /*sql*/`INSERT INTO SalesTotal
+		(OrderId, OrderNumber, CustomerId, SalesRep, OrderDate, Repeat, New, BuyIn, Terms, Delivery, Notes, CustomerOrderNumber, StockOrderId, RegionId )
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+
+		const statement = this.db.prepare(sql);
+		statement.run(order.OrderId, order.OrderNumber, order.CustomerId, order.SalesRep, order.OrderDate, order.Repeat, order.New, order.BuyIn, order.Terms, order.DeliveryDate, order.Notes, order.CustomerOrderNumber, order.StockOrderId, order.RegionId);
+	}
+
+	/**
+	 * insert a new product line into the Sales table for sales history
+	 * 
+	 * @param {*} product 
+	 */
+	insertOrderProduct(product) {
+		const names = [];
+		const values = [];
+
+		for (let key in product) {
+			if (auditColumns.includes(key))
+				continue;
+			names.push(key);
+			values.push(product[key]);
+		}
+
+		let sql = /*sql*/`INSERT INTO Sales 
+		(${names.join(",")} )
+		VALUES(${names.map(n => "?").join(",")})`; // fortunately they are all numbers
+
+		const statement = this.db.prepare(sql);
+		const lastInsertRowid = statement.run(values);
+
+	}
+
+	/**
+	 * update an order in the SalesTotal table for Sales History
+	 * 
+	 * @param {*} order 
+	 */
+	update(order) {
+		const sql = /*sql*/`UPDATE SalesTotal
+		SET OrderId=?,
+		OrderNumber=?,
+		CustomerId=?,
+		SalesRep=?,
+		OrderDate=?,
+		Repeat=?,
+		New=?,
+		BuyIn=?,
+		Terms=?,
+		Delivery=?,
+		Notes=?,
+		CustomerOrderNumber=?,
+		StockOrderId=?,
+		RegionId=?,
+		DateProcessed=?,
+		DateInvoiced=?,
+		Done=?
+		WHERE OrderId=?`;
+		const statement = this.db.prepare(sql);
+		statement.run(order.OrderId, order.OrderNumber, order.CustomerId, order.SalesRep, order.OrderDate, order.Repeat, order.New, order.BuyIn, order.Terms, order.DeliveryDate, order.Notes, order.CustomerOrderNumber, order.StockOrderId, order.RegionId, order.ProcessedDate, order.InvoiceDate, order.Done, order.OrderId);
+	}
+
+	/**
+	 * update a product line in the Sales table for Sales History
+	 * 
+	 * @param {*} product 
+	 */
+	updateOrderProduct(product) {
+		var params = Object.keys(product).filter(p => !auditColumns.includes(p));
+
+		const sql = /*sql*/`UPDATE Sales
+		SET ${params.filter(p => p !== "OrderId").map(p => p + "=@" + p).join(",")}
+		WHERE OrderId=@OrderId`;
+		
+		const statement = this.db.prepare(sql);
+		statement.run(product);
+	}
+
+		/**
+	 * delete a product line from the Sales table for sales history
+	 * @param {*} product 
+	 */
+		deleteOrderProduct(product)
+		{
+			const sql = /*sql*/`DELETE FROM Sales WHERE OrderGarmentId=?`;
+			const statement = this.db.prepare(sql);
+			statement.run(product.OrderGarmentId);
+		}
 
 }

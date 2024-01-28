@@ -57,7 +57,7 @@ module.exports = class OrderDao {
 INSERT INTO Orders ( ${Object.keys(itemToSave).join(" , ")} )
 VALUES (${Object.keys(itemToSave).map(k => `@${k}`).join(" , ")})
 `
-			let statement = this.db.prepare(query) // note, there is an insert trigger that inserts into SalesTotal
+			let statement = this.db.prepare(query) 
 			let info = statement.run(itemToSave)
 			console.log("insert orders", info)
 

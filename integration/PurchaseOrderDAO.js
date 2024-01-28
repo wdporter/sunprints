@@ -21,9 +21,17 @@ module.exports = class PurchaseOrderDao {
 	 * @returns {array} purchase orders not yet received
 	 */
 	 getOutstandingPurchaseOrders() {
-		const retVal =  this.db.prepare("SELECT StockOrderId, OrderDate, Company FROM StockOrder INNER JOIN Supplier USING (SupplierId) WHERE ReceiveDate IS NULL ").all()
+		const query = /*sql*/`SELECT StockOrderId, OrderDate, Company 
+		FROM StockOrder 
+		INNER JOIN Supplier USING (SupplierId) 
+		INNER JOIN StockOrderGarment USING (StockOrderId)
+		WHERE receivedate is null
+		GROUP BY stockorder.stockorderid`
+		const statement = this.db.prepare(query);
+		
+		const result = statement.all();
 
-		return retVal
+		return result;
 
 	}
 

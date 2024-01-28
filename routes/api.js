@@ -5,7 +5,7 @@
 
 const express = require("express")
 const router = express.Router()
-const orderService = require("../service/orderService.js")
+const orderService = require("../service/orderServiceDeprecated.js")
 
 
 router.post("/order", (req, res) => {

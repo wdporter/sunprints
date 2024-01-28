@@ -71,5 +71,50 @@ module.exports = class SalesHistoryService {
 		return total;
 	
 	}
+
+	/**
+	 * insert a new order into the SalesTotal tabel for sales history 
+	 * 
+	 * @param {*} order 
+	 */ 
+	saveOrder(order) {
+		this.dao.insert(order);
+	}
+
+	/**
+	 * insert a new product line into the Sales table for sales history
+	 * 
+	 * @param {*} product 
+	 */
+	saveProduct(product) 
+	{
+		this.dao.insertOrderProduct(product);
+	}
+
+	/**
+	 * update an order in the SalesTotal table for Sales History
+	 * 
+	 * @param {*} order 
+	 */ 
+	updateOrder(order) {
+		this.dao.update(order);
+	}
+
+	/**
+	 * update a product line in the Sales table for Sales History
+	 * 
+	 * @param {*} product 
+	 */
+	updateOrderProduct(product) {
+		this.dao.updateOrderProduct(product);
+	}
+
+	/**
+	 * delete a product line from the Sales table for sales history
+	 * @param {*} product 
+	 */
+	deleteOrderProduct(product){
+		this.dao.deleteOrderProduct(product);
+	}
 }
 
