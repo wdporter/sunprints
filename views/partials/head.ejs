@@ -58,7 +58,9 @@
 
 	<header>
 		<nav>
+			<% if (config.platform === "prod") { %>
 			<h1><a href=/><img src=/images/banner.webp /></a></h1>
+			<% } %>
 		</nav>
 		<nav class=navbar>
 			<div class=dropdown>
@@ -136,6 +138,11 @@
 
 	<main>
 		<h1>SunPrints — <%- title %></h1>
-		<h2 id=localh2 style="display:none; border: 5px dashed purple; padding: 1em">Running on local server — <i>Not</i> Live Data</h2>
+		<% if (config.platform === "dev") { %>
+			<h2 id=localh2 style="border: 5px dashed purple; padding: 1em">Running on local server — <i>Not</i> Live Data</h2>
+		<% } 
+		else if (config.platform === "uat") { %>
+			<h2 id=localh2 style="border: 5px dashed purple; padding: 1em">Testing Environment – <i>Not Live Data</i></h2>
+		<% } %>
 
 

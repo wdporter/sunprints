@@ -17,9 +17,6 @@ logged in as: <%= user %>
 </main>
 </footer>
 
-
-
-
 <script>
 
 // todo, some of this needs to be in separate script file
@@ -31,19 +28,18 @@ Date.prototype.getDateAsIsoLocal = function() {
 	return localDate.toISOString().substring(0, 10) 
 }
 
-
 	// show h2 heading on local host
-	const noticeLabel = document.getElementById("localh2");
-	if (window.location.port === "3002") {
-		noticeLabel.style.display = "block";
-		noticeLabel.innerHTML = "Testing Environment – <i>Not Live Data</i>"
-		document.querySelector("header nav img").src = "";
-	}
-	else if (window.location.hostname == "localhost") {
-		noticeLabel.style.display = "block";
-		noticeLabel.innerHTML = "Running on local server – <i>Not Live Data</i>"
-		document.querySelector("header nav img").src = "";
-	}
+	// const noticeLabel = document.getElementById("localh2");
+	// if (window.location.port === "3002") {
+	// 	noticeLabel.style.display = "block";
+	// 	noticeLabel.innerHTML = "Testing Environment – <i>Not Live Data</i>"
+	// 	document.querySelector("header nav img").src = "";
+	// }
+	// else if (window.location.hostname == "localhost") {
+	// 	noticeLabel.style.display = "block";
+	// 	noticeLabel.innerHTML = "Running on local server – <i>Not Live Data</i>"
+	// 	document.querySelector("header nav img").src = "";
+	// }
 
 	// scroll to top
 	const showOnPx = 100;

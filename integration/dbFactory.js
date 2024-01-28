@@ -1,12 +1,9 @@
 const Database = require("better-sqlite3");
+const config = require("../config/config.js")
 
 module.exports = function getDB() {
 
-	const db = new Database("sunprints.db", {  
-		// todo, read these from configuration, including the connection string
-		fileMustExist: true, 
-		verbose: console.log  
-	});
+	const db = new Database(config.connectionString, config.dbOptions);
 
 	return db;
 

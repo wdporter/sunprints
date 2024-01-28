@@ -1,3 +1,5 @@
+// rename this file to config.js in whatever environment it is deployed
+
 module.exports =  {
 
 	port: 3000,
@@ -6,6 +8,5 @@ module.exports =  {
 		fileMustExist: true,
 		verbose: console.log
 	},
-	platform: "uat"
-
+	platform: "dev"
 }
