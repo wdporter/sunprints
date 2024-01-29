@@ -58,7 +58,7 @@ function myAuthorizer(username, password) {
 	if (typeof user === "undefined") {
 		const message = `We could not find the user name: ${username}`;
 		console.log(message);
-		res.status(403).render("error", { message });
+		throw message;
 	}
 	var hash = require('crypto').createHash('md5').update(password).digest("hex");
 	return hash === user.Password;
