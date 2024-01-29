@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { json } = require("body-parser");
 const sz = require("../config/sizes.js");
-const { locations, art } = require("../config/art.js");
+const { locations, art, media, decorations } = require("../config/art.js");
 const getDB = require ("../integration/dbFactory.js"); // todo refactor so we don't need this here
 const UnitOfWork = require("../service/UnitOfWork.js");
 
@@ -529,13 +529,13 @@ router.get("/edit/:id", (req, res) => {
 				product[size] = od[size]
 			})
 
-			sz.locations.forEach(loc => {
-				sz.decorations.forEach(dec => {
+			locations.forEach(loc => {
+				decorations.forEach(dec => {
 					product[`${loc}${dec}DesignId`] = od[`${loc}${dec}DesignId`]
 					product[`${loc}${dec}DesignName`] = od[`${loc}${dec}DesignName`]
 				})
 
-				sz.media.forEach(m => {
+			media.forEach(m => {
 					product[`${loc}${m}1Id`] = od[`${loc}${m}1Id`]
 					product[`${loc}${m}1Name`] = od[`${loc}${m}1Name`]
 					product[`${loc}${m}2Id`] = od[`${loc}${m}2Id`]
@@ -543,7 +543,7 @@ router.get("/edit/:id", (req, res) => {
 				})
 			})
 
-			sz.locations.forEach(loc => {
+			locations.forEach(loc => {
 				if (product[`${loc}Screen1Name`] == "(standard)  ")
 					product[`${loc}Screen1Name`] = null
 				if (product[`${loc}Screen2Name`] == "(standard)  ")
@@ -629,11 +629,11 @@ router.get("/mediasearch", (req, res) => {
 
 	try {
 
-		if (! sz.decorations.includes(decoration))
+		if (! decorations.includes(decoration))
 			throw new Error ("bad decoration")
-		if (! sz.media.includes(media))
+		if (! media.includes(media))
 			throw new Error ("bad medium")
-		if (! sz.locations.includes(location))
+		if (! locations.includes(location))
 			throw new Error ("bad location")
 
 		const mediaColumns = {
@@ -685,7 +685,7 @@ router.get("/designsearch", (req, res) => {
 	if (decoration == "TransferName")
 		close.pop()
 
-	const media = sz.media[sz.decorations.indexOf(decoration)]
+	const media = media[decorations.indexOf(decoration)]
 
 	try {
 
@@ -737,12 +737,12 @@ router.get("/mediasearch/decoration", (req, res) => {
 	const db = getDB();
 	const { location, decoration, id } = req.query	
 
-	const media = sz.media[sz.decorations.indexOf(decoration)]
+	const media = media[decorations.indexOf(decoration)]
 
 	try {
-		if (!sz.decorations.includes(decoration))
+		if (!decorations.includes(decoration))
 			throw new Error("bad params")
-		if (!sz.locations.includes(location))
+		if (!locations.includes(location))
 			throw new Error("bad params")
 
 		let statement = db.prepare(/*sql*/`	
@@ -874,13 +874,13 @@ WHERE OrderId=?`)
 
 		const designResults = getDesigns(db, req.params.id)
 
-		const screensCount = sz.locations.reduce(function (acc, curr) {
+		const screensCount = locations.reduce(function (acc, curr) {
 			return acc + designResults.screens[curr].length
 		}, 0)
-		const usbsCount = sz.locations.reduce(function (acc, curr) {
+		const usbsCount = locations.reduce(function (acc, curr) {
 			return acc + designResults.usbs[curr].length
 		}, 0)
-		const transfersCount = sz.locations.reduce(function (acc, curr) {
+		const transfersCount = locations.reduce(function (acc, curr) {
 			return acc + designResults.transfers[curr].length
 		}, 0)
 
@@ -901,7 +901,7 @@ WHERE StockOrderId=?`).get(salesTotal.StockOrderId)
 			screens: designResults.screens,
 			usbs: designResults.usbs,
 			transfers: designResults.transfers,
-			locations: sz.locations,
+			locations: locations,
 			screensCount,
 			usbsCount,
 			transfersCount,
@@ -1108,9 +1108,9 @@ router.put("/:orderid", (req, res) => {
 
 	// compile the relevant columns, use the column names from our size table
 	const salesColumns = ["OrderId", "GarmentId", "OrderGarmentId", "Price"]
-	sz.locations.forEach(location => {
-		sz.decorations.forEach(decoration => salesColumns.push(`${location}${decoration}DesignId`))
-		sz.media.forEach(medium => {
+	locations.forEach(location => {
+		decorations.forEach(decoration => salesColumns.push(`${location}${decoration}DesignId`))
+		media.forEach(medium => {
 			salesColumns.push(`${location}${medium}Id`)
 			salesColumns.push(`${location}${medium}2Id`)
 		})
@@ -1154,8 +1154,8 @@ router.put("/:orderid", (req, res) => {
 
 		// the media fields have a "1" inside their names, but the tables don't have this, so normalise 
 		// (for example, FrontScreen1Id → FrontScreenId)
-		sz.locations.forEach(location => {
-			sz.media.forEach(medium => {
+		locations.forEach(location => {
+			media.forEach(medium => {
 				Products[0][`${location}${medium}Id`] = Products[0][`${location}${medium}1Id`]
 				delete Products[0][`${location}${medium}1Id`]
 			})
@@ -1172,9 +1172,9 @@ router.put("/:orderid", (req, res) => {
 				// 1. if it's the first item, then move the values for the decoration/media fields to the first non-deleted item
 				if (i == 0) {
 					let firstNotRemoved = Products.find(p => !p.removed)
-					sz.locations.forEach(location => {
-						sz.decorations.forEach(decoration => firstNotRemoved[`${location}${decoration}DesignId`] = product[`${location}${decoration}DesignId`])
-						sz.media.forEach(medium => {
+					locations.forEach(location => {
+						decorations.forEach(decoration => firstNotRemoved[`${location}${decoration}DesignId`] = product[`${location}${decoration}DesignId`])
+						media.forEach(medium => {
 							firstNotRemoved[`${location}${medium}Id`] = product[`${location}${medium}Id`]
 							firstNotRemoved[`${location}${medium}2Id`] = product[`${location}${medium}2Id`]
 						 })
@@ -1375,14 +1375,14 @@ function getDesigns(db, orderid) {
 	const usbs = {}
 	const screens = {}
 
-	sz.locations.forEach(loc => {
+	locations.forEach(loc => {
 		screens[loc] = []
 		usbs[loc] = []
 		transfers[loc] = []
 	})
 
 	results.forEach(r => {
-		sz.locations.forEach(loc => {
+		locations.forEach(loc => {
 			if (r[loc + "PrintDesignId"]) {
 				// get the standard/unnamed screens for this
 				statement = db.prepare(/*sql*/`SELECT Screen.* FROM Screen

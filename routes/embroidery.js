@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const getDB = require("../integration/dbFactory");
-const sz = require("../config/sizes.js");
+const { locations } = require("../config/art.js");
 
 
 /* GET Basic embroidery design page. */
@@ -10,7 +10,7 @@ router.get("/", function (req, res, next) {
 		title: "Embroidery Designs",
 		stylesheets: ["/stylesheets/printdesign-theme.css"],
 		user: req.auth.user,
-		locations: sz.locations,
+		locations: locations,
 		poweruser: res.locals.poweruser
 	})
 })
