@@ -3,7 +3,7 @@
 module.exports =  {
 
 	port: 3000,
-	connectionString: "sunprints.db",
+	connectionString: "sunprints_dev.db",
 	dbOptions: {
 		fileMustExist: true,
 		verbose: console.log
