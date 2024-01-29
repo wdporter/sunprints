@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { json } = require("body-parser");
 const sz = require("../config/sizes.js");
+const { locations, art } = require("../config/art.js");
 const getDB = require ("../integration/dbFactory.js"); // todo refactor so we don't need this here
 const UnitOfWork = require("../service/UnitOfWork.js");
 
@@ -31,8 +32,8 @@ router.get("/", (req, res) => {
 		user: req.auth.user,
 		poweruser: res.locals.poweruser,
 		sizes: sz.allSizes,
-		locations: sz.locations,
-		art: sz.art,
+		locations: locations,
+		art: art,
 		regions: uw.getRegionService().getNames(), 
 		salesreps: uw.getSalesRepService().getNames(), 
 		columnNames: dtColumnNames.map(c => c.dt),
