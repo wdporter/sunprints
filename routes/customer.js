@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const { auditColumns } = require("../sizes.js");
+const { auditColumns } = require("../config/auditColumns.js");
 const customerService = require("../service/customerServiceDeprecated.js")
 const getDb = require("../integration/dbFactory")
 const regionService = require("../service/regionServiceDeprecated.js")

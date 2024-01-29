@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const sz = require("../sizes.js");
+const sz = require("../config/sizes.js");
 const productService = require("../service/productService.js");
 const { json } = require("body-parser");
 const getDB = require ("../integration/dbFactory.js")

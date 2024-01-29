@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { json } = require("body-parser");
-const sz = require("../sizes.js");
+const sz = require("../config/sizes.js");
 const getDB = require ("../integration/dbFactory.js"); // todo refactor so we don't need this here
 const UnitOfWork = require("../service/UnitOfWork.js");
 

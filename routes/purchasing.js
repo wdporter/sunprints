@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const getDB = require("../integration/dbFactory");
-const sz = require("../sizes.js")
+const sz = require("../config/sizes.js")
 
 
 /* GET Purchasing page. */

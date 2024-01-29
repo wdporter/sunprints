@@ -1,7 +1,9 @@
 const express = require("express")
 const router = express.Router()
 const getDB = require("../integration/dbFactory");
-const { auditColumns, locations } = require("../sizes.js")
+const { auditColumns } = require("../config/auditColumns.js");
+const { locations } = require("../config/art.js");
+
 const {standardScreens} = require("../service/printDesignService")
 
 

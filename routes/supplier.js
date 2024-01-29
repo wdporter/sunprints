@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const getDB = require("../integration/dbFactory");
-const { auditColumns } = require("../sizes.js");
+const { auditColumns } = require("../config/auditColumns.js");
 
 /* GET Suppliers page. */
 router.get("/", function (req, res, next) {

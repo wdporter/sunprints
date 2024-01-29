@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const getDB = require("../integration/dbFactory");
-const sz = require("../sizes")
+const sz = require("../config/sizes.js");
 
 
 /* GET Basic embroidery design page. */
