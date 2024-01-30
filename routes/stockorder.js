@@ -427,7 +427,7 @@ router.put("/removegarment/:stockorderid/:garmentid", (req, res) => {
 		console.log(info)
 
 		let statement = db.prepare("INSERT INTO AuditLog VALUES (null, ?, ?, ?, ?, ?)")
-		info = statement.run("StockOrderGarment", myStockOrderGarment.StockOrderGarmentId, "DEL", req.auth.user, Date.now().toLocaleString())
+		info = statement.run("StockOrderGarment", myStockOrderGarment.StockOrderGarmentId, "DEL", req.auth.user, new Date().toLocaleString())
 		console.log(info)
 		const auditLogId = info.lastInsertRowid
 
