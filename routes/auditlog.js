@@ -7,10 +7,39 @@ const getDB = require("../integration/dbFactory");
 router.get("/", function (req, res, next) {
 	res.render("auditlog.ejs", {
 		title: "Audit Log",
-		stylesheets: ["/stylesheets/fixedHeader.dataTables.min.css", "/stylesheets/auditlog-theme.css"],
-		user: req.auth.user
+		stylesheets: ["/stylesheets/auditlog-theme.css", "/stylesheets/vue3-easy-data-table.css" ],
+		user: req.auth.user,
+		useNewHeader: true
 	})
-})
+});
+
+router.post("/edt", (req, res, next) => {
+	const db = getDB();
+	let query = /*sql*/`SELECT COUNT(*) FROM AuditLog`;
+	let statement = db.prepare(query);
+	statement.pluck(true);
+	let resultset = statement.get();
+	const result = { count: resultset };
+
+	query = /*sql*/`SELECT AuditLogId, ObjectName, Identifier, AuditAction, CreatedBy, substring(CreatedDateTime, 7,4) 
+	|| '-' 
+	|| substring(CreatedDateTime, 4,2)
+	|| '-' 
+	|| substring(CreatedDateTime, 1,2)
+	|| 'T'
+	|| CASE substring(CreatedDateTime, -2, 2 ) WHEN 'pm' THEN CAST(substring(CreatedDateTime, -11, 2) AS INT) + 12 ELSE printf('%02d', substring(CreatedDateTime, -11, 2)) END
+	|| ':'
+	|| substring(CreatedDateTime, -8, 5) AS CreatedDateTime
+	FROM AuditLog 
+	ORDER BY ${req.body.sortBy} ${req.body.sortType}
+	LIMIT ${req.body.rowsPerPage} OFFSET ${(req.body.page - 1) * req.body.rowsPerPage}`;
+	statement = db.prepare(query);
+	resultset = statement.all();
+	result.data = resultset;
+
+	res.send(result)
+
+});
 
 
 // GET return a listing in DataTables format

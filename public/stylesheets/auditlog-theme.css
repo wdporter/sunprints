@@ -1,4 +1,4 @@
-main {
+/* main {
 	padding-top: 1em;
 	padding-bottom: 1em;
 }
@@ -17,3 +17,15 @@ select#AuditAction {
 .breakall {
 	word-break: break-all;
 }
+*/
+
+/* undo some gd.css which the data table uses */
+#app ul {
+	line-height: revert;
+	font-size: revert;
+}
+
+#app li.selected {
+	background-color: darkorange;
+}
+ 

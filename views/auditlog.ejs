@@ -1,121 +1,91 @@
 <%- include("partials/head.ejs") %>
 
-</main>
+<script type="module">
+import { createApp, ref, onMounted, watch } from "vue"
+import Vue3EasyDataTable from "vue3easydatatable";
 
-<main class="wider">
+const App = {
+	components: { EasyDataTable: Vue3EasyDataTable },
+	setup() {
+		const message = ref("Hello World!");
+		const headers = ref([
+        { text: "", value: "AuditLogId", sortable: true },
+        { text: "Table", value: "ObjectName", sortable: true},
+        { text: "Id", value: "Identifier", sortable: true},
+        { text: "Action", value: "AuditAction", sortable: true},
+        { text: "Created By", value: "CreatedBy", sortable: true},
+        { text: "Created Date/Time", value: "CreatedDateTime", sortable: true, width: 180}
+      ]);
+		const items = ref([]);
+		const loading = ref(false);
+		const serverOptions = ref({
+			page: 1,
+			rowsPerPage: 100,
+			sortBy: "AuditLogId",
+			sortType: "DESC"
+		});
+		const themeColor = "darkorange";
+		const serverItemsLength = ref(0);
 
-	<table id="dt" class="compact">
-		<thead>
-			<tr id="headRow">
-				<th>Table</th>
-				<th>Id</th>
-				<th>Action</th>
-				<th>Column</th>
-				<th>Old Value</th>
-				<th>New Value</th>
-				<th>Created By</th>
-				<th>Created Date/Time</th>
-			</tr>
-			<tr id="filterRow">
-				<th>ObjectName</th>
-				<th>Identifier</th>
-				<th>AuditAction</th>
-				<th>PropertyName</th>
-				<th>OldValue</th>
-				<th>NewValue</th>
-				<th>CreatedBy</th>
-				<th>CreatedDateTime</th>
-			</tr>
-		</thead>
-		<tbody>
-		</tbody>
-	</table>
+		const loadFromServer = async () => {
+			console.log ("Load from server");
+			loading.value = true;
+			const response = await fetch("/auditlog/edt", {
+				method: "POST",
+				headers: new Headers({"Content-Type": "application/json"}),
+				body: JSON.stringify(serverOptions.value)
+			});
+			try {
+				const result = await response.json();
+				items.value = result.data;
+				serverItemsLength.value = result.count;
+			} catch (error) {
+				console.log(error)
+			}
+			finally {
+				loading.value = false;
+			}
+		};
 
+		onMounted(() => {
+			loadFromServer();
+		});
 
-<script>
+		watch(serverOptions, (value) => {loadFromServer();}, {deep: true})
 
-function renderValue(data) {
-	if (!data)
-		return "<i>null</i>"
-	else
-		return data?.replace(/\.0$/, "")
+		return {
+			message,
+			headers,
+			items,
+			loading,
+			loadFromServer,
+			serverOptions,
+			serverItemsLength,
+			themeColor
+		}
+	}
 }
 
-window.datatable = new DataTable("table#dt", {
-	orderCellsTop: true,
-	fixedHeader: true,
-	processing: true,
-	serverSide: true,
-	dom: "lrtip",
-	ajax: {
-		url: "/auditlog/dt",
-		data(d) {
-			d.extraSearch = {}
-			for(input of document.querySelectorAll("#filterRow input, #filterRow select")) {
-				if (input.value)
-					d.extraSearch[input.getAttribute("id")] = input.value
-			}
-		}
-	},
-	language: {
-		searchPlaceholder: "Search table"
-	},
-	columns: [
-		{ data: "ObjectName", class: "breakall" },
-		{ data: "Identifier", width: "4em" },
-		{ data: "AuditAction", width: "4em" },
-		{ data: "PropertyName", class: "breakall" },
-		{ data: "OldValue", render(data) { return renderValue(data) } },
-		{ data: "NewValue", render(data) { return renderValue(data) } },
-		{ data: "CreatedBy" },
-		{ data: "CreatedDateTime" }
-	],
-	initComplete() {
-		const api = this.api()
-		Array.from(document.querySelectorAll("#filterRow th")).forEach(function (th, i) {
-				let html = ""
-				switch (th.textContent) {
-					case "ObjectName":
-						const tables = ["Customer", "EmbroideryDesign", "Garment", "OrderGarment", "Orders", "PrintDesign", "SalesRep", "SalesTotal", "Sales", "Screen", "ScreenPrintDesign", "StockOrder", "StockOrderGarment", "Supplier", "TransferDesign", "TransferName", "TransferNameTransferDesign", "Usb", "UsbEmbroideryDesign", "User"]
-						html = `<select id=${th.textContent} ><option value=>—Select—${ tables.map(t => `<option>${t}`).join("")}</select> `
-						break
-					case "AuditAction":
-						html = `<select id=${th.textContent}><option value=>—Select—<option value=INS>Insert<option value=UPD>Update<option value=DEL>Delete</select> `
-						break
-					case "CreatedDateTime":
-						html = `<input type=date id=${th.textContent} /> `
-						break
-					default:
-						html += `<input id=${th.textContent}  />`
-				}
-				//html += " />"
-				th.innerHTML = html
-				th.querySelector("input, select").addEventListener("input", function () {
-					api.column(i).search(this.value).draw()
-				})
-		})
+const app = createApp(App)
+//app.
+app.mount("#app")
 
-		const params = new URLSearchParams(document.location.search)
-		let hasParams = false
-		const table = params.get("table")
-		if (table) {
-			document.getElementById("ObjectName").value = table
-			hasParams = true
-		}
-		const id = params.get("id")
-		if (table) {
-			document.getElementById("Identifier").value = id
-			hasParams = true
-		}
-		if (hasParams) {
-			window.datatable.draw()
-		}
-
-	}
-})
 </script>
 
+<div id=app>
+	<h1>{{ message }}</h1>
+	<easy-data-table
+	v-model:server-options="serverOptions" 
+	:server-items-length="serverItemsLength" 
+	:loading="loading"
+	:headers="headers"
+	:items="items"
+	:theme-color="themeColor"
+	alternating
+	must-sort
+	buttons-pagination
+/>
+</div>
 
-</main>
 
-	<%- include('partials/foot.ejs'); %>
+<%- include('partials/foot.ejs'); %>

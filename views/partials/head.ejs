@@ -26,11 +26,13 @@
 	<% } %>
 
 	<% if (typeof useNewHeader !== "undefined" && useNewHeader === true) { %>
-	<script async src="https://unpkg.com/es-module-shims@1.3.0/dist/es-module-shims.js"></script>
+	<!-- todo, for prod, "vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js",
+-->
 	<script type="importmap">
 	{
-		"imports": {
-			"vue": "/javascripts/vue-3.2.39.esm.js",
+		"imports": { 
+			"vue": "https://unpkg.com/vue@3/dist/vue.esm-browser.js",
+			"vue3easydatatable": "/javascripts/vue3-easy-data-table.es.js",
 			"lodash-es": "/javascripts/lodash-es-4.17.21.js",
 			"customerPick": "/components/CustomerPick.js",
 			"designPick": "/components/DesignPick.js",
@@ -44,7 +46,7 @@
 	<% if (typeof javascripts != "undefined") { 
 		javascripts.forEach(j => {
 	%>
-	<script src="<%-j %>"></script>
+	<script src="<%-j%>"></script>
 	<% }) } %>
 
 	</head>
