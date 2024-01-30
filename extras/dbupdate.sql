@@ -93,7 +93,7 @@ LEFT JOIN Region USING (RegionId)
 -- see if there are any more
 -- unfortunately we can't guess the true date
 update AuditLog
-set createdDateTime = '1970-01-01 00:00:00 am'
+set createdDateTime = '01/01/1970, 00:00:00 am'
 where auditlogid in 
 (277
 ,276
