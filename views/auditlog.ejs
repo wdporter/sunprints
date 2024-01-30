@@ -14,7 +14,7 @@ const App = {
         { text: "Id", value: "Identifier", sortable: true},
         { text: "Action", value: "AuditAction", sortable: true},
         { text: "Created By", value: "CreatedBy", sortable: true},
-        { text: "Created Date/Time", value: "CreatedDateTime", sortable: true, width: 180}
+        { text: "Created Date/Time", value: "CreatedDateTime", sortable: true, width: 190}
       ]);
 		const items = ref([]);
 		const loading = ref(false);
@@ -28,7 +28,6 @@ const App = {
 		const serverItemsLength = ref(0);
 
 		const loadFromServer = async () => {
-			console.log ("Load from server");
 			loading.value = true;
 			const response = await fetch("/auditlog/edt", {
 				method: "POST",
@@ -47,6 +46,18 @@ const App = {
 			}
 		};
 
+		const loadAuditLogEntry = async (index) => {
+			const myItem = items.value[index];
+			myItem.expandLoading = true;
+			try {
+				const response = await fetch(`/auditlog/${myItem.AuditLogId}/entries`);
+				const result = await response.json();
+				myItem.AuditLogEntries = result;
+			} finally {
+				myItem.expandLoading = false
+			}
+		};
+
 		onMounted(() => {
 			loadFromServer();
 		});
@@ -59,6 +70,7 @@ const App = {
 			items,
 			loading,
 			loadFromServer,
+			loadAuditLogEntry,
 			serverOptions,
 			serverItemsLength,
 			themeColor
@@ -75,16 +87,29 @@ app.mount("#app")
 <div id=app>
 	<h1>{{ message }}</h1>
 	<easy-data-table
-	v-model:server-options="serverOptions" 
-	:server-items-length="serverItemsLength" 
-	:loading="loading"
-	:headers="headers"
-	:items="items"
-	:theme-color="themeColor"
-	alternating
-	must-sort
-	buttons-pagination
-/>
+		v-model:server-options="serverOptions" 
+		:server-items-length="serverItemsLength" 
+		:loading="loading"
+		:headers="headers"
+		:items="items"
+		:theme-color="themeColor"
+		alternating
+		must-sort
+		buttons-pagination
+		@expand-row="loadAuditLogEntry"
+	/>
+	<template #expand="item">
+		<table style="margin-left:10em;table-layout: auto; width:revert; min-width:revert">
+			<thead><tr><th>Property</th><th>Old Value</th><th>New Value</th></tr></thead>
+			<tbody>
+				<tr v-for="entry of item.AuditLogEntries" :key="item.AuditLogEntryId">
+					<td>{{ entry.PropertyName }}</td>
+					<td>{{ entry.OldValue }}</td>
+					<td>{{ entry.NewValue }}</td>
+				</tr>
+			</tbody>
+		</table>
+	</template>
 </div>
 
 

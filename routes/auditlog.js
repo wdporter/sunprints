@@ -21,20 +21,19 @@ router.post("/edt", (req, res, next) => {
 	let resultset = statement.get();
 	const result = { count: resultset };
 
-	query = /*sql*/`SELECT AuditLogId, ObjectName, Identifier, AuditAction, CreatedBy, substring(CreatedDateTime, 7,4) 
-	|| '-' 
-	|| substring(CreatedDateTime, 4,2)
-	|| '-' 
-	|| substring(CreatedDateTime, 1,2)
-	|| 'T'
-	|| CASE substring(CreatedDateTime, -2, 2 ) WHEN 'pm' THEN CAST(substring(CreatedDateTime, -11, 2) AS INT) + 12 ELSE printf('%02d', substring(CreatedDateTime, -11, 2)) END
-	|| ':'
-	|| substring(CreatedDateTime, -8, 5) AS CreatedDateTime
-	FROM AuditLog 
+	// the CreatedDateTime column is in a format we can't sort on, so convert it so we can
+	query = /*sql*/`SELECT *
+	FROM AuditLog_View 
 	ORDER BY ${req.body.sortBy} ${req.body.sortType}
 	LIMIT ${req.body.rowsPerPage} OFFSET ${(req.body.page - 1) * req.body.rowsPerPage}`;
 	statement = db.prepare(query);
 	resultset = statement.all();
+
+	// fix our date columns
+	resultset.forEach(item => { 
+			item.CreatedDateTime = new Date(item.CreatedDateTime).toLocaleString()
+		});
+
 	result.data = resultset;
 
 	res.send(result)

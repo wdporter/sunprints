@@ -82,7 +82,24 @@ Delivery,  Customer.Company, Terms, BuyIn, SalesTotal.Notes, Done, CustomerId, S
 			
 FROM SalesTotal
 LEFT JOIN Customer USING (CustomerId)
-LEFT JOIN Region USING (RegionId)
+LEFT JOIN Region USING (RegionId);
+
+
+CREATE VIEW AuditLog_View AS 
+SELECT AuditLogId, ObjectName, Identifier, AuditAction, CreatedBy, 
+	substring(CreatedDateTime, 7,4) 
+	|| '-' 
+	|| substring(CreatedDateTime, 4,2)
+	|| '-' 
+	|| substring(CreatedDateTime, 1,2)
+	|| 'T'
+	|| CASE substring(CreatedDateTime, -2, 2 ) WHEN 'pm' THEN 
+				CASE substring(CreatedDateTime, -11, 2) WHEN '12' then '12'
+				ELSE CAST(substring(CreatedDateTime, -11, 2) AS INT) + 12 END
+		ELSE printf('%02d', substring(CreatedDateTime, -11, 2)) END
+	|| ':'
+	|| substring(CreatedDateTime, -8, 5) AS CreatedDateTime
+	FROM AuditLog;
 
 
 
