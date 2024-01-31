@@ -52,7 +52,7 @@ td {
 	<li>Use the Destination/Printer option to save a PDF 
 	<li>Under <i>More settings</i> you can remove the header/footer
 </ul>
-<form method="post" action="/order/outstanding/<%= action %>">
+<form method="post">
 	<p>
 	<label for="salesrep">Sales rep.</label>
 	<select id="salesrep" name="salesrep">
@@ -95,7 +95,7 @@ td {
 	<tr>
 		<td><%= results[i].OrderNumber %>
 		<td><%= new Date(Date.parse(results[i].OrderDate)).toLocaleDateString("en-AU").replace(/\/0/g, "/").replace(/^0/, "") %>
-		<td><%= results[i].DeliveryDate.replace(/\/0/g, "/").replace(/^0/, "") %>
+		<td><%= results[i].DeliveryDate ? results[i].DeliveryDate.replace(/\/0/g, "/").replace(/^0/, "") : "" %>
 		<td><%= results[i].BuyIn == 1 ? "✓" : "☓" %>
 		<td><%= results[i].Done == 1 ? "✓" : "☓" %>
 		<td><%= results[i].Company %>
