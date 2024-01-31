@@ -62,7 +62,28 @@
       border: 1px black solid;
     }
 
-    table.list th {
+		@media print {
+			table.list {
+				break-inside: avoid;
+			}
+
+			table.list caption {
+				break-after: avoid;
+			}
+
+			table.list tr, table.list tbody th, table.list td {
+				break-before: avoid;
+				break-after: avoid;
+			}
+
+			table.list tbody {
+				break-before: avoid;
+				break-after: avoid;
+				break-inside: avoid;
+			}
+		}
+
+		table.list th {
       text-align: left;
     }
 
@@ -90,12 +111,6 @@
 			display: none
 		}
 	}
-
-	@media print {
-  .no-print {
-    display: none
-  }
-}
 
 </style>
 </head>
@@ -296,27 +311,29 @@
 
 	<div id="app">
 
-		<table class="list" v-if="screensCount>0">
+	<table class="list" v-if="screensCount > 0">
 		<caption>Screens</caption>
-    <thead>
-      <tr>
+		<thead>
+			<tr>
 				<th>Location</th>
-        <th>Number</th>
-        <th>Colour</th>
-        <th>Name</th>
-      </tr>
-    </thead>
-    <tbody v-for="loc in locations">
-      <tr v-for="(s, i) in screens[loc]">
-				<th :rowspan="screens[loc].length" v-if="i==0">{{loc}}</th>
-        <td>{{s.Number}}</td>
-        <td>{{s.Colour}}</td>
-        <td>{{s.Name}}</td>
-      </tr>
-    </tbody>
-  </table>
+				<th>Number</th>
+				<th>Colour</th>
+				<th>Name</th>
+			</tr>
+		</thead>
+		<tbody>
+			<template v-for="loc in locations">
+				<tr v-for="(s, i) in screens[loc]">
+					<th :rowspan="screens[loc].length" v-if="i==0">{{loc}}</th>
+					<td>{{s.Number}}</td>
+					<td>{{s.Colour}}</td>
+					<td>{{s.Name}}</td>
+				</tr>
+			</template>
+		</tbody>
+	</table>
 
-  <table class=list v-if="usbsCount>0">
+  <table class=list v-if="usbsCount > 0">
 		<caption>Usbs</caption>
     <thead>
       <tr>
@@ -325,12 +342,14 @@
         <th>Notes</th>
       </tr>
     </thead>
-    <tbody v-for="loc in locations">
-      <tr v-for="(u, i) in usbs[loc]">
-				<th :rowspan="usbs[loc].length" v-if="i==0">{{loc}}</th>
-        <td>{{u.Number}}</td>
-        <td>{{u.Notes}}</td>
-      </tr>
+    <tbody>
+			<template v-for="loc in locations">
+				<tr v-for="(u, i) in usbs[loc]">
+					<th :rowspan="usbs[loc].length" v-if="i==0">{{loc}}</th>
+					<td>{{u.Number}}</td>
+					<td>{{u.Notes}}</td>
+				</tr>
+			</template>
     </tbody>
   </table>
 
@@ -342,11 +361,13 @@
         <th>Name</th>
       </tr>
     </thead>
-    <tbody v-for="loc, i in locations">
-      <tr v-for="(t, i) in transfers[loc]">
-				<th :rowspan="transfers[loc].length" v-if="i==0">{{loc}}</th>
-        <td>{{t}}</td>
-      </tr>
+    <tbody>
+			<template v-for="loc in locations">
+				<tr v-for="(t, i) in transfers[loc]">
+					<th :rowspan="transfers[loc].length" v-if="i==0">{{loc}}</th>
+					<td>{{t}}</td>
+				</tr>
+			</template>
     </tbody>
   </table> 
 
