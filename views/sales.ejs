@@ -4,7 +4,6 @@
 
 <section>
 	<div>
-	<h3>Terms</h3>
 		<details open>
 			<summary>Customer</summary>
 			<p>
@@ -13,57 +12,7 @@
 				<datalist id=customerData data-fetchurl="/sales/customernames"></datalist>
 			</p>
 		</details>
-		<details>
-			<summary>Order Number</summary>
-			<p>
-				<label for=orderNumber>Number</label>
-				<input type=text id=orderNumber name="OrderNumber" placeholder="type order number and press enter" />
-			</p>
-		</details>
-		<details>
-			<summary>Print</summary>
-			<p>
-				<label for=print>Design</label>
-				<input id=print type=search list=printData autocomplete=off placeholder="type print design" name=Print />
-				<datalist id=printData data-fetchurl="/sales/prints"></datalist>
-			</p>
-			<p>
-				<label for=screen>Screen</label>
-				<input id=screen type=search list=screenData autocomplete=off placeholder="type screen" name=Screen />
-				<datalist id=screenData data-fetchurl="/sales/screens"></datalist>
-			</p>
-		</details>
-		<details>
-			<summary>Embroidery</summary>
-			<p>
-				<label for=embroidery>Design</label>
-				<input id=embroidery type=search list=embroideryData autocomplete=off placeholder="type embroidery design" name=Embroidery />
-				<datalist id=embroideryData data-fetchurl="/sales/embroideries"></datalist>
-			</p>
-			<p>
-				<label for="usb">USB</label>
-				<input id=usb type=search list=usbData autocomplete=off placeholder="type usb" name=Usb />
-				<datalist id=usbData data-fetchurl="/sales/usbs"></datalist>
-			</p>
-		</details>
-		<details>
-			<summary>Transfer</summary>
-			<p>
-				<label for="transfer">Design</label>
-				<input id=transfer type=search list=transferData autocomplete=off placeholder="type transfer design" name=Transfer />
-				<datalist id=transferData data-fetchurl="/sales/transfers"></datalist>
-			</p>
-			<p>
-				<label for="transferName">Name</label>
-				<input id=transferName type=search list=transferNameData autocomplete=off placeholder="type transfer name" name=TransferName />
-				<datalist id=transferNameData data-fetchurl="/sales/transfernames"></datalist>
-			</p>
-		</details>
-
-	</div>
-	<div>
-		<h3>Filters</h3>
-		<details>
+		<details open>
 			<summary>Region / Sales Rep</summary>
 			<p>
 				<label for=region>Region</label>
@@ -93,8 +42,7 @@
 				</select>
 			</p>
 		</details>
-
-		<details>
+		<details open>
 			<summary>Date range</summary>
 			<p>
 				<label for=dateFrom>Date From</label>
@@ -105,9 +53,59 @@
 				<input type=date id="dateTo" name="DateTo" />
 			</p>
 		</details>
+		<details open>
+			<summary>Order Number</summary>
+			<p>
+				<label for=orderNumber>Number</label>
+				<input type=text id=orderNumber name="OrderNumber" placeholder="type order number" />
+			</p>
+		</details>
 	<div style="margin-top: var(--unit-3)">
 		<button onclick="clearSearchFields()">Clear Search</button>
 	</div>
+
+	</div>
+	<div>
+		<details open>
+			<summary>Print</summary>
+			<p>
+				<label for=print>Design</label>
+				<input id=print type=search list=printData autocomplete=off placeholder="type print design" name=Print />
+				<datalist id=printData data-fetchurl="/sales/prints"></datalist>
+			</p>
+			<p>
+				<label for=screen>Screen</label>
+				<input id=screen type=search list=screenData autocomplete=off placeholder="type screen" name=Screen />
+				<datalist id=screenData data-fetchurl="/sales/screens"></datalist>
+			</p>
+		</details>
+		<details open>
+			<summary>Embroidery</summary>
+			<p>
+				<label for=embroidery>Design</label>
+				<input id=embroidery type=search list=embroideryData autocomplete=off placeholder="type embroidery design" name=Embroidery />
+				<datalist id=embroideryData data-fetchurl="/sales/embroideries"></datalist>
+			</p>
+			<p>
+				<label for="usb">USB</label>
+				<input id=usb type=search list=usbData autocomplete=off placeholder="type usb" name=Usb />
+				<datalist id=usbData data-fetchurl="/sales/usbs"></datalist>
+			</p>
+		</details>
+		<details open>
+			<summary>Transfer</summary>
+			<p>
+				<label for="transfer">Design</label>
+				<input id=transfer type=search list=transferData autocomplete=off placeholder="type transfer design" name=Transfer />
+				<datalist id=transferData data-fetchurl="/sales/transfers"></datalist>
+			</p>
+			<p>
+				<label for="transferName">Name</label>
+				<input id=transferName type=search list=transferNameData autocomplete=off placeholder="type transfer name" name=TransferName />
+				<datalist id=transferNameData data-fetchurl="/sales/transfernames"></datalist>
+			</p>
+		</details>
+
 	</div>
 </section>
 
@@ -343,16 +341,20 @@ window.datatable.on("draw", async function() {
 
 	// if it's a customer and a date range, display a sum of their orders
 
-	if (dataSearchObject.Embroidery != null || dataSearchObject.OrderNumber !== null || dataSearchObject.Print !== null
-			|| dataSearchObject.Screen !== null || dataSearchObject.Transfer !== null || dataSearchObject.TransferName !== null
-			|| dataSearchObject.Usb !== null) {
-				// if one of these are set, we don't do a sum
+	// if any one of these are set, we don't do a sum
+	if (dataSearchObject.OrderNumber !== null 
+			|| dataSearchObject.Print !== null || dataSearchObject.Screen !== null
+			|| dataSearchObject.Embroidery != null || dataSearchObject.Usb !== null 
+			|| dataSearchObject.Transfer !== null || dataSearchObject.TransferName !== null) {
 		document.getElementById("customerSalesTotalLabel").textContent = ""
 		return;
 	}
 
-	if (dataSearchObject.DateFrom === null && dataSearchObject.DateTo === null) {
 		// don't do a sum if there is no date range
+		if (dataSearchObject.DateFrom === null 
+			|| dataSearchObject.DateFrom === "" 
+			|| dataSearchObject.DateTo === null 
+			|| dataSearchObject.DateTo === "") {
 		document.getElementById("customerSalesTotalLabel").textContent = ""
 		return;
 	}
@@ -424,13 +426,6 @@ $("tbody").on("keydown", "tr", function (event) {
 })
 
 
-function format(data) {
-		if (!data) return // happens when you click the clone button
-
-//		const retVal = 
-//			return retVal
-
-	}
 
 async function onOpenRowButtonClick(evt) {
 		const row = window.datatable.row(evt.target)
@@ -511,7 +506,7 @@ async function onOpenRowButtonClick(evt) {
 	}
 
 
-// Add event listener for opening and closing details
+// Add event listener for opening and closing table row information
 document.querySelector("table#dt tbody").addEventListener("click", onOpenRowButtonClick)
 
 
@@ -560,14 +555,6 @@ Array.from(document.querySelectorAll("input[type=search]")).forEach(function(inp
 			console.log("chosenOption", chosenOption);
 			dataSearchObject[input.name] = chosenOption.dataset.value;
 
-			// null all other search boxes
-			Array.from(document.querySelectorAll("input[type=search], input[type=text]")).forEach(function(otherInput) {
-				if (otherInput !== input) {
-					dataSearchObject[otherInput.name] = null;
-					otherInput.value = "";
-				}
-			});
-
 			window.datatable.ajax.reload();
 		}
 	});
@@ -581,29 +568,20 @@ Array.from(document.querySelectorAll("details select")).forEach(function(select)
 	});
 });
 
-Array.from(document.querySelectorAll("input[type=date]")).forEach(function(input) {
-	input.addEventListener("change", function(event) {
-		dataSearchObject[input.name] = input.value;
-		window.datatable.ajax.reload();
-	});
-});
 
-const orderNumberInput = document.getElementById("orderNumber");
-function onOrderNumberInputChange() {
-	dataSearchObject[orderNumberInput.name] = orderNumberInput.value;
+// handle order number text search
+document.getElementById("orderNumber").addEventListener("input", debounce((event) => {
+	dataSearchObject[event.target.name] = event.target.value;
 	window.datatable.ajax.reload();
+}, 500));
 
-	//reset input[type=search]
-	Array.from(document.querySelectorAll("input[type=search]")).forEach(function(input) {
-		input.value = "";
-		dataSearchObject[input.name] = "";
-	});
-}
-orderNumberInput.addEventListener("blur", onOrderNumberInputChange);
-orderNumberInput.addEventListener("keyup", function(event) {
-	if (event.key == "Enter") {
-		onOrderNumberInputChange();
-	}
+
+// handle date changes
+Array.from(document.querySelectorAll("input[type=date]")).forEach(function(input) {
+	input.addEventListener("change", debounce((event) => {
+		dataSearchObject[event.target.name] = event.target.value;
+		window.datatable.ajax.reload();
+	}, 500));
 });
 
 
@@ -618,12 +596,25 @@ document.getElementById("dateTo").addEventListener("input", function() {
 })
 
 
+// if you close a details elements, empty the inputs
+// todo confirm with cameron
+for (let details of document.querySelectorAll("details")) {
+	details.addEventListener("toggle", function() {
+		if (!this.open) {
+			for (let input of details.querySelectorAll("input, select")) {
+				input.value = null;
+				dataSearchObject[input.name] = null;
+			}
+			window.datatable.ajax.reload();
+		}
+	})
+}
+
+
 function clearSearchFields() {
-	Array.from(document.querySelectorAll("input[type=date]")).forEach(i => i.value = "");
-
-	Array.from(document.querySelectorAll("details select")).forEach(s => s.value = "");
-
-	Array.from(document.querySelectorAll("input[type=search]")).forEach(s => s.value = "");
+	for (let input of document.querySelectorAll("details input, details select")) {
+		input.value = "";
+	}
 
 	for(key in dataSearchObject) {
 		dataSearchObject[key] = null;
@@ -634,6 +625,17 @@ function clearSearchFields() {
 
 var button = document.getElementById("topClearButton")
 document.querySelector("main>h1").appendChild(button)
+
+
+function debounce(func, timeout = 300){
+	let timer = null;
+	return (...args) => {
+		window.clearTimeout(timer);
+		timer = window.setTimeout(() => { 
+			func(...args); 
+		}, timeout);
+	};
+}
 
 </script>
 

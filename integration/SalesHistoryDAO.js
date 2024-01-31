@@ -29,8 +29,8 @@ module.exports = class SalesHistoryDao {
 			params.Company = searchObject.Company
 		}
 		if (searchObject.OrderNumber.trim() !== "") {
-			where.push( " OrderNumber = @OrderNumber ")
-			params.OrderNumber = searchObject.OrderNumber
+			where.push( " OrderNumber LIKE @OrderNumber ")
+			params.OrderNumber = `%${searchObject.OrderNumber}%`
 		}
 		if (searchObject.Print != "") {
 			where.push(" PrintDesignIds LIKE @Print ")
@@ -131,10 +131,11 @@ module.exports = class SalesHistoryDao {
 			whereClauses.push( ` SalesTotal.OrderDate <= ? `)
 			parameters.push(todate)
 		}
+
+		// these are the ids for the freight charges
+		whereClauses.push(" Sales.GarmentId NOT IN (11279, 16866, 24778, 25278) ")
 		sql += whereClauses.join(" AND ");
-	
-		sql += " AND Sales.GarmentId NOT IN (11279, 16866, 24778, 25278) "
-	
+
 		const statement = this.db.prepare(sql);
 		let resultset = statement.all(parameters)
 
