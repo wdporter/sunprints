@@ -250,11 +250,12 @@
 
 	<!-- decoration pick dialog -->
 	<dialog id="designDialog" ref="designDialog">
-		<h4>Choose {{ designPick.location.toLowerCase() }} {{ designPickDecoration.toLowerCase() }} design </h4>
+		<h4>Choose {{ designPick.location }} {{ designPick.decoration }} design </h4>
 		<design-pick 
 			@design-select="onDesignSelect" 
 			ref="designPicker" 
 			:location="designPick.location"
+			location="designPick.location"
 			:decoration="designPick.decoration" >
 		</design-pick>
 		<p>
@@ -353,7 +354,6 @@ createApp ({
 			location: "",
 			decoration: ""
 		})
-		const designPickDecoration = ref("")
 		const designPicker = ref(null)    // <%# uses ref attribute of element, the <design-pick> %>
 
 		const mediaDialog = ref(null) // <%# uses ref attribute of designDialog element %>
@@ -384,7 +384,6 @@ createApp ({
 			salesReps,
 			regions,
 			order,
-			designPickDecoration,
 			designPick,
 			mediaPick,
 			productChangeId,
@@ -424,16 +423,20 @@ createApp ({
 		},
 
 		onDesignSelect(design) {
-			//set the selected design id and name
-			this.order.designs[`${design.location}${design.decoration}DesignId`]  = design[`${design.decoration}DesignId`]
-			this.order.designs[`${design.location}${design.decoration}DesignName`] = `${design.Code} ${design.Notes}`
+			//set the selected design id and name, for each of the locations in the checkbox
+			for (const location of design.checkedLocations) {
+				this.order.designs[`${location}${design.decoration}DesignId`]  = design[`${design.decoration}DesignId`]
+				this.order.designs[`${location}${design.decoration}DesignName`] = `${design.Code} ${design.Notes}`
+			}
 
 			// initialise the medium (screen, usb, transfername)
-			const medium = this.media[this.decorations.indexOf(design.decoration)];
-			[1,2].forEach(n => {
-				this.order.designs[`${design.location}${medium}${n}Id`]   = null
-				this.order.designs[`${design.location}${medium}${n}Name`] = null
-			})
+			for (const location of design.checkedLocations) {
+				const medium = this.media[this.decorations.indexOf(design.decoration)];
+				[1,2].forEach(n => {
+					this.order.designs[`${location}${medium}${n}Id`]   = null
+					this.order.designs[`${location}${medium}${n}Name`] = null
+				})
+			}
 			this.$refs.designDialog.close()
 
 			if (design.decoration == "Print") {
@@ -441,7 +444,11 @@ createApp ({
 				// todo empty this if delete is clicked
 				fetch(`/print/${design.PrintDesignId}/standardscreens`)
 				.then(response => response.json())
-				.then(json => this.order.designs[`${design.location}ScreenStandard`] = json.join("<br />"))
+				.then(json => {
+					for (const location of design.checkedLocations) {
+						this.order.designs[`${location}ScreenStandard`] = json.join("<br />")
+					}
+				})
 				.catch(err => console.error(err))
 			}
 			//todo, if there is only one media item for the design, load it up

@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const getDB = require("../integration/dbFactory");
-const sz = require("../config/sizes.js")
+const { locations } = require("../config/art.js");
 
 /* GET Basic transfer design page. */
 router.get("/", function (req, res, next) {
@@ -9,7 +9,7 @@ router.get("/", function (req, res, next) {
 		title: "Transfer Designs",
 		stylesheets: ["/stylesheets/printdesign-theme.css", "/stylesheets/transfer-theme.css"],
 		user: req.auth.user,
-		locations: JSON.stringify(sz.locations),
+		locations: JSON.stringify(locations),
 		poweruser: res.locals.poweruser
 	 })
 })
