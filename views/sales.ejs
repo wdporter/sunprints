@@ -57,7 +57,7 @@
 			<summary>Order Number</summary>
 			<p>
 				<label for=orderNumber>Number</label>
-				<input type=text id=orderNumber name="OrderNumber" placeholder="type order number" />
+				<input type=search id=orderNumber name="OrderNumber" placeholder="type order number" />
 			</p>
 		</details>
 	<div style="margin-top: var(--unit-3)">
@@ -339,23 +339,20 @@ window.datatable = new DataTable("table#dt", {
 window.datatable.on("draw", async function() {
 	window.datatable.buttons(0).text("Expand all");
 
-	// if it's a customer and a date range, display a sum of their orders
+	// if it's a customer or region or rep - and a date range, display a sum of their orders
 
 	// if any one of these are set, we don't do a sum
-	if (dataSearchObject.OrderNumber !== null 
-			|| dataSearchObject.Print !== null || dataSearchObject.Screen !== null
-			|| dataSearchObject.Embroidery != null || dataSearchObject.Usb !== null 
-			|| dataSearchObject.Transfer !== null || dataSearchObject.TransferName !== null) {
-		document.getElementById("customerSalesTotalLabel").textContent = ""
+	if (dataSearchObject.OrderNumber
+			|| dataSearchObject.Print || dataSearchObject.Screen
+			|| dataSearchObject.Embroidery || dataSearchObject.Usb
+			|| dataSearchObject.Transfer  || dataSearchObject.TransferName) {
+		document.getElementById("customerSalesTotalLabel").textContent = "";
 		return;
 	}
 
-		// don't do a sum if there is no date range
-		if (dataSearchObject.DateFrom === null 
-			|| dataSearchObject.DateFrom === "" 
-			|| dataSearchObject.DateTo === null 
-			|| dataSearchObject.DateTo === "") {
-		document.getElementById("customerSalesTotalLabel").textContent = ""
+	// don't do a sum if there is no date range
+	if (!dataSearchObject.DateFrom || !dataSearchObject.DateTo) {
+		document.getElementById("customerSalesTotalLabel").textContent = "";
 		return;
 	}
 
@@ -366,11 +363,11 @@ window.datatable.on("draw", async function() {
 
 	const who = [];
 	if (dataSearchObject.Company !== null)
-		who.push("Customer")
+		who.push("customer")
 	if (dataSearchObject.Region !== null)
-		who.push("Region")
+		who.push("region")
 	if (dataSearchObject.SalesRep !== null)
-		who.push("Rep")
+		who.push("rep")
 	document.getElementById("customerSalesTotalLabel").textContent = `Total sales ${who.length > 0 ? "for" : ""} ${who.join("/")} in date range (excl. freight): ${text}`
 
 });
@@ -511,9 +508,12 @@ document.querySelector("table#dt tbody").addEventListener("click", onOpenRowButt
 
 
 // load up our datalist elements first time the input control is focussed
-Array.from(document.querySelectorAll("input[type=search]")).forEach(function(input) {
+Array.from(document.querySelectorAll("input[type=search][list]")).forEach(function(input) {
 	input.addEventListener("focus", async function() {
 		const datalist = document.getElementById(input.getAttribute("list"));
+		// if (!datalist) {
+		// 	return; // we found the order search box
+		// }
 		if (datalist.options.length === 0) {
 			// not loaded before, so load it up
 			const response = await fetch(datalist.dataset.fetchurl);
@@ -527,9 +527,15 @@ Array.from(document.querySelectorAll("input[type=search]")).forEach(function(inp
 
 
 // handle data list selection
-Array.from(document.querySelectorAll("input[type=search]")).forEach(function(input) {
+Array.from(document.querySelectorAll("input[type=search][list]")).forEach(function(input) {
 	input.addEventListener("input", function(event) {
-		//console.log(event.inputType);
+		
+		// if (event.target.name == "OrderNumber") {
+		// 	dataSearchObject[event.target.name] = event.target.value;
+		// 	window.datatable.ajax.reload();
+		// 	return;
+		// }
+
 		if (event instanceof InputEvent && this.value === "") {
 			// user has set the input to empty
 			dataSearchObject[input.name] = null;
