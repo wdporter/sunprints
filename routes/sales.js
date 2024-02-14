@@ -685,11 +685,12 @@ router.get("/designsearch", (req, res) => {
 	if (decoration == "TransferName")
 		close.pop()
 
-	const media = media[decorations.indexOf(decoration)]
+	// get the medium for this deocoration
+	const medium = art.find(a => a.decoration === decoration).medium;
 
 	try {
 
-		const joinTable = `${media}${req.query.decoration}Design`
+		const joinTable = `${medium}${req.query.decoration}Design`
 
 		let query = /*sql*/`SELECT ${decoration}Design.*, SizeCategory 
 FROM ${joinTable}
