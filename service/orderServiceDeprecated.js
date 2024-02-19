@@ -455,19 +455,10 @@ function edit(order, designs, user) {
 
 				//update stock levels in Garment (Product) table
 				productService.adjustStockLevels(db, originalOrderProduct, product)
-
-
-
-
 			}
-
-
 		})
 
-
-
 		db.prepare("COMMIT").run()
-
 
 		const ret = {
 			LastModifiedBy: order.LastModifiedBy,

@@ -221,7 +221,7 @@ module.exports = class SalesHistoryDao {
 
 		const sql = /*sql*/`UPDATE Sales
 		SET ${params.filter(p => p !== "OrderId").map(p => p + "=@" + p).join(",")}
-		WHERE OrderId=@OrderId`;
+		WHERE OrderId=@OrderId AND OrderGarmentId=@OrderGarmentId`;
 		
 		const statement = this.db.prepare(sql);
 		statement.run(product);
