@@ -6,10 +6,14 @@
 	<div>
 		<details open>
 			<summary>Customer</summary>
-			<p>
-				<label for=customerName>Name</label>
-				<input id=customerName type=search list=customerData autocomplete=off placeholder="type name or code" name=Company />
-				<datalist id=customerData data-fetchurl="/sales/customernames"></datalist>
+				<p>
+					<label for=customerName id=customerSearchLabel>Sort by:</label>
+					<input type=radio name=customerOrderRadio id=customerNameOrderRadio value=name checked />
+					<label for=customerNameOrderRadio>Name</label>
+					<input type=radio name=customerOrderRadio id=customerCodeOrderRadio value=code />
+					<label for=customerCodeOrderRadio>Code</label>
+					<input id=customerName type=search list=customerData autocomplete=off placeholder="type name or code" name=Company />
+					<datalist id=customerData data-fetchurl="/sales/customernames"></datalist>
 			</p>
 		</details>
 		<details open>
@@ -508,22 +512,66 @@ document.querySelector("table#dt tbody").addEventListener("click", onOpenRowButt
 
 
 // load up our datalist elements first time the input control is focussed
-Array.from(document.querySelectorAll("input[type=search][list]")).forEach(function(input) {
-	input.addEventListener("focus", async function() {
-		const datalist = document.getElementById(input.getAttribute("list"));
-		// if (!datalist) {
-		// 	return; // we found the order search box
-		// }
-		if (datalist.options.length === 0) {
-			// not loaded before, so load it up
-			const response = await fetch(datalist.dataset.fetchurl);
-			const json = await response.json();
-			for (item of json) {
-				datalist.insertAdjacentHTML("beforeend", `<option data-value="${item.value}" value="${item.name}">`);
-			}
+for (let input of document.querySelectorAll("input[type=search][list]")) {
+	input.addEventListener("focus", () => loadDatalist(input));
+};
+
+async function loadDatalist(input) {
+	const datalist = document.getElementById(input.getAttribute("list"));
+	if (datalist.options.length === 0) {
+		// not loaded before, so load it up
+		const response = await fetch(datalist.dataset.fetchurl);
+		const items = await response.json();
+		for (item of items) {
+			datalist.insertAdjacentHTML("beforeend", `<option data-value="${item.value}" value="${item.name}" data-code="${item.code || ''}" data-company="${item.company || ''}" />`);
+		}
+		// if it is the customer list, sort it 
+		if (input.id === "customerName") {
+			sortCustomers(datalist);
+		}
+	}
+}
+
+
+// sorts the customer list by the selected radio button
+function sortCustomers(datalist) {
+	const myOptions = Array.from(datalist.options);
+	const selectedRadioValue = document.querySelector("input[name=customerOrderRadio]:checked").value;
+	for (option of myOptions) {
+		if (selectedRadioValue === "name") {
+			option.value = `${option.dataset.company} (${option.dataset.code})`;
+		}
+		else {
+			option.value = `${option.dataset.code} – ${option.dataset.company}`;
+		}
+	}
+	myOptions.sort(function(a, b) {
+		if (selectedRadioValue === "name") {
+			return a.value.toUpperCase() > b.value.toUpperCase() ? 1 : -1;
+		}
+		else {
+			const aAsNumber = parseInt(a.dataset.code);
+			const bAsNumber = parseInt(b.dataset.code);
+
+			if (isNaN(aAsNumber) && isNaN(bAsNumber))
+				return a.value.toUpperCase() > b.value.toUpperCase() ? 1 : -1;;
+			if (isNaN(aAsNumber))
+				return 1;
+			if (isNaN(bAsNumber))
+				return -1;
+			return aAsNumber > bAsNumber ? 1 : -1; 
 		}
 	})
-});
+	// remove all options from datalist
+	for (option of Array.from(datalist.options)) {
+		option.remove();
+	}
+	// add our changed options
+	for (option of myOptions) {
+		datalist.appendChild(option);
+	}
+}
+
 
 
 // handle data list selection
@@ -642,6 +690,17 @@ function debounce(func, timeout = 300){
 		}, timeout);
 	};
 }
+
+for (let radio of document.querySelectorAll("input[name=customerOrderRadio]")) {
+	radio.addEventListener("change", () => {
+		const datalist = document.getElementById("customerData");
+		if (datalist.options.length === 0)
+			loadDatalist(document.getElementById("customerName"));
+		else
+			sortCustomers(datalist);
+	});
+}
+
 
 </script>
 

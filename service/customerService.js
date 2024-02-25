@@ -17,7 +17,9 @@ class CustomerService {
 		return customers.map(c => {
 			return {
 				value: c.CustomerId,
-				name: `${c.Company} (${c.Code})`
+				name: `${c.Company} (${c.Code})`,
+				company: c.Company,
+				code: c.Code
 			}
 		})
 	}
