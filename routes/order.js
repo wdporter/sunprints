@@ -184,8 +184,9 @@ router.get("/jobsheet/:id", function (req, res) {
 		WHERE OrderId=?`)
 		const customer = statement.get(req.params.id)
 
-		statement = db.prepare(`SELECT * 
+		statement = db.prepare(`SELECT Orders.*, Region.Name as Region
 		FROM Orders 
+		JOIN Region USING (RegionId)
 		WHERE OrderId=?`)
 		const order = statement.get(req.params.id)
 

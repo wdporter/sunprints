@@ -3,7 +3,9 @@
 	<title>SunPrints Order Number <%= order.OrderNumber %>
 	</title>
 	<style>
-
+		  /* useful for debugging css * {
+				border: 1px purple solid;
+			}     */
 		body {
 			font-family: sans-serif;
 			font-size: 11pt;
@@ -11,15 +13,6 @@
 
 		#customerTable {
 			width: 100%;
-		}
-
-		#customerTable td {
-			width: 33%;
-		}
-
-		#customerTable #middleCell {
-			padding-left: 2em;
-			padding-right: 2em;
 		}
 
 		#garmentTable {
@@ -61,6 +54,50 @@
     .tdbox {
       border: 1px black solid;
     }
+
+		/* these are some tailwind styles */
+		.flex {
+			display: flex;
+		}
+		.w-33pc {
+			width: 33%;
+		}
+		.w-40pc {
+			width: 40%;
+		}
+		.w-50pc {
+			width: 50%;
+		}
+		.w-55pc {
+			width: 55%;
+		}
+		.min-w-40pc {
+			min-width: 40%;
+		}
+		.align-top {
+			vertical-align: top;
+		}
+		.align-middle {
+			vertical-align: middle;
+		}
+		.px-1 {
+			padding-left: 1em;
+			padding-right: 1em;
+		}
+		.pt-1 {
+			padding-top: 1em;
+		}
+		.pl-half {
+			padding-left: 0.5em;
+		}
+		.font-bold {
+			font-weight: 700;
+		}
+		.text-right {
+			text-align: right;
+		}
+
+
 
 		@media print {
 			table.list {
@@ -130,49 +167,93 @@
 
 	<table id="customerTable">
 		<tr>
-			<td>
-				<b><%= customer.Company %></b>
+			<td class="w-33pc align-top" >
+				<div class="font-bold"><%= customer.Company %></div>
 				<% if (customer.AddressLine1) { %>
-					<br><%= customer.AddressLine1 %>
+					<div><%= customer.AddressLine1 %></div>
 				<% } %>
 				<% if (customer.AddressLine2) { %>
-					<br><%= customer.AddressLine2 %>
+					<div><%= customer.AddressLine2 %></div>
 				<% } %>
-				<br><%= customer.Locality %> <%= customer.State %> <%= customer.Postcode %>
-				</td>
-			<td id="middleCell"><b>Deliver To</b><br><%- customer.Notes ? customer.Notes.replace(/\n/g, "<br>") : "n/a" %></td>
-			<td>
-				<table>
-					<tr><td style="text-align:right"><b>Order No:</b></td><td><%= order.OrderNumber %></td></tr>
-					<tr><td style="text-align:right"><b>Customer Order No:</b></td><td><%= order.CustomerOrderNumber || 'n/a' %></td></tr>
-				</table>
+				<div><%= customer.Locality %> <%= customer.State %> <%= customer.Postcode %></div>
+			</td>
+			<td class="w-33pc align-top px-1">
+				<div class="font-bold">Deliver To:</div>
+				<div><%- customer.Notes ? customer.Notes.replace(/\n/g, "<br>") : "n/a" %></div>
+			</div>
+			<td class="align-top">
+				<div class="flex">
+					<span class="font-bold w-50pc text-right">Order No:</span>
+					<span class="pl-half"><%= order.OrderNumber %></span>
+				</div>
+				<div class="flex">
+					<span class="font-bold w-50pc text-right">Customer Order No:</span>
+					<span class="pl-half flex" style="align-items: center;"><%= order.CustomerOrderNumber || 'n/a' %></span>
+				</div>
 			</td>
 		</tr>
-
 		<tr>
-		<td>
-			<b>Order Date:</b> <%=  new Date(Date.parse(order.OrderDate)).toLocaleDateString("en-AU")  %><br>
-			<b>Delivery:</b>&emsp;&ensp;<%= order.DeliveryDate || "n/a" %><br>
-			<div style="display:flex">
-				<div><b>Notes:</b></div>
-				<div style="margin-left: 1em; "><%- order.Notes ? order.Notes.replace(/\n/g, "<br>") : "" %></div>
-			</div>
-		</td>
-		<td style="vertical-align:text-top">
-			<b>Invoice Date:</b> <%= order.InvoiceDate ?  new Date(order.InvoiceDate).toLocaleDateString("en-AU") : "n/a" %><br>
-			<b>Terms:</b>&emsp;&emsp;&emsp;<%= order.Terms %><br>
-			<b>Sales Rep:</b>&emsp;&ensp;<%= order.SalesRep || "n/a" %>
-		</td>
-		<td style="vertical-align:text-top; font-size:large"> <%#  ext-align:center; %>
-			<% if (order.Repeat) { %> <b>Repeat</b><br> <% } %>
-			<% if (order.New) { %> <b>New</b><br> <% } %>
-			<% if (order.BuyIn) { %> 
-				<b>Buy In</b><br> <%#  %> 
-				<% if (stockorder) { %>
-					<%= stockorder.StockOrderId %>
+			<td class="w-33pc align-top pt-1">
+				<div class="flex">
+					<span class="w-40pc font-bold">Order Date:</span>
+					<span><%=  new Date(Date.parse(order.OrderDate)).toLocaleDateString("en-AU")  %></span>
+				</div>
+				<div class="flex">
+					<span class="w-40pc font-bold">Delivery:</span>
+					<span><%= order.DeliveryDate || "n/a" %></span>
+				</div>
+				<div class="flex">
+					<span class="min-w-40pc font-bold">Notes:</b></span>
+					<span ><%- order.Notes ? order.Notes.replace(/\n/g, "<br>") : "" %> and a whole bunch of other stuff</span>
+				</div>
+			</td>
+			<td class="px-1 w-33pc align-top pt-1">
+				<div class="flex">
+					<span class="w-55pc font-bold">Invoice Date:</span>
+					<span><%= order.InvoiceDate ?  new Date(order.InvoiceDate).toLocaleDateString("en-AU") : "n/a" %></span>
+				</div>
+				<div class="flex">
+					<span class="w-55pc font-bold">Terms:</span>
+					<span><%= order.Terms %></span>
+				</div>
+				<% if (order.SalesRep) { %>
+					<div class="flex">
+						<span class="w-55pc font-bold">Sales Rep:</span>
+						<span><%= order.SalesRep || "n/a" %></span>
+					</div>
 				<% } %>
-			<% } %>
-		</td>
+				<% if (order.Region) { %>
+					<div class="flex">
+						<span class="w-55pc font-bold">Region:</span>
+						<span><%= order.Region || "n/a" %></span>
+					</div>
+				<% } %>
+			</td>
+			<td class="align-top pt-1">
+				<% if (order.Repeat) { %>
+					<div class="flex">
+						<span class="w-50pc"></span>
+						<span class="font-bold">Repeat</span>
+					</div>
+				<% } %>
+				<% if (order.New) { %>
+					<div class="flex">
+						<span class="w-50pc"></span>
+						<span class="font-bold">New</span>
+					</div>
+					<% } %>
+					<% if (order.BuyIn) { %> 
+						<div class="flex">
+							<span class="w-50pc font-bold"></span>
+							<span class="font-bold">Buy In<% if (stockorder) { %>:<% } %></span>
+						</div>
+					<% if (stockorder) { %>
+						<div class="flex">
+							<span class="w-50pc font-bold"></span>
+							<span><%= stockorder.StockOrderId %><% } %></span>
+						</div>
+					<% } %>
+			</td>
 		<tr>
 	</table>
 
@@ -280,7 +361,7 @@
 
 
 <div style="page-break-before: always; margin-top: 3em;">
-	<div style="display:flex;  ">
+	<div class="flex">
 			<h1>Screens, Transfers and USBs</h1>
 			<h1 style="margin-left:auto">
 				<%= new Date().toLocaleDateString("en-AU") %>
