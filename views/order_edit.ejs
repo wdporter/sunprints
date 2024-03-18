@@ -469,7 +469,9 @@ createApp ({
 				this.order.designs[`${location}${medium}${n}Name`] = ""
 			})
 			// set standard (unnamed) screens to empty
-			this.order.designs[`${location}ScreenStandard`] = ""
+			if (decoration === "Print") {
+				this.order.designs[`${location}ScreenStandard`] = "";
+			}
 		},
 
 

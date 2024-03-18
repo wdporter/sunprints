@@ -74,12 +74,24 @@ VALUES (${Object.keys(product).map(k => `@${k}`).join(" , ")})`
 		// get a list of changed columns
 		const changedColumns = [] 
 		for (let key in original) {
-			if (key == "OrderGarmentId")
-				continue // ignore these
-			if (typeof orderGarment[key] == "undefined")
-				continue
-			if (original[key] !== orderGarment[key])
-				changedColumns.push(key)
+			if (key === "OrderGarmentId" || key === "CreatedBy" || key === "CreatedDateTime") {
+				continue; // ignore these, they should never change once set
+			}
+			// we only get properties from the front end that have a value
+			if (typeof orderGarment[key] === "undefined") {
+				// if it's null in the database, then there's no change
+				if (original[key] === null) {
+					continue;
+				}
+				else {
+					// but if the database had a value before, it means the user has deleted the value, 
+					// so we add it back into what the frontend submitted as a null
+					orderGarment[key] = null;
+				}
+			} 
+			if (original[key] !== orderGarment[key]) {
+				changedColumns.push(key);
+			}
 		}
 
 		let query = /*sql*/`UPDATE OrderGarment SET 
