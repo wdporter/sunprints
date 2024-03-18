@@ -573,12 +573,22 @@ createApp ({
 			}
 		}, //~ onPurchaseOrderSelect
 		saveOrder() {
-			let method = "POST"
-			let url = "/order"
+			let method = "POST";
+			let url = "/order";
 			if (this.order.OrderId > 0) {
-				method = "PUT"
-				url += `/${this.order.OrderId}`
+				method = "PUT";
+				url += `/${this.order.OrderId}`;
 			}
+
+			// fix the order date and invoice date because browsers report that as UTC
+			// which means that if you choose today and it's before 10am, it will show as yesterday.
+			if (this.order.OrderDate !== "") {
+				this.order.OrderDate = new Date(this.order.OrderDate).getDateAsIsoLocal();
+			}
+			if (this.order.InvoiceDate !== "") {
+				this.order.InvoiceDate = new Date(this.order.InvoiceDate).getDateAsIsoLocal();
+			}
+
 
 			fetch(url, {
 				method,
