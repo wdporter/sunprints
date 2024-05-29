@@ -187,6 +187,7 @@ router.post("/", function (req, res) {
 	if (req.body.Code == "") {
 		res.statusMessage = "We require a code."
 		res.status(400)
+		res.end()
 		return
 	}
 
@@ -196,6 +197,7 @@ router.post("/", function (req, res) {
 		if (count >= 1) {
 			res.statusMessage = "We are already using that code."
 			res.status(400)
+			res.end()
 			return
 		}
 
