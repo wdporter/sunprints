@@ -202,9 +202,9 @@
 					<span class="w-40pc font-bold">Delivery:</span>
 					<span><%= order.DeliveryDate || "n/a" %></span>
 				</div>
-				<div class="flex">
-					<span class="min-w-40pc font-bold">Notes:</b></span>
-					<span ><%- order.Notes ? order.Notes.replace(/\n/g, "<br>") : "" %></span>
+				<div>
+					<span class="font-bold">Notes:</span><br>
+					<%- order.Notes ? order.Notes.replace(/\n/g, "<br>") : "" %>
 				</div>
 			</td>
 			<td class="px-1 w-33pc align-top pt-1">
