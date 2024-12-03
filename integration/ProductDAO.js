@@ -225,7 +225,7 @@ WHERE GarmentId=@GarmentId`
 				// the new balanace is current balance + ( original order value - updated order value )
 				changedSizes.push({
 					size,
-					originalBalance: originalOrderGarment[size],
+					originalBalance: originalGarment[size],
 					newBalance: originalGarment[size] + (originalOrderGarment[size] - orderGarment[size])
 				})
 		})
