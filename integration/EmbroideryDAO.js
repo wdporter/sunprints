@@ -45,7 +45,8 @@ FROM Usb
 INNER JOIN UsbEmbroideryDesign USING (UsbId)
 WHERE EmbroideryDesignId = ?
 AND ${location} = 1 
-AND Deleted = 0`
+AND Deleted = 0
+ORDER BY Notes, Number`
 
 		const recordset = this.db.prepare(query).all(designId)
 

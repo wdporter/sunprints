@@ -46,7 +46,8 @@ FROM TransferName
 INNER JOIN TransferNameTransferDesign USING (TransferNameId)
 WHERE TransferDesignId = ?
 AND ${location} = 1 
-AND Deleted = 0`
+AND Deleted = 0
+ORDER BY Name`
 
 		const recordset = this.db.prepare(query).all(designId)
 

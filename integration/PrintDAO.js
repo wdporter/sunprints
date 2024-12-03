@@ -44,7 +44,8 @@ INNER JOIN ScreenPrintDesign USING (ScreenId)
 WHERE PrintDesignId = ?
 AND ${location}=1 
 AND NOT Name IS NULL
-AND Deleted=0`
+AND Deleted=0
+ORDER BY Name`
 
 
 		const recordset = this.db.prepare(query).all(designId)
