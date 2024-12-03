@@ -181,9 +181,12 @@ function format(d) {
 					},
 					enabled: <%= poweruser || salesrep ? "true" : "false" %>,
 					action: (e, dt) =>  {
-						var tr = dt.row("tr.selected")
-						if (tr.length)
-							done(tr.data().OrderId)
+						if (window.confirm("We will set the order to 'Done'. Continue?")) {
+							var tr = dt.row("tr.selected")
+							if (tr.length) {
+								done(tr.data().OrderId)
+							}
+						}
 					}
 				},
 				{
