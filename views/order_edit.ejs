@@ -581,8 +581,9 @@ createApp ({
 			}
 
 			// browser assigns default date of 1970-01-01, we want this to be null for invoice date
-			if (this.order.InvoiceDate === "1970-01-01")
+			if (this.order.InvoiceDate === null || this.order.InvoiceDate === "1970-01-01") {
 				this.order.InvoiceDate = "";
+			}
 
 			// fix the order date and invoice date because browsers report that as UTC
 			// which means that if you choose today and it's before 10am, it will show as yesterday.
