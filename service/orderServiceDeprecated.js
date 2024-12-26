@@ -359,7 +359,7 @@ function edit(order, designs, user) {
 		const orderProductDao = new OrderProductDao(db)
 
 		//******** 4. Iterate our products (OrderGarment) and save each one
-		order.products.forEach(product => {
+		for (const product of order.products) {
 
 			//******** 5. If the user added it and removed it, we don't need to save it
 			if (product.added && product.removed)
@@ -439,8 +439,6 @@ function edit(order, designs, user) {
 			}
 			else {
 				// ******** 8 update database, if there are diffs
-				product.LastModifiedBy = user
-				product.LastModifiedDateTime = new Date().toLocaleString()
 
 				delete product.added
 				delete product.removed
@@ -448,15 +446,15 @@ function edit(order, designs, user) {
 				const originalOrderProduct = orderProductDao.get(product.OrderGarmentId)
 
 				// save updated details
-				orderProductDao.update(product)
+				orderProductDao.update(product, user)
 
 				// save updated product to sales history
 				salesHistoryService.updateOrderProduct(product);
 
-				//update stock levels in Garment (Product) table
-				productService.adjustStockLevels(db, originalOrderProduct, product)
+				product.LastModifiedBy = user;
+				productService.adjustStockLevels(db, originalOrderProduct, product);
 			}
-		})
+		} //~ for (const product of order.products)
 
 		db.prepare("COMMIT").run()
 

@@ -189,63 +189,95 @@ WHERE GarmentId=@GarmentId`
 	}
 
 
-/**
- * a product has been removed from an order, so return the amounts back to stock
- * @param {object} items the stock level items that get updated
- * @param {object} product 
- */
-increaseStockLevels(items, product)  {
-
-	const keys = Object.keys(items).filter(k => !createdColumns.includes(k))
-	
-	const query = /*sql*/`
-UPDATE Garment 
-SET ${keys.map(i => `${i}=${i}+@${i}`).join(", ")},
-${lastModifiedColumns.map(col => `${col}=@${col}` ).join(", ")}
-WHERE GarmentId=@GarmentId`
-
-	const statement = this.db.prepare(query)
-	const info = statement.run(product)
-	console.log("increaseStockLevels", info)
-
-}
-
 	/**
-	 * a product on an order has had ajdustments made to stock levels, so adjust each balance
-	 * @param {object} originalOrderGarment the product(garment) as it exists in the datebase
-	 * @param {object} orderGarment the updated product(garment) that could have changed 
+	 * a product has been removed from an order, so return the amounts back to stock
+	 * @param {object} items the stock level items that get updated
+	 * @param {object} product 
 	 */
-	adjustStockLevels(originalOrderGarment, orderGarment)  {
+	increaseStockLevels(items, product)  {
 
-		const originalGarment = this.db.prepare(/*sql*/`SELECT * FROM Garment WHERE GarmentId=?`).get(orderGarment.GarmentId)
+		const keys = Object.keys(items).filter(k => !createdColumns.includes(k))
+		
+		const query = /*sql*/`
+	UPDATE Garment 
+	SET ${keys.map(i => `${i}=${i}+@${i}`).join(", ")},
+	${lastModifiedColumns.map(col => `${col}=@${col}` ).join(", ")}
+	WHERE GarmentId=@GarmentId`
 
-		const changedSizes = []
-		allSizes.forEach(size => {
-			if (originalOrderGarment[size] !== orderGarment[size]) 
-				// the new balanace is current balance + ( original order value - updated order value )
-				changedSizes.push({
-					size,
-					originalBalance: originalGarment[size],
-					newBalance: originalGarment[size] + (originalOrderGarment[size] - orderGarment[size])
-				})
-		})
-
-
-		if (changedSizes.length > 0) {
-			let query = /*sql*/`UPDATE Garment SET 
-			${changedSizes.map(s => `${s.size}=${s.newBalance}`).join(", ")}
-			,LastModifiedBy=@LastModifiedBy, LastModifiedDateTime=@LastModifiedDateTime
-			WHERE GarmentId=@GarmentId `
-
-			this.db.prepare(query).run(orderGarment)
-
-			const newGarment = this.db.prepare("SELECT * FROM Garment WHERE GarmentId=?").get(orderGarment.GarmentId)
-
-			// now do audit log
-			new AuditLogDao(this.db).update("Garment", "GarmentId", originalGarment, newGarment)
-
-		}
+		const statement = this.db.prepare(query)
+		const info = statement.run(product)
+		console.log("increaseStockLevels", info)
 
 	}
 
-}
+	/**
+	 * a product on an order has had adjustments made to stock levels, so adjust each balance
+	 * @param {object} originalOrderProduct the product(garment) as it exists in the datebase
+	 * @param {object} orderProduct the updated product(garment) that could have changed 
+	 */
+	// the order service has saved deleted products and added products
+	// so now we are looking at products that remain in the list.
+	// a lot of this should probably be shifted out to the product service class
+	// q1. did the amounts for each size get changed?
+	// q2. did the actual product change?
+	adjustStockLevels(originalOrderProduct, orderProduct) {
+
+		// see if the GarmentId has changed … 
+		if (originalOrderProduct.GarmentId !== orderProduct.GarmentId) {
+			// then first we need to return stock levels for the previous GarmentId
+			let query = "UPDATE Garment SET ";
+			const mySizes = []
+			for (const size of allSizes) {
+				if (originalOrderProduct[size] > 0) {
+					mySizes.push(` ${size}=${size} + ${originalOrderProduct[size]} `);
+				}
+			}
+			query += mySizes.join(" , ");
+			query += `, LastModifiedBy = '${orderProduct.LastModifiedBy}', LastModifiedDateTime = '${new Date().toLocaleString()}' `
+			query += ` WHERE GarmentId=${originalOrderProduct.GarmentId}`;
+			let statement = this.db.prepare(query);
+			let info = statement.run();
+			console.log("increase stock levels for the original product ", info);
+
+			// and secondly reduce stock levels for the new product type
+			query = "UPDATE Garment SET ";
+			mySizes.length = 0
+			for (const size of allSizes) {
+				if (orderProduct[size] > 0) {
+					mySizes.push(` ${size}=${size} - ${orderProduct[size]} `);
+				}
+			}
+			if (mySizes.length > 0) {
+				query += mySizes.join(" , ");
+				query += `, LastModifiedBy = '${orderProduct.LastModifiedBy}', LastModifiedDateTime = '${new Date().toLocaleString()}' `
+				query += ` WHERE GarmentId=${orderProduct.GarmentId}`;
+				statement = this.db.prepare(query);
+				info = statement.run();
+				console.log("adjust stock levels for the current product ", info);
+			}
+		}
+		else 
+		{
+
+			// product hasn't changed, so just reduce stock levels for any changed sizes
+			let query = "UPDATE Garment SET ";
+			const mySizes = []
+			for (const size of allSizes) {
+				if (originalOrderProduct[size] !== orderProduct[size]) {
+					mySizes.push(` ${size}=${size} - ( ${orderProduct[size]} - ${originalOrderProduct[size]}) `);
+				}
+			}
+			if (mySizes.length > 0) {
+				query += mySizes.join(" , ");
+				query += `, LastModifiedBy = '${orderProduct.LastModifiedBy}', LastModifiedDateTime = '${new Date().toLocaleString()}' `
+				query += ` WHERE GarmentId=${orderProduct.GarmentId}`;
+				const statement = this.db.prepare(query);
+				const info = statement.run();
+				console.log("adjust stock levels for the current product ", info);
+			}
+		}
+
+	} //~ adjustStockLevels
+
+} //~ class ProductDao
+

@@ -65,7 +65,7 @@ VALUES (${Object.keys(product).map(k => `@${k}`).join(" , ")})`
 	}
 
 
-	update(orderGarment) {
+	update(orderGarment, user) {
 		try {
 
 			// get the original OrderProduct item
@@ -74,8 +74,9 @@ VALUES (${Object.keys(product).map(k => `@${k}`).join(" , ")})`
 		// get a list of changed columns
 		const changedColumns = [] 
 		for (let key in original) {
-			if (key === "OrderGarmentId" || key === "CreatedBy" || key === "CreatedDateTime") {
-				continue; // ignore these, they should never change once set
+			// ignore these when seeing if user has made changes
+			if (key === "OrderGarmentId" || key === "CreatedBy" || key === "CreatedDateTime" || key === "LastModifiedBy" || key === "LastModifiedDateTime") {
+				continue; 
 			}
 			// we only get properties from the front end that have a value
 			if (typeof orderGarment[key] === "undefined") {
@@ -94,12 +95,23 @@ VALUES (${Object.keys(product).map(k => `@${k}`).join(" , ")})`
 			}
 		}
 
-		let query = /*sql*/`UPDATE OrderGarment SET 
-			${changedColumns.map(c => `${c}=@${c}`).join(", ")}
-			WHERE OrderGarmentId=@OrderGarmentId`
-		this.db.prepare(query).run(orderGarment)
+		// if we have changes, then save them
+		if (changedColumns.length > 0) {
+			// prepare our audit column values
+			orderGarment.LastModifiedBy = user;
+			orderGarment.LastModifiedDateTime = new Date().toLocaleString();
+			changedColumns.push("LastModifiedBy");
+			changedColumns.push("LastModifiedDateTime");
 
-		new AuditLogDao(this.db).update("OrderGarment", "OrderGarmentId", original, orderGarment )
+			// construct update statement
+			let query = /*sql*/`UPDATE OrderGarment SET 
+				${changedColumns.map(c => `${c}=@${c}`).join(", ")}
+				WHERE OrderGarmentId=@OrderGarmentId`
+			this.db.prepare(query).run(orderGarment)
+
+			// update audit logs
+			new AuditLogDao(this.db).update("OrderGarment", "OrderGarmentId", original, orderGarment )
+		}
 
 	}
 	catch (ex) {

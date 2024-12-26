@@ -232,7 +232,6 @@ function adjustStockLevels(db, originalOrderProduct, product) {
 
 		const dao = new OrderProductDao(db)
 
-
 		const productDao = new ProductDao(db)
 		productDao.adjustStockLevels(originalOrderProduct, product) 
 
