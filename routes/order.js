@@ -173,8 +173,7 @@ router.get("/edit", function (req, res) {
 // GET the jobsheet page
 router.get("/jobsheet/:id", function (req, res) {
 
-	const db = getDB()
-
+	const db = getDB();
 
 	try {
 
@@ -182,13 +181,13 @@ router.get("/jobsheet/:id", function (req, res) {
 		FROM Orders 
 		INNER JOIN Customer ON Customer.CustomerId = Orders.CustomerId
 		WHERE OrderId=?`)
-		const customer = statement.get(req.params.id)
+		const customer = statement.get(req.params.id);
 
 		statement = db.prepare(`SELECT Orders.*, Region.Name as Region
 		FROM Orders 
-		JOIN Region USING (RegionId)
-		WHERE OrderId=?`)
-		const order = statement.get(req.params.id)
+		LEFT OUTER JOIN Region ON Orders.RegionId=Region.RegionId
+		WHERE OrderId=?`);
+		const order = statement.get(req.params.id);
 
 		statement = db.prepare(`SELECT Garment.Code AS Code, Label, Type, Garment.Colour AS Colour, OrderGarment.* 
 	,PrintDesignF.Code || ' ' || IFNULL(PrintDesignF.Notes, '') || ' ' || IFNULL(PrintDesignF.Comments, '') AS FrontPrintDesign
