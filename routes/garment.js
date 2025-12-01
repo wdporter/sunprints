@@ -260,7 +260,7 @@ router.get("/dt", function (req, res) {
 			query += whereClause
 		}
 
-		const columns = ["SizeCategory", "Code", "Type", "Colour", "Label", "maxdate", "GarmentId"] // sort columns 
+		const columns = ["GarmentId", "SizeCategory", "Code", "Type", "Colour", "Label", "Notes", "maxdate", "GarmentId"] // sort columns 
 		const orderByClause = req.query.order.map(o => ` ${columns[o.column]} COLLATE NOCASE ${o.dir} `)
 		query += ` ORDER BY ${orderByClause.join(",")}`
 
