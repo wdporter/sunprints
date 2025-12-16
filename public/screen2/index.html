@@ -1,0 +1,221 @@
+<html lang="en">
+<head><title>vue3 easy data table</title>
+<link rel=stylesheet href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">	<link rel="stylesheet" href="/stylesheets/vue3-easy-data-table-style.css" >
+	<style>
+		:root {
+			--color-primary: #005ea5;  
+			--color-tertiary: #942514;
+		}
+
+
+		/* .buttons-pagination .item.button {
+			padding: 0 .5rem 0 .5rem;
+		} */
+
+		span.fa-trash {
+			color: var(--color-tertiary);		
+		}
+		span.fa-edit {
+			color:var(--color-primary);		
+		}
+		span.fa-trash:hover, span.fa-edit {
+			cursor: pointer;
+		}
+
+		/*tailwind type of stuff */
+		.p-4 {
+			padding: 1rem;
+		}
+		.px-2 {
+			padding-left: .5rem;
+			padding-right: .5rem;
+		}
+		.border-solid {
+			border-style: solid;
+		}
+		.border {
+			border-width: 1px;
+		}
+		.border-black {
+			border-color: #000
+		}
+		.text-center {
+			text-align: center;
+		}
+		.border-collapse {
+			border-collapse: collapse;
+		}
+	</style>
+
+</head>
+<body>
+<div id=app>
+  <label for=searchValue>search value: </label>
+  <input type=text id=searchValue placeholder="name, number and/or colour" :value=searchValue @input=onSearchInput>
+	<easy-data-table
+		:headers=headers 
+		:items=items 
+		theme-color="#005EA5"
+		alternating 
+		buttons-pagination 
+		v-model:server-options=serverOptions 
+		:server-items-length=serverItemsLength 
+		:loading=loading 
+		must-sort
+		border-cell
+		@expand-row=loadPrints
+	 >
+		<template #expand=item>
+			<div class=p-4 >
+				<div v-if="item.printsError">error: {{ item.printsError }}</div>
+				<media-subtable :data="item.prints" :headers="expandItemHeaders" />
+				<div v-if="data && data.length > 0">no print designs for this screen</div>
+			</div>
+    	</template>
+	 	<template #item-ScreenId="item"> {{item.ScreenId}} <span class="fa fa-edit fa-lg" title=Edit @click="editScreen(item)"></span> <span class="fa fa-trash fa-lg" title=Delete @click="deleteScreen(item)"></span>
+		</template>
+		<template #item-LastUsed="item">
+			{{  fixLastUsedDate(item.LastUsed) }}
+		</template>
+	</easy-data-table>
+</div>
+
+<script type=importmap>
+{
+	"imports": {
+		"vue": "../javascripts/vue.esm-browser-3.5.25.js",
+		"functions": "../javascripts/utilityFunctions.js",
+		"edt": "../javascripts/vue3-easy-data-table.es.js",
+		"mediaSubtable": "../components/MediaSubtable.js"
+ 	}
+}
+</script>
+
+<script type=module>
+	import { createApp, ref, watch } from "vue"
+	import EasyDataTable from "edt"
+	import {debounce} from "functions"
+	import MediaSubtable from "mediaSubtable"
+
+	const App = {
+		components: {
+			EasyDataTable,
+			MediaSubtable
+		},
+		setup () {
+			const loading = ref(false);
+			const searchValue = ref("");
+			const serverItemsLength = ref(0);
+			const serverOptions = ref({
+				page: 1,
+				rowsPerPage: 25,
+				sortBy: "Number",
+				sortType: "asc"
+			});
+			const headers = [
+				{ text: "Actions", value: "ScreenId", sortable: false },
+				{ text: "Name", value: "Name", sortable: true },
+				{ text: "Number", value: "Number", sortable: true },
+				{ text: "Colour", value: "Colour", sortable: true },
+				{ text: "Last Used", value: "LastUsed", sortable: true }
+			]
+			const items = ref([])
+			const expandItemHeaders = [
+				{name: "Code", type: String },
+				{name: "Notes", type: String },
+				{name: "Comments", type: String },
+				{name: "SizeCategory", displayName: "Size", type: String },
+				{name: "Front", type: Boolean },
+				{name: "Back", type: Boolean },
+				{name: "Pocket", type: Boolean },
+				{name: "Sleeve", type: Boolean },
+			]
+
+			const loadFromServer = async () => {
+				loading.value = true;
+				const url = `/screen/edt?page=${serverOptions.value.page}&rowsperpage=${serverOptions.value.rowsPerPage}&sortBy=${serverOptions.value.sortBy}&sorttype=${serverOptions.value.sortType}&searchValue=${searchValue.value}`
+
+				const result = await ( await fetch(url)).json()
+
+				items.value = result.serverCurrentPageItems
+				serverItemsLength.value = result.serverTotalItemsLength
+
+				loading.value = false;
+			}
+
+			const fixLastUsedDate = (dateString) => {
+				const date = Date.parse(dateString)
+				if (isNaN(date))
+					return "not used"
+				else
+					return new Date(date).toLocaleDateString("en-AU", {day: "numeric", month: "numeric", year: "numeric"})
+			}
+
+			const onSearchInput = debounce((e)=> {
+				searchValue.value = e.target.value.trim()
+			}, 1000)
+
+			watch([serverOptions, searchValue], 
+				(value) => { 
+					loadFromServer(); 
+				}, 
+				{ 
+					deep: true, 
+					immediate: true 
+				}
+			)
+
+			const loadPrints = async (index) => {
+				const myIndex = index - ((serverOptions.value.page - 1) * serverOptions.value.rowsPerPage)
+				const expandedItem = items.value[myIndex]
+				if (expandedItem.prints == undefined) {
+					expandedItem.expandLoading = true
+					const url = `/screen/prints/${expandedItem.ScreenId}`
+					try {
+						expandedItem.prints  = await (await fetch(url)).json()
+					}
+					catch(err) {
+						expandedItem.printsError = err.Message
+					} 
+					expandedItem.expandLoading = false
+				}
+			}
+
+			const deleteScreen = function(screen) {
+				console.log(`delete ${screen.ScreenId} `)
+				const item = items.value.find(item=>item.ScreenId == screen.ScreenId)
+				// todo: fetch/delete the item
+				const index = items.value.indexOf(item)
+				items.value.splice(index, 1) 
+			}
+
+			const editScreen = function(screen) {
+				console.log(`edit ${screen.ScreenId}!`)
+				const item = items.value.find(item=>item.ScreenId == screen.ScreenId)
+				//todo: fetch/put the item
+				item.Colour = "purple"
+			}
+
+			return {
+				headers,
+				items,
+				loading,
+				serverOptions,
+				serverItemsLength,
+				loadPrints,
+				searchValue,
+				onSearchInput,
+				expandItemHeaders,
+				deleteScreen,
+				editScreen,
+				fixLastUsedDate
+			}
+		}
+  	}
+	createApp(App).mount("#app")
+
+</script>
+
+
+	</body>
+</html>

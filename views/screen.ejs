@@ -1,4 +1,4 @@
-<%- include("partials/head.ejs") %>
+<%- include("partials/head2.ejs") %>
 
 <style>
 	table.printTable {
@@ -109,20 +109,26 @@
 		]
 	})
 
-	function format(d) {
-		return fetch(`screen/prints/${d.ScreenId}`)
-		.then(response => response.json())
-		.then(json => {
+	async function format(d) {
+		try {
+			const url = `/screen/prints/${d.ScreenId}`
+			const response = await fetch(url)
+			if (! response.ok )
+				return "We encountered an error: " + response.statusText
+			var json = await response.json()
 			if (json.length == 0)
 				return "not used"
 			else {
 				let ret = "<table class=printTable><tr><th>Print Design<th>Size<th>Front<th>Back<th>Pocket<th>Sleeve"
 				json.forEach(x => {
-					ret += `<tr><td>${x.Code} ${x.Notes} ${x.Comments}<td>${x.SizeCategory}<td>${x.Front ? "✅" : ""}<td>${x.Back ? "✅" : ""}<td>${x.Pocket ? "✅" : ""}<td>${x.Sleeve ? "✅" : ""}`
+					ret += `<tr><td>${x.Code || ""} ${x.Notes || ""} ${x.Comments || ""}<td>${x.SizeCategory}<td>${x.Front ? "✅" : ""}<td>${x.Back ? "✅" : ""}<td>${x.Pocket ? "✅" : ""}<td>${x.Sleeve ? "✅" : ""}`
 				})
 				return ret 
 			}
-		})
+		}
+		catch(err) {
+			return "We encountered an error: " + err
+		}
 	}
 
 	var detailRows = [];

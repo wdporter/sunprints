@@ -12,15 +12,6 @@ router.get("/", function (req, res, next) {
 	 })
 })
 
-/* GET Screens page. 
-expermimental */
-router.get("/2", function (req, res, next) {
-	res.render("screen3.ejs", { 
-		title: "Screens",
-		user: req.auth.user,
-		poweruser: res.locals.poweruser
-	 })
-})
 
 // GET screens for the New Order page
 router.get("/ordersearch", function (req, res, next) {
@@ -96,7 +87,8 @@ router.get("/dt", function(req, res) {
 		const recordsTotal = statement.get().Count
 		let recordsFiltered = recordsTotal
 
-		let query = `SELECT Screen.ScreenId, Name, Number, Colour, s.maxdate AS LastUsed FROM Screen
+		let query = /*sql*/`SELECT Screen.ScreenId, Name, Number, Colour, s.maxdate AS LastUsed 
+		FROM Screen
 		LEFT OUTER JOIN 
 		(SELECT Sales.FrontScreenId AS ScreenId, MAX(SalesTotal.OrderDate, 0) AS maxdate
 		FROM Sales
@@ -106,7 +98,7 @@ router.get("/dt", function(req, res) {
 		SELECT Sales.FrontScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
 		FROM Sales
 		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.FrontScreenId
+		GROUP BY Sales.FrontScreen2Id
 		UNION ALL 
 		SELECT Sales.BackScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
 		FROM Sales
@@ -139,7 +131,7 @@ router.get("/dt", function(req, res) {
 		GROUP BY Sales.SleeveScreen2Id
 		) s
 		ON  s.ScreenId=Screen.ScreenId `
-		let	whereClause = " WHERE Deleted=0 "
+		let	whereClause = /*sql*/` WHERE Deleted=0 `
 
 		let whereParams = []
 		if (req.query.search.value) {
@@ -150,15 +142,15 @@ router.get("/dt", function(req, res) {
 			whereParams = searchables.map(c => `%${req.query.search.value}%`)
 			whereClause += ` AND ( ${cols} ) `
 
-			statement = db.prepare(`SELECT Count(*) as Count FROM Screen ${whereClause}`)
+			statement = db.prepare(/*sql*/`SELECT Count(*) as Count FROM Screen ${whereClause}`)
 			recordsFiltered = statement.get(whereParams).Count
 		}
 
 		query += whereClause
 
-		query += ` ORDER BY ${req.query.order[0].column } COLLATE NOCASE ${req.query.order[0].dir} `
+		query += /*sql*/` ORDER BY ${req.query.order[0].column } COLLATE NOCASE ${req.query.order[0].dir} `
 
-		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start} `
+		query += /*sql*/` LIMIT ${req.query.length} OFFSET ${req.query.start} `
 		const data = db.prepare(query).all(whereParams)
 
 		data.forEach(d => d.DT_RowId=d.ScreenId)
@@ -168,7 +160,7 @@ router.get("/dt", function(req, res) {
 			recordsTotal,
 			recordsFiltered,
 			data
-		}).end()
+		})
 
 	}
 	catch(ex) {
@@ -181,6 +173,61 @@ router.get("/dt", function(req, res) {
 	}
 
 })
+
+
+/* get screens for vue-easy-datatable server side processing */
+router.get("/edt", function(req, res) {
+	const db = getDB()
+	try {
+
+		let	whereClause = " WHERE  Deleted=0 "
+		//  filtering to enhance where clause
+		if (req.query.searchValue != "undefined") {
+			const searchPhrases = req.query.searchValue.split(" ").filter(e => e)
+			if (searchPhrases.length > 0) {
+				whereClause += " AND "
+				for (const phrase of searchPhrases) {
+					whereClause +=  /*sql*/` Name || ' ' || Number || ' ' || Colour LIKE '%${phrase}%'  AND`  
+				}
+				whereClause = whereClause.substring(0, whereClause.length-3) // get rid of trailing "AND" 
+			}
+		}
+
+		// get a count of all records
+		let statement = db.prepare(/*sql*/`SELECT COUNT(*) as Count FROM ScreenSearch_View ${whereClause} `)
+		const serverTotalItemsLength = statement.get().Count
+
+		// todo, add last used date
+		let query = /*sql*/`SELECT Name, Number, Colour, ScreenId, LastUsed FROM ScreenSearch_View ${whereClause}`
+
+		// create order by clause
+		orderByClause = /*sql*/` ORDER BY ${req.query.sortBy}  COLLATE NOCASE ${req.query.sorttype}`
+		query += orderByClause
+
+		// create limit cause
+		query += /*sql*/` LIMIT ${req.query.rowsperpage}`
+
+		// create offset clause
+		query += /*sql*/` OFFSET  ${Number(req.query.page - 1) * Number(req.query.rowsperpage) }`
+		
+		const data = db.prepare(query).all()
+
+		res.send({
+			serverTotalItemsLength,
+			serverCurrentPageItems: data
+		})
+	}
+	catch(ex) {
+		res.statusMessage = ex.message
+		res.sendStatus(400)
+		console.log(ex)
+	}
+	finally
+	{
+		db.close()
+	}
+})
+
 
 
 
@@ -237,13 +284,6 @@ router.get("/dt2", function(req, res) {
 })
 
 
-
-
-
-
-
-
-
 // GET page of deleted screens
 router.get("/deleted", (req, res) => {
 
@@ -287,12 +327,12 @@ router.get("/prints/:id", (req, res) => {
 	const db = getDB();
 	try {
 		const printDesigns = db.prepare(/*sql*/`
-			SELECT Code, Notes, Comments, SizeCategory, Front, Back, Pocket, Sleeve 
+			SELECT Code, Notes, Comments, REPLACE(SizeCategory, ',', ', ') AS SizeCategory, Front, Back, Pocket, Sleeve 
 			FROM PrintDesign 
 			INNER JOIN ScreenPrintDesign ON PrintDesign.PrintDesignId = ScreenPrintDesign.PrintDesignId
 			WHERE ScreenId=?`).all(req.params.id)
 
-		res.json(printDesigns).end()
+		res.json(printDesigns)
 	}
 	finally {
 		db.close()
