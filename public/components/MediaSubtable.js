@@ -15,7 +15,7 @@ export default {
 			}
 	},
 	template: /*html*/`
-		<table v-if="data && data.length > 0" class="border border-solid border-black border-collapse">
+		<table v-if="data && data.length > 0" class="border border-solid border-black border-collapse w-initial min-w-initial" >
 			<thead>
 				<tr>
 					<th v-for="header in headers" class="border border-solid border-black px-2" scope=col>{{header.displayName || header.name}}</th>

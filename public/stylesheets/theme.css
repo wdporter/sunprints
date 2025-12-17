@@ -135,6 +135,11 @@ span.fa-trash {
 	color:var(--color-tertiary);
 }
 
+span.fa-trash:hover, span.fa-edit:hover {
+	cursor: pointer;
+}
+
+
 button:disabled, input[type=button]:disabled, input[type=reset]:disabled, input[type=submit]:disabled {
 	opacity: 0.5;
 }
@@ -168,21 +173,23 @@ input.yellow-on-black-buttton, button.yellow-on-black-buttton {
 
 /* back to top button */
 .back-to-top {
-	position: fixed;
-	right: 2rem;
-	bottom: 2rem;
-	border-radius: 100%;
+	position: fixed; /*✅ */
+	right: 2rem; /*✅ */
+	bottom: 2rem; /*✅ */
+	border-radius: 100%; /* replaced with rounded-full */
 	background: #141c38;
 	/* padding: 0.5rem;
 	border: none; */
-	cursor: pointer;
-	opacity: 100%;
+	cursor: pointer; /*✅ */
+	opacity: 100%;  /*✅ but not sure why the hidden class was also applied */
 	transition: opacity 0.5s;
 }
 .back-to-top:hover {
   opacity: 60%;
 }
-
+/* 
+replaced with opacity 0,
+but when/how is this used  */
 .hidden {
   opacity: 0%;
 }
@@ -215,4 +222,9 @@ input.yellow-on-black-buttton, button.yellow-on-black-buttton {
 }
 #footLinks li a:active, #footLinks li a:visited {
 	color: var(--color-body);
+}
+
+/* the expand-column-width prop doesn't seem to work */
+.vue3-easy-data-table__header tr th:first-of-type {
+	width: 1rem;
 }
