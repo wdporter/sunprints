@@ -1,0 +1,47 @@
+/* this is not a generated file,
+we just add tailwind classes into here as/when needed 
+*/
+
+.border {
+	border-width: 1px;
+}
+.border-5 {
+	border-width: 5px;
+}
+.border-black {
+	border-color: #000
+}
+.border-collapse {
+	border-collapse: collapse;
+}
+.border-dashed {
+	border-style: dashed;
+}
+.border-purple {
+	border-color: purple; 
+}
+.border-solid {
+	border-style: solid;
+}
+.inline {
+	display: inline;
+}
+.min-w-initial {
+	min-width: initial;
+}
+.p-4 {
+	padding: 1rem;
+}
+.px-2 {
+	padding-left: .5rem;
+	padding-right: .5rem;
+}
+.text-center {
+	text-align: center;
+}
+.w-initial {
+	width: initial;
+}
+.w-½ {
+	width: 50%; /* i made this one up, since w-1/2 is not a valid class name */
+}
