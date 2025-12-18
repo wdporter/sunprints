@@ -4,7 +4,7 @@ const getDB = require("../integration/dbFactory");
 
 
 /* GET Screens page. */
-router.get("/", function (req, res, next) {
+router.get("/", function (req, res) {
 	res.render("screen.ejs", { 
 		title: "Screens",
 		user: req.auth.user,
@@ -14,7 +14,7 @@ router.get("/", function (req, res, next) {
 
 
 // GET screens for the New Order page
-router.get("/ordersearch", function (req, res, next) {
+router.get("/ordersearch", function (req, res) {
 	const db = getDB();
 	try {
 
