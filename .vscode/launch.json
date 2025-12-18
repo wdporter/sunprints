@@ -19,7 +19,8 @@
 			],
 			"type": "node",
 			"env": {
-				"DEBUG": "website:*"
+				"DEBUG": "website:*",
+				"NODE_ENV": "development"
 		},
 		// {
 		// 	"type": "pwa-node",
