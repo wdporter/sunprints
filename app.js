@@ -4,7 +4,6 @@ const path = require("path")
 const cookieParser = require("cookie-parser")
 const logger = require("morgan")
 const bodyParser = require("body-parser")
-const basicAuth = require('express-basic-auth')
 
 const apiRouter = require("./routes/api")
 const auditLogRouter = require("./routes/auditlog")
@@ -45,39 +44,49 @@ app.use(express.static(path.join(__dirname, "public")))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 
-
-app.use(basicAuth({
-	authorizer: myAuthorizer,
-	challenge: true,
-	realm: 'sprealm',
-}));
-function myAuthorizer(username, password) {
-	const db = getDB();
-	const user = db.prepare("SELECT * FROM User WHERE Name=? COLLATE NOCASE").get(username);
-	db.close()
-	if (typeof user === "undefined") {
-		const message = `We could not find the user name: ${username}`;
-		console.log(message);
-		throw message;
+// do our basic auth
+app.use (function(req, res, next) {
+ 
+	// send the request back to authenticate
+	const reject = () => {
+		res.setHeader("WWW-Authenticate", `Basic realm="sprealm"`);
+		res.sendStatus(401)
 	}
-	var hash = require('crypto').createHash('md5').update(password).digest("hex");
-	return hash === user.Password;
-}
 
-app.use((req, res, next) => {
-	const db = getDB();
-	const user = db.prepare("SELECT * FROM User WHERE Name=? COLLATE NOCASE").get(req.auth.user);
-	db.close();
-	if (typeof user === "undefined") {
-		const message = `We could not find the user name: ${username}`;
-		console.log(message);
-		res.status(403).render("error", { message });
+	// have they already authenticated?
+	if (!req.headers.authorization) {
+		// okay, well send the request for authentication here
+		return reject()
 	}
-	res.locals.poweruser = user.PowerUser == 1
-	res.locals.salesrep = user.SalesRep == 1
-	res.locals.admin = user.Admin == 1
 
-	next()
+	// break open the authorization object sent by the users
+	const [username, password] = Buffer.from(req.headers.authorization.replace("Basic ", ""), "base64").toString().split(":")
+
+	// go to db to get user information
+	let db, user
+	try {
+		db = getDB()
+		user = db.prepare(/*sql*/`SELECT * FROM User WHERE Name=? COLLATE NOCASE`).get(username)
+	}
+	finally {
+		db.close()
+	}
+
+	if ( user == undefined || user == null) {
+		throw new Error(`no user ${username}`)
+	}
+
+	var hash = require('crypto').createHash('md5').update(password).digest("hex")
+	if (hash === user.Password) {
+		req.auth = {user : username};
+		res.locals.poweruser = user.PowerUser == 1
+		res.locals.salesrep = user.SalesRep == 1
+		res.locals.admin = user.Admin == 1
+		return next()
+	}
+	else {
+		throw new Error(`wrong password`)
+	}
 })
 
 
@@ -103,14 +112,15 @@ app.use("/usb", usbRouter)
 app.use("/user", userRouter)
 
 
-
-
 // catch 404 and forward to error handler
+// this works by being applied to any path that is not defined
 app.use(function(req, res, next) {
   next(createError(404))
 })
 
+
 // error handler
+// because the first argument is "err", this is called whenever the first argument to "next" is an Error
 app.use(function(err, req, res, next) {
 	console.error(`❌ Error in ${req.method} ${req.path}:`, err);
 
