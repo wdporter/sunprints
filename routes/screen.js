@@ -1,7 +1,7 @@
 const express = require("express")
 const router = express.Router()
 const getDB = require("../integration/dbFactory");
-const { handler, validate } = require("../config/misc.js")
+const { handler, validate, convertToIsoDate } = require("../config/misc.js")
 const ScreenController = require( "../controllers/screenController.js");
 
 
@@ -203,21 +203,50 @@ router.post("/deleted/dt", function(req, res) {
 		const recordsTotal = statement.get().Count
 		let recordsFiltered = recordsTotal
 
-		let whereClause = " WHERE Deleted=1 "
-		if (req.body["search[value]"]) {
-			whereClause += ` AND (Number LIKE '%${req.body["search[value]"]}%' OR Colour LIKE '%${req.body["search[value]"]}%'
-				OR Name LIKE '%${req.body["search[value]"]}%' 
-			) `
-			// get count of filtered records
-			statement = db.prepare(`SELECT Count(*) as Count FROM Screen ${whereClause} `)
-			recordsFiltered = statement.get().Count
+		// the LastModifiedDateTime column is not sortable by sqlite, so we have to do it here
+		let data;
+		if (req.body["order[0][column]"] == "5") {
+			data = db.prepare(/*sql*/`SELECT ScreenId, Number, Colour, Name, LastModifiedBy, LastModifiedDateTime FROM Screen WHERE Deleted=1`).all()
+			data.forEach(d => {
+				d.LastModifiedDateTime = convertToIsoDate(d.LastModifiedDateTime)
+			})
+			data.sort((a, b) => {
+				return req.body["order[0][dir]"] == "asc" 
+					? Date.parse(a.LastModifiedDateTime) - Date.parse(b.LastModifiedDateTime)
+					: Date.parse(b.LastModifiedDateTime) - Date.parse(a.LastModifiedDateTime)
+			})
+
+			const start = parseInt(req.body.start)
+			const length = parseInt(req.body.length)
+			data = data.slice(start, start + length)
+
+			// put back the format
+			data.forEach(d=> {
+				const parse = Date.parse(d.LastModifiedDateTime)
+				const newDate = new Date(parse)
+				const formatted = newDate.toLocaleDateString(undefined, {day: "numeric", month: "numeric", year: "numeric", hour: "numeric", minute: "numeric", second: "numeric", hour12: true}) 
+				d.LastModifiedDateTime = formatted
+			})
+
 		}
+		else {
 
-		let query = ` SELECT ScreenId, Number, Colour, Name, LastModifiedBy, LastModifiedDateTime FROM Screen ${whereClause}  `
-		query += ` ORDER BY ${parseInt(req.body["order[0][column]"]) + 1} COLLATE NOCASE ${req.body["order[0][dir]"]} `
-		query += ` LIMIT ${req.body.length} OFFSET ${req.body.start}`
-		const data = db.prepare(query).all()
+			let whereClause = " WHERE Deleted=1 "
+			if (req.body["search[value]"]) {
+				whereClause += ` AND (Number LIKE '%${req.body["search[value]"]}%' OR Colour LIKE '%${req.body["search[value]"]}%'
+					OR Name LIKE '%${req.body["search[value]"]}%' 
+				) `
+				// get count of filtered records
+				statement = db.prepare(`SELECT Count(*) as Count FROM Screen ${whereClause} `)
+				recordsFiltered = statement.get().Count
+			}
 
+			let query = ` SELECT ScreenId, Number, Colour, Name, LastModifiedBy, LastModifiedDateTime FROM Screen ${whereClause}  `
+			query += ` ORDER BY ${parseInt(req.body["order[0][column]"]) + 1} COLLATE NOCASE ${req.body["order[0][dir]"]} `
+			query += ` LIMIT ${req.body.length} OFFSET ${req.body.start}`
+			data = db.prepare(query).all()
+
+		}
 
 		res.send({
 			draw: Number(req.body.draw),
