@@ -12,6 +12,7 @@
 	<link rel=stylesheet href=/stylesheets/tailwind.css>
 	<link rel=stylesheet href=/stylesheets/vue3-easy-data-table-style.css>
 	<link rel=stylesheet href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+	<link rel="stylesheet" href="sweetalert2.min.css">
 <% if (typeof stylesheets !== "undefined") { 
 	for (s of stylesheets) {
 %>
@@ -19,6 +20,8 @@
 <% } 
 } %>
 
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <% if (typeof javascripts != "undefined") { 
 	for (j of javascripts) {
 	%>

@@ -1,6 +1,8 @@
 const express = require("express")
 const router = express.Router()
 const getDB = require("../integration/dbFactory");
+const { handler, validate } = require("../config/misc.js")
+const ScreenController = require( "../controllers/screenController.js");
 
 
 /* GET Screens page. */
@@ -86,7 +88,7 @@ router.get("/edt", function(req, res) {
 			if (searchPhrases.length > 0) {
 				whereClause += " AND "
 				for (const phrase of searchPhrases) {
-					whereClause +=  /*sql*/` Name || ' ' || Number || ' ' || Colour LIKE '%${phrase}%'  AND`  
+					whereClause +=  /*sql*/` Name || Number || Colour LIKE '%${phrase}%'  AND`  
 				}
 				whereClause = whereClause.substring(0, whereClause.length-3) // get rid of trailing "AND" 
 			}
@@ -183,59 +185,11 @@ router.get("/prints/:id", (req, res) => {
 })
 
 
+
 /*************************************************************************** */
-
 /// POST to create a new screen
-router.post("/", function(req, res) {
-	
-	const db = getDB();
 
-	try {
-
-		// name must be saved as a null, so we know it is standard screen
-		if (req.body.Name == "")
-			req.body.Name = null
-
-		req.body.CreatedBy = req.body.LastModifiedBy = req.auth.user
-		req.body.CreatedDateTime = req.body.LastModifiedDateTime = new Date().toLocaleString()
-
-		const columns = []
-		for (const column in req.body) {
-			if (req.body[column]) { // value is truthy
-				columns.push(column)
-			}
-		}
-
-		const query = /*sql*/`INSERT INTO Screen ( ${columns.join(", ")} ) VALUES ( ${columns.map(c => ` @${c} `).join(", ")} )`
-		const statement = db.prepare(query)
-		const info = statement.run(req.body)
-		console.log(info)
-
-		req.body.ScreenId = info.lastInsertRowid
-		res.location(`/screen/${info.lastInsertRowid}`)
-		res.status(201)
-		res.json({
-   			success: true,
-    		message: "saved ok",
-    		data: req.body,
-    		timestamp: new Date().toISOString()
-  		})
-
-		// code to insert into Audit Log was here
-	}
-	catch(ex) {
-		console.log(ex)
-		res.status(400).json({
-   			success: false,
-    		message: ex.message,
-    		data: null,
-    		timestamp: new Date().toISOString()
-  		})
-	}
-	finally {
-		db.close()
-	}
-})
+router.post("/", ScreenController.screenValidation, validate, handler(ScreenController.createScreen ))
 
 
 // GET data for datatables for deleted Screens
@@ -283,63 +237,12 @@ router.post("/deleted/dt", function(req, res) {
 
 
 /*************************************************************************** */
-
-
 // PUT to edit an existing screen
-router.put("/:id", function(req, res) {
-	
-	const db = getDB();
-
-	try {
-		delete req.body.LastUsed
-
-		// name must be saved as a null, so we know it is standard screen
-		if (req.body.Name == "")
-			req.body.Name = null
+router.put("/:id", ScreenController.screenValidation, validate, handler(ScreenController.editScreen)) 
 
 
-		req.body.LastModifiedDateTime = new Date().toLocaleString()
-		req.body.LastModifiedBy = req.auth.user
-		
-		// find changed values
-		const myScreen = db.prepare(/*sql*/`SELECT * FROM Screen WHERE ScreenId=?`).get(req.params.id)
-		const columns = []
-		for (const column in req.body) {
-			if (req.body[column] != myScreen[column]) {
-				columns.push(column)
-			}
-		}
-
-		const query = /*sql*/`UPDATE Screen SET 
-		${columns.map(col => `${col}=@${col}`).join(", ")}	
-		WHERE ScreenId = @ScreenId `
-		statement = db.prepare(query)
-
-		let info = statement.run(req.body)
-		console.log(info)
-		
-		res.sendStatus(204)
-
-		// deleted some code here to write change to audit logs
-	}
-	catch(ex) {
-		res.statusMessage = ex.message
-		res.status(400).json({
-   			success: false,
-    		message: ex.message,
-    		data: null,
-    		timestamp: new Date().toISOString()
-  		})
-	}
-	finally {
-		db.close()
-	}
-
-})
-
-
-// PUT edit by setting deleted to 0
-router.put("/restore/:id", (req, res) => {
+// PUT undelete by setting deleted to 0
+router.put("/undelete/:id", (req, res) => {
 
 	const db = getDB();
 
@@ -387,32 +290,7 @@ router.put("/restore/:id", (req, res) => {
 
 
 // DELETE deletes an existing screen
-router.delete("/:id", function(req, res) {
-	
-	const db = getDB();
-
-	try {
-		let date = new Date().toLocaleString()
-		let statement = db.prepare(/*sql*/`UPDATE Screen SET Deleted=1, LastModifiedBy=?, LastModifiedDateTime=? WHERE ScreenId=?`)
-		let info = statement.run(req.auth.user, date, req.params.id)
-		console.log(info)
-
-		res.sendStatus(204)
-	}
-	catch(ex) {
-		res.statusMessage = ex.message
-		res.status(400).json({
-   			success: false,
-    		message: ex.message,
-    		data: null,
-    		timestamp: new Date().toISOString()
-  		})
-	}
-	finally {
-		db.close()
-	}
-
-})
+router.delete("/:id", handler(ScreenController.deleteScreen)) 
 
 
 

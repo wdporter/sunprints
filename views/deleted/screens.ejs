@@ -47,7 +47,7 @@
 	function restore(id) {
 		const tr = document.querySelector(`tr[data-id="${id}"]`)
 
-		fetch(`/screen/restore/${id}`, { method: "PUT" })
+		fetch(`/screen/undelete/${id}`, { method: "PUT" })
 		.then(response => {
 			if (response.ok) {
 				window.datatable.row(tr).remove().draw("page")

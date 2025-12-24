@@ -35,23 +35,24 @@
 	 	<template #item-ScreenId="item"> <span class="fa fa-edit fa-lg" title=Edit @click="editScreen(item)"></span>&emsp;<span class="fa fa-trash fa-lg" title=Delete @click="deleteScreen(item)"></span> 
 		</template>
 		<% } %>
+		<template #item-Name="item">
+			<span :class="{italic: item.Name == null, 'font-extralight': item.Name == null}">{{ item.Name == null ? "standard" : item.Name }}</span>
+		</template>
 		<template #item-LastUsed="item">
 			{{  fixLastUsedDate(item.LastUsed) }}
 		</template>
 	</easy-data-table>
 
-<dialog id="editDialog">
+<dialog id=editDialog closedby=any>
 	<h3>Edit Screen</h3>
-	<form method=dialog>
-			<input type=hidden v-model="selectedItem.ScreenId">
-			<label for=name>Name</label> <input id=name v-model="selectedItem.Name"><br>
-			<label for=number>Number</label> <input id=number v-model="selectedItem.Number"><br>
-			<label for=colour>Colour</label> <input id=colour v-model="selectedItem.Colour"><br>
-			<p>
-				<button id="saveButton" value="default" @click="saveScreen">Save</button>&emsp;
-				<input type=button value="Cancel" onclick="this.closest('dialog').close()" />
-			</p>
-	</form>
+		<input type=hidden v-model="selectedItem.ScreenId">
+		<label for=name>Name</label> <input id=name v-model="selectedItem.Name" autofocus><br>
+		<label for=number>Number</label> <input id=number v-model="selectedItem.Number" ><br>
+		<label for=colour>Colour</label> <input id=colour v-model="selectedItem.Colour"><br>
+		<p>
+			<button id=saveButton @click="saveScreen">Save</button>&emsp;
+			<button id=closeButton style="background-color: var(--color-primary);"> Cancel</button>
+		</p>
 </dialog>
 
 </div>
@@ -66,6 +67,9 @@
  	}
 }
 </script>
+
+
+
 
 <script type=module>
 	import { createApp, ref, watch } from "vue"
@@ -172,12 +176,22 @@
 						const item = items.value.find(item=>item.ScreenId == screen.ScreenId)
 						const index = items.value.indexOf(item)
 						items.value.splice(index, 1) 
+						Swal.fire({
+							title: "Deleted",
+							text: "We have deleted the screen",
+							icon: "success"
+						})
 					}
 					else
 						throw new Error(response.statusText)
 				}
 				catch (error) {
-					window.alert(`We encountered an error: ${error.message}`)
+						Swal.fire({
+							title: "We encountered an error",
+							text: error.message,
+							icon: "error",
+							draggable: true
+						})
 				}
 			}
 
@@ -185,13 +199,15 @@
 				console.log(`editScreen ${JSON.stringify(screen)}`)
 				const item = items.value.find(item=>item.ScreenId == screen.ScreenId)
 				selectedItem.value = item
+				
 				const editDialog = document.getElementById("editDialog")
 				editDialog.querySelector("h3").textContent = "Edit screen"
-				editDialog.showModal() //todo: bind dialog to the item
+				editDialog.showModal() 
 			}
 
 			const saveScreen = async function() {
 				console.log(`saveScreen ${JSON.stringify(selectedItem.value)}`)
+
 				try {
 					let method = "POST" 
 					let url = "/screen"
@@ -207,31 +223,77 @@
 						body: JSON.stringify(selectedItem.value)
 					})
 					console.log("response", response)
-					if (response.ok) {
-						const json = await response.json()
-						console.log("json", json)
-						// go to last page and reload from server
-						// it would be nice just to add the returned item to the existing array
-						// but we wouldn't have a way to show it on the last page
-						// without forcing the user go to the last page
-						if (response.status == 201) {
-							serverOptions.value.page = Math.ceil(serverItemsLength.value / serverOptions.value.rowsPerPage)
-							serverOptions.value.sortBy = "ScreenId"
-							serverOptions.sortType = "desc"
-							await loadFromServer()
-						}
+					switch(response.status) {
+						case 400: 
+							// error -- probably in validation but could be for another reason
+							console.log("400 response", response.statusText)
+							const responseJson = await response.json()
+							const validationMessage = responseJson?.error
+							if (validationMessage == "Validation failed") {
+								console.log(validationMessage, responseJson.details)
+								const messages = responseJson.details.map(d => `${d.path}: ${d.msg}`).join("<br />")
+								Swal.fire({
+									title: "We encountered an error",
+									text: messages,
+									icon: "error",
+									draggable: true
+								})
+							}
+							else {
+								throw new Error(errors)
+							}
+							break;
+						case 201: 
+							// succesful post/new
+							const json = await response.json()
+							console.log("json", json)
+							// go to last page and reload from server
+							// it would be nice just to add the returned item to the existing array
+							// but we wouldn't have a way to show it on the last page
+							// without forcing the user go to the last page
+							if (response.status == 201) {
+								document.getElementById("editDialog").close()
+								Swal.fire({
+									title: "Saved",
+									text: "We have saved the new screen",
+									icon: "success"
+								})
+
+								serverOptions.value.page = Math.ceil((serverItemsLength.value + 1) / serverOptions.value.rowsPerPage)
+								serverOptions.value.sortBy = "ScreenId"
+								serverOptions.sortType = "desc"
+								await loadFromServer()
+							}
+							break;
+						case 204: 
+							// successful put/edit
+							document.getElementById("editDialog").close()
+							Swal.fire({
+								title: "Saved",
+								text: "We have saved the changes to the screen",
+								icon: "success"
+							})
+
+							break;
+						default: 
+							throw new Error(response.statusText)
 					}
-					else
-						throw new Error(response.statusText)
 				}
 				catch (err) {
-					window.alert("We encountered an error: " + err.message)
 					console.log("exception: ", err)
+					Swal.fire({
+						title: "We have enountered an error",
+						text: err.message,
+						icon: "error",
+						draggable: true
+					})
+
 				}
 			}
 			
 			const createNewScreen = async function() {
 				selectedItem.value = newItem
+
 				const editDialog = document.getElementById("editDialog")
 				editDialog.querySelector("h3").textContent = "New screen"
 				editDialog.showModal()
@@ -261,7 +323,15 @@
 
 </script>
 
+<script defer>
+document.addEventListener("DOMContentLoaded", () => 
+	document.getElementById("closeButton").addEventListener("click", ()=> 
+		document.getElementById("editDialog").close()
+	)
+)
+</script>
 
 
 
 <%- include("partials/foot.ejs") %>
+

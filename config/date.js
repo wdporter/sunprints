@@ -1,3 +1,4 @@
+// todo: put this in misc.js
 
 function getDateAsHtml5(date) {
 

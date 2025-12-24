@@ -23,8 +23,14 @@ we just add tailwind classes into here as/when needed
 .border-solid {
 	border-style: solid;
 }
+.font-extralight {
+	font-weight: 200;
+}
 .inline {
 	display: inline;
+}
+.italic {
+	font-style: italic;
 }
 .min-w-initial {
 	min-width: initial;
@@ -36,12 +42,23 @@ we just add tailwind classes into here as/when needed
 	padding-left: .5rem;
 	padding-right: .5rem;
 }
+.text-3xl {
+	font-size: 1.875rem; 
+	line-height: 1.2;
+}
+.text-xl {
+	font-size: 1.25rem;
+	line-height: 1.4;
+}
 .text-center {
 	text-align: center;
+}
+.text-red {
+	color: red;
 }
 .w-initial {
 	width: initial;
 }
 .w-½ {
-	width: 50%; /* i made this one up, since w-1/2 is not a valid class name */
+	width: 50%; 
 }
