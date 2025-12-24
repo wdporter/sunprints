@@ -115,7 +115,6 @@ class ScreenController {
 
 	/** soft delete, sets Deleted field to 1 and it won't be shown on the screens page */
 	static deleteScreen(req, res) {
-		throw new error("ouch, wtf was that?")
 		let db, info
 		let date = new Date().toLocaleString()
 		try {
