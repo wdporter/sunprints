@@ -4,10 +4,6 @@ module.exports = class ScreenDao {
 		this.db = db
 	}
 
-	close = function() {
-		this.db.close()
-	}
-
 	/**
 	 * @returns list of screens, each has ScreenId, Number, Colour and Name
 	 */
@@ -52,11 +48,11 @@ module.exports = class ScreenDao {
 	createScreen = function(screen) {
 
 		const columnsToCreate = []
-		for (const column in screen) {
-			if (column == "ScreenId")
+		for (const columnName in screen) {
+			if (columnName == "ScreenId")
 					continue;
-			if (screen?.[column]) { 
-				columnsToCreate.push(column)
+			if (screen?.[columnName]) { 
+				columnsToCreate.push(columnName)
 			}
 		}
 

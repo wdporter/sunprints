@@ -3,7 +3,7 @@ const router = express.Router()
 const getDB = require("../integration/dbFactory");
 const { handler, validate, convertToIsoDate } = require("../config/misc.js")
 const ScreenController = require( "../controllers/screenController.js");
-
+const ScreenService = require("../service/ScreenService.js");
 
 /* GET Screens page. */
 router.get("/", function (req, res) {
@@ -189,7 +189,7 @@ router.get("/prints/:id", (req, res) => {
 /*************************************************************************** */
 /// POST to create a new screen
 
-router.post("/", ScreenController.screenValidation, validate, handler(ScreenController.createScreen ))
+router.post("/", ScreenService.screenValidation, validate, handler(ScreenController.createScreen ))
 
 
 // GET data for datatables for deleted Screens
@@ -267,7 +267,7 @@ router.post("/deleted/dt", function(req, res) {
 
 /*************************************************************************** */
 // PUT update an existing screen
-router.put("/:id", ScreenController.screenValidation, validate, handler(ScreenController.updateScreen)) 
+router.put("/:id", ScreenService.screenValidation, validate, handler(ScreenController.updateScreen)) 
 
 
 // PUT undelete by setting deleted to 0
