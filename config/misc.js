@@ -39,7 +39,6 @@ const validate = (req, res, next) => {
  * @param {String} d the date string, which must be in the LastModifiedDateTime format, for example 31/10/2024, 9:55:48 am . If the string doesn't match, behaviour is undefined
  * @return {String} a date string in the ISO format, for example 2024-10-31T09:55:48 
 */
-
 const convertToIsoDate = (d) =>
 { 
 		const parts = d.split(", ")

@@ -266,8 +266,8 @@ router.post("/deleted/dt", function(req, res) {
 
 
 /*************************************************************************** */
-// PUT to edit an existing screen
-router.put("/:id", ScreenController.screenValidation, validate, handler(ScreenController.editScreen)) 
+// PUT update an existing screen
+router.put("/:id", ScreenController.screenValidation, validate, handler(ScreenController.updateScreen)) 
 
 
 // PUT undelete by setting deleted to 0

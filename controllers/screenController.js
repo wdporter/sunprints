@@ -1,142 +1,93 @@
-const getDB = require("../integration/dbFactory");
 const { body } = require("express-validator");
+const ScreenDao = require("../integration/ScreenDAO.js");
+const {nameAuditColumns, dateAuditColumns } = require("../config/auditColumns.js")
 
 /** a class with static methods for the Screen table */
 class ScreenController {
 
-	/** checks if the given screen already exists in the database 
-	 * @returns true if it exists, false if it doesn't exist
-	*/
-	static checkExists(screen) {
-		let db
-		try {
-			db = getDB();
-			const statement = db.prepare(/*sql*/`SELECT 1 FROM Screen WHERE  
-				Name IS ?  
-				AND Number IS ?
-				AND  Colour IS ? ` )
-			statement.pluck()
-			const value = statement.get(screen.Name, screen.Number, screen.Colour) ?? 0
-			return value == 1;
-		}
-		finally {
-			db ?? db.close()
-		}
-	}
+	static columns = ["ScreenId", "Name", "Number", "Colour"]
 
 
 	/** creates a new screen 
-	 * @param {Object} req The request object that needs a body property that represents the new screen
+	 * @param {Object} req The request object. It should have a body property that represents the new screen. ScreenId is ignored
 	*/
   static createScreen(req, res, next) {
 
-		const screen = req.body
+	const screen = {}
+	for(const column of ScreenController.columns) {
+		screen[column] = req.body[column]
+	}
+	screen.LastModifiedBy = req.auth.user
+	screen.LastModifiedDateTime = new Date().toLocaleString("en-AU")
+	
+	const dao = new ScreenDao()
+	try {
 
-		delete screen.ScreenId
-		screen.CreatedBy = screen.LastModifiedBy = req.auth.user
-		screen.CreatedDateTime = screen.LastModifiedDateTime = new Date().toLocaleString()
+			dao.createScreen(screen)
 
-		const columns = []
-		for (const column in screen) {
-			if (screen[column] != null) { 
-				columns.push(column)
-			}
-		}
-
-		const query = /*sql*/`INSERT INTO Screen ( ${columns.join(", ")} ) VALUES ( ${columns.map(c => ` @${c} `).join(", ")} )`
-		let db, info
-		try {
-			db = getDB();
-			const statement = db.prepare(query)
-			info = statement.run(screen)
+			res.location(`/screen/${screen.ScreenId}`)
+			res.status(201)
+			res.json({
+				success: true,
+				message: "saved ok",
+				data: screen,
+				timestamp: new Date().toISOString()
+			})
 		}
 		finally {
-			db ?? db.close()
+			dao.close
 		}
 
-		console.log(info)
-		screen.ScreenId = info.lastInsertRowid
-		res.location(`/screen/${screen.ScreenId}`)
-		res.status(201)
-		res.json({
-			success: true,
-			message: "saved ok",
-			data: screen,
-			timestamp: new Date().toISOString()
-		})
-
-		//todo:  code to insert into Audit Log was here
 	}
 
-	/** edit an existing screen
-	 * @param {Object} req The request object that needs a body property that represents the changed screen
+	/** update an existing screen
+	 * @param {Object} req The request object. It should have a body property that represents the new screen
 	 */
-	static editScreen(req, res) {
-		
-		const screen = req.body
+	static updateScreen(req, res) {
+		const screen = {}
+		for(const column of ScreenController.columns) {
+			screen[column] = req.body[column]
+		}
+		for(const column of nameAuditColumns) {
+		screen[column] = req.auth.user
+		}
+		for(const column of dateAuditColumns) {
+			screen[column] = new Date().toLocaleString("en-AU")
+		}
 
-		delete screen.LastUsed
-		delete screen.expandLoading
-		delete screen.prints
-	
-		screen.LastModifiedDateTime = new Date().toLocaleString()
-		screen.LastModifiedBy = req.auth.user
-			
-			// find changed values
-			let db, info
-			try {
-				db = getDB();
-				// get the existing screen because we only want to update columns that have actually changed
-				// todo: create auditing environment variable
-				const myScreen = db.prepare(/*sql*/`SELECT * FROM Screen WHERE ScreenId=?`).get(req.params.id)
-				const columns = []
-				for (const column in screen) {
-					if (screen[column] != myScreen[column]) {
-						columns.push(column)
-					}
-				}
-	
-				const query = /*sql*/`UPDATE Screen 
-					SET ${columns.map(col => `${col}=@${col}`).join(", ")}	
-					WHERE ScreenId = @ScreenId `
-				const statement = db.prepare(query)
-	
-				info = statement.run(screen)
-			}
-			finally {
-				db ?? db.close
-			}
-
-			console.log(info)
+		const dao = new ScreenDao()
+		try {
+			dao.updateScreen(screen)
 			res.sendStatus(204)
-	
-		// deleted some code here to write change to audit logs
+		}
+		finally {
+			dao.close
+		}
 	}
 
 	/** soft delete, sets Deleted field to 1 and it won't be shown on the screens page */
 	static deleteScreen(req, res) {
-		let db, info
-		let date = new Date().toLocaleString()
+		const dao = new ScreenDao()
 		try {
-			db = getDB();
-			let statement = db.prepare(/*sql*/`UPDATE Screen SET Deleted=1, LastModifiedBy=?, LastModifiedDateTime=? WHERE ScreenId=?`)
-			info = statement.run(req.auth.user, date, req.params.id)
+			dao.deleteScreen(req.params.id, req.auth.user)
+			res.sendStatus(204)
 		}
 		finally {
-			db ?? db.close()
+			dao.close()
 		}
-		console.log(info)
-		res.sendStatus(204)
+		
 	}
 
 	/** validation rules for a screen */
 	static screenValidation = [
-		body("Number").trim(),
-		// empty strings are not allowed for a Name
+		body("Number").trim().customSanitizer(value => value == "" ? null : value),
 		body("Name").trim().customSanitizer(value => value == "" ? null : value),
-		body("Colour").trim(),
+		body("Colour").trim().customSanitizer(value => value == "" ? null : value),
 		body().custom(screen => {
-			return ScreenController.checkExists(screen)  ? false : true
+			const dao = new ScreenDao()
+			const retVal = dao.isScreenExisting(screen)
+			dao.close()
+			return !retVal
 		 }).withMessage("we already have this screen")
 	]
 }

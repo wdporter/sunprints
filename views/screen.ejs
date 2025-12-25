@@ -9,7 +9,7 @@
 <% } %>
 	<p class="w-½">
 		<label for=searchValue>Search: </label>
-		<input type=text id=searchValue placeholder="name, number and/or colour (spaces ok)" :value=searchValue @input=onSearchInput>
+		<input type=text id=searchValue placeholder="name, number and/or colour (spaces ok)" :value=searchValue @input=onSearchInput autofocus>
 	</p>
 	<easy-data-table
 		:headers=headers 
@@ -32,7 +32,7 @@
 			</div>
     	</template>
 		<% if (poweruser) { %> 
-	 	<template #item-ScreenId="item"> <span class="fa fa-edit fa-lg" title=Edit @click="editScreen(item)"></span>&emsp;<span class="fa fa-trash fa-lg" title=Delete @click="deleteScreen(item)"></span> 
+	 	<template #item-ScreenId="item"> <span class="fa fa-edit fa-lg" title=Edit @click="updateScreen(item)"></span>&emsp;<span class="fa fa-trash fa-lg" title=Delete @click="deleteScreen(item)"></span> 
 		</template>
 		<% } %>
 		<template #item-Name="item">
@@ -175,7 +175,7 @@
 					if (response.ok) {
 						const item = items.value.find(item=>item.ScreenId == screen.ScreenId)
 						const index = items.value.indexOf(item)
-						items.value.splice(index, 1) 
+						items.value.splice(index, 1)  //todo: doesn't update the pagination values
 						Swal.fire({
 							title: "Deleted",
 							text: "We have deleted the screen",
@@ -196,13 +196,12 @@
 				}
 			}
 
-			const editScreen = async function(screen) {
-				console.log(`editScreen ${JSON.stringify(screen)}`)
-				const item = items.value.find(item=>item.ScreenId == screen.ScreenId)
-				selectedItem.value = item
+			const updateScreen = async function(screen) {
+				console.log(`updateScreen ${JSON.stringify(screen)}`)
+				selectedItem.value = screen
 				
 				const editDialog = document.getElementById("editDialog")
-				editDialog.querySelector("h3").textContent = "Edit screen"
+				editDialog.querySelector("h3").textContent = "Update screen"
 				editDialog.showModal() 
 			}
 
@@ -239,42 +238,43 @@
 									icon: "error",
 									draggable: true
 								})
+								document.getElementById("editDialog").close()
 							}
 							else {
 								throw new Error(errors)
 							}
 							break;
 						case 201: 
-							// succesful post/new
+							// succesful post/create
 							const json = await response.json()
 							console.log("json", json)
 							// go to last page and reload from server
-							// it would be nice just to add the returned item to the existing array
+							// would have preferred to add the returned item to the existing array
 							// but we wouldn't have a way to show it on the last page
 							// without forcing the user go to the last page
-							if (response.status == 201) {
-								document.getElementById("editDialog").close()
-								Swal.fire({
-									title: "Saved",
-									text: "We have saved the new screen",
-									icon: "success"
-								})
+							document.getElementById("editDialog").close()
+							Swal.fire({
+								title: "Saved",
+								text: "We have saved the new screen",
+								icon: "success"
+							})
 
-								serverOptions.value.page = Math.ceil((serverItemsLength.value + 1) / serverOptions.value.rowsPerPage)
-								serverOptions.value.sortBy = "ScreenId"
-								serverOptions.sortType = "desc"
-								await loadFromServer()
-							}
+							serverOptions.value.page = Math.ceil((serverItemsLength.value + 1) / serverOptions.value.rowsPerPage)
+							serverOptions.value.sortBy = "ScreenId"
+							serverOptions.sortType = "desc"
+							await loadFromServer()
 							break;
 						case 204: 
-							// successful put/edit
+							// successful put/update
 							document.getElementById("editDialog").close()
 							Swal.fire({
 								title: "Saved",
 								text: "We have saved the changes to the screen",
 								icon: "success"
 							})
-
+							// replace the screen in the array so that it is showing in the table
+							let itemIndex = items.value.findIndex(item => item.ScreenId == selectedItem.value.ScreenId)
+							items.value[itemIndex] = selectedItem.value
 							break;
 						default: 
 							throw new Error(response.statusText)
@@ -286,7 +286,8 @@
 						title: "We have enountered an error",
 						text: err.message,
 						icon: "error",
-						draggable: true
+						draggable: true,
+						topLayer: true
 					})
 
 				}
@@ -312,7 +313,7 @@
 				onSearchInput,
 				expandItemHeaders,
 				deleteScreen,
-				editScreen,
+				updateScreen,
 				fixLastUsedDate,
 				saveScreen,
 				selectedItem,
