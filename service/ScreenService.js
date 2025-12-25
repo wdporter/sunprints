@@ -6,6 +6,9 @@ const { body } = require("express-validator")
  */
 class ScreenService {
 
+	/** requires a db connection
+	 * @param {Object} db an open db connection
+	 */
 	constructor(db) {
 		this.dao = new ScreenDao(db);
 	}
@@ -28,6 +31,11 @@ class ScreenService {
 		body("Colour").trim().customSanitizer(value => value == "" ? null : value)
 	]
 
+	/**
+	 * adds audit column info, checks screen doesn't already exist, and passes to db layer 
+	 * @param {Object} screen the screen object to be created
+	 * @param {String} userName the name to record as CreatedBy
+	 */
 	create(screen, userName) {
 		screen.LastModifiedBy = screen.CreatedBy = userName
 		screen.LastModifiedDateTime = screen.CreatedDateTime= new Date().toLocaleString("en-AU")
@@ -44,6 +52,11 @@ class ScreenService {
 		this.dao.createScreen(screen)
 	}
 
+	/**
+	 * updates audit column info, checks screen doesn't already exist, and passes to db layer 
+	 * @param {*} screen the screen to be updated
+	 * @param {*} userName the name to be recorded as LastModifiedBy
+	 */
 	update(screen, userName) {
 		screen.LastModifiedBy = userName
 		screen.LastModifiedDateTime = new Date().toLocaleString("en-AU")
@@ -58,6 +71,11 @@ class ScreenService {
 		this.dao.updateScreen(screen)
 	}
 
+	/**
+	 * passes parameters to data layer for deletion
+	 * @param {Number} screenId the id of the screen to be deleted
+	 * @param {String} userName the user name to be recorded as LastModifiedBy
+	 */
 	delete(screenId, userName) {
 		this.dao.deleteScreen(screenId, userName)
 	}
