@@ -1,6 +1,6 @@
-const { body } = require("express-validator");
-const ScreenDao = require("../integration/ScreenDAO.js");
-const {nameAuditColumns, dateAuditColumns } = require("../config/auditColumns.js")
+const { body } = require("express-validator")
+const ScreenDao = require("../integration/ScreenDAO.js")
+const getDB = require("../integration/dbFactory.js")
 
 /** a class with static methods for the Screen table */
 class ScreenController {
@@ -13,15 +13,25 @@ class ScreenController {
 	*/
   static createScreen(req, res, next) {
 
-	const screen = {}
-	for(const column of ScreenController.columns) {
-		screen[column] = req.body[column]
-	}
-	screen.LastModifiedBy = req.auth.user
-	screen.LastModifiedDateTime = new Date().toLocaleString("en-AU")
-	
-	const dao = new ScreenDao()
-	try {
+		const screen = {}
+		for(const column of ScreenController.columns.slice(1)) {
+			screen[column] = req.body[column]
+		}
+		screen.LastModifiedBy = screen.CreatedBy = req.auth.user
+		screen.LastModifiedDateTime = screen.CreatedDateTime= new Date().toLocaleString("en-AU")
+
+		const db = getDB()
+		const dao = new ScreenDao(db)
+		try {
+			if (dao.isScreenExisting(screen)) {
+				return res.status(400).json({ 
+					error: 'Validation failed',
+					details: [{
+						path: "name/number/colour",
+						msg: "we already have this screen"
+					}]
+				})
+			}
 
 			dao.createScreen(screen)
 
@@ -35,7 +45,7 @@ class ScreenController {
 			})
 		}
 		finally {
-			dao.close
+			db.close()
 		}
 
 	}
@@ -48,32 +58,40 @@ class ScreenController {
 		for(const column of ScreenController.columns) {
 			screen[column] = req.body[column]
 		}
-		for(const column of nameAuditColumns) {
-		screen[column] = req.auth.user
-		}
-		for(const column of dateAuditColumns) {
-			screen[column] = new Date().toLocaleString("en-AU")
-		}
+		screen.LastModifiedBy = req.auth.user
+		screen.LastModifiedDateTime = new Date().toLocaleString("en-AU")
 
-		const dao = new ScreenDao()
+		const db = getDB()
+		const dao = new ScreenDao(db)
 		try {
+			if (dao.isScreenExisting(screen)) {
+				return res.status(400).json({ 
+					error: 'Validation failed',
+					details: [{
+						path: "name/number/colour",
+						msg: "we already have this screen"
+					}]
+				})
+			}
+
 			dao.updateScreen(screen)
 			res.sendStatus(204)
 		}
 		finally {
-			dao.close
+			db.close()
 		}
 	}
 
 	/** soft delete, sets Deleted field to 1 and it won't be shown on the screens page */
 	static deleteScreen(req, res) {
-		const dao = new ScreenDao()
+		const db = getDB()
+		const dao = new ScreenDao(db)
 		try {
 			dao.deleteScreen(req.params.id, req.auth.user)
 			res.sendStatus(204)
 		}
 		finally {
-			dao.close()
+			db.close()
 		}
 		
 	}
@@ -82,13 +100,7 @@ class ScreenController {
 	static screenValidation = [
 		body("Number").trim().customSanitizer(value => value == "" ? null : value),
 		body("Name").trim().customSanitizer(value => value == "" ? null : value),
-		body("Colour").trim().customSanitizer(value => value == "" ? null : value),
-		body().custom(screen => {
-			const dao = new ScreenDao()
-			const retVal = dao.isScreenExisting(screen)
-			dao.close()
-			return !retVal
-		 }).withMessage("we already have this screen")
+		body("Colour").trim().customSanitizer(value => value == "" ? null : value)
 	]
 }
 

@@ -1,9 +1,7 @@
-const getDB = require("./dbFactory.js");
-
 module.exports = class ScreenDao {
 	
 	constructor(db) {
-		this.db = db ?? getDB()
+		this.db = db
 	}
 
 	close = function() {
@@ -53,16 +51,16 @@ module.exports = class ScreenDao {
 	 */
 	createScreen = function(screen) {
 
-		const columns = []
+		const columnsToCreate = []
 		for (const column in screen) {
 			if (column == "ScreenId")
 					continue;
 			if (screen?.[column]) { 
-				columns.push(column)
+				columnsToCreate.push(column)
 			}
 		}
 
-		const query = /*sql*/`INSERT INTO Screen ( ${columns.join(", ")} ) VALUES ( ${columns.map(c => ` @${c} `).join(", ")} )`
+		const query = /*sql*/`INSERT INTO Screen ( ${columnsToCreate.join(", ")} ) VALUES ( ${columnsToCreate.map(c => ` @${c} `).join(", ")} )`
 		const statement = this.db.prepare(query)
 		const info = statement.run(screen)
 		console.log(info)
@@ -80,15 +78,15 @@ module.exports = class ScreenDao {
 	{
 		// get the existing screen because we only want to update columns that have actually changed
 		const myScreen = this.db.prepare(/*sql*/`SELECT * FROM Screen WHERE ScreenId=? `).get(screen.ScreenId)
-		const columns = []
+		const columnsToUpdate = []
 		for (const column in screen) {
 			if (screen[column] != myScreen[column]) {
-				columns.push(column)
+				columnsToUpdate.push(column)
 			}
 		}
 	
 		const query = /*sql*/`UPDATE Screen 
-			SET ${columns.map(col => `${col}=@${col}`).join(", ")}	
+			SET ${columnsToUpdate.map(col => `${col}=@${col}`).join(", ")}	
 			WHERE ScreenId = @ScreenId `
 		const statement = this.db.prepare(query)
 	
@@ -106,6 +104,7 @@ module.exports = class ScreenDao {
 		const statement = this.db.prepare(/*sql*/`UPDATE Screen SET Deleted=1, LastModifiedBy=?, LastModifiedDateTime=? WHERE ScreenId=?`)
 		const info = statement.run(userName, new Date().toLocaleString("en-AU"), id)
 		console.log(info)
+		//todo:  code to insert into Audit Log if being used
 	}
 
 }
