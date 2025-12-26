@@ -275,6 +275,7 @@
 							// replace the screen in the array so that it is showing in the table
 							let itemIndex = items.value.findIndex(item => item.ScreenId == selectedItem.value.ScreenId)
 							items.value[itemIndex] = selectedItem.value
+							//todo: the problem here is that "standard" screens don't show in the Name field, it will be empty instead
 							break;
 						default: 
 							throw new Error(response.statusText)
