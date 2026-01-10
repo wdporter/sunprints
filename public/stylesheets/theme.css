@@ -8,6 +8,17 @@
 	}
 }
 
+@media (prefers-color-scheme: dark) {
+	html {
+		background: #000;
+	} 
+	body {
+		filter: invert(95%) hue-rotate(12deg);
+	}
+	img{
+		filter: invert(95%) hue-rotate(-12deg);
+	}
+}
 
 /* for some crazy reason sunprints wanted a background colour, but this interfered
 with gd.css when datatables went 100% width */
