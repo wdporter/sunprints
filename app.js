@@ -54,19 +54,32 @@ app.use(basicAuth({
 	realm: 'sprealm',
 }));
 function myAuthorizer(username, password) {
+//	return true; // this function was causing delays so I used this to bail out asap
+
 	const db = getDB();
 	const user = db.prepare("SELECT * FROM User WHERE Name=? COLLATE NOCASE").get(username);
-	db.close()
+	db.close();
 	if (typeof user === "undefined") {
 		const message = `We could not find the user name: ${username}`;
 		console.log(message);
-		throw message;
+		res.status(403).render("error", { message });
 	}
 	var hash = require('crypto').createHash('md5').update(password).digest("hex");
+
+
 	return hash === user.Password;
 }
 
 app.use((req, res, next) => {
+
+	/*	
+	// this function was causing delays so I used this to bail out asap
+	// return default all privileges
+	res.locals.poweruser = true; 
+	res.locals.salesrep = true;
+	res.locals.admin = true;
+	*/
+
 	const db = getDB();
 	const user = db.prepare("SELECT * FROM User WHERE Name=? COLLATE NOCASE").get(req.auth.user);
 	db.close();
@@ -75,9 +88,9 @@ app.use((req, res, next) => {
 		console.log(message);
 		res.status(403).render("error", { message });
 	}
-	res.locals.poweruser = user.PowerUser == 1
-	res.locals.salesrep = user.SalesRep == 1
-	res.locals.admin = user.Admin == 1
+	res.locals.poweruser = user.PowerUser == 1;
+	res.locals.salesrep = user.SalesRep == 1;
+	res.locals.admin = user.Admin == 1 ;
 
 	next()
 })
