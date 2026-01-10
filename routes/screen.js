@@ -92,53 +92,11 @@ router.get("/dt", function(req, res) {
 	try {
 
 		// first get count of all records
-		let statement = db.prepare("SELECT COUNT(*) as Count FROM Screen WHERE Deleted=0 ")
+		let statement = db.prepare("SELECT COUNT(*) as Count FROM ScreenSearch_View WHERE Deleted=0 ")
 		const recordsTotal = statement.get().Count
 		let recordsFiltered = recordsTotal
 
-		let query = `SELECT Screen.ScreenId, Name, Number, Colour, s.maxdate AS LastUsed FROM Screen
-		LEFT OUTER JOIN 
-		(SELECT Sales.FrontScreenId AS ScreenId, MAX(SalesTotal.OrderDate, 0) AS maxdate
-		FROM Sales
-		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.FrontScreenId
-		UNION ALL 
-		SELECT Sales.FrontScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-		FROM Sales
-		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.FrontScreenId
-		UNION ALL 
-		SELECT Sales.BackScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-		FROM Sales
-		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.BackScreenId
-		UNION ALL 
-		SELECT Sales.BackScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-		FROM Sales
-		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.BackScreen2Id
-		UNION ALL 
-		SELECT Sales.PocketScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-		FROM Sales
-		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.PocketScreenId
-		UNION ALL 
-		SELECT Sales.PocketScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-		FROM Sales
-		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.PocketScreen2Id
-		UNION ALL 
-		SELECT Sales.SleeveScreenId as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-		FROM Sales
-		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.SleeveScreenId
-		UNION ALL 
-		SELECT Sales.SleeveScreen2Id as ScreenId, MAX(SalesTotal.OrderDate) AS maxdate
-		FROM Sales
-		INNER JOIN SalesTotal ON SalesTotal.OrderId=Sales.OrderId	
-		GROUP BY Sales.SleeveScreen2Id
-		) s
-		ON  s.ScreenId=Screen.ScreenId `
+		let query = `SELECT ScreenId, Name, Number, Colour, LastUsed FROM ScreenSearch_View`
 		let	whereClause = " WHERE Deleted=0 "
 
 		let whereParams = []
