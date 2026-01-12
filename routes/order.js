@@ -974,7 +974,6 @@ router.all("/outstanding/promo", (req, res) => {
 
 	}
 	catch (ex) {
-		res.statusMessage = ex.message
 		res.status(400).send(ex.message)
 	}
 	finally {
