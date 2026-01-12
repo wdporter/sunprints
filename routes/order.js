@@ -858,8 +858,12 @@ router.all("/outstanding/promo", (req, res) => {
 
 	try {
 
-		if (req.method == "GET") 
+		if (req.method == "GET") {
+			if (req.body == undefined)
+				req.body = {salesrep: null}
+
 			req.body.salesrep = "All"
+		}
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, 
 		Customer.Company, 
@@ -971,7 +975,7 @@ router.all("/outstanding/promo", (req, res) => {
 	}
 	catch (ex) {
 		res.statusMessage = ex.message
-		res.status(400)
+		res.status(400).send(ex.message)
 	}
 	finally {
 		if (db != null)
