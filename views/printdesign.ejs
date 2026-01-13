@@ -76,7 +76,7 @@
 				Screen Number: <span id="chosenScreenNumber"></span><br>
 				Screen Colour: <span id="chosenScreenColour"></span><br>
 			</p>
-			<div id="selectUsb">
+			<div id="selectScreenDiv">
 				<p>
 					<input id="screenFilterInput" oninput="loadScreens(this)" placeholder="start typing to filter the list" />
 					<input id="toggleListInput" type=button value="Hide List" onclick="toggleScreenList(this)" />
@@ -212,28 +212,30 @@
 				})
 			.then(json => {
 				// success, create a box in the row
-				const span = document.querySelector(`span[data-id="${data.PrintDesignId}"]`)
-				if (span.parentElement.querySelector(".noscreens")) {
-					span.parentElement.remove(a.parentElement.querySelector(".noscreens"))
+				const myTable = document.querySelector(`#screentable-${data.PrintDesignId}`)
+				const noScreenRow = myTable.querySelector(".noscreens")
+				if (noScreenRow != null) {
+					noScreenRow.remove()
 				}
-				let insertDiv = "<div class=screenDiv>"
-				//  insertDiv += `<b>Sizes:</b> ${data.SizeCategory}<br>` -- hide these, no longer relevant but may need to restored
+
 				const locations = <%- locations %>;
 				let myLocations = []
 				locations.forEach(loc => {
 					if (data[loc])
 						myLocations.push(loc)
 				})
-				insertDiv += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>
-				<b>Screen Name:</b> <span class=screenNameSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenName").textContent}</span><br>
-				<b>Screen Number:</b> <span class=screenNumberSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenNumber").textContent}</span><br>
-				<b>Screen Colour:</b> <span class=screenColourSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenColour").textContent}</span><br>
-<% if (poweruser) { %>
-				<a href=# data-id=${data.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
-				<a href=# data-id=${json.id} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>
-<% } %>
-				</div>`
-				span.insertAdjacentHTML("beforebegin", insertDiv)
+
+				let newRowString = `<tr id=${data.ScreenId}>
+								<td>${myLocations.join(", ")}
+								<td><span class=screenNameSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenName").textContent}</span>
+								<td><span class=screenNumberSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenNumber").textContent}</span>
+								<td><span class=screenColourSpan data-id=${data.ScreenId}>${document.getElementById("chosenScreenColour").textContent}</span>`
+<% if (poweruser) { %> 
+							newRowString += `<td><a href=# data-id=${data.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
+							<a href=# data-id=${json.id} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>`
+<% } %>				
+					
+				myTable.tBodies[0].insertAdjacentHTML("beforeend", newRowString)
 				
 			})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
@@ -378,9 +380,9 @@
 						throw new Error(response.statusText)
 					})
 				.then(data => {
-					let itemString = `<table class="mb-4 ml-16 w-unset" ><thead><tr><th>Location<th>Name<th>Number<th>Colour<th>Actions<tbody>`
+					let itemString = `<table class="mb-4 ml-16 w-unset" id="screentable-${rowData.PrintDesignId}" ><thead><tr><th>Location<th>Name<th>Number<th>Colour<th>Actions<tbody>`
 					if (data.length == 0)
-						itemString += "<span class=noscreens>no screens defined for this print design<span>"
+						itemString += "<tr><td colspan=5><span class=noscreens>no screens defined for this print design<span>"
 					else {
 						for (var item of data) {
 							const locations = <%- locations %>;
@@ -391,9 +393,9 @@
 							})
 							itemString += `<tr id=${item.ScreenId}>
 								<td>${myLocations.join(", ")}
-								<td>${item.ScreenName ?? "<i>standard</i>"}
-								<td>${item.ScreenNumber}
-								<td>${item.ScreenColour}`
+								<td><span class=screenNameSpan data-id=${item.ScreenId}>${item.ScreenName ?? "<i>standard</i>"}</span>
+								<td><span class=screenNumberSpan data-id=${item.ScreenId}>${item.ScreenNumber}</span>
+								<td><span class=screenColourSpan data-id=${item.ScreenId}>${item.ScreenColour}</span>`
 <% if (poweruser) { %> 
 							itemString += `<td><a href=# data-id=${item.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
 							<a href=# data-id=${item.ScreenPrintDesignId} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>`
@@ -426,7 +428,7 @@
 				})
 				.then(json => {
 						// when done, remove the div from the list of screens
-						a.parentElement.parentElement.removeChild(a.parentElement)
+						a.parentElement.parentElement.remove()
 				})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
 		}
@@ -455,7 +457,7 @@
 			document.getElementById("chosenScreenName").textContent = ""
 
 			document.getElementById("screenFilterInput").value = ""
-			document.getElementById("selectUsb").style.display = "inline"
+			document.getElementById("selectScreenDiv").style.display = "inline"
 			document.getElementById("addScreenDialog").showModal()
 		}
 
@@ -537,7 +539,7 @@
 						document.getElementById("newScreenSuccessMessage").style.display = "inline"
 						window.setTimeout(function() {
 							document.getElementById("createScreenDialog").close()
-							document.getElementById("selectUsb").style.display = "none"
+							document.getElementById("selectScreenDiv").style.display = "none"
 							document.getElementById("addScreenDialog").showModal()
 						}, 1500)
 					}
