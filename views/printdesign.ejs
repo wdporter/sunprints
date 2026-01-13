@@ -6,7 +6,20 @@
 	align-self:center; 
 	cursor:pointer;
 }
+.addScreenLink {
+	margin-left: unset;
+}
 
+.mb-4 {
+	margin-bottom: 1rem;
+}
+.ml-16 {
+	margin-left: 4rem;
+}
+.w-unset {
+	width: unset;
+	min-width: unset;
+}
 </style>
 
 <ul>
@@ -365,36 +378,33 @@
 						throw new Error(response.statusText)
 					})
 				.then(data => {
-					let itemString = "<div style=display:flex>"
+					let itemString = `<table class="mb-4 ml-16 w-unset" ><thead><tr><th>Location<th>Name<th>Number<th>Colour<th>Actions<tbody>`
 					if (data.length == 0)
 						itemString += "<span class=noscreens>no screens defined for this print design<span>"
 					else {
 						for (var item of data) {
-							itemString += "<div class=screenDiv>"
-							// itemString += `<b>Sizes:</b> ${item.SizeCategory}<br>` -- hide these, no longer relevant but may need to restored
-
 							const locations = <%- locations %>;
 							let myLocations = []
 							locations.forEach(loc => {
 								if (item[loc])
 									myLocations.push(loc)
 							})
-							itemString += `<b>Location${myLocations.length > 1 ? 's' : ''}:</b> ${myLocations.join(", ")}<br>
-							<b>Screen Name:</b> <span class=screenNameSpan data-id=${item.ScreenId}>${item.ScreenName ?? "<i>standard</i>"}</span><br>
-							<b>Screen Number:</b> <span class=screenNumberSpan data-id=${item.ScreenId}>${item.ScreenNumber}</span><br>
-							<b>Screen Colour:</b> <span class=screenColourSpan data-id=${item.ScreenId}>${item.ScreenColour}</span><br>
+							itemString += `<tr id=${item.ScreenId}>
+								<td>${myLocations.join(", ")}
+								<td>${item.ScreenName ?? "<i>standard</i>"}
+								<td>${item.ScreenNumber}
+								<td>${item.ScreenColour}`
 <% if (poweruser) { %> 
-							<a href=# data-id=${item.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
-							<a href=# data-id=${item.ScreenPrintDesignId} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>
+							itemString += `<td><a href=# data-id=${item.ScreenId} class=editScreenLink><span class="fa fa-lg fa-edit" title="change screen details"></span></a>&emsp;
+							<a href=# data-id=${item.ScreenPrintDesignId} class=removeScreenLink><span class="fa fa-lg fa-trash" title="remove screen from this design"></span></a><br>`
 <% } %>
-							</div>`
 						}
 					}
 <% if (poweruser) { %> 
-					itemString += `<span tabindex=0 class="fa fa-lg fa-plus addScreenLink" data-id=${rowData.PrintDesignId} title="add exsiting screen"></span>&emsp;`
+					itemString += `<tfoot><tr><td colspan=5><span tabindex=0 class="fa fa-lg fa-plus addScreenLink" data-id=${rowData.PrintDesignId} title="add exsiting screen"></span>&emsp;`
 					itemString += `<span tabindex=0 class="fa fa-lg fa-file-circle-plus newScreenLink" data-id=${rowData.PrintDesignId} title="add new screen"></span>`
 <% } %>
-					itemString += "</div>"
+					itemString += "</table>"
 					return itemString
 				})
 				.catch(error => window.alert(`We encountered an error: ${error}`))
