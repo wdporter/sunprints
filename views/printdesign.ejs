@@ -331,9 +331,11 @@
 					data: null,
 					defaultContent: "<br>",
 					sortable: false,
-					width: "40px"
+					width: "40px",
+					searchable: false
 				},
 				{
+					searchable: false,
 					orderable: false,
 					sortable: false,
 					data: "PrintDesignId",
@@ -350,7 +352,7 @@
 				{ data: "Code" },
 				{ data: "Notes" },
 				{ data: "Comments" },
-				{ data: "maxdate", orderable: false}
+				{ data: "LastUsedDate", searchable: false}
 			]
 		})
 

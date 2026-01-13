@@ -123,53 +123,58 @@ router.get("/dt", function (req, res, next) {
 	try {
 
 		// first get count of all records
-		let statement = db.prepare("SELECT COUNT(*) as Count FROM PrintDesign WHERE Deleted=0")
+		let statement = db.prepare("SELECT COUNT(*) as Count FROM PrintDesignSearch_View WHERE Deleted=0")
 		const recordsTotal = statement.get().Count
 		let recordsFiltered = recordsTotal
 
-		let whereClause = "WHERE Deleted = 0 "
-		if (req.query.search.value)
-			req.query.search.value = req.query.search.value.trim()
+		let query = `SELECT PrintDesignId, Code, Notes, Comments, LastUsedDate FROM PrintDesignSearch_View`
+		let	whereClause = " WHERE Deleted=0 "
+
+		let whereParams = []
 		if (req.query.search.value) {
-			whereClause += ` AND (Code LIKE '%${req.query.search.value}%' OR Notes LIKE '%${req.query.search.value}%' OR Comments LIKE '%${req.query.search.value}%') `
-			// get count of filtered records
+			req.query.search.value = req.query.search.value.trim()
+			
+			const searchables = req.query.columns.filter(c => c.searchable == "true")
+			const cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
+			whereParams = searchables.map(c => `%${req.query.search.value}%`)
+			whereClause += ` AND ( ${cols} ) `
+
 			statement = db.prepare(`SELECT Count(*) as Count FROM PrintDesign ${whereClause}`)
-			recordsFiltered = statement.get().Count
+			recordsFiltered = statement.get(whereParams).Count
 		}
 
-		let query = ` SELECT * FROM PrintDesign ${whereClause} `
+		query += whereClause
 
-		const columns = ["PrintDesignId", "", "Code", "Notes", "Comments"]
-		const orderByClause = req.query.order.map(o => ` ${columns[o.column]} COLLATE NOCASE ${o.dir} `)
-		query += ` ORDER BY ${orderByClause.join(",")}`
+		let orderColumn = req.query.order[0].column
+		if (orderColumn == "0")
+			orderColumn = "1"
 
-		query += `LIMIT ${req.query.length} OFFSET ${req.query.start}`
-		const data = db.prepare(query).all()
+		query += ` ORDER BY ${orderColumn } COLLATE NOCASE ${req.query.order[0].dir} `
 
-		// get the last date this was on an order
-		// NOTE one day, we should put the max values in view and join to that, so it can be sortable
-		statement = db.prepare("SELECT max(orderdate) AS maxdate FROM Sales WHERE FrontPrintDesignId=@id OR BackPrintDesignId=@id OR SleevePrintDesignId=@id OR PocketPrintDesignId=@id")
-		for (const print of data) {
-			const maxdate = statement.get({ id: print.PrintDesignId }).maxdate
-			if (maxdate)
-				print.maxdate = new Date(Date.parse(maxdate)).toLocaleDateString()
-			else
-				print.maxdate = "never"
+		query += ` LIMIT ${req.query.length} OFFSET ${req.query.start} `
+		const data = db.prepare(query).all(whereParams)
 
+		console.log(db.pragma("optimize"))
+
+		for(d of data) {
+			d.DT_RowId = d.ScreenId
+
+			const timestamp = Date.parse(d.LastUsedDate)
+			if (!isNaN(timestamp)) {
+				const myDate = new Date(timestamp)
+				d.LastUsedDate = myDate.toLocaleDateString("en-AU", {day: "numeric", month: "numeric", year: "numeric"})
+			}
 		}
 
-
-		res.send({
+		res.json({
 			draw: Number(req.query.draw),
 			recordsTotal,
 			recordsFiltered,
 			data
-		}).end()
-
+		})
 	}
 	catch (ex) {
-		res.statusMessage = ex.message
-		res.status(400).end()
+		res.status(400).send(ex.message)
 	}
 	finally {
 		db.close()
