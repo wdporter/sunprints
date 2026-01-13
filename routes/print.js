@@ -6,71 +6,6 @@ const { locations } = require("../config/art.js");
 
 const {standardScreens} = require("../service/printDesignService")
 
-
-/* GET Basic print design page. */
-//experimental 
-router.get("/2", function (req, res, next) {
-	res.render("printdesign2.ejs", {
-		title: "Print Designs",
-		stylesheets: [],//["/stylesheets/printdesign-theme.css"],
-		user: req.auth.user,
-		poweruser: res.locals.poweruser
-	})
-})
-
-
-// GET a listing in DataTables format used by datatables ajax
-//experimental 
-router.get("/dt2", function (req, res, next) {
-	const db = getDB();
-
-	try {
-
-		const recordsTotal = db.prepare("SELECT COUNT(*) AS Count FROM PrintDesign WHERE Deleted=0 ").get().Count
-		let recordsFiltered = recordsTotal
-
-		let query = `SELECT PrintDesign.* FROM PrintDesign WHERE Deleted=0 `
-
-		let whereParams = []
-		let whereClause = ""
-		if (req.query.search.value) {
-			const searchables = req.query.columns.filter(c => c.searchable == "true")
-			const cols = searchables.map(c => `${c.data} LIKE ?`).join(" OR ")
-			whereParams = searchables.map(c => `%${req.query.search.value}%`)
-			whereClause += ` AND ( ${cols} ) `
-
-			recordsFiltered = db.prepare(`SELECT COUNT(*) AS Count FROM PrintDesign WHERE Deleted=0 ${whereClause}`).get(whereParams).Count
-		}
-
-		query += ` ${whereClause} 
-		ORDER BY ${req.query.columns[req.query.order[0].column].data} COLLATE NOCASE ${req.query.order[0].dir} 
-		LIMIT ${req.query.length} 
-		OFFSET ${req.query.start} `
-
-		const data = db.prepare(query).all(whereParams)
-
-
-		res.send({
-			draw: parseInt(req.query.draw),
-			recordsTotal,
-			recordsFiltered,
-			data
-		})
-	}
-	catch (ex) {
-		console.log(ex)
-		res.statusMessage = ex.message
-		res.sendStatus(400).end()
-	}
-	finally {
-		db.close()
-	}
-
-
-})
-
-
-
 // GET print design edit page, needs ?id=[0|n]
 //experimental 
 router.get("/edit", (req, res) => {
@@ -100,7 +35,6 @@ router.get("/edit", (req, res) => {
 })
 
 
-
 /* GET Basic print design page. */
 router.get("/", function (req, res, next) {
 	res.render("printdesign.ejs", {
@@ -111,8 +45,6 @@ router.get("/", function (req, res, next) {
 		poweruser: res.locals.poweruser
 	})
 })
-
-
 
 
 // GET datatables server side processing on Print Design page
