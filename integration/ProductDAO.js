@@ -263,8 +263,9 @@ WHERE GarmentId=@GarmentId`
 			let query = "UPDATE Garment SET ";
 			const mySizes = []
 			for (const size of allSizes) {
-				if (originalOrderProduct[size] !== orderProduct[size]) {
-					mySizes.push(` ${size}=${size} - ( ${orderProduct[size]} - ${originalOrderProduct[size]}) `);
+				const orderProductQuantity = orderProduct[size] || 0
+				if (originalOrderProduct[size] !== orderProductQuantity) {
+					mySizes.push(` ${size}=${size} - ( ${orderProductQuantity} - ${originalOrderProduct[size]}) `);
 				}
 			}
 			if (mySizes.length > 0) {

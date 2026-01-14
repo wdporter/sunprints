@@ -484,8 +484,8 @@ router.all("/outstanding/print", (req, res) => {
 
 	try {
 
-		if (req.method == "GET") 
-			req.body.salesrep = "All"
+		if (req.body == undefined)
+			req.body = {}
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, Done, 
 		Customer.Company, 
@@ -505,13 +505,13 @@ router.all("/outstanding/print", (req, res) => {
 		WHERE ProcessedDate IS NULL `
 
 		var params = []
-		if (req.body.salesrep !== "All") {
+		if (salesRep != "All") {
 			// we need a filter on the query
-			if (req.body.salesrep == "none")
+			if (salesRep == "none")
 				query += " AND IFNULL(Orders.SalesRep, '')='' "
 			else {
 				query += " AND Orders.SalesRep = ? "
-				params.push(req.body.salesrep);
+				params.push(salesRep);
 			}
 		}
 		
@@ -619,6 +619,8 @@ router.all("/outstanding/embroidery", (req, res) => {
 	const db = getDB()
 
 	try {
+		if (req.body == undefined)
+			req.body = {}
 
 		if (req.method == "GET") 
 			req.body.salesrep = "All"
@@ -738,6 +740,8 @@ router.all("/outstanding/transfer", (req, res) => {
 	const db = getDB()
 
 	try {
+		if (req.body == undefined)
+			req.body = {}
 
 		if (req.method == "GET") 
 			req.body.salesrep = "All"
@@ -858,12 +862,11 @@ router.all("/outstanding/promo", (req, res) => {
 
 	try {
 
-		if (req.method == "GET") {
-			if (req.body == undefined)
-				req.body = {salesrep: null}
+		if (req.body == undefined)
+			req.body = {}
 
+		if (req.method == "GET") 
 			req.body.salesrep = "All"
-		}
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, 
 		Customer.Company, 
@@ -1555,15 +1558,10 @@ router.put("/:id", (req, res) => {
 			res.json(savedOrder).end()
 		}
 	}
-
-
 	catch(ex) {
-		res.statusMessage = ex.message
-		res.sendStatus(400).end()
+		res.status(400).send(ex.message)
 		console.log(ex.message)
 	}
-
-
 })
 
 

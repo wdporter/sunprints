@@ -163,10 +163,11 @@
 					<tr><th v-for="sz in sizes[product.SizeCategory]">{{ sz.slice(1) }}</th></tr> 
 					<tr>
 						<td v-for="sz in sizes[product.SizeCategory]">
-							<input type="number" min="0" 
+							<input type="number" min="0" required
 									v-model="product[sz]" 
 									:ref="`product_${product.GarmentId}_size`"
-									@keydown.enter="$refs[`price_${product.GarmentId}`][0].focus()" >
+									@keydown.enter="$refs[`price_${product.GarmentId}`][0].focus()"
+									@change="product[sz] = isNaN(parseInt(product[sz])) ? 0 : product[sz]" >
 						</td>
 					</tr> <!-- todo set class to reduce padding on the td -->
 				</table> 
@@ -526,7 +527,8 @@ createApp ({
 
 		productCount(product) {
 			const count = this.sizes[product.SizeCategory].reduce((acc, curr) => { 
-				return product[curr] + acc
+				const currentProductCount = parseInt(product[curr])
+				return  acc + (isNaN(currentProductCount) ? 0 : currentProductCount)
 			}, 0)
 			return count
 		},
@@ -534,7 +536,8 @@ createApp ({
 			let sum = 0
 			this.order.products.forEach( product => {
 				const count = this.sizes[product.SizeCategory].reduce((acc, curr) => { 
-					return product[curr] + acc
+					const currentProductCount = parseInt(product[curr])
+					return  acc + (isNaN(currentProductCount) ? 0 : currentProductCount)
 				}, 0)
 				sum += count
 			})
@@ -544,7 +547,8 @@ createApp ({
 			let sum = 0
 			this.order.products.forEach( product => {
 				const count = this.sizes[product.SizeCategory].reduce((acc, curr) => { 
-					return product[curr] + acc
+					const currentProductCount = parseInt(product[curr])
+					return  acc + (isNaN(currentProductCount) ? 0 : currentProductCount)
 				}, 0)
 				sum += count * product.Price || 0
 			})
@@ -606,7 +610,7 @@ createApp ({
 			.then(response => {
 				if (! response.ok) {
 					// todo show error dialog and quit
-					throw response.statusText
+					return response.text().then(text => { throw new Error(text) })
 				}
 				return response.json()
 			})
@@ -635,8 +639,6 @@ createApp ({
 					this.order.products = json
 				})
 				.catch(err => window.alert("We encountered an error fetching the updated products: " + err))
-
-
 			})
 			.catch(err => {
 				let msg = ""
