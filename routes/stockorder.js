@@ -465,8 +465,12 @@ router.put("/removegarment/:stockorderid/:garmentid", (req, res) => {
 router.put("/receiveorder/:stockorderid", function (req, res) {
 	const db = getDB();
 	try {
-
-		req.body.LastModifiedBy = req.auth.user
+		if (req.body == undefined) {
+			req.body = {
+				LastModifiedBy: req.auth.user,
+				LastModifiedDateTime: new Date().toLocaleString()
+			}
+		}
 		const now = new Date()
 		req.body.LastModifiedDateTime = now.toLocaleString()
 
