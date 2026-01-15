@@ -481,11 +481,10 @@ router.get("/dt/products/:orderId", function (req, res) {
 router.all("/outstanding/print", (req, res) => {
 
 	const db = getDB()
+	if (req.body == undefined)
+		req.body = {}
 
 	try {
-
-		if (req.body == undefined)
-			req.body = {}
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, Done, 
 		Customer.Company, 
@@ -505,13 +504,13 @@ router.all("/outstanding/print", (req, res) => {
 		WHERE ProcessedDate IS NULL `
 
 		var params = []
-		if (salesRep != "All") {
+		if (req.body.salesrep != "All") {
 			// we need a filter on the query
-			if (salesRep == "none")
+			if (req.body.salesrep == "none")
 				query += " AND IFNULL(Orders.SalesRep, '')='' "
 			else {
 				query += " AND Orders.SalesRep = ? "
-				params.push(salesRep);
+				params.push(req.body.salesrep);
 			}
 		}
 		
