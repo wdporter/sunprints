@@ -481,10 +481,14 @@ router.get("/dt/products/:orderId", function (req, res) {
 router.all("/outstanding/print", (req, res) => {
 
 	const db = getDB()
-	if (req.body == undefined)
-		req.body = {}
 
 	try {
+
+		if (req.body == undefined)
+		req.body = {}
+
+	if (req.method == "GET") 
+		req.body.salesrep = "All"
 
 		let query = `SELECT OrderNumber, OrderDate, DeliveryDate, BuyIn, Orders.SalesRep, Done, 
 		Customer.Company, 
